@@ -58,8 +58,8 @@ release raised.
 | A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
 | A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
-| T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
+| T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 
 ## Checklist
 
@@ -343,15 +343,17 @@ This phase tests two things the finished plan claims but nothing checks. First, 
 
   </details>
   Note: done test-first at the phase start: `banner.default.html` (root `max-width: 20rem; margin: 0 auto`) in the components fixture, a snapshot only like `card.default` (no source file or catalog entry — it has no stylesheet or content); T2 opens it in the Looks page.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
-- [ ] An approval reopens when the element rules it was drawn under change, and a centred story fits its frame — both failing before the fixes.
+- [x] An approval reopens when the element rules it was drawn under change, and a centred story fits its frame — both failing before the fixes.
   <details><summary>Technical</summary>
 
   T1: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/approvals.test.ts`. T2: `cd apps/indusk-admin && node ../indusk-mcp/scripts/with-daemon-guard.js npx vitest run --config vitest.system.config.ts -t T2 "src/app/p/[project]/looks/looks-components.contract.test.ts"`.
 
   </details>
+  Note: T1 red first: `expected { …, kind: "story", story: "badge.ok" … } to match object { baseRulesHash: "aaaa…" }` (the entry recorded none); green 18/18 after. T2 red first: `expected 'frame 390, component 344 + 2 x 8 = 360' to be 'fitted'`; green after. `vitest related` green: indusk-mcp 53 files / 375 tests, indusk-admin 13 files / 92 tests; typecheck and biome clean on both packages' changed files.
 
 #### Build Phase 3 Context
 
