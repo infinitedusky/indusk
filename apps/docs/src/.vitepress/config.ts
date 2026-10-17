@@ -181,6 +181,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/reference/telemetry/overview" },
 						{ text: "CLI Reference", link: "/reference/telemetry/cli" },
+						{ text: "The signal helper", link: "/reference/telemetry/signal-helper" },
 					],
 				},
 				{

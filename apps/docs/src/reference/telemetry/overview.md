@@ -217,10 +217,12 @@ flowchart LR
 
 | Runtime | Files |
 |---------|-------|
-| Node | `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts`, `telemetry-settings.ts` (in `src/` when the app has one) |
-| Next.js | `instrumentation.ts` at the app root; `src/logger.ts`, `src/instrumentation.web.ts`, `src/telemetry-settings.ts` |
-| Browser app | `instrumentation.ts`, `telemetry-settings.ts` (in `src/` when the app has one) |
-| Python | `instrumentation.py`, with the settings inline at its top |
+| Node | `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts`, `telemetry-settings.ts`, `signal.ts` (in `src/` when the app has one) |
+| Next.js | `instrumentation.ts` at the app root; `src/logger.ts`, `src/instrumentation.web.ts`, `src/telemetry-settings.ts`, `src/signal.ts` |
+| Browser app | `instrumentation.ts`, `telemetry-settings.ts` (in `src/` when the app has one); no signal helper, it has no server |
+| Python | `instrumentation.py`, with the settings inline at its top; `indusk_signal.py` |
+
+The signal file is how the app tells InDusk a promise held or broke: see [the signal helper](./signal-helper). An app that already sets up OpenTelemetry itself gets only that file and the settings it reads.
 
 **How an app finds the daemon.** Each app carries a small settings file, `telemetry-settings.ts`, rendered with four values: the service name (the code repo's name in a workbench, the project folder's otherwise), the InDusk project id, and the daemon's stored traces and logs addresses (InDusk's block, `24318` and `24319`, when none is stored yet). Every template reads it, so every runtime sends to the daemon with nothing set; a set endpoint still wins:
 

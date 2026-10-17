@@ -659,7 +659,7 @@ next phase then makes what init prints and the skills teach match all of this.
 
 #### Build Phase 2 Document
 
-- [ ] Write the signal helper's reference page, and make the promises guide show the helper first.
+- [x] Write the signal helper's reference page, and make the promises guide show the helper first.
   <details><summary>Technical</summary>
 
   New `apps/docs/src/reference/telemetry/signal-helper.md` (the two calls, the keys, the marker, the same keys from another language); `apps/docs/src/guide/promises.md` "Marking a behaviour promise": the helper first, the attributes it writes after; changelog entry.
