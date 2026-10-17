@@ -16,6 +16,8 @@ cleanup_reason: "One small test helper duplicated across two files; left as is (
 approved_brief: "68e5c8933f4f0c3d3c62ba16ecb0537a828ef0a60d5cdfd59f16450e51517ea8"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-17T17:44:15.988Z"
+accepted: 2026-10-17T18:14:01.854Z
+accepted_by: person
 ---
 
 # Impl tasks are written as instructions
