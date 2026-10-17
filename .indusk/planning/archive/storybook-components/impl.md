@@ -676,7 +676,8 @@ Evidence found while hunting:
 ### Build Phase 12: Maintenance — i-2026-10-16-mockups-render-in-the-cockpit
 
 - [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-mockups-render-in-the-cockpit.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Fix: a code site, a widened test, or a revised promise
+  Landed before this phase was worked: the checks on this branch (cc1e18618, 04a75ed0a, 742861018, 29b156c3e), the drawing by `mockups-draw-components-as-stories` (element resets in `_reset.css`, page-only mockup rules, Message wraps, end-aligned stories fitted).
 
 #### Build Phase 12 Verification
 
