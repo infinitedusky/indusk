@@ -2,7 +2,7 @@
 id: i-2026-10-16-a-master-plan-tells-its-story
 promise: a-master-plan-tells-its-story
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -11,6 +11,7 @@ tests:
   - "apps/indusk-admin/src/__tests__/plan-stories.contract.test.ts > A6 — plan-stories' screens and stories are approved and held > A6 each is held by value at every reference device"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:32:03Z'
 ---
 
 ## Symptom
