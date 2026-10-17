@@ -1164,7 +1164,7 @@ A reader who did not build this plan found two places where the code does not do
 
   </details>
 
-- [ ] When the address file is lost while the daemon runs, writing it again keeps the ports the running daemon already holds.
+- [x] When the address file is lost while the daemon runs, writing it again keeps the ports the running daemon already holds.
   <details><summary>Technical</summary>
 
   `startPlan` in `apps/indusk-mcp/src/lib/telemetry/start-plan.ts:82` (takeover with no stored address) and `:104` (start with none) call `chooseAddress(holders, {}, …)`, so a role on a picked port gets a new free port and the daemon reads as off its address until a restart. Pass the ports the taken candidate holds (its labelled ports from `daemon-find.ts`) as `ownPorts` at `:82`, and at `:104` the record's ports when its processes are alive (`runningDaemonPorts` in `daemon-address.ts:213` already does this for `--reset`; reuse it, do not copy it). Answers row A38.
