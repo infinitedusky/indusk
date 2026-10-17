@@ -1,7 +1,7 @@
 ---
 title: "The daemon is found, not guessed"
 date: 2026-10-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -91,6 +91,7 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A32 | With the record naming a running Jaeger and a collector that has died, `status` sends the Jaeger a broken report for one-daemon-on-its-own-ports naming the collector as not running and the stored logs port as not held; today it sends nothing | Build Phase 6 | Build Phase 6 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
 | A33 | An address file that exists but cannot be read (cut short, or a port that is not a number) is never taken for a missing one: a start in the real home refuses naming the file and leaves it as it was, chooses nothing and moves no port, and `telemetry address` says it is unreadable; the address is written whole or not at all | Build Phase 6 | Build Phase 6 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
 | A34 | In a project with a production source, `promises status` judges the local section by the rule the admin uses for it (the newest signal), so a local break followed by a newer upheld report does not read broken there, while the production section still reads broken by its incidents | Build Phase 6 | Build Phase 6 | passing | unit | a regression guard over a-promise-is-upheld-or-broken: the command line and the admin say the same word for the same source | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
+| A35 | One definition reads a record's four ports by role, and one compares them with the stored address: a record on the stored address has no differences, one on another port names that role, the port held and the port expected, and a port the finder could not read (0) is no difference; status's lines and the daemon's reports both say what that one comparison found | Build Phase 7 | Build Phase 7 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
 
 ### Deferred Verification
 
@@ -1055,6 +1056,76 @@ This phase tests the finished plan against three ways it could fail and nobody w
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/overview.md`, "The promise's signal": status reports a partly running daemon broken. `apps/docs/src/reference/telemetry/cli.md`, `address` and `start`: an unreadable address file refuses, `--reset` chooses again. `apps/docs/src/reference/cli/promises.md`: each source judged by its own rule.
+
+  </details>
+
+### Build Phase 7: Cleanup — one reading of a record's ports, one comparison with the address, and finding in its own module
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+This plan grew the daemon's code across several new files, and two things are now spelled more than once: the record's four ports are read by role by hand in six places across four files, and the comparison of those ports with the stored address is written twice, once for status and once for the reports, with slightly different words. The state module also holds the whole of finding a lost daemon, about half its length and a job of its own. Once this phase closes, each of those is written once, the finding code sits in its own module, and nothing the commands print or send changes.
+
+- [ ] A record's four ports are read by their role through one definition, used everywhere that today spells it out by hand.
+  <details><summary>Technical</summary>
+
+  Add `portsOfRecord(meta: DaemonMeta): Ports` to `apps/indusk-mcp/src/lib/telemetry/daemon-address.ts` (the owner of `ADDRESS_ROLES` and `ROLE_LABEL`) and use it at `daemon-state.ts:118-130` (`portDifferencesOf`), `daemon-state.ts:388` (the finder's role table, if it maps the same fields), `daemon-address.ts:200`, `daemon-reports.ts:120-134` (`portsNotHeld`) and `start-plan.ts:362`. Rule of three: six hand-written copies in four files. Keep `recordedPorts` (status's display labels) as it is unless it can read through the same definition without changing its output.
+
+  </details>
+- [ ] The comparison of a record's ports with the stored address is written once, and status and the reports each word what it found.
+  <details><summary>Technical</summary>
+
+  Add `portDifferences(meta, address): { role, held, expected }[]` beside `portsOfRecord` (a port read as 0 is no difference; a null address gives none). `portDifferencesOf` in `daemon-state.ts` and `portsNotHeld` in `daemon-reports.ts` become wordings over it: status keeps `traces on 4318 (expected 24318)`, reports keep `MCP on 62843, expected 24317` (the A6 symptom regex depends on that). Rows A35 (new) plus the existing A6 and status tests hold the wording.
+
+  </details>
+- [ ] Finding a daemon whose record is gone moves from the state module into its own module.
+  <details><summary>Technical</summary>
+
+  Move the "finding a daemon whose record is gone" section of `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts` (`FoundRole`, `Found`, `trustedPorts` … `findDaemonSync`, `candidatesOf`, `takeOverLocked`, `describeFinding`, ≈ lines 266-581) into a new `lib/telemetry/daemon-find.ts`; `daemon-state.ts` keeps the state, its rendering, the self-tracing count and the resolver, importing `findDaemon`/`findDaemonSync` from the new module. Re-export nothing: update the importers (`grep -rn "daemon-state.js"` under `apps/indusk-mcp/src`, the tests and `__tests__/helpers`). One reason to change each: what the daemon's state is, versus how a lost one is found and its record written. Check the import cycle `daemon-state → daemon-reports → daemon-state` (types only today) does not grow a value cycle.
+
+  </details>
+- [ ] The two ways a stray process is described, one per status line and one inside a report, stay as two.
+  <details><summary>Technical</summary>
+
+  Reviewed `describeStray` (`daemon-state.ts:152`) and `describe` (`daemon-reports.ts:90`) — left as-is: two copies with different formats (a padded status line with the binary, an inline phrase in a symptom); folding them into one would need a format switch, a worse abstraction than two four-line functions.
+
+  </details>
+- [ ] The reports module stays one module: deciding, sending and the reader's throttle are all what the daemon is told.
+  <details><summary>Technical</summary>
+
+  Reviewed `apps/indusk-mcp/src/lib/telemetry/daemon-reports.ts` (429 lines, flagged) — left as-is: its parts (`daemonReports`, `sendDaemonReports`, `reportFinding`, the reader's stamp throttle) change together with the clause set; the throttle is about 50 lines and has one caller.
+
+  </details>
+- [ ] The older large files this plan touched lightly are left in their shape.
+  <details><summary>Technical</summary>
+
+  Reviewed `bin/cli.ts`, `bin/commands/update.ts`, `bin/commands/promises.ts`, `bin/commands/telemetry.ts`, `lib/eval/otel.ts`, `lib/promises/health.ts`, `lib/promises/sources.ts`, `lib/promises/telemetry.ts`, `lib/telemetry/daemon.ts` (and the docs `changelog.md`, `reference/cli/promises.md`) — left as-is: each was over the cap before this plan, which changed a few lines in each; their decomposition belongs to the plan that owns them, not to a cleanup of these touches. `telemetry.ts` shrank under this plan.
+
+  </details>
+
+#### Build Phase 7 Verification
+
+- [ ] The new definitions are tested and every daemon test still passes with the same words.
+  <details><summary>Technical</summary>
+
+  A35 authored red first in `src/__tests__/telemetry-address.test.ts`. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-address.test.ts src/__tests__/telemetry-daemon-reports.test.ts src/__tests__/telemetry-daemon-state.test.ts src/__tests__/telemetry-daemon-found.test.ts src/__tests__/telemetry-start-plan.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-address.ts src/lib/telemetry/daemon-state.ts src/lib/telemetry/daemon-find.ts src/lib/telemetry/daemon-reports.ts src/lib/telemetry/start-plan.ts && pnpm exec tsc --noEmit`. Row State updated in the same edit.
+
+  </details>
+
+#### Build Phase 7 Context
+
+- [ ] The package's context file names the finding module where it names the state module.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry", the daemon-process rule: "a finder (`lib/telemetry/daemon-find.ts`) writes the record…" in place of the `daemon-state.ts` mention for the finder. The file is over its budget: make the edit shrink it.
+
+  </details>
+
+#### Build Phase 7 Document
+
+- [ ] No docs page changes, because only internal modules move.
+  <details><summary>Technical</summary>
+
+  Check `apps/docs/src` for `daemon-state.ts` (`grep -rn "daemon-state" apps/docs/src --include=*.md`); if a page names the finder's file, point it at `daemon-find.ts`, otherwise record that nothing named it.
 
   </details>
 
