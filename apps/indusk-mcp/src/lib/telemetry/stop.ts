@@ -1,5 +1,5 @@
-import { join } from "node:path";
 import { isOwnProcess, type ProcessDeps } from "../process-identity.js";
+import { daemonConfigPath } from "./daemon-process.js";
 import type { DaemonMeta } from "./status.js";
 
 /**
@@ -41,11 +41,11 @@ export async function stopDaemon(
 	deps: StopDeps,
 ): Promise<StopResult> {
 	const recorded = [
-		{ pid: meta.jaegerPid, binary: meta.jaegerBinary, config: join(home, "telemetry-jaeger.yaml") },
+		{ pid: meta.jaegerPid, binary: meta.jaegerBinary, config: daemonConfigPath(home, "jaeger") },
 		{
 			pid: meta.otelcolPid,
 			binary: meta.otelcolBinary,
-			config: join(home, "telemetry-collector.yaml"),
+			config: daemonConfigPath(home, "otelcol"),
 		},
 	];
 	const own = recorded

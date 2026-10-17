@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
+import { daemonProcessOf, isOrphan } from "./daemon-process.js";
 
 /**
  * Finding and reaping telemetry processes that outlived their configuration.
@@ -28,10 +29,6 @@ export interface TelemetryProcess {
 	orphaned: boolean;
 }
 
-/** Matches the platform-split binaries this package ships. */
-const TELEMETRY_BINARY = /telemetry-binaries-[a-z0-9-]+\/bin\/(jaeger|otelcol)\b/;
-const CONFIG_ARG = /--config=(\S+)/;
-
 /**
  * Every running jaeger/otelcol this package could have started.
  *
@@ -53,25 +50,23 @@ export function listTelemetryProcesses(): TelemetryProcess[] {
 	const found: TelemetryProcess[] = [];
 	for (const line of out.split("\n")) {
 		const trimmed = line.trim();
-		if (trimmed === "") continue;
-		const binaryMatch = TELEMETRY_BINARY.exec(trimmed);
-		if (!binaryMatch) continue;
-
 		const space = trimmed.indexOf(" ");
+		if (space < 0) continue;
 		const pid = Number.parseInt(trimmed.slice(0, space), 10);
 		if (!Number.isInteger(pid) || pid <= 0) continue;
 
-		const configMatch = CONFIG_ARG.exec(trimmed);
-		// jaeger is started as `--config=file:/path`; otelcol as `--config=/path`.
-		const configPath = configMatch ? configMatch[1].replace(/^file:/, "") : "";
+		// What an InDusk daemon process is is defined once, in `daemon-process.ts`.
+		// A process with no --config is not listed: absence of evidence is not
+		// an orphan, and killing something we cannot identify is worse than
+		// leaving it.
+		const proc = daemonProcessOf(trimmed.slice(space + 1));
+		if (!proc) continue;
 
 		found.push({
 			pid,
-			binary: binaryMatch[1],
-			// No --config at all is NOT treated as orphaned: absence of evidence.
-			// Killing something we cannot identify is worse than leaving it.
-			orphaned: configPath !== "" && !existsSync(configPath),
-			configPath,
+			binary: proc.role,
+			orphaned: isOrphan(proc, existsSync),
+			configPath: proc.configPath,
 		});
 	}
 	return found;
