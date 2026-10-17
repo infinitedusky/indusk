@@ -483,7 +483,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   `apps/indusk-mcp/src/bin/commands/update.ts`: a `[Telemetry scaffold]` section calling `applyScaffold(projectRoot, { force: false })` after the test-runner detection (step 5c''). No port literal (the reader-module test covers this file).
 
   </details>
-- [ ] Write the MCP config into each declared code repo from init and update, never over one that exists.
+- [x] Write the MCP config into each declared code repo from init and update, never over one that exists.
   <details><summary>Technical</summary>
 
   `ensureMcpJson(repo.dir)` for each of `declaredRepoDirs(projectRoot)` in both commands; the existing call at the root stays.

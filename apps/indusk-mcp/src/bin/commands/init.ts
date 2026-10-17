@@ -1135,6 +1135,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info(`\n[Config]`);
 	console.info(`  create: .indusk/config.json (mode: ${config.mode})`);
 
+	// 12.4. Each declared code repo gets its own `.mcp.json`, never over one it has.
+	{
+		const { ensureCodeRepoMcpJson } = await import("../../lib/mcp-config.js");
+		for (const file of ensureCodeRepoMcpJson(projectRoot)) {
+			console.info(`  create: ${file} (indusk server, for the code repo)`);
+		}
+	}
+
 	// 12.5. Scaffold OpenTelemetry into the app — after the config (the declared repos,
 	// `disabled_extensions`) and the extensions are written, through the one scaffold
 	// module `update` calls too. Each declared code repo, else the project root.
