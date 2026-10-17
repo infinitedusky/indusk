@@ -73,6 +73,12 @@ the wording until they pass.
   A1 and A3 in `planner-impl-summary-template.test.ts`: step 7's phase-summary paragraph says "one plain instruction saying what to do" and "what must hold", carries a before-and-after pair, and no longer says "what will be true when it is done"; `templates/planning/CLAUDE.md` says the same. A2: every `- [ ] {…}` placeholder under a task position in the impl template (in `planner-impl-summary-template.test.ts`) and in the falsify and cleanup templates (in `ritual-templates-phase-summary.test.ts`) asks for an instruction; verification placeholders ask for what must hold.
 
   </details>
+- [x] Shape — reviewed a file this phase changed and left it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts`: its placeholder-lines helper repeats the one in planner-impl-summary-template.test.ts; cross-file duplication is /cleanup's at plan close, and each test file reads on its own
+
+  </details>
 
 #### Regression Guards
 
