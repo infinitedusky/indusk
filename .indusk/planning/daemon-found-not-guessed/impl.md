@@ -1024,7 +1024,7 @@ This phase tests the finished plan against three ways it could fail and nobody w
   `readAddressFile` in `lib/telemetry/daemon-address.ts` returns `null` for both a missing and an unreadable file, so `startPlan` (`lib/telemetry/start-plan.ts:63-102`) chooses again and `writeAddress`'s exclusive create then fails silently; with a stranger on a block port each start may pick a different spare. Return a distinct unreadable result; `startPlan` refuses naming the file and `--reset` as the way out; `telemetry address` prints it unreadable. `writeAddress` in `lib/telemetry/daemon-reads.ts` writes a temporary file and renames it (exclusive: link, or `wx` on the temporary then rename only if the target is absent). Answers row A33.
 
   </details>
-- [ ] The promise status command judges each source by the rule the admin uses for it.
+- [x] The promise status command judges each source by the rule the admin uses for it.
   <details><summary>Technical</summary>
 
   `formatStatus` (`lib/promises/status.ts`) calls `healthOf` with the default `incidents` rule for every section; the admin uses `ruleFor(read, reads)` (`lib/promises/health.ts:544`), `newest` for local beside production. Pass the rule per section from `bin/commands/promises.ts`. Answers row A34.
