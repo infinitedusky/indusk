@@ -977,7 +977,12 @@ Three of the cold audit's findings were defects nothing had answered. A person w
 
 #### Build Phase 6 Context
 
-- [ ] (none needed) — each fix sits beside a rule its own test now holds; no area file changes.
+- [ ] Add to the package's context file that a recommendation the new-project flow acts on is named by a constant the agent's prompt reads.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the eval/agents/skills section: one line, T32 as its guard.
+
+  </details>
 
 #### Build Phase 6 Document
 
