@@ -135,6 +135,12 @@ export const PROMISE_MARK = {
 	 * The reader drops a mark that names a different project.
 	 */
 	project: "indusk.project",
+	/**
+	 * Optional span attribute: which part of the promise this signal concerns,
+	 * when a promise is held by several (the key a signal's spans carry beside
+	 * the promise). A reader that does not read it still reads the promise.
+	 */
+	clause: "indusk.clause",
 } as const;
 
 /**

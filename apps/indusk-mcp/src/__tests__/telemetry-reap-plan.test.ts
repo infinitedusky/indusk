@@ -12,9 +12,9 @@ import { collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-
  *
  * A20: the strays of this home, whether or not their config file is still
  * there, and nothing else. A21: each stray stopped is printed, and one that
- * would not stop is named with a non-zero exit. Its report half (upheld or
- * broken for strays-are-cleared) is added with `daemonReports` in Build
- * Phase 5.
+ * would not stop is named with a non-zero exit. Its report half: upheld for
+ * strays-are-cleared when none remains, broken naming each that does, and
+ * nothing when no daemon is recorded to receive it.
  */
 
 const TEMP_HOME = "/tmp/someone-elses-test-home";
@@ -118,5 +118,37 @@ describe("A21 — reap says what it stopped and what would not stop", () => {
 		const out = await runReap(reads, HOME, table(OWN).deps);
 		expect(out.text).toMatch(/No strays/);
 		expect(out.code).toBe(0);
+	});
+
+	it("reports upheld for strays-are-cleared when every stray stopped", async () => {
+		const processes = [...OWN, jaegerCmd(3, HOME)];
+		const reads = fakeReads({ record: rec(1, 2), processes, files: filesOf(processes) });
+		const out = await runReap(reads, HOME, table(processes).deps);
+		expect(out.reports).toEqual([
+			expect.objectContaining({ clause: "strays-are-cleared", outcome: "upheld" }),
+		]);
+	});
+
+	it("reports broken for strays-are-cleared naming each stray that would not stop", async () => {
+		const processes = [...OWN, jaegerCmd(3, HOME), jaegerCmd(4, HOME)];
+		const reads = fakeReads({ record: rec(1, 2), processes, files: filesOf(processes) });
+		const out = await runReap(reads, HOME, table(processes, [4]).deps);
+		expect(out.reports).toHaveLength(1);
+		expect(out.reports[0]).toMatchObject({ clause: "strays-are-cleared", outcome: "broken" });
+		expect(out.reports[0]?.symptom).toMatch(/^strays-are-cleared: .*jaeger 4/);
+		expect(out.reports[0]?.symptom).not.toMatch(/jaeger 3/);
+	});
+
+	it("with nothing to stop it reports upheld", async () => {
+		const reads = fakeReads({ record: rec(1, 2), processes: OWN, files: filesOf(OWN) });
+		const out = await runReap(reads, HOME, table(OWN).deps);
+		expect(out.reports.map((r) => r.outcome)).toEqual(["upheld"]);
+	});
+
+	it("with no record there is no daemon to receive a report, so none is made", async () => {
+		const processes = [jaegerCmd(3, HOME), collectorCmd(4, HOME)];
+		const reads = fakeReads({ record: null, processes, files: filesOf(processes) });
+		const out = await runReap(reads, HOME, table(processes).deps);
+		expect(out.reports).toEqual([]);
 	});
 });

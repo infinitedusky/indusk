@@ -1,6 +1,7 @@
 import { isOwnProcess } from "../process-identity.js";
 import { daemonConfigPath } from "./daemon-process.js";
 import type { DaemonReads } from "./daemon-reads.js";
+import { daemonReports, type Report } from "./daemon-reports.js";
 import { type DaemonState, daemonState, type OwnProcess } from "./daemon-state.js";
 import { type StopDeps, terminate } from "./stop.js";
 
@@ -26,6 +27,10 @@ export function reapPlan(state: DaemonState): OwnProcess[] {
 	return state.kind === "found" ? [] : state.strays;
 }
 
+/** A recorded daemon is there to receive a report: the record names a process that is still InDusk's. */
+const hasDaemon = (state: DaemonState): boolean =>
+	state.kind === "running" || state.kind === "partial";
+
 const label = (p: OwnProcess): string => `${p.role} ${p.pid}`;
 
 export interface ReapResult {
@@ -33,6 +38,8 @@ export interface ReapResult {
 	text: string;
 	stopped: OwnProcess[];
 	stillRunning: OwnProcess[];
+	/** What to tell the recorded daemon, made once the reap is over; none without a record or on a dry run. */
+	reports: Report[];
 }
 
 /** Stops this home's strays and says which stopped and which would not. */
@@ -50,10 +57,17 @@ export async function runReap(
 			text: `The record is missing while a daemon runs (${state.found.map(label).join(" and ")}); run \`indusk telemetry start\` to take it over first. Nothing was stopped.`,
 			stopped: [],
 			stillRunning: [],
+			reports: [],
 		};
 	}
 	if (plan.length === 0) {
-		return { code: 0, text: "No strays to stop.", stopped: [], stillRunning: [] };
+		return {
+			code: 0,
+			text: "No strays to stop.",
+			stopped: [],
+			stillRunning: [],
+			reports: hasDaemon(state) ? daemonReports("reap", { ...state, strays: [] }) : [],
+		};
 	}
 	if (opts.dryRun) {
 		return {
@@ -64,6 +78,7 @@ export async function runReap(
 			].join("\n"),
 			stopped: [],
 			stillRunning: [],
+			reports: [],
 		};
 	}
 
@@ -87,5 +102,6 @@ export async function runReap(
 		text: [`Strays of this home (${plan.length}):`, ...lines].join("\n"),
 		stopped,
 		stillRunning,
+		reports: hasDaemon(state) ? daemonReports("reap", { ...state, strays: stillRunning }) : [],
 	};
 }
