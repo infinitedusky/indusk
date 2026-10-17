@@ -52,7 +52,7 @@ incident and fixed.
 | `SEAT_HOLDS_TOLERANCE_MS` | `1500` | how late a release may be and still keep the promise |
 | `SEAT_HOLDS_FAULT_TOGGLE` | unset | `1` shows the Break it switch |
 | `SEAT_HOLDS_FAULT` | unset | `slow-release` starts with releases late |
-| `SEAT_HOLDS_ENV` | `local` | `deployment.environment` on every span |
+| `SEAT_HOLDS_ENV` | unset (spans say `development`) | `deployment.environment` on every span when set |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | — | where spans go: the InDusk daemon, or your project's server |
 
 ## Deploy it

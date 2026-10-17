@@ -13,16 +13,25 @@ import { telemetrySettings } from "./telemetry-settings.js";
 
 let provider: NodeTracerProvider | null = null;
 
+/**
+ * What every span says about where it ran: the settings' project and environment
+ * (`development` unless set), under the example's own service name, so a copy under
+ * another folder still reports as it. `SEAT_HOLDS_ENV`, which the Dockerfile and
+ * `fly.toml` set to `production`, names the environment when it is set.
+ */
+export function demoResourceAttributes(env: NodeJS.ProcessEnv): Record<string, string> {
+	return {
+		...telemetrySettings(env).resource,
+		"service.name": "seat-holds",
+		...(env.SEAT_HOLDS_ENV ? { "deployment.environment": env.SEAT_HOLDS_ENV } : {}),
+	};
+}
+
 /** Start exporting. Spans leave every half second, so a break shows quickly. */
 export function startTelemetry(): void {
 	const settings = telemetrySettings(process.env);
 	const resource = detectResources({ detectors: [envDetector] }).merge(
-		resourceFromAttributes({
-			...settings.resource,
-			// The example keeps its own name, so a copy under another folder still reports as it.
-			"service.name": "seat-holds",
-			"deployment.environment": process.env.SEAT_HOLDS_ENV ?? "local",
-		}),
+		resourceFromAttributes(demoResourceAttributes(process.env)),
 	);
 	provider = new NodeTracerProvider({
 		resource,
