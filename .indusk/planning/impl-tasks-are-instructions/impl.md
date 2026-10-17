@@ -137,7 +137,7 @@ verification item an end state, then changes the promise's sentence to match.
   `apps/indusk-mcp/templates/planning/CLAUDE.md`, the `phase_summary: required` entry: "each task is one plain instruction … each verification item a plain statement of what must hold".
 
   </details>
-- [ ] Resync the project's copies of the skills and the planning rules from the package.
+- [x] Resync the project's copies of the skills and the planning rules from the package.
   <details><summary>Technical</summary>
 
   `.claude/skills/{planner,falsify,cleanup}.md` and `.indusk/planning/CLAUDE.md` from the package (`indusk update` or the sync script); `skill-sync-parity.test.ts` must pass.

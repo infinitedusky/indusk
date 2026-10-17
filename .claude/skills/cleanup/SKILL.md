@@ -84,7 +84,7 @@ When you've formed one or more recommendations, **append a new phase to the plan
 - [ ] {docs update if the public surface changed, or "(none — internal decomposition)" with proof}
 ```
 
-**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph. A reasoned leave-as-is is a task too: its sentence says what was reviewed and why it stays, its file in the fold.
+**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain instruction saying what to do and each verification item one plain statement of what must hold, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph. A reasoned leave-as-is is a task too: its instruction says what to review and why it stays, its file in the fold.
 
 <!-- template: phase_summary required -->
 ```markdown
@@ -94,13 +94,13 @@ When you've formed one or more recommendations, **append a new phase to the plan
 
 {Two or three plain sentences: what this plan grew that is worth decomposing, the best-practice basis, and what is true once the phase closes. No row labels, no abbreviations, no code.}
 
-- [ ] {One plain sentence saying what is extracted or refactored and why}
+- [ ] {One plain instruction saying what to extract or refactor and why}
   <details><summary>Technical</summary>
 
   Extract {unit} from {file} into {new file} — {best-practice basis}.
 
   </details>
-- [ ] {One plain sentence saying what was reviewed and why it stays as it is}
+- [ ] {One plain instruction saying what to review and, if it stays as it is, why}
   <details><summary>Technical</summary>
 
   Reviewed {file} — left as-is: {reason}.
@@ -109,7 +109,7 @@ When you've formed one or more recommendations, **append a new phase to the plan
 
 #### Phase N Verification
 
-- [ ] {One plain sentence saying that the new unit is tested, or that behaviour is unchanged}
+- [ ] {One plain statement of what must hold: the new unit is tested, or behaviour is unchanged}
   <details><summary>Technical</summary>
 
   T{M}: {new unit has a focused test / behavior-parity holds}.
