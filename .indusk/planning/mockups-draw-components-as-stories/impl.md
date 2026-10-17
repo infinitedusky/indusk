@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -72,7 +72,7 @@ now fail only on the real drawing defects; merging that branch here makes them
 this plan's yardstick. The new tests for the stylesheet generator fail because
 it writes no resets yet. Build Phase 1 then makes the generator tests pass.
 
-- [ ] This plan has its own worktree.
+- [x] This plan has its own worktree.
   <details><summary>Technical</summary>
 
   `indusk worktree create mockups-draw-components-as-stories` — created by `indusk plans start`; confirm with `indusk worktree list`.
