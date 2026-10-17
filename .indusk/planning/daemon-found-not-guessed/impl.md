@@ -187,7 +187,7 @@ Before any code changes, this phase writes every test that today's code can alre
   ```
 
   </details>
-- [ ] No test written in this phase fails only because a file it loads is missing.
+- [x] No test written in this phase fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   The four contract files and the live check drive the built CLI and `daemonStatus`; `telemetry-daemon-state.test.ts` imports `daemonStatus`; `port-guard.test.ts` imports `daemonStart`; `telemetry-mcp-entries.test.ts` imports `upsertJaegerEntry` and `ensureMcpJson`. All exist today; every red is an assertion.
