@@ -32,6 +32,8 @@ describe("A25 — only the real home's own processes are taken over or reaped", 
 			address: STORED,
 			processes: [jaegerCmd(5, TEMP_HOME), { pid: 6, startedAt: null, command: STRANGER.command }],
 			holders: { [PORT_BLOCK.traces]: STRANGER },
+			// the temporary home is live: its config file is there (a deleted home's daemon is an orphan, which reap stops)
+			files: { [`${TEMP_HOME}/telemetry-jaeger.yaml`]: { mtimeMs: 1, size: 1 } },
 		});
 		const state = daemonState(reads, HOME);
 		const plan = startPlan(
