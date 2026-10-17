@@ -21,7 +21,7 @@
 			.mono { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); overflow-wrap: anywhere; }
 			.card { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); padding: var(--space-4); display: grid; gap: var(--space-3); }
 			.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius: var(--radius-lg); font-weight: var(--font-weight-semibold); padding: var(--space-snug) var(--space-5); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); background: var(--color-surface); }
-			.btn.primary { background: var(--color-dusk); border-color: var(--color-dusk); color: var(--color-surface); }
+			.btn.primary { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-surface); }
 			.btn.quiet { padding: var(--space-tight) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
 			.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
 			.box { display: grid; gap: var(--space-3); }
@@ -41,7 +41,7 @@
 	<body>
 <main class="page">
 <header class="head"><div><h1 class="title">Projects</h1><p class="hint">Every project registered on this machine.</p></div><button class="btn primary" type="button">New project</button></header>
-<div class="cards"><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component></div>
+<div class="cards"><indusk-component name="project-card" state="in-progress"></indusk-component><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="workbench"></indusk-component></div>
 </main>
 	</body>
 </html>

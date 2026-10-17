@@ -244,6 +244,18 @@ changed; and Sandy approves the changed `message.you` story.
   Discovered at this phase: A18's 580 s limit cannot hold the admin's 113 stories at ~11 s each (1 192 s measured, all fitted); it had only ever stopped early, on `message.you`. Limit raised to 1 800 s in `looks-components.contract.test.ts` — a timeout, no assertion changed. Asked Sandy whether to raise it here or leave it to storybook-components' Maintenance — Sandy: "Raise it here".
 
   </details>
+- [x] The project card draws its shape, in-progress badge and last-seen line itself, so its story and the home mockup show what the home page shows.
+  <details><summary>Technical</summary>
+
+  Discovered at this phase: Sandy compared `home.default` with the real home page — the cards differed and the look check held anyway (`looks check admin --only home.default --all`: 6 held), because the page's badges and last-seen line came through `ui/ProjectCard`'s `extra` slot, "not part of the look". `ui/ProjectCard` takes `shape`, `inProgress` and `lastSeen` and draws them; `extra` goes; `components/ProjectCard` passes them. Stories `default`, `in-progress`, `workbench`, each a different project; `home.default` places the three. Sandy: "Do it in this plan."
+
+  </details>
+- [x] The home mockup's New project button has the real button's colours.
+  <details><summary>Technical</summary>
+
+  `home.default.html`'s `.btn.primary` drew in `--color-dusk` (orange); the page's `NewProjectLink` is `buttonClasses("primary")` — `bg-ink`, `border-ink`, `text-surface`.
+
+  </details>
 - [ ] Pause for a person: Sandy approves the changed message story.
   <details><summary>Technical</summary>
 

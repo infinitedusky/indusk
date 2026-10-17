@@ -1,5 +1,5 @@
 {
-	"renderedFrom": "0fd0cf1bb707f1276e13e448232baebc170b13389da56c50bc002247d073c025",
+	"renderedFrom": "ad147474cb9b118de28134dba30f600d671d8b434605c939a19e0885c396d812",
 	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
@@ -2504,17 +2504,30 @@
 					"description": "Where it opens."
 				},
 				{
-					"name": "extra",
-					"type": "ReactNode",
+					"name": "shape",
+					"type": "\"workbench\" | \"normal-mode\"",
 					"required": false,
-					"description": "What the page adds beneath the count: a shape, an in-progress badge, when it was last seen."
+					"description": "A workbench or a normal-mode project, when known."
+				},
+				{
+					"name": "inProgress",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Whether any of its plans is being worked."
+				},
+				{
+					"name": "lastSeen",
+					"type": "string",
+					"required": true,
+					"description": "When it was last seen, in words (`6d ago`)."
 				}
 			],
 			"states": [
 				{
 					"name": "default",
 					"id": "ui-projectcard--default",
-					"snapshotHash": "39104a137d61747cd9dcc494dcbf2ced8abbe22adc1eb7d2ae027dc10822c0a4",
+					"snapshotHash": "9e8ef42a6b4e63186015844ce37c97201038419c6eaacd64d354bdc36c4ce94c",
 					"content": {
 						"name": [
 							[
@@ -2529,12 +2542,111 @@
 								1,
 								0
 							]
+						],
+						"shape": [
+							[
+								0,
+								3,
+								0,
+								1
+							]
+						],
+						"lastSeen": [
+							{
+								"at": [
+									0,
+									3,
+									1,
+									0
+								],
+								"before": "last seen "
+							}
+						]
+					}
+				},
+				{
+					"name": "in-progress",
+					"id": "ui-projectcard--in-progress",
+					"snapshotHash": "3d1c3187374895f2bfe58db8125b93feec17ef435d0da4735060ac0944c82beb",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"path": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"shape": [
+							[
+								0,
+								3,
+								0,
+								1
+							]
+						],
+						"lastSeen": [
+							{
+								"at": [
+									0,
+									3,
+									2,
+									0
+								],
+								"before": "last seen "
+							}
+						]
+					}
+				},
+				{
+					"name": "workbench",
+					"id": "ui-projectcard--workbench",
+					"snapshotHash": "6375229d7d7add286f53b965870146662ae8b22ac6d14d2a4a04200aa75ce354",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"path": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"shape": [
+							[
+								0,
+								3,
+								0,
+								1
+							]
+						],
+						"lastSeen": [
+							{
+								"at": [
+									0,
+									3,
+									2,
+									0
+								],
+								"before": "last seen "
+							}
 						]
 					}
 				}
 			],
 			"stylesheet": "components/project-card.css",
-			"stylesheetHash": "4b2f698887b372e86b009b0e2ce3bbb72106a9c9ead521f15fe324e0e7e72e26"
+			"stylesheetHash": "bebbfd7e3b42a58c85d70df933140b0fd2c5b690119857340b9062cada1d32ee"
 		},
 		{
 			"name": "promise-row",
