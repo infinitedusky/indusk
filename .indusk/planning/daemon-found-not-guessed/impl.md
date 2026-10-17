@@ -1065,13 +1065,13 @@ This phase tests the finished plan against three ways it could fail and nobody w
 
 This plan grew the daemon's code across several new files, and two things are now spelled more than once: the record's four ports are read by role by hand in six places across four files, and the comparison of those ports with the stored address is written twice, once for status and once for the reports, with slightly different words. The state module also holds the whole of finding a lost daemon, about half its length and a job of its own. Once this phase closes, each of those is written once, the finding code sits in its own module, and nothing the commands print or send changes.
 
-- [ ] A record's four ports are read by their role through one definition, used everywhere that today spells it out by hand.
+- [x] A record's four ports are read by their role through one definition, used everywhere that today spells it out by hand.
   <details><summary>Technical</summary>
 
   Add `portsOfRecord(meta: DaemonMeta): Ports` to `apps/indusk-mcp/src/lib/telemetry/daemon-address.ts` (the owner of `ADDRESS_ROLES` and `ROLE_LABEL`) and use it at `daemon-state.ts:118-130` (`portDifferencesOf`), `daemon-state.ts:388` (the finder's role table, if it maps the same fields), `daemon-address.ts:200`, `daemon-reports.ts:120-134` (`portsNotHeld`) and `start-plan.ts:362`. Rule of three: six hand-written copies in four files. Keep `recordedPorts` (status's display labels) as it is unless it can read through the same definition without changing its output.
 
   </details>
-- [ ] The comparison of a record's ports with the stored address is written once, and status and the reports each word what it found.
+- [x] The comparison of a record's ports with the stored address is written once, and status and the reports each word what it found.
   <details><summary>Technical</summary>
 
   Add `portDifferences(meta, address): { role, held, expected }[]` beside `portsOfRecord` (a port read as 0 is no difference; a null address gives none). `portDifferencesOf` in `daemon-state.ts` and `portsNotHeld` in `daemon-reports.ts` become wordings over it: status keeps `traces on 4318 (expected 24318)`, reports keep `MCP on 62843, expected 24317` (the A6 symptom regex depends on that). Rows A35 (new) plus the existing A6 and status tests hold the wording.
