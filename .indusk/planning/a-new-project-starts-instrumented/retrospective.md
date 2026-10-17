@@ -78,8 +78,12 @@ phase-summary rule refuses. And the plan's root context line pushed the root pas
 held budget; the daemon entry, already stated in full in `apps/indusk-mcp/CLAUDE.md`,
 was cut to a pointer to make room.
 
-**Most audit findings were not acted on.** The audit raised about 25 concerns; Build
-Phase 5 took one (two counting the demo copy). The rest are open and carried below.
+**Most audit findings were not acted on at first.** The audit raised about 25 concerns;
+Build Phase 5 took one (two counting the demo copy). After the first close, Build Phase 6
+fixed three more (the decline's name, the demo's `local` environment, the health check's
+package), and the first promise's sentence was amended to what was built: a Next.js
+server needs no hand edit, every other app needs the one line `init` prints. Sandy
+re-approves that amendment. The rest are carried below.
 Nothing yet answers each concern one by one; that is the job of the plan
 [audit-concerns-are-answered](../../audit-concerns-are-answered/brief.md).
 
@@ -115,21 +119,14 @@ Nothing yet answers each concern one by one; that is the job of the plan
 Carried, not done — the audit's open findings that touch a promise, for whoever picks
 them up (mark-first, production-is-heard, or a bugfix plan):
 
-- **Must-not-break at risk:** `a-recommendation-can-be-declined` holds only when the
-  declined recommendation is named `telemetry` (`lib/new-project/create.ts:239`).
-- **"No file edited by hand" holds for a Next.js server, not every runtime.** Node is
-  told to start with `--import`, Python to add `import instrumentation`, a Next.js
-  browser half to import `./instrumentation.web`. Either the promise's sentence narrows
-  or the scaffold wires these itself.
+- **Wiring the other runtimes itself** (Node's `--import`, Python's import line, the
+  Next.js browser half) is a feature for its own plan; the promise now says they need one line.
 - **Weak rows:** T3, T7 (see above); T13 writes value, bound, plan and phase but asserts
   none of them; the Python test-run marker has no test; T16 plants the `src/index.ts`
   it checks for; T17 bans five vendor names.
 - **Unrowed behaviour:** `update` swallows a scaffold error and still succeeds (an
   unreadable `.indusk/scaffold.json` quietly stops every refresh); a `.indusk-new` file
-  is rewritten and announced on every update until the edited file matches; the demo
-  overrides the environment with `SEAT_HOLDS_ENV ?? "local"`; the otel extension's
-  health check wants `@opentelemetry/sdk-node`, which a Next.js or browser app may not
-  install.
+  is rewritten and announced on every update until the edited file matches.
 - **Homework Gate's first expectation is unobserved.** It is measured the day Homework
   Gate's code repo gets its app.
 
@@ -147,6 +144,6 @@ Phase 3: 0, Build Phase 4: 1, Build Phase 5: 0), 0 judged wrong by a human.
 - Files touched: 76
 - Lines added/removed: +3,809 / −674
 - Trajectory rows: 31, all passing (one manual live check)
-- Defects found after the build: 5 by falsification, 1 acted on from the audit
+- Defects found after the build: 5 by falsification, 4 acted on from the audit (Build Phases 5 and 6), one promise sentence amended
 - `pnpm test` at close: 3 failures. Two were this plan's (its root context line over the held root budget; its own impl refused by the plan-task rule), both fixed. The third, `looks-admin-approvals-hold` A11, is the trunk failure current.md already records. The impl-corpus check's other refusal, `archive/nav-row-legible`, is also on trunk.
 - Nested-context probe (`pnpm e2e`): context-tiers passed. `day-monitor` A24 failed, and it fails on trunk too: it waits for `promises status` to print "1 violation", which has printed "1 break" since one-promise-language.

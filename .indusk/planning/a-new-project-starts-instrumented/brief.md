@@ -32,7 +32,7 @@ reader reads, no way for an app to write a signal — are in
 
 ### This plan makes
 
-1. **`a-new-project-reports-from-its-first-run`** (state). A project InDusk scaffolds sends its spans, named after the project and carrying where they ran, to the local daemon from its first run, with no file edited by hand.
+1. **`a-new-project-reports-from-its-first-run`** (state). A project InDusk scaffolds sends its spans, named after the project and carrying where they ran, to the local daemon from its first run: a Next.js app's server with no file edited by hand, any other app once it adds the one line `init` prints for it.
    - **`the-scaffold-sits-where-the-app-runs`** (split). The instrumentation is written in the declared code repo for the runtime found there, never at a workbench root; a repo with no app yet is told so, and `indusk update` scaffolds it once one appears.
    - **`the-service-is-named`** (split). Every template sets the service name in code to the project's name.
    - **`the-spans-reach-the-daemon`** (split). With nothing set, a scaffolded app exports to the daemon's fixed ports; a set endpoint still wins.

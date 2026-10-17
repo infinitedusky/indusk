@@ -39,7 +39,7 @@ clauses:
     rests_on: the-daemon-readers-follow-is-the-one-running
 ---
 
-A project InDusk scaffolds sends its spans, named after the project and carrying where they ran, to the local daemon from its first run, with no file edited by hand.
+A project InDusk scaffolds sends its spans, named after the project and carrying where they ran, to the local daemon from its first run: a Next.js app's server with no file edited by hand, any other app once it adds the one line `init` prints for it.
 
 ## History
 - 2026-10-17 — declared (a-new-project-starts-instrumented), from its planning conversation.
