@@ -686,6 +686,18 @@ This phase makes InDusk find its daemon when the record is gone. A command that 
   `resolveLocalDaemon({ reads, home })` in `daemon-state.ts`, used by: `resolveLocal` (`apps/indusk-mcp/src/lib/promises/sources.ts:99-112`, behind `promises status`, `watch`, `promise_health`, the admin and catchup), the span reader with no endpoint (`apps/indusk-mcp/src/lib/promises/telemetry.ts:339-345`), look standing (`apps/indusk-mcp/src/lib/promises/look-standing.ts:263`), `liveOtlpEndpointSync` (`apps/indusk-mcp/src/lib/telemetry/status.ts:118-126`, synchronous: `spawnSync` of `ps` and `lsof`), `update`'s own-project jaeger sync (`apps/indusk-mcp/src/bin/commands/update.ts:507-526`), `demo` (`apps/indusk-mcp/src/bin/commands/demo.ts:64-84`) and `telemetryReset`. Failures stay `JaegerUnreachable` or `WatcherBlind`, naming the URL. Author A13 and A28 in `apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts`.
 
   </details>
+- [x] Shape: Move the lost-record finding and the line that says it out of `telemetryStatus` into a named `describeFinding` in `daemon-state.ts`, so the sentence status prints about a finding is a function a test can reach
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/bin/commands/telemetry.ts`. Rule: Should this inline block have been a named function? `telemetryStatus` reads, finds, re-reads, words the finding and prints, and the wording has no seam a test reaches without running the CLI.
+
+  </details>
+- [x] Shape — reviewed a file this phase changed and left it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts`: it now holds the state decision, the finder and the resolver, three jobs in one 450-line file, but the plan and the carried test bodies name `daemon-state.ts` for all three and a split is a module boundary, which `/cleanup` judges on the finished whole; the three groups are separated by section comments and share no state.
+
+  </details>
 
 #### Build Phase 2 Verification
 
@@ -710,7 +722,7 @@ This phase makes InDusk find its daemon when the record is gone. A command that 
 
 #### Build Phase 2 Context
 
-- [ ] The package's context file says every reader resolves the daemon through one resolver and how a finder writes the record.
+- [x] The package's context file says every reader resolves the daemon through one resolver and how a finder writes the record.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry", appended to the Build Phase 1 rule: "Every reader resolves the local daemon through `resolveLocalDaemon`; a finder writes the record with an exclusive create under `<home>/telemetry.lock`, reading ports from listening sockets, never guessing one. — guarded by `telemetry-daemon-found.test.ts` and `telemetry-readers-follow.test.ts`."
