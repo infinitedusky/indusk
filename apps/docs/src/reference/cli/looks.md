@@ -324,7 +324,13 @@ reaches only a component and what is inside it, so the page around a component
 draws as before. Rules for `html`, `body`, `:root` and `:host` are left out
 (`_base.css` holds `body`; a mockup's page is its own). The cockpit loads it
 after the foundation's tokens, under every mockup and every story. It is not
-part of an approval's `componentsHash`, as `_base.css` is not.
+part of an approval's `componentsHash`, as `_base.css` is not. An approval
+binds it another way: the catalog keeps a hash of these rules (`baseRulesHash`)
+and an approved story or mockup records the one it was approved under. When the
+app's element rules change, every look is drawn differently in the cockpit, so
+each approval that recorded the old hash reads proposed until a person approves
+it again. An approval made before the hash was kept records none and reads as
+it always did.
 
 `components.json` is `{ components: [{ name, file, properties[], states[] }] }`:
 `file` is the component's one source file, `properties` are Storybook's
