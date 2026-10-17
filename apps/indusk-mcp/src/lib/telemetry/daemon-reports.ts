@@ -77,6 +77,8 @@ export interface Registered {
 
 /** The daemon as a command saw it, with what the command did beside it. */
 export type ReportState = Pick<DaemonState, "meta" | "address" | "strays"> & {
+	/** Which recorded process is still this home's daemon; absent where the caller did not read it. */
+	recorded?: DaemonState["recorded"];
 	finding?: Finding;
 	registered?: Registered;
 	selfTracing?: SelfTracing;
@@ -131,8 +133,27 @@ function portsNotHeld(state: ReportState): string[] {
 	);
 }
 
+/** Each recorded process that no longer runs, with the stored ports it held. */
+function processesGone(state: ReportState): string[] {
+	const { meta, recorded } = state;
+	if (meta === null || recorded === undefined) return [];
+	return [
+		...(recorded.jaeger
+			? []
+			: [
+					`jaeger ${meta.jaegerPid} not running, no longer holding traces port ${meta.otlpPort}, interface port ${meta.uiPort} and MCP port ${meta.mcpPort}`,
+				]),
+		...(recorded.otelcol
+			? []
+			: [
+					`otelcol ${meta.otelcolPid} not running, no longer holding logs port ${meta.logsOtlpPort}`,
+				]),
+	];
+}
+
 function onItsOwnPorts(state: ReportState): Report {
 	const parts = [
+		...processesGone(state),
 		...(state.strays.length > 0
 			? [`another InDusk daemon runs beside it: ${state.strays.map(describe).join("; ")}`]
 			: []),
@@ -222,7 +243,9 @@ function logIsReadable(state: ReportState): Report[] {
 export function daemonReports(moment: ReportMoment, state: ReportState): Report[] {
 	switch (moment) {
 		case "status":
-			return state.meta === null ? [] : [onItsOwnPorts(state), ...logIsReadable(state)];
+			// A daemon whose Jaeger has died cannot receive the report: nothing to send.
+			if (state.meta === null || state.recorded?.jaeger === false) return [];
+			return [onItsOwnPorts(state), ...logIsReadable(state)];
 		case "started":
 		case "restarted":
 			return state.meta === null ? [] : [onItsOwnPorts(state), nothingBesideIt(state)];

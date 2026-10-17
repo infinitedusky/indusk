@@ -181,7 +181,8 @@ export async function telemetryStatus(): Promise<void> {
 		const tracing = selfTracingSince(reads, state.meta);
 		for (const line of renderSelfTracing(tracing)) console.info(line);
 		// Status knows the answer now: tell the daemon whether it holds its own ports and its log is readable.
-		if (state.kind === "running") {
+		// A partly running daemon is reported too, while its Jaeger is alive to receive it.
+		if (state.kind === "running" || (state.kind === "partial" && state.recorded.jaeger)) {
 			await reads.report?.(
 				state.meta.otlpPort,
 				daemonReports("status", { ...state, selfTracing: tracing }),
