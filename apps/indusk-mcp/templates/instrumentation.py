@@ -1,15 +1,15 @@
 """
-OpenTelemetry Auto-Instrumentation for Python
+OpenTelemetry setup for Python
 
-Run your application with the auto-instrumentation wrapper:
-
-    opentelemetry-instrument python your_app.py
-
-Or import this module before your application code:
+Import this module first in your application's entry point, before other imports:
 
     import instrumentation  # noqa: F401
     from your_app import main
     main()
+
+Do not start the app through OpenTelemetry's own command-line wrapper: it builds its own tracer
+provider from the environment (the standard port, `unknown_service`) before this module
+loads, so the spans would miss the daemon and carry no service name or project.
 
 Where spans go, the service name and the resource are decided below (RENDERED and
 the lines after it): with nothing set, the local InDusk daemon (`indusk telemetry address`).
@@ -22,10 +22,7 @@ Configuration via environment variables (each wins over the rendered values):
     OTEL_PYTHON_LOG_CORRELATION   — set to "true" for trace context in logs (default)
 
 Install required packages:
-    pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp
-
-Then auto-install all available instrumentations:
-    opentelemetry-bootstrap --action=install
+    pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
 """
 
 import os

@@ -85,13 +85,13 @@ This detects the runtime and scaffolds:
 `init` prints the install command — run it:
 - **Next.js**: `pnpm add @vercel/otel pino pino-opentelemetry-transport`
 - **Node.js**: `pnpm add @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node ...` (full list printed by init)
-- **Python**: `pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp`
+- **Python**: `pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http`
 
 ### 4. Wire instrumentation into the entry point
 
 - **Next.js**: automatic — Next.js loads `instrumentation.ts` from the app root
 - **Node.js**: `node --import ./src/instrumentation.ts src/index.ts`
-- **Python**: `opentelemetry-instrument python your_app.py`
+- **Python**: `import instrumentation` as the first import of the entry point (not `opentelemetry-instrument`, whose own provider ignores the scaffold)
 
 ### 5. Create a composable.env contract (if using composable.env)
 

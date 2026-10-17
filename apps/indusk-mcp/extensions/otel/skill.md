@@ -279,8 +279,7 @@ After instrumenting a service, verify:
 - Only a request made synchronously in the click handler is in the click's trace; one after a native `await`, from a `.then()` callback or a timer is in its own trace — make the request before the first `await`, or accept the separate trace
 
 ### Python
-- Use `opentelemetry-instrument` CLI: `opentelemetry-instrument python your_app.py`
-- Or import `instrumentation.py` before app code
+- Import `instrumentation.py` first in the entry point, before app code; do not run under `opentelemetry-instrument`, whose own provider sends to the standard port as `unknown_service` before the scaffold loads
 
 ## Environment Variables
 

@@ -107,8 +107,8 @@ function guidance(runtime: Runtime, instrumentation: string): string[] {
 			];
 		case "python":
 			return [
-				"install: pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp",
-				"run: opentelemetry-instrument python your_app.py",
+				"install: pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http",
+				"wire: import instrumentation as the first import of your entry point, then run it as you do today",
 			];
 	}
 }
