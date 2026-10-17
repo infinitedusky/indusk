@@ -211,12 +211,13 @@ mockup is traced to its cause and fixed where it lives; Message wraps long
 unbroken text with a class the looks lint accepts; the promise's sentence is
 changed; and Sandy approves the changed `message.you` story.
 
-- [ ] The project card draws with its own spacing in the home mockup.
+- [x] The project card draws with its own spacing in the home mockup.
   <details><summary>Technical</summary>
 
   Confirm the cause of `gap: 16px` against the story's `4px` (likely `home.default.html`'s own CSS beating the card's `.gap-1`); fix the mockup's own rule if so, or the component's if not. The ~3 px narrower text boxes go with it or are explained.
 
   </details>
+  Confirmed cause: the card's root carries the utility class `grid` (`grid gap-1 ...`), and the home mockup's own page rule `.grid { display: grid; grid-template-columns: ...; gap: var(--space-4) }`, meant for the container of the cards, matches the card root too and, unlayered and later in the document, beats the component's `.gap-1` (probe in Chromium: matching `gap` rules were `.gap-1 => space-1` and `.grid => space-4`, computed 16px). The same rule gave the card its own `grid-template-columns`, which is the ~3 px narrower text boxes (h2 and p 300 px against 296.656 px). Fixed where it lives: the mockup's container class renamed `.grid` to `.cards` in `.indusk/mockups/admin/screens/home.default.html`; the card now computes gap 4 px and h2 width 296.656 px, as its story. Note: this changes `home.default`'s mockup hash, so its approval reopens for a person.
 - [ ] A message with long unbroken text wraps inside its bubble.
   <details><summary>Technical</summary>
 

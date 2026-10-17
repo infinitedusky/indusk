@@ -32,7 +32,7 @@
 			.dot.ok { background: var(--color-ok); }
 			.dot.idle { background: var(--color-idle); }
 			.head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); }
-			.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--size-side), 1fr)); gap: var(--space-4); }
+			.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--size-side), 1fr)); gap: var(--space-4); }
 			.pcard { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); padding: var(--space-5); display: grid; gap: var(--space-1); }
 			.pcard h2 { font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-semibold); }
 			.pcard .count { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); margin-top: var(--space-2); }
@@ -41,7 +41,7 @@
 	<body>
 <main class="page">
 <header class="head"><div><h1 class="title">Projects</h1><p class="hint">Every project registered on this machine.</p></div><button class="btn primary" type="button">New project</button></header>
-<div class="grid"><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component></div>
+<div class="cards"><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component></div>
 </main>
 	</body>
 </html>
