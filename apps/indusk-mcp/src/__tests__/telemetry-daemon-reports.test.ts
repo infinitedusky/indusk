@@ -1,9 +1,17 @@
 // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
 // promise: the-daemon-readers-follow-is-the-one-running
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { PickedPort } from "../lib/telemetry/daemon-address.js";
 import { PORT_BLOCK, type Ports } from "../lib/telemetry/daemon-address.js";
-import { daemonReports, type ReportState, readerReports } from "../lib/telemetry/daemon-reports.js";
+import {
+	daemonReports,
+	type ReportState,
+	readerReports,
+	reportReaderRead,
+} from "../lib/telemetry/daemon-reports.js";
 import { daemonState, findDaemon } from "../lib/telemetry/daemon-state.js";
 import { collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
 
@@ -226,5 +234,31 @@ describe("a finder tells the daemon it found, and only the finder", () => {
 		const found = await findDaemon({ ...reads, record: () => null }, HOME, "update");
 		expect(found?.finder).toBe(false);
 		expect(told).toEqual([]);
+	});
+});
+
+describe("A9 — the reader's stamp throttles the report on disk", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon
+	it("two reads of one project a minute apart send once; another project sends its own", async () => {
+		const home = mkdtempSync(join(tmpdir(), "reader-stamp-"));
+		try {
+			const sent: { project?: string }[] = [];
+			const reads = {
+				...fakeReads(),
+				async report(_port: number, reports: { project?: string }[]) {
+					sent.push(...reports);
+				},
+			};
+			const t0 = Date.parse("2026-10-16T20:00:00Z");
+			const read = (project: string, now: number) =>
+				reportReaderRead({ reads, home, project, otlpPort: 24318, now });
+			await read("dusk", t0);
+			await read("dusk", t0 + 60_000);
+			await read("seats", t0 + 60_000);
+			await read("dusk", t0 + 15 * 60_000);
+			expect(sent.map((r) => r.project)).toEqual(["dusk", "seats", "dusk"]);
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
 	});
 });

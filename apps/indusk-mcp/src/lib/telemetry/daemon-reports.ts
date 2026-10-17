@@ -1,3 +1,5 @@
+import { statSync, utimesSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { markPromise } from "../promises/mark.js";
 import { type SpanEvent, sendWatcherSpan, watcherSpanBody } from "../promises/probe.js";
 import { ADDRESS_ROLES, ROLE_LABEL } from "./daemon-address.js";
@@ -360,4 +362,51 @@ export function reportFinding(reads: DaemonReads, found: Found, by: string): Pro
 		finding: { by, jaegerPid: found.meta.jaegerPid, startedAt: found.meta.startedAt },
 	});
 	return reads.report(found.meta.otlpPort, reports);
+}
+
+/** Where a project's last reader report is stamped: the file's modification time is when. */
+export function readStampPath(home: string, project: string): string {
+	return join(home, `telemetry-read-report.${project.replace(/[^A-Za-z0-9._-]/g, "_")}.stamp`);
+}
+
+function stampTime(path: string): number | null {
+	try {
+		return statSync(path).mtimeMs;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * A promise reader's report at its probe: it reached the daemon through an
+ * intact record, so the record held. Throttled to one per project per quarter
+ * hour by the stamp file's modification time against the injected clock
+ * (`now`, else the machine's); the stamp is written before the send so two
+ * readers at once send one. Nothing when the machine cannot report.
+ */
+export async function reportReaderRead(opts: {
+	reads: DaemonReads;
+	home: string;
+	project: string;
+	otlpPort: number;
+	now?: number;
+}): Promise<void> {
+	const { reads, home, project } = opts;
+	if (reads.report === undefined) return;
+	const now = opts.now ?? reads.now();
+	const stamp = readStampPath(home, project);
+	const reports = readerReports({
+		via: "record",
+		project,
+		now,
+		lastStamp: stampTime(stamp),
+	});
+	if (reports.length === 0) return;
+	try {
+		writeFileSync(stamp, "");
+		utimesSync(stamp, now / 1000, now / 1000);
+	} catch {
+		// an unwritable stamp only means the next read reports again
+	}
+	await reads.report(opts.otlpPort, reports);
 }
