@@ -593,6 +593,8 @@ Before any code changes, this phase writes every test that today's code can alre
 
   `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-cli-lifecycle.test.ts src/__tests__/telemetry-slow-not-gone.test.ts src/__tests__/telemetry-reap-strays.test.ts src/__tests__/telemetry-self-tracing.test.ts` — A2 red on the unknown `--logs-port`, A8 red on the record being gone, A22 red on the stray still running, A23 red on a non-zero count of self-tracing lines; `pnpm exec vitest run src/__tests__/telemetry-mcp-entries.test.ts src/__tests__/telemetry-daemon-state.test.ts src/lib/telemetry/port-guard.test.ts` — A27 red on the changed mtime and the missing `jaeger` entry, A7 red on the record being removed, A3 red on the refusal not naming its holder; `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 red at "took over the running daemon", then `ls ~/.indusk/telemetry.json ~/.indusk/telemetry.pid` shows the record back and `pgrep -f telemetry-binaries` shows the same one Jaeger and one collector. Each row's State goes to `written` in the same edit.
 
+  Note (2026-10-16, against `~/.indusk`; record copied aside and restored by the test itself, no daemon started or stopped): `start` took over the running daemon (jaeger 43599, otelcol 43600, still on 4318, 16686, 62843 and 62841) and wrote the record; `status` found it again; the test then failed where it was meant to, at `something listens on the stored port 24318`. The address was chosen at that first start with the block free: `~/.indusk/telemetry-address.json` holds 24318 (traces), 24319 (logs), 24316 (interface), 24317 (MCP), nothing picked; `telemetry address` prints it; `telemetry.json` is present. Still one Jaeger and one collector.
+
   </details>
 - [x] Every deferred test body above has been read and judged.
   <details><summary>Technical</summary>
@@ -800,7 +802,7 @@ This phase gives the daemon one address of its own and makes starting it safe. T
   Note (2026-10-16): A2 green; 9 tests across the three files pass. The first run failed and found a real defect the unit tests had not reached: the spawn bound the logs and interface ports in swapped order (the destructure followed a different role order than the roles list), caught as restart changing two ports and the interface answering a log receiver's reply; fixed in the same phase.
 
   </details>
-- [ ] The check against this machine's own daemon runs again and now gets past the takeover and the finding, failing only on the ports and the reports later steps provide.
+- [x] The check against this machine's own daemon runs again and now gets past the takeover and the finding, failing only on the ports and the reports later steps provide.
   <details><summary>Technical</summary>
 
   `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 still red, now on the stored address (the daemon still on 4318, 16686, 62843 and 62841 until the restart in Build Phase 5) and on the reports; `start` took over and `status` found the daemon; `ls ~/.indusk/telemetry.json ~/.indusk/telemetry-address.json` shows the record present afterwards and the address chosen; `node apps/indusk-mcp/dist/bin/cli.js telemetry address` prints it (24318, 24319, 24316, 24317 if the block was free).
