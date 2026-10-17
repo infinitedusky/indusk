@@ -650,7 +650,7 @@ next phase then makes what init prints and the skills teach match all of this.
 
 #### Build Phase 2 Context
 
-- [ ] Record in the promise library's context file that a signal key is added in the vocabulary and in both helper templates together.
+- [x] Record in the promise library's context file that a signal key is added in the vocabulary and in both helper templates together.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: "An app's signal and resource keys live in `vocabulary.ts` (`APP_SIGNAL_KEYS`, `APP_RESOURCE_KEYS`); `templates/signal.ts`, `signal.py`, `telemetry-settings.ts` and `instrumentation.py` spell them as strings and `signal-vocabulary-pin.test.ts` holds them equal — change both sides together."
