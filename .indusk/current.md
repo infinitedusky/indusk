@@ -19,7 +19,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
-- **This machine's telemetry daemon moved (2026-10-16, daemon-found-not-guessed)** — it now runs on its stored address (`indusk telemetry address`: 24318 traces, 24319 logs, 24316 interface, 24317 MCP). An application that sent to 4318 reaches nothing until it is given that address; a project whose `.mcp.json` named an old port other than 62843 moves at its own `indusk update`. Its binaries run from the plan's worktree until landing: restart from trunk then.
+- **daemon-found-not-guessed (closed 2026-10-17)** — one telemetry daemon per machine on its stored address (`indusk telemetry address`: 24318 traces, 24319 logs, 24316 interface, 24317 MCP), found from what runs when its record is lost, never a second; each clause reports itself as a span. An application that sent to 4318 needs the stored address. Open: the extension manifest's health checks, 2,663 dead test entries in the telemetry project registry, and the plan page reading a promise's registry state instead of its health (a bugfix plan). See [archive](planning/archive/daemon-found-not-guessed/).
 - **plans-are-promises (closed 2026-10-16)** — a promise can be stated as clauses (`clauses: required` in a brief, `declare --clause`, `clause:` rows) and a plan closes per clause; accepted and landed by a person next. Open: a promise of only resting clauses cannot close, `change`/`replace` carry no clauses, `indusk plans start` fails under `init --local`. See [archive](planning/archive/plans-are-promises/).
 - **brief-as-the-contract (closed 2026-10-13)** — the brief is the contract: looks in the brief, approval of the brief, amendments wait for the person, a brief page with the agent beside it, a plan starts as a draft outside the repo. See [archive](planning/archive/brief-as-the-contract/) for full detail.
 - **cockpit-redraw (closed 2026-10-14)** — the nav redrawn from the original cockpit and dragged wider, the brief page drawn, re-approval a person's; the admin's look check names a missing page unchecked and goes on. See [archive](planning/archive/cockpit-redraw/).
@@ -3182,24 +3182,24 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 ---
 
-## Session 5feb490a — Maintenance: storybook-components incidents (A30 composition compare, A18 timeout)
+## Session 5feb490a — impl-tasks-are-instructions — Test Phase 1
 
 **Session ID**: 5feb490a-2253-4dc8-a75e-50679a24f52e
-**Last updated**: 2026-10-17T02:33:47.023Z
+**Last updated**: 2026-10-17T17:53:43.707Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-(empty)
+impl-tasks-are-instructions (worktree dusk-worktrees/impl-tasks-are-instructions, branch plan/impl-tasks-are-instructions) is at Test Phase 1 with its wording tests red: rows A1-A3 fail on their own assertions, A4 save-check guards green.
 
 ### Open Questions
 
-(empty)
+None.
 
 ### Cursor
 
-(empty)
+Next: Build Phase 1 (rewrite planner step 7, templates, shipped planning rules, resync copies, change the promise sentence).
 
 ---
 

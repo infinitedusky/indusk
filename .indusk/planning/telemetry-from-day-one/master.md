@@ -1,13 +1,15 @@
 ---
 title: "Telemetry from day one"
-description: "A project built with InDusk reports from its first run, is heard by its server, proves each clause by its signal, and reads its expectations when they come due; InDusk's own closing rule (Signal first) is the third of seven steps."
+description: "A project InDusk initialises is set up for telemetry, is heard by its server, links each clause to its tests and its telemetry, and reads its expectations when they come due."
 date: 2026-10-16
 status: living
 subplans:
   - daemon-found-not-guessed
+  - impl-tasks-are-instructions
   - a-new-project-starts-instrumented
   - mark-first
   - a-plan-page-shows-its-clauses
+  - audit-concerns-are-answered
   - production-is-heard
   - production-keeps-only-what-it-should
   - a-look-comes-due
@@ -52,9 +54,17 @@ each child is one plan with one landing.
    every app-side writer still says port 4318 — Homework Gate's own creation
    on 2026-10-12 spawned the third. Closes the audit's gaps about the daemon
    record, the port bump, the recovery commands, the unreadable log (80,230
-   self-tracing warnings) and the logs port nothing binds.
+   self-tracing warnings) and the logs port nothing binds. Landed 2026-10-17.
 
-2. **`a-new-project-starts-instrumented`** — blocked by `daemon-found-not-
+1b. **`impl-tasks-are-instructions`** ("Impl tasks are written as
+   instructions") — blocked by nothing; moved out of `mark-first` on
+   2026-10-17 (Sandy) so it lands now rather than behind it. A task in a new
+   impl reads as work to do and a verification item as what must hold; the
+   planner, its templates and the shipped planning rules say so. Clauses per
+   phase stay with 3b, read from the rows.
+
+2. **`a-new-project-starts-instrumented`** ("Init sets up telemetry (New
+   Projects)", retitled 2026-10-17) — blocked by `daemon-found-not-
    guessed` (its spans go to the daemon's fixed ports); blocks Signal first,
    which reads what this plan's helper writes, and Homework Gate's `indusk
    init`. A project scaffolded today gets instrumentation that exports to the
@@ -68,19 +78,20 @@ each child is one plan with one landing.
    InDusk dependency, pinned to the package's one vocabulary), a test run
    marks its spans as test-made, and the skills tell the truth. **This plan
    defines what a signal carries** — the vocabulary keys below — because it is
-   the first to write one from an application. Takes the demo's stale test
-   words (its loop works; the tests expect the words `one-promise-language`
-   replaced). The largest child; if it stalls, placement, naming, the daemon
+   the first to write one from an application. (The demo's stale test words
+   it was to take were fixed in demo-app-template's Maintenance, landed
+   2026-10-17.) The largest child; if it stalls, placement, naming, the daemon
    and environment land first.
 
-3. **`mark-first`** ("Signal first") — blocked by the scaffold plan for the
+3. **`mark-first`** ("Tests and telemetry linked to clauses", retitled from
+   "Signal first" on 2026-10-17) — blocked by the scaffold plan for the
    keys it reads, and by `daemon-found-not-guessed` because closing asks the
    daemon; still blocks `run-the-master`. Moved behind the scaffold on
    2026-10-16 (Sandy): write before read — a closing rule that asks for a
    signal belongs after something outside InDusk can write one. A clause is
    verified by its tests before release and upheld by its signal in use; a
-   break names its clause; the audit answers each concern with a signal, a fix
-   or a reason. The additions the audit forces: readers read a clause's signal
+   break names its clause. The audit's answer to each concern left for 3c,
+   and tasks-as-instructions for 1b, on 2026-10-17 (Sandy). The additions the audit forces: readers read a clause's signal
    whatever its promise's kind (today every reader filters to `behaviour`);
    the rule that a signal comes from the clause, not a test, becomes a
    contract check; a phase whose rows name a clause carries a runnable
@@ -115,6 +126,13 @@ each child is one plan with one landing.
    never declared per phase: phases and clauses are many-to-many. A change to
    the plan page, so its looks are drawn and approved in the cockpit before it
    builds.
+
+3c. **`audit-concerns-are-answered`** ("Audit concerns are answered by the
+   plan's agent") — blocked by `mark-first`, since a signal answer names the
+   clause it upholds; split out of it on 2026-10-17 (Sandy). The audit finds
+   what could go wrong; the plan's agent, with the build's context, answers
+   each concern with a fix, a signal or a reason; every "nothing needed" is
+   shown to the person (shape agreed 2026-10-17). Its brief is a draft.
 
 4. **`production-is-heard`** — blocked by `a-new-project-starts-instrumented`;
    before Homework Gate's first deploy; in parallel with the next. Production
