@@ -238,6 +238,12 @@ changed; and Sandy approves the changed `message.you` story.
   Discovered at this phase: A18 still failed on `message.you` after the wrap — `frame 2380x126, component 4259`. Its root is `justify-self-end`, so it sits at the frame's right edge, and `useFittedFrame`'s `r.right + r.left` grew the frame by the frame's width. `measure` now takes the width as the component's width plus, on both sides, the space a start-aligned component would have before it (the container's content edge and the component's left margin) — the same as before for every start-aligned story. Height is unchanged (`bottom + top`): changing it too made `view-link.default` 4px tall, a collapsed margin counted twice.
 
   </details>
+- [x] The story-frame check has the time every story of the admin takes.
+  <details><summary>Technical</summary>
+
+  Discovered at this phase: A18's 580 s limit cannot hold the admin's 113 stories at ~11 s each (1 192 s measured, all fitted); it had only ever stopped early, on `message.you`. Limit raised to 1 800 s in `looks-components.contract.test.ts` — a timeout, no assertion changed. Asked Sandy whether to raise it here or leave it to storybook-components' Maintenance — Sandy: "Raise it here".
+
+  </details>
 - [ ] Pause for a person: Sandy approves the changed message story.
   <details><summary>Technical</summary>
 
