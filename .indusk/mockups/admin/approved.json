@@ -8094,6 +8094,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:17.997Z",
 			"plan": "mockups-draw-components-as-stories"
+		},
+		{
+			"kind": "story",
+			"story": "project-card.in-progress",
+			"snapshotHash": "3d1c3187374895f2bfe58db8125b93feec17ef435d0da4735060ac0944c82beb",
+			"stylesheetHash": "bebbfd7e3b42a58c85d70df933140b0fd2c5b690119857340b9062cada1d32ee",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-17T17:11:18.208Z",
+			"plan": "mockups-draw-components-as-stories"
 		}
 	]
 }
