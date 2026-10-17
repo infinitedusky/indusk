@@ -538,12 +538,13 @@ A reader that had not seen the build found gaps between what the plan promises a
 
 #### Build Phase 5 Verification
 
-- [ ] Each new test fails before its fix where there is a fix, and every looks test passes after.
+- [x] Each new test fails before its fix where there is a fix, and every looks test passes after.
   <details><summary>Technical</summary>
 
   T4, T5, T6, T8, T9: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/ src/__tests__/looks-cli.test.ts src/__tests__/looks-lint-rules.test.ts src/__tests__/looks-component-content-lint.test.ts`. T7: `cd apps/indusk-admin && node ../indusk-mcp/scripts/with-daemon-guard.js npx vitest run --config vitest.system.config.ts src/__tests__/composition.contract.test.ts`. Approvals: a script reading `approved.json` reports 22 current entries carrying `baseRulesHash` and `indusk looks status admin` reports the same approved count as before. Typecheck and biome clean on both packages' changed files.
 
   </details>
+  Note: red first: T6 (`.grid` unchanged), T9 (general message), the variant-order test (`.max-md-hidden` before the later `.flex`), T7 (611 lines on the phone before the fixes); T4, T5 and T8 passed when written, the behaviour already holding. After: `vitest run src/lib/looks/ src/__tests__/looks-cli|looks-lint-rules|looks-component-content-lint|looks-components-cli src/lib/plans` 27 files / 246 tests green; T7 via the daemon guard green in 203 s at three devices (the guard reports no leaked daemon); the script reports 22 entries carrying `baseRulesHash` and `indusk looks status admin` reports 187 approved before and after; typecheck and biome clean on both packages' changed files; the admin's `src/app/p` tests 132/132.
 
 #### Build Phase 5 Context
 
