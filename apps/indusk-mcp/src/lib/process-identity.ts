@@ -87,3 +87,39 @@ export const realProcessReads: Required<ProcessDeps> = {
 		return Number.isNaN(at) ? null : new Date(at);
 	},
 };
+
+/** One row of the whole process list. */
+export interface PsRow {
+	pid: number;
+	/** When the process started (ISO), or `null` when `ps` printed a date `Date` cannot read. */
+	startedAt: string | null;
+	command: string;
+}
+
+const PS_ROW = /^\s*(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+\d\d:\d\d:\d\d\s+\d{4})\s+(.*)$/;
+
+/** Parses `ps -axo pid=,lstart=,command=` output (C locale), skipping lines that are not rows. */
+export function parsePsAll(out: string): PsRow[] {
+	const rows: PsRow[] = [];
+	for (const line of out.split("\n")) {
+		const m = PS_ROW.exec(line);
+		if (!m) continue;
+		const at = Date.parse(m[2]);
+		rows.push({
+			pid: Number.parseInt(m[1], 10),
+			startedAt: Number.isNaN(at) ? null : new Date(at).toISOString(),
+			command: m[3],
+		});
+	}
+	return rows;
+}
+
+/** Every process on the machine: pid, start time and command line, read in one `ps`. Empty when `ps` fails. */
+export function psAll(): PsRow[] {
+	const r = spawnSync("ps", ["-axo", "pid=,lstart=,command="], {
+		encoding: "utf-8",
+		env: { ...process.env, LC_ALL: "C" },
+		maxBuffer: 32 * 1024 * 1024,
+	});
+	return r.status === 0 ? parsePsAll(r.stdout) : [];
+}

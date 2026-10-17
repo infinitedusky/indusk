@@ -161,7 +161,7 @@ export function recordLeftAsIs(
 		return appendItemToPhase(
 			implBody,
 			phase,
-			"- [x] Shape — reviewed a file this phase changed and left it as it is",
+			"- [x] Shape — review a file this phase changed and leave it as it is",
 			`\`${file}\`: ${reason}`,
 		);
 	}

@@ -20,7 +20,12 @@ to InDusk's own ports. The standard 4318 is every OpenTelemetry tool's default,
 so a person's other tools are the likeliest to hold it; InDusk, installed on
 someone else's machine, takes a block of its own and hands the address to every
 application, so a taken port never splits writers from readers (Sandy,
-2026-10-16).
+2026-10-16). InDusk never moves that address on its own. `indusk telemetry
+address --reset` is the one deliberate way a person chooses it again, and it
+prints the old and the new address. It is the way out of two refusals: a stored
+port that another program has taken for good, and an address file that exists
+but cannot be read (Sandy, 2026-10-16). "Never changed" in the first clause below
+means never changed by InDusk; `--reset` is a person's act.
 
 ## Expectations
 
@@ -41,7 +46,7 @@ application, so a taken port never splits writers from readers (Sandy,
 ### This plan makes
 
 1. **`the-daemon-readers-follow-is-the-one-running`** (behaviour). Every reader of promises, every InDusk command and every application on a machine reaches the same one local telemetry daemon.
-   - **`one-daemon-on-its-own-ports`** (limit). At most one InDusk daemon runs on a machine, on one address chosen once and kept: InDusk's own port block (24318 for traces, 24319 for logs, 24316 for its interface, 24317 for its MCP server), or, when one of those is held at first setup, free ports picked once, recorded and never changed; every reader, every InDusk command and what `init` hands an application read that stored address and never assume one.
+   - **`one-daemon-on-its-own-ports`** (limit). At most one InDusk daemon runs on a machine, on one address chosen once and kept until a person chooses it again with `indusk telemetry address --reset`: InDusk's own port block (24318 for traces, 24319 for logs, 24316 for its interface, 24317 for its MCP server), or, when one of those is held at first setup, free ports picked once and recorded, which InDusk never changes on its own; every reader, every InDusk command and what `init` hands an application read that stored address and never assume one.
    - **`a-read-never-loses-the-daemon`** (limit). No status read, health check or promise reader deletes the daemon's record; a port slow to answer reads as slow, never as gone.
    - **`a-lost-daemon-is-found`** (split). When the record is missing, a running InDusk daemon is found from the process list, its record is written again, and `telemetry start` takes it over instead of starting another.
    - **`nothing-starts-a-second`** (limit). Enabling the telemetry extension, `init` and `update` never start a daemon beside a running one and never point another project's MCP entry somewhere else.

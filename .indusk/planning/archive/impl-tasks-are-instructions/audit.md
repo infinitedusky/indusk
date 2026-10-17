@@ -1,0 +1,40 @@
+---
+plan: impl-tasks-are-instructions
+audited: 2026-10-17
+model: claude-opus-5-5
+---
+
+# Audit — impl-tasks-are-instructions
+
+## Does each row prove its promise's sentence, or something narrower?
+- `.indusk/promises/an-impl-phase-explains-itself.md:24` — The changed promise says every task of a new impl *is* one plain instruction and every verification item *is* a statement of what must hold. Rows A1, A2 and A3 (trajectory rows asserting that the planner's step 7, the template placeholders and the shipped planning rules carry the instruction wording) prove only that the guidance says so. Nothing checks an impl, and the brief rules out such a check under "Not promised". The promise's file still reads `state: enforced`, so the new clause is stated as enforced when no enforcer exists. Narrower (high confidence).
+- `apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts:129` — Row A2 (a trajectory row asserting that every task placeholder in the impl template asks for an instruction) keeps only placeholders whose gate heading is empty. The OTel, Context and Document gate tasks are dropped, and they still ask for outcomes: `apps/indusk-mcp/skills/planner.md:673` "what is now observable", `:698` "what changes about how the project works", `:706` "what a reader can now find in the docs". The row passes while gate tasks in the template are still written as states. The phase-summaries decision says gate tasks follow the same shape as other tasks. Narrower (high confidence).
+- `apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts:83` — The falsify and cleanup half of Row A2 has the same filter, so `apps/indusk-mcp/skills/falsify.md:97` and `:106` and `apps/indusk-mcp/skills/cleanup.md:121` and `:130` still pass. These are the Context and Document tasks, and they still read "One plain sentence saying what…". Narrower (high confidence).
+- `apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts:112` — Row A1 (a trajectory row asserting that step 7 says a task is "one plain instruction saying what to do") checks three separate substrings anywhere in step 7. `"what to do"` and `"one plain instruction"` need not appear in the same sentence or refer to tasks, so a step 7 that used those phrases elsewhere would pass. The row is weaker than it reads (moderate confidence).
+- `apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts:1` — Row A4 is a trajectory row standing for the must-not-break promise `hidden-detail-is-only-read`, which says folded detail never ticks a box, skips a check or adds a task. A4 runs the save-check template tests and the snapshot of older impls. It does not run `apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts`, the test the promise's own file lists. Passing A4 shows that the templates and older impls still validate. It does not show that folded detail is still only read. The practical risk is low because no gate code changed (moderate confidence).
+
+## What does the diff change that no row touches?
+- `apps/indusk-mcp/skills/cleanup.md:103` — The leave-as-is placeholder changed from a record of a decision ("what was reviewed and why it stays") to a conditional instruction ("what to review and, if it stays as it is, why"). Row A2 checks only that the word "instruction" is present, so the change in meaning goes unseen.
+- `apps/indusk-mcp/skills/planner.md:185` — Step 7 no longer says the fold holds "its instruction". It now says "a task's technical detail goes in" the fold, and it adds a correct verification-item example ("The prompt box draws in the app's font"). That same sentence is also step 7's "Before" example of a task written wrongly. No row reads either the fold sentence or the verification example.
+- `.indusk/promises/an-impl-phase-explains-itself.md:7` — Ownership of the promise moved from `story-first-phases` to `impl-tasks-are-instructions`. No row covers it.
+- `.claude/skills/planner/SKILL.md:1` — The resynced skill copies are covered only by `skill-sync-parity.test.ts`. That test runs in Build Phase 1 Verification but is not a trajectory row. Row A3 covers only the copy of the planning rules.
+- `apps/docs/src/reference/skills/plan.md:175` — The new before-and-after paragraph on the reference page and the changelog entry at `apps/docs/src/changelog.md:9` have no row. This is expected for docs.
+
+## What does the code do that the brief never promised?
+- `.indusk/promises/an-impl-phase-explains-itself.md:7` — The plan takes ownership of the promise. Under "Changes", the brief says only that the sentence changes. It does not say that `story-first-phases` gives up ownership. This is a side effect of `indusk promises change` and is recorded in the promise's history line.
+- `apps/indusk-mcp/skills/cleanup.md:103` — The leave-as-is placeholder now makes the "why it stays" part conditional. The brief promises a wording change from state to instruction. It does not promise that a reasoned leave-as-is becomes optional or open-ended.
+
+## Which rejected ADR alternative does the code quietly take?
+- nothing — the plan is a bugfix with no ADR, so there are no rejected alternatives to match.
+
+## Which skip reason would you not accept?
+- `.indusk/planning/impl-tasks-are-instructions/impl.md:13` — The falsification reason "no code path to break" does not hold. The plan added test code, and the filter on Row A2 (`gate === ""`) is the defect a falsification pass would have hunted. That filter lets every OTel, Context and Document gate placeholder keep its outcome wording. It also leaves the bugfix and refactor workflow templates unchecked, and they still say "what will be true" (see the last section).
+- `.indusk/planning/impl-tasks-are-instructions/impl.md:15` — The cleanup reason "nothing to decompose" contradicts this impl's own Shape item at `impl.md:80`–`83`. That item left a duplicated helper "to /cleanup at plan close": `placeholders()` at `apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts:95` and `placeholderLines()` at `apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts:68` are identical. Cleanup was named as where that decision would be made, and then cleanup was skipped as having nothing to do.
+
+## What else would have to change for each promise to hold?
+- `apps/indusk-mcp/templates/workflows/bugfix.md:79` — The bugfix workflow's impl template still asks for "One plain sentence saying what will be true once the fix is in", and its verification placeholders at `:87` and `:93` ask for "what proves…" and "what keeps it fixed". The docs say the bugfix and refactor templates "are written this way", and this plan is itself a bugfix. The file was not touched.
+- `apps/indusk-mcp/templates/workflows/refactor.md:85` — The refactor workflow template still asks for "One plain sentence saying what will be true once this step is done", and its verification items at `:93` and `:99` are unchanged. The file was not touched.
+- `apps/indusk-mcp/templates/workflows/feature.md:16` — The feature workflow still says "each task is one plain sentence". The file was not touched.
+- `apps/indusk-mcp/src/lib/shape/shape.ts:164` — `recordLeftAsIs` writes "Shape — reviewed a file this phase changed and left it as it is" into every impl that has opted in. That is a task written as a state. This plan's own impl carries it at `.indusk/planning/impl-tasks-are-instructions/impl.md:80`. The file was not touched.
+- `apps/indusk-mcp/hooks/_phase-summary.js:106` — The save check's refusal messages here and at `:112` and `:118`, and the summary message at `apps/indusk-mcp/hooks/validate-impl-structure.js:225`, still teach "a task is one plain sentence". Under the project's context tiers, the enforcer's message is where an agent receives the rule. The files were not touched.
+- `apps/docs/src/guide/test-trajectory.md:229` — Guide pages still say "Each task is one plain sentence", as do `apps/docs/src/guide/falsification-ritual.md:69` and `apps/docs/src/guide/cleanup-ritual.md:129`. They now disagree with the updated reference page. The files were not touched.

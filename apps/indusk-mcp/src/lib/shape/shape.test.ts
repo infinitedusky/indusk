@@ -192,7 +192,7 @@ describe("Shape's notes on an opted-in impl pass the save check", () => {
 		expect(r.exitCode, r.stderr).toBe(0);
 		const line = out.split("\n").find((l) => l.startsWith("- [x] Shape"));
 		expect(line).not.toContain("`");
-		expect(line).toMatch(/left/i);
+		expect(line).toMatch(/leave/i);
 		expect(out).toContain("`src/thing.ts`");
 		expect(out).toContain("one `run()` loop, cohesive");
 	});

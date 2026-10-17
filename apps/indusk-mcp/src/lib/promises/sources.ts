@@ -1,6 +1,13 @@
 import { readConfig } from "../config.js";
 import { machineSecrets } from "../server/secrets-file.js";
-import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
+import { realDaemonReads } from "../telemetry/daemon-reads.js";
+import { reportReaderRead } from "../telemetry/daemon-reports.js";
+import {
+	daemonMetaPath,
+	induskHome,
+	type ResolveDeps,
+	resolveLocalDaemonViaHere,
+} from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import { probeWatcher, WatcherBlind } from "./probe.js";
 import type { PromiseEntry, Registry } from "./registry.js";
@@ -55,6 +62,12 @@ export interface MarkSource {
 	 * Null when a named server has none — the probe then reads blind.
 	 */
 	intakeUrl: string | null;
+	/**
+	 * Local only: tells the daemon a reader of `project` reached it through its
+	 * record (at most once a quarter hour per project). Absent when the daemon
+	 * was found because the record was gone — the finder has reported that.
+	 */
+	reportRead?: (project: string) => Promise<void>;
 }
 
 /** The config key a named server's intake comes from, as a reader is told to set it. */
@@ -96,18 +109,27 @@ export async function resolveMarkSources(root: string): Promise<ResolvedSource[]
 	);
 }
 
-async function resolveLocal(): Promise<MarkSource> {
-	const status = await daemonStatus();
-	if (!status.running) {
+export async function resolveLocal(deps: ResolveDeps = {}): Promise<MarkSource> {
+	const reached = await resolveLocalDaemonViaHere("promises", deps);
+	if (reached === null) {
 		throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 	}
-	const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+	const { meta: daemon } = reached;
+	const home = deps.home ?? induskHome();
+	const reads = deps.reads ?? realDaemonReads(home);
+	const endpoint = jaegerEndpoint(`http://localhost:${daemon.uiPort}`);
 	return {
 		name: "local",
 		endpoint,
 		label: endpoint.queryUrl,
 		remote: false,
-		intakeUrl: `http://localhost:${status.otlpPort}`,
+		intakeUrl: `http://localhost:${daemon.otlpPort}`,
+		...(reached.via === "record"
+			? {
+					reportRead: (project: string) =>
+						reportReaderRead({ reads, home, project, otlpPort: daemon.otlpPort }),
+				}
+			: {}),
 	};
 }
 
@@ -304,6 +326,8 @@ function behaviourOf(registry: Registry): PromiseEntry[] {
  * read must fit the admin's 2 s budget, not the probe's own 5 s (A13).
  */
 async function probe(root: string, source: MarkSource, timeoutMs?: number): Promise<void> {
+	// Beside the probe, as its own span under its own service: the read reached the daemon through its record.
+	await source.reportRead?.(markProjectId(root));
 	await probeWatcher(
 		{ endpoint: source.endpoint, intakeUrl: source.intakeUrl, missingIntake: INTAKE_CONFIG_KEY },
 		{ project: markProjectId(root), ...(timeoutMs !== undefined ? { waitMs: timeoutMs } : {}) },

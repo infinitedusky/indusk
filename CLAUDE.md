@@ -29,7 +29,7 @@ dusk/
 **Apps:**
 
 - **indusk-mcp** — the InDusk MCP server + CLI (`init`/`update`/`setup`/`extensions`/`agent`/`plans`/`sync`/`context`/`eval`/`ui`/`telemetry`/`worktree`/`promises`/`papers`/`workbench`), published as `@infinitedusky/indusk-mcp`. Skills (`skills/*.md`), hooks (`hooks/*.js`) and the planning context file (`templates/planning/CLAUDE.md`) are package-owned and installed into projects by `init`/`update`. It also hosts the two Dawn commands: `indusk run <plan>` (a model-agnostic gated loop over a plan's phases) and `indusk verify <plan> --phase N` (phase-boundary verification for work Dawn did not execute; detects, never repairs). Git is the only SCM. — see `/reference/cli/run`, `/reference/cli/verify`
-- **indusk-admin** — Next.js read-only viewer over `.indusk/planning/` + each project's evaluation results, one machine-global daemon (`indusk ui`), reusing indusk-mcp's parsers through workspace subpath exports — never duplicating parsing. — see `/decisions/admin-ui-hosting`
+- **indusk-admin** — Next.js read-only viewer over `.indusk/planning/` + each project's evaluation results, one machine-global daemon (`indusk ui`) (its parsing rule lives in its CLAUDE.md). — see `/decisions/admin-ui-hosting`
 - **vscode-extension** — markers at each promise's line, the Promises panel, Fix with Claude; reads `indusk promises health --json`, writes nothing; ships in the npm package (`indusk editor install`).
 - **docs** — VitePress site. Every plan contributes pages at close; ADRs publish to `/decisions/*`.
 
@@ -93,6 +93,7 @@ dusk/
 - Sessions per plan: one per plan and kind, at most `sessions.max` a machine — see `/decisions/sessions-per-plan`
 - New project flow: a project starts as a conversation in the admin; drafts at `~/.indusk/new-projects/`, creation by the package — see `/decisions/new-project-flow`
 - Plans are promises: a plan holds the promises it lands, each stated as clauses with a clause plan before the ADR; opt-in `clauses: required` — see `/decisions/plans-are-promises`
+- The daemon is found, not guessed: one daemon on one address chosen once and stored in ~/.indusk (InDusk's block 24316-24319, or ports picked once when held at first setup; a recording server keeps 4318), read by every reader and handed out by `indusk telemetry address`, recognised by binary + config path, its record never deleted by a read and rebuilt from the process list; nothing starts a second — see /decisions/daemon-found-not-guessed
 
 ## Known Gotchas
 

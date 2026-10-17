@@ -10,9 +10,12 @@ import { isPortListening } from "./status.js";
  * event loop. In the admin, `next dev` rendering a page can hold that loop
  * longer; Node's timer phase then fires the timeout before the poll phase
  * delivers the connect, and a listening port reads as closed. `daemonStatus`
- * takes that as a dead daemon and deletes its record — every later read in
- * the process says "no telemetry daemon is running" (the Promises page's
- * watcher-blind test, after the timeline added one read to the render).
+ * once took that as a dead daemon and deleted its record, so every later read
+ * in the process said "no telemetry daemon is running" (the Promises page's
+ * watcher-blind test, after the timeline added one read to the render). It no
+ * longer decides from a port at all (it judges the recorded processes by their
+ * command lines, `daemon-state.ts`) and no read removes the record; this check
+ * stays for the callers that do ask whether a port listens.
  */
 
 let server: Server;

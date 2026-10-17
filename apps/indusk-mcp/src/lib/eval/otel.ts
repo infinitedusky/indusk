@@ -28,7 +28,11 @@ import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { evalDir } from "../bookkeeping/roots.js";
 import { markPromise } from "../promises/mark.js";
-import { liveOtlpEndpointSync } from "../telemetry/status.js";
+import {
+	liveLogsEndpointSync,
+	liveOtlpEndpointSync,
+	type ResolveDeps,
+} from "../telemetry/status.js";
 import type { EvalErrorEntry, EvalScorecard, EvalWaitingEntry } from "./types.js";
 
 const TRACER_NAME = "@infinitedusky/indusk-mcp/eval";
@@ -42,6 +46,26 @@ function syslog(projectRoot: string, msg: string): void {
 	} catch {
 		// logging should never break anything
 	}
+}
+
+/** The URL the evaluator's log records go to: the daemon's logs port, never its traces port (Jaeger answers a log record 404). */
+export function evalLogsEndpoint(address: { traces: string; logs: string }): string {
+	return `${address.logs.replace(/\/$/, "")}/v1/logs`;
+}
+
+/**
+ * Where the evaluator's log records go. An explicit `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`
+ * wins; a collector the person pointed `OTEL_EXPORTER_OTLP_ENDPOINT` at takes
+ * logs on the same endpoint; otherwise the local daemon's logs port.
+ */
+function logsUrl(endpoint: string, deps: ResolveDeps): string | null {
+	const explicit = process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT;
+	const base = explicit ?? (process.env.OTEL_EXPORTER_OTLP_ENDPOINT ? endpoint : null);
+	if (base !== null) {
+		return base.endsWith("/v1/logs") ? base : `${base.replace(/\/$/, "")}/v1/logs`;
+	}
+	const logs = liveLogsEndpointSync(deps);
+	return logs === null ? null : evalLogsEndpoint({ traces: endpoint, logs });
 }
 
 export interface EvalOtelConfig {
@@ -73,12 +97,12 @@ const DEFAULT_DATASET = "agent";
  *   `OTEL_EXPORTER_OTLP_HEADERS` if present there (env headers beat constructor
  *   headers per OTel spec — so we fix the env header at the source).
  */
-export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
+export function isEvalOtelEnabled(projectRoot: string, deps: ResolveDeps = {}): EvalOtelConfig {
 	const envFlag = process.env.INDUSK_EVAL_OTEL;
 	// The local telemetry daemon, when it runs, is where the evaluator's
 	// promise mark goes by default (day-monitor, ADR D10): the monitor reads
 	// that Jaeger, and a mark nobody configured an exporter for is never seen.
-	const localEndpoint = liveOtlpEndpointSync();
+	const localEndpoint = liveOtlpEndpointSync(deps);
 	const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? localEndpoint;
 	const explicitDataset = process.env.INDUSK_EVAL_OTEL_DATASET;
 	const composableDataset = process.env.EVAL_AGENT_DATASET;
@@ -284,8 +308,8 @@ export function markEvaluation(
  * Log records emitted via `getEvalLogger().emit(...)` automatically
  * correlate with the active span via trace_id / span_id.
  */
-export function initEvalOtelLogs(projectRoot: string): Logger {
-	const { enabled, endpoint, dataset } = isEvalOtelEnabled(projectRoot);
+export function initEvalOtelLogs(projectRoot: string, deps: ResolveDeps = {}): Logger {
+	const { enabled, endpoint, dataset } = isEvalOtelEnabled(projectRoot, deps);
 
 	if (!enabled) return logs.getLogger(LOGGER_NAME);
 
@@ -296,6 +320,15 @@ export function initEvalOtelLogs(projectRoot: string): Logger {
 
 	if (activeLoggerProvider) return logs.getLogger(LOGGER_NAME);
 
+	const logsEndpoint = logsUrl(endpoint, deps);
+	if (logsEndpoint === null) {
+		syslog(
+			projectRoot,
+			"eval.otel.logs — the daemon's logs port is unknown; falling back to no-op logger",
+		);
+		return logs.getLogger(LOGGER_NAME);
+	}
+
 	rewriteDatasetInEnvHeaders(dataset);
 
 	const headers: Record<string, string> = { "Dash0-Dataset": dataset };
@@ -305,7 +338,7 @@ export function initEvalOtelLogs(projectRoot: string): Logger {
 
 	try {
 		const exporter = new OTLPLogExporter({
-			url: endpoint.endsWith("/v1/logs") ? endpoint : `${endpoint.replace(/\/$/, "")}/v1/logs`,
+			url: logsEndpoint,
 			headers,
 		});
 		const provider = new LoggerProvider({
@@ -321,7 +354,7 @@ export function initEvalOtelLogs(projectRoot: string): Logger {
 			activeLoggerProvider = provider;
 			syslog(
 				projectRoot,
-				`eval.otel.logs initialized — endpoint: ${endpoint}, dataset: ${dataset}`,
+				`eval.otel.logs initialized — endpoint: ${endpoint}, dataset: ${dataset}, logs: ${logsEndpoint}`,
 			);
 		} else {
 			syslog(projectRoot, "eval.otel.logs — global provider already set; using existing");
