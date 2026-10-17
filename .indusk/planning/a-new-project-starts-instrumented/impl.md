@@ -1,7 +1,7 @@
 ---
 title: "Init sets up telemetry (New Projects)"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -88,8 +88,8 @@ assertions in [test-plan.md](test-plan.md).
 | T27 | The run line init prints for a Python app and the Python template load the scaffolded `instrumentation` module and never name `opentelemetry-instrument`, whose own provider sends to the standard port as `unknown_service` | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon | apps/indusk-mcp/src/__tests__/init-scaffold-runtimes.test.ts |
 | T28 | An `OTEL_RESOURCE_ATTRIBUTES` value that is not valid percent-encoding (`deployment.environment=100%`) is kept as written and the settings never throw | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran | apps/indusk-mcp/src/__tests__/telemetry-settings.test.ts |
 | T29 | A scaffolded file InDusk recorded writing and a person then deleted is not written back by `update` (one line says it was left out), `--force` writes it, and a missing file with no record is still created | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts, apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts |
-| T30 | A recorded scaffolded file whose only changes are layout (whitespace and line breaks, trailing commas, semicolons, quote style) is refreshed, not written beside; one already the rendering in another layout is left untouched; a changed word still goes beside; a record written as a hash of the exact text still matches | Build Phase 5 | Build Phase 5 | written | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts |
-| T31 | After `init`, the settings file reformatted the way Biome prints it (the values line split across lines) is not reported as changed by `update`: nothing beside it, no "you changed"; and `init` on a fresh copy of the seat-holds example writes nothing beside any file | Build Phase 5 | Build Phase 5 | written | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts, apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
+| T30 | A recorded scaffolded file whose only changes are layout (whitespace and line breaks, trailing commas, semicolons, quote style) is refreshed, not written beside; one already the rendering in another layout is left untouched; a changed word still goes beside; a record written as a hash of the exact text still matches | Build Phase 5 | Build Phase 5 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts |
+| T31 | After `init`, the settings file reformatted the way Biome prints it (the values line split across lines) is not reported as changed by `update`: nothing beside it, no "you changed"; and `init` on a fresh copy of the seat-holds example writes nothing beside any file | Build Phase 5 | Build Phase 5 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts, apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
 
 ## Checklist
 
@@ -873,28 +873,29 @@ The cold audit ran `init` on a fresh copy of the demo and was told a file nobody
   Root cause (seen): `examples/seat-holds/.indusk/scaffold.json` records `sha256` of the one-line rendering of `src/telemetry-settings.ts`; the committed file has the `RENDERED` object split across lines by Biome, so `decideFile` in `lib/scaffold/plan.ts` sees neither a matching record nor the rendering and returns `beside`. Fix: a `fingerprint(text)` in `plan.ts` hashes the text with whitespace, `;`, trailing commas before a closing bracket, and quote style (`'` read as `"`) removed. `decideFile` refreshes when either the fingerprint or the exact-text hash of the file matches the record (old records stay valid), and returns `record` when the file's fingerprint equals the rendering's; `scaffoldPlan`'s `current` (already the rendering, so nothing written) compares fingerprints, so a formatted file is not rewritten back to one line on every update. `apply.ts` records `fingerprint(rendered)`.
 
   </details>
-- [ ] Rewrite the demo's scaffold record so it matches its files as committed.
+- [x] Rewrite the demo's scaffold record so it matches its files as committed.
   <details><summary>Technical</summary>
 
   `examples/seat-holds/.indusk/scaffold.json`: both entries as `fingerprint(...)` of the committed files, written through a `tsx` script calling the package's function, not by hand.
 
   </details>
-- [ ] Say in the settings template that reformatting the file is not a change.
+- [x] Say in the settings template that reformatting the file is not a change.
   <details><summary>Technical</summary>
 
   `templates/telemetry-settings.ts` docblock ("once you change it…"): a formatter's layout is not a change. The seat-holds copy gets the same line so it stays a copy (its fingerprint is rewritten after).
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 5 Verification
 
-- [ ] A scaffolded file changed only in layout is refreshed, one already current in another layout is left alone, and a real edit still goes beside it.
+- [x] A scaffolded file changed only in layout is refreshed, one already current in another layout is left alone, and a real edit still goes beside it.
   <details><summary>Technical</summary>
 
   T30: red today (`decideFile` returns `beside` for the reformatted file).
 
   </details>
-- [ ] Reformatting the settings after init is not reported as a change by update, and init on a fresh copy of the demo writes nothing beside any file.
+- [x] Reformatting the settings after init is not reported as a change by update, and init on a fresh copy of the demo writes nothing beside any file.
   <details><summary>Technical</summary>
 
   T31: red today on both (the audit's reproduction). `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/scaffold/plan.test.ts src/__tests__/update-scaffold-refresh.test.ts src/__tests__/demo-signal-helper.test.ts`, then `vitest related` on the changed sources; tsc and biome on the changed files.
@@ -903,7 +904,7 @@ The cold audit ran `init` on a fresh copy of the demo and was told a file nobody
 
 #### Build Phase 5 Context
 
-- [ ] Add to the scaffold's context file that the record holds a layout-blind fingerprint, so a formatter never makes a file look edited.
+- [x] Add to the scaffold's context file that the record holds a layout-blind fingerprint, so a formatter never makes a file look edited.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/scaffold/CLAUDE.md`: one line, T30 as its guard.
@@ -912,7 +913,7 @@ The cold audit ran `init` on a fresh copy of the demo and was told a file nobody
 
 #### Build Phase 5 Document
 
-- [ ] Say on the telemetry reference page that reformatting a scaffolded file is not an edit, and add a changelog line.
+- [x] Say on the telemetry reference page that reformatting a scaffolded file is not an edit, and add a changelog line.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/overview.md` where it describes the file beside an edit; the changelog's unreleased section.
