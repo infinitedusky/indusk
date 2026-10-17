@@ -138,6 +138,14 @@ describe("impl-tasks-are-instructions A2 — the impl template's placeholders as
 	});
 });
 
+describe("impl-tasks-are-instructions A6 — the gate tasks ask for instructions too", () => {
+	it("every OTel, Context and Document placeholder asks for an instruction", () => {
+		const gateTasks = placeholders(implTemplate()).filter((p) => /(OTel|Context|Document)\s*$/.test(p.gate));
+		expect(gateTasks.length, "no OTel, Context or Document placeholders found").toBeGreaterThanOrEqual(3);
+		for (const { line } of gateTasks) expect(line, line).toMatch(/\binstruction\b/i);
+	});
+});
+
 describe("impl-tasks-are-instructions A3 — the shipped planning rules say the same", () => {
 	const REPO = resolve(PKG, "../..");
 	const rules = readFileSync(join(PKG, "templates/planning/CLAUDE.md"), "utf-8");

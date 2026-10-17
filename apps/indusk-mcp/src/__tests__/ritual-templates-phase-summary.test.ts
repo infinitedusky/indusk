@@ -85,6 +85,12 @@ describe.each(["falsify", "cleanup"])("A2 — the %s template's placeholders", (
 		for (const { line } of tasks) expect(line, line).toMatch(/\binstruction\b/i);
 	});
 
+	it("every Context and Document placeholder asks for an instruction (A6)", () => {
+		const gateTasks = lines().filter((p) => /(Context|Document)\s*$/.test(p.gate));
+		expect(gateTasks.length, `${skill}.md has no Context or Document placeholders`).toBeGreaterThanOrEqual(2);
+		for (const { line } of gateTasks) expect(line, line).toMatch(/\binstruction\b/i);
+	});
+
 	it("every verification placeholder asks for what must hold", () => {
 		const items = lines().filter((p) => /Verification\s*$/.test(p.gate));
 		expect(items.length, `${skill}.md has no verification placeholders`).toBeGreaterThan(0);
