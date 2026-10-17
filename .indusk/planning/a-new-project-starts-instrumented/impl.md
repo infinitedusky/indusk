@@ -80,7 +80,7 @@ assertions in [test-plan.md](test-plan.md).
 | T21 | A workbench's declared code repo gets a `.mcp.json` from `init` and `update`, and one that exists is never rewritten | Test Phase 1 | Build Phase 1 | written | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/workbench-code-repo-mcp-json.test.ts |
 | T22 | A click in a scaffolded browser app still carries its trace to the project's own services | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-click-and-its-server-work-share-a-trace | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T23 | Nothing `init` writes into an app names a vendor, and what it prints names each file and its SDK | Test Phase 1 | Test Phase 1 | planned | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
-| T24 | The seat-holds example writes its signal through a copy of the helper template, and `init` on a fresh copy adds no second OpenTelemetry setup | Test Phase 1 | Build Phase 2 | planned | unit | the carried item: the demo's hand-written signal becomes the helper and its dead second scaffold goes | apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
+| T24 | The seat-holds example writes its signal through a copy of the helper template, and `init` on a fresh copy adds no second OpenTelemetry setup | Test Phase 1 | Build Phase 2 | written | unit | the carried item: the demo's hand-written signal becomes the helper and its dead second scaffold goes | apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
 
 ## Checklist
 
@@ -136,7 +136,7 @@ makes the placement, naming, address and environment tests pass.
   T20 in `new-project-telemetry-declined.test.ts`, driving creation the way `new-project-cli.test.ts` does, with the telemetry recommendation declined and a reason: the config records the reason, `disabled_extensions` names `local-telemetry` and `otel`, neither has a manifest under `.indusk/extensions/`, and no instrumentation file exists in the workbench or the repo. Red today: the flow records the decline after init has enabled both. T21 in `workbench-code-repo-mcp-json.test.ts`: init on a workbench writes `<repo>/.mcp.json` naming `indusk`; a pre-existing one with other content is byte-identical after `update`. Red today: only the workbench root gets one.
 
   </details>
-- [ ] Write the demo test: the example writes its signal through a copy of the helper template, and init on a fresh copy adds no instrumentation of its own.
+- [x] Write the demo test: the example writes its signal through a copy of the helper template, and init on a fresh copy adds no instrumentation of its own.
   <details><summary>Technical</summary>
 
   T24 in `demo-signal-helper.test.ts`: `examples/seat-holds/src/signal.ts` equals `apps/indusk-mcp/templates/signal.ts` byte for byte (both read inside the test, so a missing file fails the assertion, not the load); `src/server.ts` imports `./signal.js` and `src/telemetry.ts` no longer sets `indusk.promise` by hand; a fresh copy (as `demo-example.test.ts` makes one) run through `indusk init` gains no `src/instrumentation.ts`, `src/logger.ts` or `src/filtering-exporter.ts`. Red today on all three.
