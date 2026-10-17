@@ -55,8 +55,8 @@ release raised.
 | A1 | A component built on a link draws in its own ink inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
 | A2 | A component's text field draws in the app's text font and size inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
 | A3 | The resets reach only the components inside a mockup; the page around them draws as before | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
-| A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | planned | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
-| A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | planned | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
+| A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
+| A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 
 ## Checklist
@@ -97,7 +97,7 @@ it writes no resets yet. Build Phase 1 then makes the generator tests pass.
 
 #### Test Phase 1 Verification
 
-- [ ] The generator's new tests fail on their own assertions, and the two browser checks fail only on the drawing defects.
+- [x] The generator's new tests fail on their own assertions, and the two browser checks fail only on the drawing defects.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/component-styles.test.ts` — A1–A3 red on assertions, not on load. A4: `composition.contract.test.ts` reports only the project card and prompt box findings. A5: `looks-components.contract.test.ts` fails on `message.you` not fitted. A6: `vitest run src/lib/looks/compose.test.ts` passes.
@@ -115,7 +115,7 @@ it writes no resets yet. Build Phase 1 then makes the generator tests pass.
 
 #### Test Phase 1 Document
 
-- [ ] The research file records which findings the checks now report.
+- [x] The research file records which findings the checks now report.
   <details><summary>Technical</summary>
 
   `research.md` Findings: the A4 and A5 reports as of this phase.
