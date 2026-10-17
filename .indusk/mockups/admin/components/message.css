@@ -113,6 +113,9 @@
 .break-words {
     overflow-wrap: break-word;
 }
+.wrap-anywhere {
+    overflow-wrap: anywhere;
+}
 .whitespace-pre-wrap {
     white-space: pre-wrap;
 }

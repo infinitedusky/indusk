@@ -1,5 +1,5 @@
 {
-	"renderedFrom": "0c16201569632d629f18c3f4760fa0c9c86565dc86bd17e4bddc78f51daae4f1",
+	"renderedFrom": "0fd0cf1bb707f1276e13e448232baebc170b13389da56c50bc002247d073c025",
 	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
@@ -1135,7 +1135,7 @@
 				{
 					"name": "you",
 					"id": "ui-message--you",
-					"snapshotHash": "49e58d7e8117c2b85c5c20046b4766b443a10ebe918aea9adde94b0443515883",
+					"snapshotHash": "458bccd1de5cd77cda514c58e4f09fa12d4c15fa123e0d8390a0c631079c32a9",
 					"content": {
 						"children": [
 							[
@@ -1148,7 +1148,7 @@
 				{
 					"name": "agent",
 					"id": "ui-message--agent",
-					"snapshotHash": "610a400a814d02dfc03e7f756b29c27ce5589243e3a34bd086d52781a2e0fd95",
+					"snapshotHash": "282ba8755460f04a6bee898b105cb22b637c7465fb1b0648f6bf5c6210b47c8e",
 					"content": {
 						"children": [
 							{
@@ -1164,7 +1164,7 @@
 				{
 					"name": "agent-folded",
 					"id": "ui-message--agent-folded",
-					"snapshotHash": "0efbe9906dc4d534cd03d92184e370385864e317d71261074b18082978dfd48f",
+					"snapshotHash": "c277af5511d05dfbc12eaf4fc24ac3a546b8dbf96f7312213923a822273aa104",
 					"content": {
 						"children": [
 							{
@@ -1180,7 +1180,7 @@
 				{
 					"name": "agent-open",
 					"id": "ui-message--agent-open",
-					"snapshotHash": "c4a9ea11bf390a8f5d989aae640a2bdb9c93163b11b9a9c84bad941a2e228a51",
+					"snapshotHash": "00943cf3680cf0b36b41d991d47074c3c2695d5f043a5c2e9572d169d547c745",
 					"content": {
 						"children": [
 							{
@@ -1196,18 +1196,18 @@
 				{
 					"name": "agent-working",
 					"id": "ui-message--agent-working",
-					"snapshotHash": "92d333839ba51a52644669bea4e716b455fc3ca5bcde15809479774b641327f9",
+					"snapshotHash": "8c7a221cb85fa7d6384ff8d1ac91867daa2b8fe735de5da175467d1d108ff6fa",
 					"content": {}
 				},
 				{
 					"name": "agent-stopped",
 					"id": "ui-message--agent-stopped",
-					"snapshotHash": "e05b425ebe23bdc7498d010e74136cf84b3f4696e2681e3ceb9ff84e58a8427b",
+					"snapshotHash": "31d5f31ad2a500e5bf16cb7d399959fbe44262446e11645df5b42799b9b6745f",
 					"content": {}
 				}
 			],
 			"stylesheet": "components/message.css",
-			"stylesheetHash": "2aa4de27ff8aa5f227c964f2853815b932044c869658e67cf476311b8b3d91be"
+			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca"
 		},
 		{
 			"name": "nav",
