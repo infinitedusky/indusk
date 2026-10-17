@@ -39,7 +39,7 @@ const EXTENSIONS = /\.(md|js|ts)$/;
  * - "task" within a clause of "what will be true";
  * - the Shape step's written item that states what happened.
  */
-export function taughtAsOutcome(line: string): string | null {
+function taughtAsOutcome(line: string): string | null {
 	if (/^\s*- \[ \] \{One plain sentence/.test(line)) return "placeholder asks for one plain sentence";
 	if (/\btasks?\b.{0,80}\bplain sentence\b|\bplain sentence\b.{0,80}\btasks?\b/i.test(line))
 		return "a task is called one plain sentence";

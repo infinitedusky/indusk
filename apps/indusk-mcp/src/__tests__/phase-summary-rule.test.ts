@@ -270,7 +270,7 @@ describe("A22 — a task line with nothing after its box is refused", () => {
 		const r = await validateWrite(summaryImpl("demo", spec));
 		expect(r.exitCode, `an empty ${kind} task`).toBe(2);
 		expect(r.stderr).toContain("Build Phase 1");
-		expect(r.stderr).toMatch(/no sentence/i);
+		expect(r.stderr).toMatch(/no instruction/i);
 	});
 
 	it("still accepts the same phase once the task has its sentence", async () => {

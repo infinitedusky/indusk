@@ -1,7 +1,7 @@
 ---
 title: "Impl tasks are written as instructions"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -54,8 +54,8 @@ hold, so a person reading a phase can tell the work from the checks.
 | A2 | Every task placeholder in the impl, falsify and cleanup templates asks for an instruction; every verification placeholder for what must hold | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 | A3 | The planning rules a project is shipped say the same, and its copy matches the package's | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
 | A4 | The templates still pass the save check as written, and an impl written before still validates | Test Phase 1 | Test Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts, apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
-| A5 | No file outside the archives and history teaches a task as a statement of what will be true | Build Phase 2 | Build Phase 2 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/task-wording-gone.test.ts |
-| A6 | The gate tasks under each phase's OTel, Context and Document headings in the templates also ask for instructions | Build Phase 2 | Build Phase 2 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
+| A5 | No file outside the archives and history teaches a task as a statement of what will be true | Build Phase 2 | Build Phase 2 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/task-wording-gone.test.ts |
+| A6 | The gate tasks under each phase's OTel, Context and Document headings in the templates also ask for instructions | Build Phase 2 | Build Phase 2 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 
 ## Checklist
 
@@ -242,16 +242,17 @@ rewords every place it names, so the change cannot be partial again.
   `.claude/skills/{planner,falsify,cleanup}/SKILL.md`, `.claude/hooks/{_phase-summary,validate-impl-structure}.js` from the package; `skill-sync-parity.test.ts` and any hook parity test pass.
 
   </details>
-- [ ] Review the changed text and code against the extensions' rules.
+- [x] Review the changed text and code against the extensions' rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 2 Verification
 
-- [ ] The gone test, the widened template tests and every earlier row pass, and the hooks' own tests still pass.
+- [x] The gone test, the widened template tests and every earlier row pass, and the hooks' own tests still pass.
   <details><summary>Technical</summary>
 
   A1–A6: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/task-wording-gone.test.ts src/__tests__/planner-impl-summary-template.test.ts src/__tests__/ritual-templates-phase-summary.test.ts src/__tests__/phase-summary-existing-impls.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/phase-summary-rule.test.ts`, then `pnpm --filter @infinitedusky/indusk-mcp exec vitest related` on the changed files.
@@ -260,7 +261,7 @@ rewords every place it names, so the change cannot be partial again.
 
 #### Build Phase 2 Context
 
-- [ ] Make the gone test name what it guards, so the old wording cannot return unnoticed.
+- [x] Make the gone test name what it guards, so the old wording cannot return unnoticed.
   <details><summary>Technical</summary>
 
   guard: `task-wording-gone.test.ts` carries `promise: an-impl-phase-explains-itself`, and `lesson: <name>` once the evaluator writes the lesson from this plan's highlight.
@@ -269,7 +270,7 @@ rewords every place it names, so the change cannot be partial again.
 
 #### Build Phase 2 Document
 
-- [ ] Extend the changelog line to cover the audit's fixes.
+- [x] Extend the changelog line to cover the audit's fixes.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`: the templates, the Shape item, the save check's messages and the guides.
