@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: draft
+status: accepted
 workflow: bugfix
 description: "A component placed in a mockup is drawn exactly as its story draws it — the same colours, fonts and spacing — and every story fits its frame. Fixes the two open incidents the release's slow tests raised on 2026-10-16."
 ---
