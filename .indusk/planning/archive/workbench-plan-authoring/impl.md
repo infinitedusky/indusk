@@ -74,7 +74,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A19 | In a scratch copy of a real workbench, one plan goes from New plan to landed in the admin, without a terminal | Build Phase 6 | Build Phase 6 | skipped | live check | the whole flow in a workbench, recorded in Build Phase 6; each promise it walks is proven by its own rows. Skipped past build by Sandy's call (2026-10-06: "whatever I have been testing will work"): New plan, planning and build ran live in a numero copy; review, accept and land did not, and rest on A15 and A16 | manual: recorded in Build Phase 6 |
 | A24 | A plan started from New plan opens a session told to read the project's state first, then say it is ready and ask for a description, and not to infer the plan from its name | Build Phase 6 | Build Phase 6 | passing | unit | the admin's opening (ADR D11); what the agent then does is observed in A19 | apps/indusk-mcp/src/lib/session/new-plan-prompt.test.ts |
 | A25 | A project Claude Code does not trust shows "Trust in Claude Code" on its admin pages; one click trusts it, writing only that flag and keeping everything else in the config, and the button is gone | Build Phase 6 | Build Phase 6 | passing | unit | the admin's trust step (ADR D12); sessions then run on the project's allow-list, observed in A19 | apps/indusk-mcp/src/lib/session/trust.test.ts, apps/indusk-admin/src/components/session/TrustNotice.test.tsx |
-| A26 | a-plan-can-start-from-the-admin holds again after i-2026-10-16-a-plan-can-start-from-the-admin: the test that reproduces it, named by its root cause, passes | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-plan-can-start-from-the-admin |  |
+| A26 | a-plan-can-start-from-the-admin holds again after i-2026-10-16-a-plan-can-start-from-the-admin: the test that reproduces it, named by its root cause, passes | Build Phase 7 | Build Phase 7 | passing | contract | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts |
 
 ### Deferred Verification
 
@@ -266,17 +266,17 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 ### Build Phase 7: Maintenance — i-2026-10-16-a-plan-can-start-from-the-admin
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-plan-can-start-from-the-admin.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-plan-can-start-from-the-admin.md`)
+- [x] Fix: a code site, a widened test, or a revised promise
 
 #### Build Phase 7 Verification
 
-- [ ] A26: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A26: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
 
 #### Build Phase 7 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — none: the test now follows the acceptEdits decision brief-as-the-contract made
 
 #### Build Phase 7 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section
