@@ -6,6 +6,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import {
 	baseStylesheet,
+	componentReset,
 	classesOf,
 	componentStylesheet,
 	elementRulesOf,
@@ -22,6 +23,7 @@ import { markedComponentsOf } from "./markup.js";
 import {
 	appSourceFiles,
 	BASE_STYLESHEET,
+	RESET_STYLESHEET,
 	type LooksApp,
 	LooksAppError,
 	readApp,
@@ -463,7 +465,8 @@ async function renderAll(appDir: string): Promise<{
  * Each component's stylesheet, `components/<name>.css`: the app's compiled
  * rules for the classes its snapshots use and for its own markers, resolved to
  * the foundation's tokens (ADR decision 10); and the app's base, `_base.css`,
- * its `body` rules, which every story's frame draws under. Names each file on its component
+ * its `body` rules, which every story's frame draws under; and `_reset.css`, its
+ * element rules scoped to components, which every mockup and story draws under. Names each file on its component
  * in the catalog (`stylesheet`, `stylesheetHash`) and returns the paths written,
  * relative to `root`.
  */
@@ -504,6 +507,9 @@ function writeStylesheets(args: {
 	const base = join(snapshotsDir, BASE_STYLESHEET);
 	writeFileSync(base, baseStylesheet(css, app.foundation));
 	written.push(relative(root, base));
+	const reset = join(snapshotsDir, RESET_STYLESHEET);
+	writeFileSync(reset, componentReset(css, app.foundation));
+	written.push(relative(root, reset));
 	return written;
 }
 

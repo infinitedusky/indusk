@@ -145,7 +145,7 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
   `componentReset(appCss, foundation)` in `apps/indusk-mcp/src/lib/looks/component-styles.ts`: the rules `elementRulesOf` keeps (no class, no marker), `html`/`:root`/`body` excluded (`_base.css` holds `body`), each selector rewritten under `:where([data-component], [data-component] *)`, resolved through `sheetOf`.
 
   </details>
-- [ ] Rendering the stories writes the reset sheet beside the base sheet.
+- [x] Rendering the stories writes the reset sheet beside the base sheet.
   <details><summary>Technical</summary>
 
   `stories.ts` writes `components/_reset.css` (constant beside `BASE_STYLESHEET` in `mockups.ts`); `readApp` reads it as `reset` ("" when absent).
