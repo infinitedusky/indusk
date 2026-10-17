@@ -525,6 +525,7 @@ export function healthRows(
 	return out;
 }
 
+// promise: a-promise-reads-the-same-on-its-plan-page
 /**
  * Each promise's health from the alarm source, by name: the one answer the
  * sidebar's red dot and a plan's page both read, so neither decides its own.

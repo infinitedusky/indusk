@@ -28,7 +28,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Fixed
 
-- **A plan's page no longer shows a broken promise as healthy** (plan-page-promise-health): each promise's dot on a plan's page and its brief page takes the colour the Promises page gives its health, read from the same rule as the nav's red dot; a promise telemetry says nothing about keeps the colour of its registry state.
+- **A plan's page no longer shows a broken promise as healthy** (plan-page-promise-health): each promise's dot on a plan's page and its brief page takes the colour the Promises page gives its health, read from the same rule as the nav's red dot; a promise telemetry says nothing about keeps the colour of its registry state. The nav's red dot now also counts a promise new on a plan's branch, as the plan's page does, so the two never disagree.
 
 ## [1.71.0] — 2026-10-16
 

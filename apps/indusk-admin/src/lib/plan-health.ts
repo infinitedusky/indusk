@@ -5,6 +5,7 @@ import {
 import type { PromiseEntry } from "@infinitedusky/indusk-mcp/promises/registry";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 
+// promise: a-promise-reads-the-same-on-its-plan-page
 /**
  * The promises the plans' own checkouts (their worktrees) register, read once
  * for a plan's page and for the nav's red dot, so both hand the package the

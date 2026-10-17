@@ -39,6 +39,7 @@ const DOT: Record<string, string> = {
   unregistered: "bg-idle",
 };
 
+// promise: a-promise-reads-the-same-on-its-plan-page
 /**
  * The parts of a plan's brief, each folded to a closed row of its name and one
  * line, in the approved order: Promises, Expectations, Looks. The Phases and

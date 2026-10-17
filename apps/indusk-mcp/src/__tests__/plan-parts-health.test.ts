@@ -162,7 +162,7 @@ describe("A6 — a promise the branch changes to a behaviour promise reads no si
 	// clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike
 	it("A6 a state promise on the trunk, behaviour on the branch, is unverified", async () => {
 		const { root, registry: checkout } = project();
-		// The trunk still has the promise as a state promise: it gives it no health.
+		// The trunk still has the promise as a state promise, so it gives it no health.
 		const trunk = {
 			...checkout,
 			promises: checkout.promises.map((p) =>
