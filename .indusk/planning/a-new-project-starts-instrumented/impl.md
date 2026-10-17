@@ -1,7 +1,7 @@
 ---
 title: "Init sets up telemetry (New Projects)"
 date: 2026-10-17
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -57,8 +57,8 @@ assertions in [test-plan.md](test-plan.md).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | In a workbench whose declared code repo holds a Next.js app, `indusk init` writes the instrumentation into that repo, for Next.js, and no instrumentation file at the workbench root | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts |
-| T2 | In a workbench whose code repo holds only a README, `init` writes no instrumentation and prints that the repo has no app yet, naming it; after a `package.json` appears, `indusk update` scaffolds it | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts |
+| T1 | In a workbench whose declared code repo holds a Next.js app, `indusk init` writes the instrumentation into that repo, for Next.js, and no instrumentation file at the workbench root | Test Phase 1 | Build Phase 1 | written | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts |
+| T2 | In a workbench whose code repo holds only a README, `init` writes no instrumentation and prints that the repo has no app yet, naming it; after a `package.json` appears, `indusk update` scaffolds it | Test Phase 1 | Build Phase 1 | written | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts |
 | T3 | For Node, Next.js, a browser app and Python, the files `init` writes set the service name in code, not only in a comment, to the project's name (the code repo's name in a workbench) | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-new-project-reports-from-its-first-run/the-service-is-named | apps/indusk-mcp/src/__tests__/init-scaffold-runtimes.test.ts |
 | T4 | No file outside archived plans, plan documents, incidents and the changelog names `unknown-service` | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-new-project-reports-from-its-first-run/the-service-is-named | apps/indusk-mcp/src/__tests__/unknown-service-gone.test.ts |
 | T5 | With no endpoint variable set, a scaffolded app sends traces to the daemon's stored traces address and logs to its logs address; a set endpoint wins; with no address stored, the rendered default is InDusk's block | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-settings.test.ts |
@@ -94,13 +94,13 @@ today for the reason the plan exists. It records, with their bodies, the tests w
 subject is a file or function the build phases create. The first build phase then
 makes the placement, naming, address and environment tests pass.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   Made by `indusk plans start feature a-new-project-starts-instrumented`; check with `indusk worktree list`, and `indusk worktree assign a-new-project-starts-instrumented /Users/the_dusky/code/sandbox/dusk-worktrees/a-new-project-starts-instrumented` if it is not recorded.
 
   </details>
-- [ ] Write the placement tests: a workbench whose code repo holds a Next.js app, and one whose code repo holds only a README, then a package file added and update run.
+- [x] Write the placement tests: a workbench whose code repo holds a Next.js app, and one whose code repo holds only a README, then a package file added and update run.
   <details><summary>Technical</summary>
 
   T1, T2 in `apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts`, through the built CLI (`runCli` from `helpers/cli.ts`, `describe.skipIf(SHOULD_SKIP)`), on a workbench made the way `init-workbench.test.ts` makes one (declared repo, `--workbench --wrapped-repo --sibling-parent`). Assert: `<repo>/instrumentation.ts` exists and imports `@vercel/otel`; no `instrumentation.ts`, `src/instrumentation.ts`, `logger.ts` or `filtering-exporter.ts` at the workbench root; for the README-only repo, stdout names the repo with "no app yet" and nothing is written; after writing `package.json` there, `indusk update` creates `<repo>/src/instrumentation.ts`. Red today: init detects at the workbench root and falls back to the Node path there; update scaffolds nothing. The file carries `// clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs`.
