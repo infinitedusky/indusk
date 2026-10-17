@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mockups draw components as their stories do** (mockups-draw-components-as-stories): a component placed in a mockup is drawn with the browser resets its story draws under — `indusk looks stories` writes them to `components/_reset.css`, scoped to components, and the cockpit loads it under every mockup and story — so a link-based component keeps its own ink and a text field its font. Message wraps long unbroken text in its bubble; a story aligned to its frame's end is fitted to its own width; the project card draws its shape, in-progress badge and last-seen line itself, so its stories and the home mockup show what the home page shows. Closes the two incidents the 1.71.0 release raised. See [`indusk looks`](/reference/cli/looks).
+
 ## [1.71.0] — 2026-10-16
 
 ### Fixed
