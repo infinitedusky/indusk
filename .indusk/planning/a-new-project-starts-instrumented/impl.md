@@ -741,7 +741,7 @@ record that its first run reports.
 
 #### Build Phase 3 Context
 
-- [ ] Record in the package's context file that what init prints is checked against the command line by test, so a new printed command must exist.
+- [x] Record in the package's context file that what init prints is checked against the command line by test, so a new printed command must exist.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`: "Every `indusk` command and file `init` prints is checked by `init-next-steps.test.ts`."

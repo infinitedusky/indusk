@@ -229,6 +229,8 @@ pointer; the pointer holds the story.
   500-line file this split undid — guarded by the file-size attention-focus and
   `looks-lint-rules.test.ts`; see `/reference/cli/looks`
 
+- **What `init` prints is checked against the command line**: every `indusk` command and file `init` prints is checked by `init-next-steps.test.ts`, so a new printed command must exist.
+
 ## Eval, agents, skills, extensions
 
 - **Eval agent** ("evaluator", never "judge"): PostToolUse on `git commit`
