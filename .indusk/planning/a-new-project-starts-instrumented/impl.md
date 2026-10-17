@@ -489,7 +489,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   `ensureMcpJson(repo.dir)` for each of `declaredRepoDirs(projectRoot)` in both commands; the existing call at the root stays.
 
   </details>
-- [ ] Make a declined telemetry recommendation in the new-project flow turn both telemetry extensions off before init runs.
+- [x] Make a declined telemetry recommendation in the new-project flow turn both telemetry extensions off before init runs.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/new-project/create.ts`: before the `init --workbench` spawn, when the proposal's `telemetry` recommendation is not kept, write `disabled_extensions: ["local-telemetry", "otel"]` into `.indusk/config.json` (created if absent; `writeConfig` must keep the key when init writes the config later — check it merges). `recordChoices` still records the reason.

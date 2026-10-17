@@ -225,6 +225,24 @@ function recordChoices(root: string, proposal: Proposal): void {
 	});
 }
 
+/** The extensions a declined telemetry recommendation turns off. */
+const TELEMETRY_EXTENSIONS = ["local-telemetry", "otel"] as const;
+
+/**
+ * A declined telemetry recommendation turns both telemetry extensions off before `init`
+ * runs, so init enables neither (no daemon registered) and scaffolds nothing; the reason
+ * is still recorded afterwards by `recordChoices`.
+ *
+ * promise: a-recommendation-can-be-declined
+ */
+function disableDeclinedTelemetry(root: string, proposal: Proposal): void {
+	const telemetry = proposal.recommendations.find((rec) => rec.name === "telemetry");
+	if (!telemetry || telemetry.kept) return;
+	const config = readConfig(root) ?? ({} as InduskConfig);
+	const disabled = new Set([...(config.disabled_extensions ?? []), ...TELEMETRY_EXTENSIONS]);
+	writeConfig(root, { ...config, disabled_extensions: [...disabled] });
+}
+
 /** The workbench's own git repository and first commit; the repositories and worktrees inside it are ignored. */
 async function commitWorkbench(root: string, proposal: Proposal): Promise<void> {
 	await git(root, ["init", "-q", "-b", "main"]);
@@ -388,6 +406,7 @@ async function makeProject(
 		progress.set("repository", "done");
 
 		begin("install");
+		disableDeclinedTelemetry(root, proposal);
 		await run(
 			process.execPath,
 			[

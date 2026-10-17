@@ -1121,7 +1121,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				}
 			: {}),
 	};
-	writeConfig(projectRoot, config);
+	// An opt-out written before init (the new-project flow's declined telemetry) is the
+	// person's decision: kept, never replaced by init's fresh config.
+	const { readConfig } = await import("../../lib/config.js");
+	const priorDisabled = readConfig(projectRoot)?.disabled_extensions;
+	writeConfig(projectRoot, {
+		...config,
+		...(Array.isArray(priorDisabled) ? { disabled_extensions: priorDisabled } : {}),
+	});
 
 	// Workbench mode: explicitly enable the worktree extension AFTER the
 	// config write so the on_enable hook sees worktree.shape="workbench"
