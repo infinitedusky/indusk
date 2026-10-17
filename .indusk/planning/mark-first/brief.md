@@ -67,6 +67,7 @@ None.
 
 ### Not promised
 
+- **Tasks written as instructions** in an impl: its own small plan, `impl-tasks-are-instructions`, moved out on 2026-10-17 (Sandy) so it lands without waiting on this one.
 - **The audit's answer to each concern** (a fix, a signal, or the reason nothing is needed): its own plan, split out on 2026-10-17 (Sandy). It shares little code with this one, and who answers a concern — the auditor or the plan's agent — is open there.
 - **The later cut**, after `run-the-master`: a break leading to its cause, a diagnosis with every break, every broken trace kept, signals from the browser, every break becoming a test, approvals giving way to questions, and the promise page's clause views (research.md, "First cut").
 - **Removing tests.** Tests verify before release and guard against regression (Sandy: "the regression is fucked if you remove the tests").
@@ -86,7 +87,6 @@ Work this plan takes on that is not a promise of its own. Each is built here and
 - **The writers switch from `violated` to `broken`.** InDusk's own writers — `markPromise` and `scripts/suite-speed.js` — write `broken` (the demo app's writer is the scaffold plan's, through its helper); every reader still reads both. The editor's health line (`indusk promises health --json`, `runs[].outcome`) keeps `violated` until the editor extension shipped with the language release has been out a release, and is switched then, not here.
 - **The registry state `known-broken` and older InDusks.** A checkout on an InDusk older than the language release refuses it. Whether that matters is decided in the ADR.
 - **InDusk's own commands get one tracer.** Closing and the incident writer emit the spans this plan's own clauses are read by, through one tracer provider for the package's commands that exports to the local daemon and is silent when none runs; `new_project.create` reaches the daemon through it too.
-- **Tasks are written in the imperative.** The planner's phase-summary rule says a task reads as work to do ("Make the browser template's test project read the pre-bundle list from the root configuration"); verification items stay as end states that must hold. For new impls only.
 
 Waiting for a plan to take them, in `known-issues.md`: three promises `new-project-flow`'s audit found held only because the prompt says so, `change` and `replace` not carrying clauses (with the MCP `clauses` argument having no row), and `indusk plans start` failing under `indusk init --local`.
 

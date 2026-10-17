@@ -95,7 +95,6 @@ Assertions that prove none of this plan's clauses, each worth a test for the rea
 | A29 | A test file carrying a clause token is refused at close when it asserts nothing about the clause. | unit | carried from `plans-are-promises`' audit: the proof by file named the clause but not its content; this tightens `verified-before-release` and may be dropped if the check cannot be made without false refusals |
 | A30 | No skill, tool description or doc page calls a promise's telemetry a mark; each says signal. The Day 4b entry in the root `CLAUDE.md`, archived plans and decisions, and this plan's own name are exempt. | unit | the word cleanup carried from `one-promise-language`, which no promise of this plan states |
 | A31 | The suite-speed script and the demo app write `broken` where they wrote `violated`, and every reader still reads both. | unit | the writers outside `markPromise`, carried from `one-promise-language`'s falsification; the editor's health line is switched later, as the brief says |
-| A32 | The planner's instructions say a task is written in the imperative and a verification item as an end state that must hold, and an impl written before this still validates. | unit | the task wording Sandy settled on 2026-10-15; a change to the planner for new impls only |
 
 ## Untestable Assertions
 

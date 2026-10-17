@@ -57,7 +57,7 @@ a signal derived from the clause's own sentence runs on inputs nobody chose and 
 
 **D8. The registry state `known-broken` is accepted as a skew.** An InDusk older than the language release refuses it; we do not keep writing `known-violated` for them. A checkout updates with `indusk update`, and the changelog says to update every checkout; the registry is the project's own, so the skew only appears when two InDusk versions read one project. Confidence: moderate; the cost of keeping both words is a writer branch that never goes away.
 
-**D9. Tasks in an impl are imperative.** The planner's phase-summary rule says a task reads as work to do and a verification item as an end state that must hold. New impls only; an impl written before still validates. A32.
+**D9. Tasks written as instructions moved to their own plan** (`impl-tasks-are-instructions`, 2026-10-17, Sandy), so they land without waiting on this one.
 
 ## Alternatives Considered
 
@@ -108,7 +108,6 @@ Rejected (D8).
 - New: `decisions/mark-first.md`, published from this ADR (`/decisions/mark-first`).
 - New: `guide/signals.md` — what a signal is, derived from the clause and not from a test, the kinds, fire rate, and how a break names its clause.
 - Update: `guide/briefs.md` ("Promises as clauses": the clause's signal and the two proofs) and `guide/test-trajectory.md` (closing runs the clause's tests).
-- Update: `reference/skills/plan.md` (tasks are imperative).
 - Update: `reference/cli/promises.md` (what closing reads) and `guide/context-tiers.md` only if the root's Key Decisions grows.
 
 ### Diagrams
