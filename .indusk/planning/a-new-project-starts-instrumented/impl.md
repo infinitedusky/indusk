@@ -768,7 +768,7 @@ record that its first run reports.
 
 This phase tests the finished scaffold against apps shaped differently from the one the live check used: a Next.js app whose pages live in a source folder, a fresh app calling the signal helper, a Python app started the way init tells it to start, an environment value the settings cannot decode, and a scaffolded file a person deleted. Each hypothesis is that the app silently reports nothing, reports to the wrong place, crashes, or gets back a file its owner removed. Once it closes, each of those apps reports to the local daemon or is left as its owner chose.
 
-- [ ] Put the Next.js server setup file in the source folder when the app's pages live there, reading the settings beside it.
+- [x] Put the Next.js server setup file in the source folder when the app's pages live there, reading the settings beside it.
   <details><summary>Technical</summary>
 
   Hypothesis: Next.js loads `instrumentation.ts` from the folder that holds `app/` or `pages/`; a project made with `create-next-app --src-dir` keeps them in `src/`, so the root-level file `filesFor("nextjs", …)` in `lib/scaffold/plan.ts` writes is never loaded and the app reports nothing. The live check (a project without a source folder) could not see it. Fix: when `src/app` or `src/pages` exists, place the setup at `src/instrumentation.ts` and render its settings import as `./telemetry-settings` (today the template hard-codes `./src/telemetry-settings`); otherwise keep today's root placement. The read for `src/app`/`src/pages` goes on `TargetRead` beside `hasSrc`, so `plan.ts` still decides from what was read.
