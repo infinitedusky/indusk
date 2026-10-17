@@ -1,6 +1,6 @@
 ---
 title: "Telemetry from day one"
-description: "A project built with InDusk reports from its first run, is heard by its server, proves each clause by its signal, and reads its expectations when they come due; InDusk's own closing rule (Signal first) is the third of seven steps."
+description: "A project InDusk initialises is set up for telemetry, is heard by its server, links each clause to its tests and its telemetry, and reads its expectations when they come due."
 date: 2026-10-16
 status: living
 subplans:
