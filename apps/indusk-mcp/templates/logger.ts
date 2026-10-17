@@ -13,8 +13,10 @@
  * Log levels:
  *   ERROR — something is broken, needs immediate attention
  *   WARN  — degraded but functional, investigate soon
- *   INFO  — business events, state transitions (the useful stuff)
+ *   INFO  — what happened, for diagnosis
  *   DEBUG — development details, disable in production
+ *
+ * A log line is for diagnosis. A promise's signal is a span, written with `./signal`.
  */
 
 import type { TransportTargetOptions } from "pino";

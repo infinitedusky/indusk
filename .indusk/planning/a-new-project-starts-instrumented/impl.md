@@ -690,7 +690,7 @@ record that its first run reports.
   `apps/indusk-mcp/extensions/otel/skill.md` (line ~241 Dash0 check → `indusk telemetry address` and the local Jaeger; the `OTEL_SERVICE_NAME` row "Set by init" → "in `telemetry-settings.ts`"; correlation example returns `trace_id`, `span_id`, `trace_flags`; INFO no longer "business events"), `extensions/testing/skill.md` (the attribute snippet → `signal.upheld` / `signal.broken`, outcome `broken`), `extensions/local-telemetry/skill.md` (drop "Dash0's job", the composable.env pattern and `.env.dash0`; `tail_logs({ service, level, since_minutes, limit })`; `get_trace` → `get_span_details` / `search_traces`; "init scaffolds your app to send here"), `extensions/local-telemetry/README.md`, `extensions/local-telemetry/.env.example` (drop composable.env). Resync `.claude/skills/{otel,testing,local-telemetry}/SKILL.md`; `skill-sync-parity.test.ts` and `promise-words.test.ts` stay green.
 
   </details>
-- [ ] Rewrite the logger template's header so it presents log records as diagnosis, not as the place for business events or measurements.
+- [x] Rewrite the logger template's header so it presents log records as diagnosis, not as the place for business events or measurements.
   <details><summary>Technical</summary>
 
   `templates/logger.ts` docblock: INFO is "what happened, for diagnosis"; a promise's signal is a span written with `./signal`.
