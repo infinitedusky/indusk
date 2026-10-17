@@ -65,4 +65,39 @@ describe.skipIf(SHOULD_SKIP)("update-scaffold-refresh", () => {
 		);
 		expect(existsSync(`${untouched}.indusk-new`), "nothing beside the unedited file").toBe(false);
 	});
+
+	// Build Phase 4, T29: a file InDusk wrote and a person then deleted stays deleted.
+	it("T29: a deleted scaffolded file is not written back by update, init --force writes it, and a file never recorded is still created", () => {
+		const env = { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" };
+		const dir = nodeProject();
+		const init = runCli(dir, ["init"], env);
+		expect(init.code, `init exit\n${init.stderr}`).toBe(0);
+
+		const logger = join(dir, "src", "logger.ts");
+		rmSync(logger);
+
+		const u = runCli(dir, ["update"], env);
+		expect(u.code, `update exit\n${u.stderr}`).toBe(0);
+		expect(existsSync(logger), "update did not write the deleted file back").toBe(false);
+		const told = u.stdout.split("\n").filter((l) => l.includes("left out: src/logger.ts"));
+		expect(told, "one line says it was left out").toHaveLength(1);
+		expect(u.stdout, "a deleted file is not a first scaffold: no install lines").not.toMatch(
+			/^\s*install:/m,
+		);
+
+		const again = runCli(dir, ["update"], env);
+		expect(again.code).toBe(0);
+		expect(existsSync(logger), "still deleted on the next update").toBe(false);
+
+		// A file with no record is still created: drop the record and a missing file comes back.
+		const forced = runCli(dir, ["init", "--force"], env);
+		expect(forced.code, `init --force exit\n${forced.stderr}`).toBe(0);
+		expect(existsSync(logger), "--force writes it").toBe(true);
+
+		rmSync(join(dir, ".indusk", "scaffold.json"));
+		rmSync(logger);
+		const fresh = runCli(dir, ["update"], env);
+		expect(fresh.code).toBe(0);
+		expect(existsSync(logger), "no record: created").toBe(true);
+	});
 });

@@ -116,4 +116,44 @@ describe.skipIf(SHOULD_SKIP)("init-scaffold-placement", () => {
 		);
 		expect(scaffoldAt(b.workbench), "still nothing at the workbench root").toEqual([]);
 	});
+
+	// Build Phase 4, T25: Next.js loads `instrumentation.ts` from the folder that holds
+	// `app/` or `pages/`, so a project made with `--src-dir` needs it in `src/`.
+	it.each(["src/app/page.tsx", "src/pages/index.tsx"])(
+		"T25: a Next.js app with %s gets its setup file in src/, importing its settings from beside it",
+		(page) => {
+			const b = bench({
+				"package.json": JSON.stringify({ name: REPO, dependencies: { next: "16.0.0" } }),
+				"next.config.js": "module.exports = {};\n",
+				[page]: "export default function Page() { return null; }\n",
+			});
+			const r = initWorkbench(b);
+			expect(r.code, `init exit\n${r.stderr}`).toBe(0);
+
+			const inSrc = join(b.repo, "src", "instrumentation.ts");
+			expect(existsSync(inSrc), "the setup file is in src/, where Next.js looks").toBe(true);
+			expect(existsSync(join(b.repo, "instrumentation.ts")), "none at the root").toBe(false);
+			const text = readFileSync(inSrc, "utf-8");
+			expect(text).toMatch(/from "\.\/telemetry-settings"/);
+			expect(
+				existsSync(join(b.repo, "src", "telemetry-settings.ts")),
+				"the settings sit beside it",
+			).toBe(true);
+		},
+	);
+
+	it("T25: a Next.js app without src/app or src/pages keeps the setup file at the root", () => {
+		const b = bench({
+			"package.json": JSON.stringify({ name: REPO, dependencies: { next: "16.0.0" } }),
+			"next.config.js": "module.exports = {};\n",
+			"app/page.tsx": "export default function Page() { return null; }\n",
+		});
+		const r = initWorkbench(b);
+		expect(r.code, `init exit\n${r.stderr}`).toBe(0);
+		expect(existsSync(join(b.repo, "instrumentation.ts"))).toBe(true);
+		expect(existsSync(join(b.repo, "src", "instrumentation.ts"))).toBe(false);
+		expect(readFileSync(join(b.repo, "instrumentation.ts"), "utf-8")).toMatch(
+			/from "\.\/src\/telemetry-settings"/,
+		);
+	});
 });

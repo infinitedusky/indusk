@@ -5,7 +5,11 @@
 // built command line; every file a `create:` line announces, and every file a `wire:` line
 // imports or runs, exists once init is done; the retired `indusk infra start` is gone; and
 // `indusk editor install` is printed exactly once. Run on a Node project through the built CLI.
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+//
+// Build Phase 4: T26 - the install line init prints for a runtime names every package the
+// files it scaffolded for that runtime import (a package pnpm does not hoist is not
+// resolvable from the app's source unless the app lists it).
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -82,4 +86,67 @@ describe.skipIf(SHOULD_SKIP)("init-next-steps", () => {
 		const editor = lines.filter((l) => l.includes("indusk editor install"));
 		expect(editor, "`indusk editor install` printed exactly once").toHaveLength(1);
 	});
+});
+
+type Kind = "node" | "nextjs" | "browser";
+
+/** A fresh app of one kind, as create-next-app, create-vite or an Express project would leave it. */
+function appOf(kind: Kind): string {
+	const parent = mkdtempSync(join(tmpdir(), `init-install-line-${kind}-`));
+	made.push(parent);
+	const dir = join(parent, "homework-gate");
+	mkdirSync(join(dir, "src"), { recursive: true });
+	git(dir, ["init", "-q"]);
+	const deps =
+		kind === "nextjs"
+			? { next: "16.0.0", react: "19.0.0" }
+			: kind === "browser"
+				? { react: "19.0.0", vite: "6.0.0" }
+				: { express: "5.0.0" };
+	writeFileSync(
+		join(dir, "package.json"),
+		JSON.stringify({ name: "homework-gate", version: "0.0.0", dependencies: deps }),
+	);
+	if (kind === "nextjs") writeFileSync(join(dir, "next.config.js"), "module.exports = {};\n");
+	if (kind === "browser") writeFileSync(join(dir, "vite.config.ts"), "export default {};\n");
+	return dir;
+}
+
+/** The package each bare import or `from` names in a source file, without a subpath. */
+function importedPackages(source: string): string[] {
+	const names = [...source.matchAll(/(?:from|import)\s+["']([^"'.][^"']*)["']/g)].map(
+		(m) => m[1] as string,
+	);
+	return names
+		.filter((n) => !n.startsWith("node:"))
+		.map((n) =>
+			n.startsWith("@") ? n.split("/").slice(0, 2).join("/") : (n.split("/")[0] as string),
+		);
+}
+
+describe.skipIf(SHOULD_SKIP)("init-next-steps: the install line", () => {
+	it.each(["node", "nextjs", "browser"] as const)(
+		"T26: the install line for a %s app names every package its scaffolded files import",
+		(kind) => {
+			const dir = appOf(kind);
+			const r = runCli(dir, ["init"], { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" });
+			expect(r.code, `init exit\n${r.stderr}`).toBe(0);
+			const lines = r.stdout.split("\n");
+
+			const written = lines
+				.map((l) => /^\s*create: (\S+)/.exec(l)?.[1])
+				.filter((p): p is string => Boolean(p) && /\.(ts|tsx)$/.test(p as string));
+			expect(written.length, "init wrote scaffold files").toBeGreaterThan(0);
+			const imported = new Set(
+				written.flatMap((p) => importedPackages(readFileSync(join(dir, p), "utf-8"))),
+			);
+
+			const install = lines.find((l) => /^\s*install:/.test(l)) ?? "";
+			const named = new Set(install.replace(/^\s*install:\s*pnpm add\s+/, "").split(/\s+/));
+			const missing = [...imported].filter((p) => !named.has(p));
+			expect(missing, `imported by the scaffolded files, absent from "${install.trim()}"`).toEqual(
+				[],
+			);
+		},
+	);
 });

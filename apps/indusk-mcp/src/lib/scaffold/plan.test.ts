@@ -13,7 +13,7 @@ const NEW = "rendered v2";
 describe("what the scaffold does with one file", () => {
 	it.each([
 		[{ current: null, recorded: null }, "create"],
-		[{ current: null, recorded: h("rendered v1") }, "create"],
+		[{ current: null, recorded: h("rendered v1") }, "removed"],
 		[{ current: "rendered v1", recorded: h("rendered v1") }, "refresh"],
 		[{ current: NEW, recorded: h(NEW) }, "refresh"],
 		[{ current: NEW, recorded: h("rendered v1") }, "record"],
@@ -22,6 +22,15 @@ describe("what the scaffold does with one file", () => {
 		[{ current: "someone else's", recorded: null }, "beside"],
 	] as const)("T10: %j → %s", (file, action) => {
 		expect(decideFile({ ...file, rendered: NEW }).action).toBe(action);
+	});
+	it("T29: a missing file with a record is left out; force writes it; with no record it is created", () => {
+		expect(decideFile({ current: null, recorded: h("rendered v1"), rendered: NEW }).action).toBe(
+			"removed",
+		);
+		expect(
+			decideFile({ current: null, recorded: h("rendered v1"), rendered: NEW, force: true }).action,
+		).toBe("create");
+		expect(decideFile({ current: null, recorded: null, rendered: NEW }).action).toBe("create");
 	});
 	it("T10: never overwrites a file whose content is not what InDusk recorded", () => {
 		for (const current of ["edited", "", "rendered v2 plus a line"]) {

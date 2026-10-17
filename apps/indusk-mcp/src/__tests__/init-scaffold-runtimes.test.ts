@@ -107,4 +107,20 @@ describe.skipIf(SHOULD_SKIP)("init-scaffold-runtimes", () => {
 		}
 		expect(problems).toEqual([]);
 	});
+
+	// Build Phase 4, T27: `opentelemetry-instrument` builds its own provider from the
+	// environment (the standard port, `unknown_service`) before the app runs, so it
+	// is the opposite of the scaffold. The printed run line imports the scaffolded module.
+	it("T27: a Python app is told to load the scaffolded instrumentation module, never OpenTelemetry's wrapper", () => {
+		const dir = project("python");
+		const r = runCli(dir, ["init"], { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" });
+		expect(r.code, `init exit\n${r.stderr}`).toBe(0);
+
+		const section = r.stdout.slice(r.stdout.indexOf("[OpenTelemetry]"));
+		expect(section, "init names the wrapper").not.toContain("opentelemetry-instrument");
+		expect(section, "init says to import the scaffolded module").toMatch(/import instrumentation/);
+
+		const template = readFileSync(join(dir, "instrumentation.py"), "utf-8");
+		expect(template, "the template offers the wrapper").not.toContain("opentelemetry-instrument");
+	});
 });

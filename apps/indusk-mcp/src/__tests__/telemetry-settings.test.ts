@@ -73,3 +73,17 @@ describe("a test run says so", () => {
 		expect(s.resource["indusk.run"]).toBe(marked ? "test" : undefined);
 	});
 });
+
+// Build Phase 4, T28: the settings run at import in the instrumentation, the logger, the
+// browser file and the helper, so a throw there stops the app from starting.
+describe("an environment value the settings cannot decode", () => {
+	it("T28: deployment.environment=100% is kept as written and nothing throws", () => {
+		const env = { OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=100%" };
+		expect(() => telemetrySettings(env, RENDERED)).not.toThrow();
+		expect(telemetrySettings(env, RENDERED).resource["deployment.environment"]).toBe("100%");
+	});
+	it("T28: a valid percent-encoded value is still decoded", () => {
+		const env = { OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=blue%20green" };
+		expect(telemetrySettings(env, RENDERED).resource["deployment.environment"]).toBe("blue green");
+	});
+});
