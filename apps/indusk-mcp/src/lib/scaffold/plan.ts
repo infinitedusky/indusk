@@ -30,7 +30,7 @@ export function sha256(text: string): string {
  * A hash of a file's text that a formatter cannot change: whitespace and line breaks, `;`,
  * a trailing comma before a closing bracket, and quote style (`'` read as `"`) are left out.
  * The record holds this, so a file Biome or Prettier has re-laid-out is still the file InDusk wrote
- * (lesson: a-formatted-file-is-not-an-edited-one). A changed word still changes it.
+ * (T30 in plan.test.ts). A changed word still changes it.
  */
 export function fingerprint(text: string): string {
 	return sha256(

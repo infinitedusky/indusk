@@ -4,6 +4,7 @@
  *
  * Written by `indusk init` and refreshed by `indusk update` while you leave it as it is;
  * once you change it, a newer version is written beside it as `telemetry-settings.ts.indusk-new`.
+ * A formatter's layout (line breaks, spacing, quotes, semicolons) is not a change.
  * The line marked RENDERED holds this project's values: the service name, the InDusk
  * project id, and the local daemon's traces and logs addresses (`indusk telemetry address`).
  *
