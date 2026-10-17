@@ -2,7 +2,7 @@
 name: the-demo-app-starts-with-its-promise-holding
 kind: state
 lifetime: holds
-state: known-broken
+state: enforced
 domain: admin
 owner: demo-app-template
 sites:

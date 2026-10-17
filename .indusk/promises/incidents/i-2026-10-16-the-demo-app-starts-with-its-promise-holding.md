@@ -2,7 +2,7 @@
 id: i-2026-10-16-the-demo-app-starts-with-its-promise-holding
 promise: the-demo-app-starts-with-its-promise-holding
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -11,6 +11,7 @@ tests:
   - "apps/indusk-mcp/src/__tests__/demo-command.test.ts > indusk demo — the seat-holds example, its promise held and broken > A7 — with the switch on, a late release reads broken with its trace; off, it is still reported broken"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:12:10Z'
 ---
 
 ## Symptom
