@@ -731,7 +731,7 @@ This phase makes InDusk find its daemon when the record is gone. A command that 
 
 #### Build Phase 2 Document
 
-- [ ] The getting-started troubleshooting entry says a lost daemon is now found by the next command that looks.
+- [x] The getting-started troubleshooting entry says a lost daemon is now found by the next command that looks.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/getting-started.md:123-133` ("Telemetry: the daemon looks up but no traces arrive"): the first recovery step becomes `indusk telemetry status`, which finds a daemon whose record is gone. `apps/docs/src/reference/telemetry/overview.md`: a paragraph on the finding (process list, listening sockets, lsof or `/proc`). Changelog (Unreleased, Changed): "A telemetry daemon whose record is lost is found from the process list, and every reader follows it."
