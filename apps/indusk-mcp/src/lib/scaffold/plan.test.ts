@@ -67,3 +67,70 @@ describe("the scaffold for a target, from what was read", () => {
 		expect(file).toMatchObject({ action: "refresh", current: true });
 	});
 });
+
+// clause: an-app-writes-its-signal-from-a-helper-it-owns/a-signal-names-its-promise-and-clause
+//
+// Build Phase 2: the helper goes into every server app; an app that sets up
+// OpenTelemetry itself gets the helper and its settings, and nothing else.
+describe("the signal helper and an app's own OpenTelemetry setup", () => {
+	const target = (files: Record<string, string>, hasSrc = false) => ({
+		name: "app",
+		rel: "",
+		exists: true,
+		present: (f: string) => f in files,
+		hasSrc,
+		current: (p: string) => files[p] ?? null,
+	});
+	const reads = (record: Record<string, string> = {}) => ({
+		record,
+		force: false,
+		render: (template: string) => template,
+	});
+	const paths = (files: Record<string, string>, record?: Record<string, string>, hasSrc = false) =>
+		scaffoldPlan([target(files, hasSrc)], reads(record))[0]?.files.map((f) => f.path);
+	const pkg = (deps: Record<string, string>) => JSON.stringify({ dependencies: deps });
+
+	it("a Node, Next.js and Python app each get a helper; the Python one is not named signal.py", () => {
+		expect(paths({ "package.json": "{}" })).toContain("signal.ts");
+		expect(paths({ "package.json": "{}" }, {}, true)).toContain("src/signal.ts");
+		expect(paths({ "next.config.js": "", "package.json": "{}" })).toContain("src/signal.ts");
+		expect(paths({ "requirements.txt": "flask" })).toContain("indusk_signal.py");
+		expect(paths({ "requirements.txt": "flask" })).not.toContain("signal.py");
+	});
+
+	it("a browser-only app gets no helper", () => {
+		expect(paths({ "vite.config.ts": "", "package.json": "{}" })).not.toContain("signal.ts");
+	});
+
+	it.each([
+		["@opentelemetry/sdk-node"],
+		["@opentelemetry/sdk-trace-node"],
+		["@opentelemetry/sdk-trace-web"],
+		["@vercel/otel"],
+	])("an app depending on %s gets only the helper and its settings", (name) => {
+		expect(paths({ "package.json": pkg({ [name]: "1" }) }, {}, true)).toEqual([
+			"src/telemetry-settings.ts",
+			"src/signal.ts",
+		]);
+	});
+
+	it("a Python app naming opentelemetry-sdk gets only the helper", () => {
+		expect(paths({ "requirements.txt": "flask\nopentelemetry-sdk==1.2\n" })).toEqual([
+			"indusk_signal.py",
+		]);
+	});
+
+	it("a browser-only app with its own setup gets nothing", () => {
+		const files = {
+			"vite.config.ts": "",
+			"package.json": pkg({ "@opentelemetry/sdk-trace-web": "1" }),
+		};
+		expect(paths(files)).toEqual([]);
+	});
+
+	it("a setup InDusk wrote stays InDusk's after its packages are installed", () => {
+		const files = { "package.json": pkg({ "@opentelemetry/sdk-node": "1" }) };
+		const written = paths(files, { "instrumentation.ts": "abc" });
+		expect(written).toContain("instrumentation.ts");
+	});
+});

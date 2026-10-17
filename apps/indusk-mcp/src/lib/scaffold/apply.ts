@@ -73,7 +73,17 @@ function propagationLines(setting: string): string[] {
 	];
 }
 
-/** The install and wiring lines a runtime's first scaffold prints. `at` is where its files went. */
+/** What an app that sets up OpenTelemetry itself is told: only the helper (and its settings) were written. */
+function ownSetupLines(helper: string): string[] {
+	return [
+		"this app sets up OpenTelemetry itself: wrote only the signal helper, not a second setup",
+		helper.endsWith(".py")
+			? "signal: from indusk_signal import signal; signal.upheld(promise) / signal.broken(promise, symptom=...)"
+			: "signal: import { signal } from './signal'; signal.upheld({ promise }) / signal.broken({ promise, symptom })",
+	];
+}
+
+/** The install and wiring lines a runtime's first scaffold prints. `instrumentation` is where its setup file went. */
 function guidance(runtime: Runtime, instrumentation: string): string[] {
 	switch (runtime) {
 		case "node":
@@ -148,6 +158,12 @@ function writeTarget(
 		console.info(`  skip: ${target.name} (no checkout at ${where})`);
 		return;
 	}
+	if (target.runtime !== null && target.files.length === 0) {
+		console.info(
+			`  ${target.name} (${where}) sets up OpenTelemetry itself and has no server to write a signal from: nothing scaffolded`,
+		);
+		return;
+	}
 	if (target.runtime === null) {
 		console.info(
 			`  no app yet: ${target.name} (${where}) — \`indusk update\` scaffolds it once it has one of ${MARKER_NAMES}`,
@@ -184,11 +200,22 @@ function writeTarget(
 				break;
 		}
 	}
-	if (firstScaffold) {
-		const instrumentation = target.files[0]?.projectPath ?? "";
-		const relToTarget = target.rel === "" ? instrumentation : relative(target.rel, instrumentation);
-		for (const line of guidance(target.runtime, relToTarget)) console.info(`  ${line}`);
+	if (!firstScaffold) return;
+	const toTarget = (projectPath: string) =>
+		target.rel === "" ? projectPath : relative(target.rel, projectPath);
+	const helper = target.files.find((f) => f.role === "helper");
+	if (target.ownSetup) {
+		if (helper)
+			for (const line of ownSetupLines(toTarget(helper.projectPath))) console.info(`  ${line}`);
+		return;
 	}
+	const setup = target.files.find((f) => f.role === "setup");
+	for (const line of guidance(target.runtime, toTarget(setup?.projectPath ?? ""))) {
+		console.info(`  ${line}`);
+	}
+	if (helper)
+		for (const line of ownSetupLines(toTarget(helper.projectPath)).slice(1))
+			console.info(`  ${line}`);
 }
 
 /** Scaffold OpenTelemetry into every target of the project, printing an `[OpenTelemetry]` section. */

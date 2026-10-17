@@ -60,9 +60,49 @@ export function detectRuntime(present: (file: string) => boolean): Runtime | nul
 	return null;
 }
 
+/**
+ * Why a file is written: `setup` is the OpenTelemetry setup itself, `settings` what the setup
+ * and the helper read, `helper` the signal helper an app writes its promise's verdict through.
+ */
+export type FileRole = "setup" | "settings" | "helper";
+
+/** The packages whose presence in `package.json` means the app sets up OpenTelemetry itself. */
+const NODE_OTEL_SETUP = [
+	"@opentelemetry/sdk-node",
+	"@opentelemetry/sdk-trace-node",
+	"@opentelemetry/sdk-trace-web",
+	"@vercel/otel",
+];
+
+/**
+ * Whether the app already sets up OpenTelemetry itself, from its dependency files: a Node,
+ * Next.js or browser app by its `package.json` dependencies, a Python app by naming
+ * `opentelemetry-sdk` in its requirements or `pyproject.toml`. Unreadable JSON is not a setup.
+ */
+export function setsUpOpenTelemetry(
+	runtime: Runtime,
+	read: (path: string) => string | null,
+): boolean {
+	if (runtime === "python") {
+		return ["requirements.txt", "pyproject.toml"].some((f) =>
+			/(^|[\s"'])opentelemetry-sdk\b/m.test(read(f) ?? ""),
+		);
+	}
+	try {
+		const pkg = JSON.parse(read("package.json") ?? "{}") as Record<string, unknown>;
+		const names = ["dependencies", "devDependencies", "peerDependencies"].flatMap((k) =>
+			Object.keys((pkg[k] as Record<string, string> | undefined) ?? {}),
+		);
+		return names.some((n) => NODE_OTEL_SETUP.includes(n));
+	} catch {
+		return false;
+	}
+}
+
 export interface ScaffoldFile {
 	/** The file under `templates/` it is rendered from. */
 	template: string;
+	role: FileRole;
 	/** Where it goes, relative to the target. */
 	path: string;
 	/** What it is, in the line printed about it. */
@@ -70,9 +110,22 @@ export interface ScaffoldFile {
 }
 
 const SETTINGS = "OpenTelemetry settings — the daemon's address, service, project, environment";
+const HELPER = "signal helper — upheld and broken, in InDusk's vocabulary";
 
-/** The files a runtime gets. `hasSrc` puts a Node or browser app's files in its `src/`. */
-export function filesFor(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
+/**
+ * The files a runtime gets. `hasSrc` puts a Node or browser app's files in its `src/`. An app
+ * that sets up OpenTelemetry itself (`ownSetup`) gets only the helper and the settings the
+ * helper reads — and nothing at all when it has no server to write a signal from.
+ */
+export function filesFor(runtime: Runtime, hasSrc: boolean, ownSetup = false): ScaffoldFile[] {
+	const all = runtimeFiles(runtime, hasSrc);
+	if (!ownSetup) return all;
+	return all.filter((f) => f.role === "helper" || (f.role === "settings" && hasHelper(all)));
+}
+
+const hasHelper = (files: ScaffoldFile[]) => files.some((f) => f.role === "helper");
+
+function runtimeFiles(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
 	const at = hasSrc ? "src/" : "";
 	switch (runtime) {
 		case "node":
@@ -81,22 +134,27 @@ export function filesFor(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
 					template: "instrumentation.ts",
 					path: `${at}instrumentation.ts`,
 					purpose: "OpenTelemetry Node SDK",
+					role: "setup",
 				},
 				{
 					template: "filtering-exporter.ts",
 					path: `${at}filtering-exporter.ts`,
 					purpose: "OpenTelemetry span exporter, category filter",
+					role: "setup",
 				},
 				{
 					template: "logger.ts",
 					path: `${at}logger.ts`,
 					purpose: "pino logger — OpenTelemetry log transport",
+					role: "setup",
 				},
 				{
 					template: "telemetry-settings.ts",
 					path: `${at}telemetry-settings.ts`,
 					purpose: SETTINGS,
+					role: "settings",
 				},
+				{ template: "signal.ts", path: `${at}signal.ts`, purpose: HELPER, role: "helper" },
 			];
 		case "nextjs":
 			// Next.js loads `instrumentation.ts` from the app root; the rest sit in `src/`,
@@ -106,18 +164,27 @@ export function filesFor(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
 					template: "instrumentation.next.ts",
 					path: "instrumentation.ts",
 					purpose: "Next.js — @vercel/otel, OpenTelemetry",
+					role: "setup",
 				},
 				{
 					template: "logger.ts",
 					path: "src/logger.ts",
 					purpose: "pino logger — OpenTelemetry log transport",
+					role: "setup",
 				},
 				{
 					template: "instrumentation.web.ts",
 					path: "src/instrumentation.web.ts",
 					purpose: "browser — OTel Web SDK",
+					role: "setup",
 				},
-				{ template: "telemetry-settings.ts", path: "src/telemetry-settings.ts", purpose: SETTINGS },
+				{
+					template: "telemetry-settings.ts",
+					path: "src/telemetry-settings.ts",
+					purpose: SETTINGS,
+					role: "settings",
+				},
+				{ template: "signal.ts", path: "src/signal.ts", purpose: HELPER, role: "helper" },
 			];
 		case "browser":
 			return [
@@ -125,11 +192,13 @@ export function filesFor(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
 					template: "instrumentation.web.ts",
 					path: `${at}instrumentation.ts`,
 					purpose: "React SPA — OpenTelemetry Web SDK",
+					role: "setup",
 				},
 				{
 					template: "telemetry-settings.ts",
 					path: `${at}telemetry-settings.ts`,
 					purpose: SETTINGS,
+					role: "settings",
 				},
 			];
 		case "python":
@@ -138,6 +207,14 @@ export function filesFor(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
 					template: "instrumentation.py",
 					path: "instrumentation.py",
 					purpose: "OpenTelemetry Python SDK",
+					role: "setup",
+				},
+				// Not `signal.py`: a file of that name would hide Python's own `signal` module.
+				{
+					template: "signal.py",
+					path: "indusk_signal.py",
+					purpose: HELPER,
+					role: "helper",
 				},
 			];
 	}
@@ -179,6 +256,8 @@ export interface PlannedTarget {
 	rel: string;
 	/** "missing" when the directory is not there; null when it holds no app yet. */
 	runtime: Runtime | null | "missing";
+	/** The app sets up OpenTelemetry itself, so only the helper and its settings are scaffolded. */
+	ownSetup: boolean;
 	files: PlannedFile[];
 }
 
@@ -187,10 +266,16 @@ const joinRel = (rel: string, path: string) => (rel === "" ? path : `${rel}/${pa
 /** The scaffold for every target: its runtime, and each file with what to do with it. */
 export function scaffoldPlan(targets: TargetRead[], reads: ScaffoldReads): PlannedTarget[] {
 	return targets.map((t) => {
-		if (!t.exists) return { name: t.name, rel: t.rel, runtime: "missing", files: [] };
+		if (!t.exists)
+			return { name: t.name, rel: t.rel, runtime: "missing", ownSetup: false, files: [] };
 		const runtime = detectRuntime(t.present);
-		if (runtime === null) return { name: t.name, rel: t.rel, runtime, files: [] };
-		const files = filesFor(runtime, t.hasSrc).map((file) => {
+		if (runtime === null) return { name: t.name, rel: t.rel, runtime, ownSetup: false, files: [] };
+		// A setup InDusk wrote stays InDusk's to refresh, even once its packages are installed.
+		const wroteSetup = filesFor(runtime, t.hasSrc).some(
+			(f) => f.role === "setup" && joinRel(t.rel, f.path) in reads.record,
+		);
+		const ownSetup = !wroteSetup && setsUpOpenTelemetry(runtime, t.current);
+		const files = filesFor(runtime, t.hasSrc, ownSetup).map((file) => {
 			const projectPath = joinRel(t.rel, file.path);
 			const rendered = reads.render(file.template, t.name);
 			const onDisk = t.current(file.path);
@@ -202,6 +287,6 @@ export function scaffoldPlan(targets: TargetRead[], reads: ScaffoldReads): Plann
 			});
 			return { ...file, projectPath, rendered, action, current: onDisk === rendered };
 		});
-		return { name: t.name, rel: t.rel, runtime, files };
+		return { name: t.name, rel: t.rel, runtime, ownSetup, files };
 	});
 }

@@ -602,7 +602,7 @@ next phase then makes what init prints and the skills teach match all of this.
   `templates/telemetry-settings.ts`: `testRun = Boolean(env.VITEST || env.JEST_WORKER_ID || env.MODE === "test" || env.NODE_ENV === "test")`; `resource["indusk.run"] = "test"` when true. `instrumentation.py`: `"pytest" in sys.modules` or `PYTEST_VERSION`.
 
   </details>
-- [ ] Make the scaffold write the helper into every server app, and write only the helper when the app already sets up OpenTelemetry itself.
+- [x] Make the scaffold write the helper into every server app, and write only the helper when the app already sets up OpenTelemetry itself.
   <details><summary>Technical</summary>
 
   `lib/scaffold/plan.ts`: `signal.ts` for Node and Next.js, `signal.py` for Python, none for a browser-only app. Existing-setup rule: `package.json` dependencies naming `@opentelemetry/sdk-node`, `@opentelemetry/sdk-trace-node`, `@opentelemetry/sdk-trace-web` or `@vercel/otel`, or `opentelemetry-sdk` in Python requirements → helper and settings only, with a printed line saying the app sets up OpenTelemetry itself.
