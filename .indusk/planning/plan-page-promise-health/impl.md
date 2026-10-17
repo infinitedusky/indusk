@@ -1,7 +1,7 @@
 ---
 title: "A promise reads the same on its plan's page"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -209,10 +209,11 @@ This plan taught a plan's page to colour each promise by its health. Along the w
   `apps/indusk-mcp/src/lib/plans/parts.ts` (an optional `health` option threaded through), `plan/[name]/page.tsx` and `brief/page.tsx` (one argument each — the two call sites are the same two lines, but each page already repeats the `readPlanParts` call around them; folding them belongs to whatever unifies the two pages' reads), and the two test files `plan-parts.test.tsx` and `plan-parts-health.test.ts` (each tests one side of the boundary; no shared fixture between the admin's browser project and the package's node tests).
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
-- [ ] The plan page draws every promise in the same colour as before, the branch-only promise still reads no signal, and every page test still passes with the shared stand-in.
+- [x] The plan page draws every promise in the same colour as before, the branch-only promise still reads no signal, and every page test still passes with the shared stand-in.
   <details><summary>Technical</summary>
 
   No row flips — structure-preserving refactor under A1–A4. `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/plan-parts.test.tsx && pnpm exec vitest related --run src/components/bars/labels.ts src/components/plan/PlanParts.tsx src/lib/plan-health.ts src/__tests__/helpers/cockpit-fixture.ts && pnpm exec tsc --noEmit`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plan-parts-health.test.ts`; `pnpm check`.
@@ -221,7 +222,7 @@ This plan taught a plan's page to colour each promise by its health. Along the w
 
 #### Build Phase 3 Context
 
-- [ ] Nothing to add to the project's instructions: the change is internal and the rule the admin's context file states is unchanged.
+- [x] Nothing to add to the project's instructions: the change is internal and the rule the admin's context file states is unchanged.
   <details><summary>Technical</summary>
 
   (none — internal decomposition) `apps/indusk-admin/CLAUDE.md` already says a plan's promise dot is its health from the package's one rule; where the colour constant lives is not a rule.
@@ -230,7 +231,7 @@ This plan taught a plan's page to colour each promise by its health. Along the w
 
 #### Build Phase 3 Document
 
-- [ ] Nothing to change in the docs: no page, command or behaviour a reader sees changes.
+- [x] Nothing to change in the docs: no page, command or behaviour a reader sees changes.
   <details><summary>Technical</summary>
 
   (none — internal decomposition) `apps/docs/src/reference/admin-ui/overview.md` describes colours, not where they are defined.
