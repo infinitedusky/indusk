@@ -837,7 +837,7 @@ This phase tests the finished scaffold against apps shaped differently from the 
 
 #### Build Phase 4 Context
 
-- [ ] Add to the scaffold's own context file that a deleted scaffolded file stays deleted, and that a Next.js setup file goes where the app's pages are.
+- [x] Add to the scaffold's own context file that a deleted scaffolded file stays deleted, and that a Next.js setup file goes where the app's pages are.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/scaffold/CLAUDE.md` (the area file, loaded when the scaffold is edited): two lines, each with its row as the guard.
