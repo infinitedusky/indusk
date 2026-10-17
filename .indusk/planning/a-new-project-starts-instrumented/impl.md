@@ -846,7 +846,7 @@ This phase tests the finished scaffold against apps shaped differently from the 
 
 #### Build Phase 4 Document
 
-- [ ] Update the telemetry reference page and the new-project guide where they say where a Next.js setup goes and how a Python app is started.
+- [x] Update the telemetry reference page and the new-project guide where they say where a Next.js setup goes and how a Python app is started.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/overview.md`, `apps/docs/src/guide/new-project.md`; grep `apps/docs` for `opentelemetry-instrument` and fix each mention that tells an InDusk-scaffolded app to use it; changelog entry.
