@@ -560,7 +560,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   `apps/docs/src/reference/telemetry/overview.md`: replace the claim that enabling the extension writes an `.env` component (around lines 97 and 162–165); add the Mermaid flow from the ADR's Documentation Plan; `apps/docs/src/changelog.md` entry for placement, naming, address and environment.
 
   </details>
-- [ ] Publish the decision record to the docs site.
+- [x] Publish the decision record to the docs site.
   <details><summary>Technical</summary>
 
   `apps/docs/src/decisions/init-sets-up-telemetry.md` from `adr.md`.
