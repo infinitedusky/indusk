@@ -132,7 +132,7 @@ each child is one plan with one landing.
    clause it upholds; split out of it on 2026-10-17 (Sandy). The audit finds
    what could go wrong; the plan's agent, with the build's context, answers
    each concern with a fix, a signal or a reason; every "nothing needed" is
-   shown to the person. Its brief is a draft: that shape is still to be agreed.
+   shown to the person (shape agreed 2026-10-17). Its brief is a draft.
 
 4. **`production-is-heard`** — blocked by `a-new-project-starts-instrumented`;
    before Homework Gate's first deploy; in parallel with the next. Production
