@@ -504,7 +504,7 @@ Promises observed in the last 7 days, from Jaeger at https://indusk-always-on.fl
 …
 ```
 
-The same promise can be red in one and green in the other: a break on the
+Each section is judged by the rule the admin uses for that source: `local` by its newest signal when the project also has production (a local break followed by a newer upheld report reads as holding there), `production` by its incidents. The same promise can be red in one and green in the other: a break on the
 laptop is work in progress, and a break in production is the alarm. A source
 that could not be read says so in its own section, naming where it looked,
 and the other source is still printed. The exit code follows the **alarm

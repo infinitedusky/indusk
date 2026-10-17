@@ -1051,7 +1051,7 @@ This phase tests the finished plan against three ways it could fail and nobody w
 
 #### Build Phase 6 Document
 
-- [ ] The telemetry reference says what status reports for a half-running daemon and what a damaged address file does.
+- [x] The telemetry reference says what status reports for a half-running daemon and what a damaged address file does.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/overview.md`, "The promise's signal": status reports a partly running daemon broken. `apps/docs/src/reference/telemetry/cli.md`, `address` and `start`: an unreadable address file refuses, `--reset` chooses again. `apps/docs/src/reference/cli/promises.md`: each source judged by its own rule.

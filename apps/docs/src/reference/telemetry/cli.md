@@ -52,6 +52,7 @@ flowchart TD
 
 - **Taking over.** If the record is lost but the daemon runs, `start` reads it from the process list and its listening sockets, writes the record again and starts nothing: `took over the running daemon: jaeger 43599, otelcol 43600 on 24318, 24319, 24316, 24317`. Any other InDusk Jaeger or collector of this home is listed as a stray for `indusk telemetry reap`.
 - **Refusing.** Once the address is stored, a start that finds one of its ports held by a process that is not InDusk's starts nothing, picks nothing, leaves the address as it was and exits `1`, naming the port, the holder's process id and its command.
+- **An unreadable address file.** A file that exists but is cut short, or names a port that is not a number, is never taken for a missing one: a start refuses, naming the file, chooses nothing and leaves it as it was. `indusk telemetry address --reset` chooses the address again. The address is always written whole (a temporary file, then a rename), so a crash never leaves it half-written.
 
 **Port options** (`--otlp-port`, `--ui-port`, `--logs-port`, `--mcp-port`) are accepted only in a temporary home (a test's, under the system temp directory). A temporary home takes the ports it is given (`0` means any free port) and never reads or writes the stored address. In your own home they are refused by name.
 
@@ -92,7 +93,7 @@ indusk telemetry address --json     # the same as JSON
 indusk telemetry address --reset    # choose again, by the same rule
 ```
 
-With no address stored it says so and exits `1`; it chooses nothing. `--reset` is the **only** way the stored address ever changes: it keeps any port this home's running daemon holds, prints the old and the new address, and reminds you that every application given the old address needs the new one. The running daemon moves onto the new address at the next `restart`.
+With no address stored it says so and exits `1`; with an address file it cannot read it says that instead, naming `--reset`; it chooses nothing. `--reset` is the **only** way the stored address ever changes: it keeps any port this home's running daemon holds, prints the old and the new address, and reminds you that every application given the old address needs the new one. The running daemon moves onto the new address at the next `restart`.
 
 ## `indusk telemetry stop`
 
