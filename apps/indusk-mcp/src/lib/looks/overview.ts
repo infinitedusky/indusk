@@ -177,10 +177,15 @@ export function storyDocument(
 	reset = "",
 ): string {
 	const page = `<!doctype html>\n<html>\n<head><meta charset="utf-8"></head>\n<body><div id="storybook-root">${story.html}</div></body>\n</html>\n`;
-	return mockupDocument(page, tokensCss, [
-		...(base ? [{ component: "_base", css: base }] : []),
-		...styles.filter((s) => s.component === story.component),
-	], reset);
+	return mockupDocument(
+		page,
+		tokensCss,
+		[
+			...(base ? [{ component: "_base", css: base }] : []),
+			...styles.filter((s) => s.component === story.component),
+		],
+		reset,
+	);
 }
 
 function storiesOf(

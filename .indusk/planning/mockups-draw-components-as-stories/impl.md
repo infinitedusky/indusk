@@ -174,12 +174,13 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
 
 #### Build Phase 1 Verification
 
-- [ ] The generator's tests pass, and the composition check no longer reports the link colour or the text field's font.
+- [x] The generator's tests pass, and the composition check no longer reports the link colour or the text field's font.
   <details><summary>Technical</summary>
 
   A1–A3 pass: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/component-styles.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/looks/component-styles.ts src/lib/looks/overview.ts src/lib/looks/stories.ts`. A4 run: no `color` or `font-*` finding remains.
 
   </details>
+  Result: A1-A3 pass; `vitest related` 35 files, 267 tests pass; typecheck clean; biome clean on `src/lib/looks/` (repo-wide `pnpm check` has errors in files this phase did not touch). A4 (after `pnpm --filter @infinitedusky/indusk-mcp build`, since the admin test reads the package's `dist`) reports no `color` or `font-*` finding; what remains is the project card's `gap` (4px vs 16px) and ~3 px `content-width`, Build Phase 2's.
 
 #### Build Phase 1 Context
 

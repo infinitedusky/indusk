@@ -6,8 +6,8 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import {
 	baseStylesheet,
-	componentReset,
 	classesOf,
+	componentReset,
 	componentStylesheet,
 	elementRulesOf,
 } from "./component-styles.js";
@@ -23,9 +23,9 @@ import { markedComponentsOf } from "./markup.js";
 import {
 	appSourceFiles,
 	BASE_STYLESHEET,
-	RESET_STYLESHEET,
 	type LooksApp,
 	LooksAppError,
+	RESET_STYLESHEET,
 	readApp,
 	sourcesHashOf,
 	stylesheetHash,

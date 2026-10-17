@@ -333,9 +333,7 @@ function pseudoElementAt(selector: string): number {
 function scoped(selector: string): string {
 	const s = selector.trim();
 	const at = pseudoElementAt(s);
-	return at === -1
-		? `${s}${COMPONENT_SCOPE}`
-		: `${s.slice(0, at)}${COMPONENT_SCOPE}${s.slice(at)}`;
+	return at === -1 ? `${s}${COMPONENT_SCOPE}` : `${s.slice(0, at)}${COMPONENT_SCOPE}${s.slice(at)}`;
 }
 
 /**
