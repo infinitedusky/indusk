@@ -1,7 +1,19 @@
 import { spawnSync } from "node:child_process";
-import { closeSync, openSync, readFileSync, readSync, statSync, writeFileSync } from "node:fs";
+import {
+	closeSync,
+	mkdirSync,
+	openSync,
+	readdirSync,
+	readFileSync,
+	readlinkSync,
+	readSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
+import { acquireLock, acquireLockAsync } from "../agents/lock.js";
 import { type PsRow, psAll } from "../process-identity.js";
+import { daemonConfigPath } from "./daemon-process.js";
 import type { DaemonMeta } from "./status.js";
 
 /**
@@ -20,6 +32,20 @@ import type { DaemonMeta } from "./status.js";
 
 export type ProcessRow = PsRow;
 
+/**
+ * The ports the home's rendered config files name. A file is a claim about a
+ * daemon, not a fact: the finder trusts it only for a process that started
+ * after the file was written and that holds every port the file names.
+ */
+export interface RenderedPorts {
+	otlpPort?: number;
+	uiPort?: number;
+	mcpPort?: number;
+	jaegerHealthPort?: number;
+	logsOtlpPort?: number;
+	otelcolHealthPort?: number;
+}
+
 export interface DaemonReads {
 	/** The record, or `null` when there is none or it cannot be read. */
 	record(): DaemonMeta | null;
@@ -33,15 +59,77 @@ export interface DaemonReads {
 	holders(ports: number[]): Record<number, { pid: number; command: string } | null>;
 	/** A file's modification time and size, or `null` when it is not there. */
 	stat(path: string): { mtimeMs: number; size: number } | null;
+	/** The ports the home's rendered Jaeger and collector config files name, when they can be read. */
+	renderedPorts(): RenderedPorts | null;
+	/** Takes the home's `telemetry.lock`, waiting by yielding. The release function. */
+	lock(): Promise<() => void>;
+	/** `lock` for a synchronous caller. */
+	lockSync(): () => void;
 	/** The daemon's log lines from a byte offset, or written since a time. */
 	logSince(from: { offset: number } | { time: number }): string[];
 	now(): number;
 }
 
-function lsof(args: string[]): string {
+/** `lsof`'s standard output, or `null` when `lsof` is not on the PATH. */
+function lsofOrNull(args: string[]): string | null {
 	// lsof exits 1 when it finds nothing: that is an answer, not a failure.
 	const r = spawnSync("lsof", ["-nP", ...args], { encoding: "utf-8", maxBuffer: 8 * 1024 * 1024 });
+	if ((r.error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") return null;
 	return r.stdout ?? "";
+}
+
+function lsof(args: string[]): string {
+	return lsofOrNull(args) ?? "";
+}
+
+/**
+ * The listening TCP ports of each process, from Linux's own files: the LISTEN
+ * rows (state `0A`) of `/proc/net/tcp` and `/proc/net/tcp6` joined to the
+ * socket inodes each process holds open. A pure parser: `netTcp` is both files'
+ * text, `fds` maps a process id to the targets of its `/proc/<pid>/fd` links.
+ */
+export function listeningFromProc(
+	netTcp: string,
+	fds: Record<number, string[]>,
+): Record<number, number[]> {
+	const portByInode = new Map<string, number>();
+	for (const line of netTcp.split("\n")) {
+		const cols = line.trim().split(/\s+/);
+		// sl local_address rem_address st tx_queue:rx_queue tr:tm->when retrnsmt uid timeout inode
+		if (cols.length < 10 || cols[3] !== "0A") continue;
+		const port = Number.parseInt(cols[1].slice(cols[1].lastIndexOf(":") + 1), 16);
+		if (Number.isInteger(port) && cols[9] !== "0") portByInode.set(cols[9], port);
+	}
+	const byPid: Record<number, number[]> = {};
+	for (const [pid, links] of Object.entries(fds)) {
+		const ports = new Set<number>();
+		for (const link of links) {
+			const inode = /^socket:\[(\d+)\]$/.exec(link)?.[1];
+			const port = inode === undefined ? undefined : portByInode.get(inode);
+			if (port !== undefined) ports.add(port);
+		}
+		if (ports.size > 0) byPid[Number(pid)] = [...ports].sort((a, b) => a - b);
+	}
+	return byPid;
+}
+
+function listeningFromProcFs(pids: number[]): Record<number, number[]> {
+	const netTcp = ["/proc/net/tcp", "/proc/net/tcp6"].map((f) => readText(f) ?? "").join("\n");
+	const fds: Record<number, string[]> = {};
+	for (const pid of pids) {
+		try {
+			fds[pid] = readdirSync(`/proc/${pid}/fd`).flatMap((fd) => {
+				try {
+					return [readlinkSync(`/proc/${pid}/fd/${fd}`)];
+				} catch {
+					return [];
+				}
+			});
+		} catch {
+			fds[pid] = [];
+		}
+	}
+	return listeningFromProc(netTcp, fds);
 }
 
 /** Parses `lsof -Fpn` output: `p<pid>` lines each followed by `n<addr>:<port>` lines. */
@@ -57,6 +145,41 @@ export function parseListening(out: string): Record<number, number[]> {
 	}
 	for (const ports of Object.values(byPid)) ports.sort((a, b) => a - b);
 	return byPid;
+}
+
+/** The port in an `endpoint: 0.0.0.0:<port>` line that follows `anchor` in `text`. */
+function endpointAfter(text: string, anchor: RegExp): number | undefined {
+	const at = anchor.exec(text);
+	if (!at) return undefined;
+	const m = /endpoint:\s*\S*:(\d+)/.exec(text.slice(at.index + at[0].length));
+	return m ? Number.parseInt(m[1], 10) : undefined;
+}
+
+/** Reads the ports the config files InDusk renders name (see `renderJaegerConfig` and `renderCollectorConfig`). */
+export function parseRenderedPorts(
+	jaegerYaml: string | null,
+	collectorYaml: string | null,
+): RenderedPorts {
+	const out: RenderedPorts = {};
+	if (jaegerYaml !== null) {
+		out.otlpPort = endpointAfter(jaegerYaml, /^ {6}http:\s*$/m);
+		out.uiPort = endpointAfter(jaegerYaml, /^ {2}jaeger_query:[\s\S]*?^ {4}http:\s*$/m);
+		out.mcpPort = endpointAfter(jaegerYaml, /^ {2}jaeger_mcp:\s*\n {4}http:\s*$/m);
+		out.jaegerHealthPort = endpointAfter(jaegerYaml, /^ {2}healthcheckv2:[\s\S]*?^ {4}http:\s*$/m);
+	}
+	if (collectorYaml !== null) {
+		out.logsOtlpPort = endpointAfter(collectorYaml, /^ {6}http:\s*$/m);
+		out.otelcolHealthPort = endpointAfter(collectorYaml, /^ {2}health_check:\s*$/m);
+	}
+	return out;
+}
+
+function readText(path: string): string | null {
+	try {
+		return readFileSync(path, "utf-8");
+	} catch {
+		return null;
+	}
 }
 
 export function realDaemonReads(home: string): DaemonReads {
@@ -84,11 +207,9 @@ export function realDaemonReads(home: string): DaemonReads {
 		},
 		processes: psAll,
 		listening(pids) {
-			const out =
-				pids.length === 0
-					? ""
-					: lsof(["-a", "-p", pids.join(","), "-iTCP", "-sTCP:LISTEN", "-Fpn"]);
-			const found = parseListening(out);
+			if (pids.length === 0) return {};
+			const out = lsofOrNull(["-a", "-p", pids.join(","), "-iTCP", "-sTCP:LISTEN", "-Fpn"]);
+			const found = out === null ? listeningFromProcFs(pids) : parseListening(out);
 			return Object.fromEntries(pids.map((pid) => [pid, found[pid] ?? []]));
 		},
 		holders(ports) {
@@ -106,6 +227,19 @@ export function realDaemonReads(home: string): DaemonReads {
 					return [port, Number.isInteger(pid) && command !== undefined ? { pid, command } : null];
 				}),
 			);
+		},
+		renderedPorts() {
+			const jaeger = readText(daemonConfigPath(home, "jaeger"));
+			const collector = readText(daemonConfigPath(home, "otelcol"));
+			return jaeger === null && collector === null ? null : parseRenderedPorts(jaeger, collector);
+		},
+		lock() {
+			mkdirSync(home, { recursive: true });
+			return acquireLockAsync(join(home, "telemetry.lock"));
+		},
+		lockSync() {
+			mkdirSync(home, { recursive: true });
+			return acquireLock(join(home, "telemetry.lock"));
 		},
 		stat(path) {
 			try {

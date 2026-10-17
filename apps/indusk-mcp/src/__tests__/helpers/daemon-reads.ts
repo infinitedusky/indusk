@@ -1,4 +1,4 @@
-import type { DaemonReads, ProcessRow } from "../../lib/telemetry/daemon-reads.js";
+import type { DaemonReads, ProcessRow, RenderedPorts } from "../../lib/telemetry/daemon-reads.js";
 import type { DaemonMeta } from "../../lib/telemetry/status.js";
 
 /**
@@ -63,6 +63,17 @@ export function rec(
 	};
 }
 
+/** InDusk's own block: the ports the stored address holds when the block is free. */
+export const BLOCK: RenderedPorts = {
+	otlpPort: 24318,
+	logsOtlpPort: 24319,
+	uiPort: 24316,
+	mcpPort: 24317,
+};
+
+/** Process 1 (Jaeger) and 2 (collector) holding the block's ports. */
+export const ON_BLOCK: Record<number, number[]> = { 1: [24318, 24316, 24317], 2: [24319] };
+
 export interface FakeReads extends DaemonReads {
 	/** Every record the code under test removed: none, since a read never removes one. */
 	removed: string[];
@@ -79,6 +90,11 @@ export function fakeReads(
 		files?: Record<string, { mtimeMs: number; size: number }>;
 		log?: string[];
 		now?: number;
+		/**
+		 * The rendered config files: the ports they name (the block unless given),
+		 * and whether they were written after the daemon's processes started.
+		 */
+		yaml?: { ports?: RenderedPorts; mtimeAfterStart: boolean };
 	} = {},
 ): FakeReads {
 	let record = machine.record ?? null;
@@ -97,7 +113,18 @@ export function fakeReads(
 		listening: (pids) =>
 			Object.fromEntries(pids.map((pid) => [pid, machine.listening?.[pid] ?? []])),
 		holders: (ports) => Object.fromEntries(ports.map((p) => [p, machine.holders?.[p] ?? null])),
-		stat: (path) => machine.files?.[path] ?? null,
+		renderedPorts: () => (machine.yaml ? (machine.yaml.ports ?? BLOCK) : null),
+		lock: async () => () => {},
+		lockSync: () => () => {},
+		stat(path) {
+			const file = machine.files?.[path];
+			if (file) return file;
+			const yaml = machine.yaml;
+			const row = machine.processes?.find((p) => p.command.includes(path));
+			if (!yaml || !row?.startedAt) return null;
+			const started = Date.parse(row.startedAt);
+			return { mtimeMs: started + (yaml.mtimeAfterStart ? 60_000 : -1_000), size: 1 };
+		},
 		logSince: () => machine.log ?? [],
 		now: () => machine.now ?? Date.parse("2026-10-16T13:00:00.000Z"),
 	};
