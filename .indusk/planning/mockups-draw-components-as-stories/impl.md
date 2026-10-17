@@ -315,12 +315,13 @@ changed; and Sandy approves the changed `message.you` story.
 
 This phase tests two things the finished plan claims but nothing checks. First, the cockpit now draws every story and mockup under the app's element resets, but an approval is tied only to the component's own markup and stylesheet. A change to the app's element rules changes what every approved look shows without reopening any of them. Second, the frame-fitting reads a component's left margin as space around it, and a component centred by automatic margins has a margin that grows with the frame. Its frame never shrinks, and the story-frame check, which measures the same way, passes anyway. Once this phase closes, an approval reopens when what it was drawn under changes, and a centred story fits its frame.
 
-- [ ] An approval of a story or a mockup records the app's element rules it was drawn under, and reads proposed once they change.
+- [x] An approval of a story or a mockup records the app's element rules it was drawn under, and reads proposed once they change.
   <details><summary>Technical</summary>
 
   Hypothesis: change `a { color: inherit }` in the app's compiled CSS → `_reset.css` changes and every snapshot draws differently in the cockpit, yet `storyApprovalOf` (keyed on `snapshotHash` + `stylesheetHash` + `boundToNow`'s foundation and declarations) and the mockup's `approvalOf` (`componentsHash`) still read approved. Build Phase 1's note on `componentsHash` rested on a false premise: `baseRulesHash` reopens a story's *look-check reuse* (`reuse.ts`), not its approval. Fix: `approve` records the catalog's `baseRulesHash` on story and mockup entries; `storyApprovalOf` and `approvalOf` compare it when the entry carries one — an entry without it is read as before (absence is a rule, not a migration; the brief does not ask for re-approval).
 
   </details>
+  Note: `LooksApp.baseRulesHash` is read from `components.json` in `readApp`; `approve` (story and mockup) records it as `baseRulesHash` on the entry; `approvalOf` and `storyApprovalOf` compare it when the entry has one (`drawnUnderNow`); an entry without it reads as before. The cockpit's Approve route sends no rules hash of its own and needs no change: it calls `approve`, which reads the checkout's catalog itself under the record's lock, as it does the foundation and declarations. T1 passes (18/18 in `approvals.test.ts`).
 - [ ] Build Phase 1's note on the reset and approvals says what is true.
   <details><summary>Technical</summary>
 
