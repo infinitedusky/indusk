@@ -42,8 +42,8 @@ mockup's own styles.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A component a mockup declares new and draws itself takes that mockup's own styles in the cockpit | Test Phase 1 | Build Phase 1 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
-| A2 | In the same mockup, a component it places by name still takes none of the mockup's own styles, nor does anything inside it | Test Phase 1 | Build Phase 1 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
+| A1 | A component a mockup declares new and draws itself takes that mockup's own styles in the cockpit | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
+| A2 | In the same mockup, a component it places by name still takes none of the mockup's own styles, nor does anything inside it | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
 
 ## Checklist
 
@@ -66,7 +66,7 @@ This phase writes the two tests the fix is measured by: one showing a new compon
 
 #### Test Phase 1 Verification
 
-- [ ] The new-component test fails because the mockup's styles do not reach it, and the placed-component test passes.
+- [x] The new-component test fails because the mockup's styles do not reach it, and the placed-component test passes.
   <details><summary>Technical</summary>
 
   A1 red on its assertion, A2 green: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/overview.test.ts`.
