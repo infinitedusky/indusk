@@ -103,6 +103,8 @@ interface Drawn {
   box: number;
   /** The `display` of the element's parent. */
   parentDisplay: string;
+  /** The element's text, whitespace collapsed: a mockup may give a component its own words. */
+  text: string;
 }
 
 /**
@@ -155,6 +157,7 @@ function readDrawn(args: {
       parentDisplay: el.parentElement
         ? getComputedStyle(el.parentElement).display
         : "",
+      text: (el.textContent ?? "").replace(/\s+/g, " ").trim(),
       size: drawn
         ? {
             width:
@@ -201,6 +204,14 @@ function borderDrawn(el: Drawn, prop: string): boolean {
  */
 const blockified = (display: string) =>
   display === "inline" ? "block" : display.replace(/^inline-/, "");
+
+/**
+ * `start` and `end` are the logical names of `left` and `right`; in a
+ * left-to-right page each draws the same, so a story's `start` and a
+ * mockup's `left` are one value. The admin's pages are left to right.
+ */
+const logical = (value: string) =>
+  value === "start" ? "left" : value === "end" ? "right" : value;
 
 let server: Server;
 let origin: string;
@@ -447,7 +458,11 @@ describe("A30 — a composed mockup draws each component as its story does", () 
               if (!(p in want.props)) continue;
               if (!BORDER_DRAWN.test(p) || borderDrawn(want, p)) {
                 const ask =
-                  p === "display" && i === 0 ? blockified : (v: string) => v;
+                  p === "display" && i === 0
+                    ? blockified
+                    : p === "text-align"
+                      ? logical
+                      : (v: string) => v;
                 if (
                   ask(want.props[p] as string) !== ask(got.props[p] as string)
                 ) {
@@ -465,7 +480,10 @@ describe("A30 — a composed mockup draws each component as its story does", () 
               String(expected[0]?.props.display).startsWith("inline");
             const wantSize = (sized[i] as Drawn).size;
             const stretched = i === 0 && /flex|grid/.test(got.parentDisplay);
-            if (wantSize && got.size && !inlineRoot) {
+            // A mockup may give a component its own words (component-content):
+            // a box holding other words is sized by them, not by the component.
+            const ownWords = (sized[i] as Drawn).text !== got.text;
+            if (wantSize && got.size && !inlineRoot && !ownWords) {
               for (const dim of ["width", "height"] as const) {
                 if (dim === "height" && stretched) continue;
                 if (Math.abs(wantSize[dim] - got.size[dim]) > 1) {
