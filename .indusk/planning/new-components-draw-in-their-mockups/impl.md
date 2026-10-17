@@ -1,7 +1,7 @@
 ---
 title: "New components draw in their mockups"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -128,7 +128,7 @@ This phase makes the fix: the scoping that keeps a mockup's own styles off compo
 
 #### Build Phase 1 Document
 
-- [ ] Say in the looks reference that a mockup's own styles still reach the components it declares new.
+- [x] Say in the looks reference that a mockup's own styles still reach the components it declares new.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`, the page-only paragraph; and a changelog line under Fixed.
