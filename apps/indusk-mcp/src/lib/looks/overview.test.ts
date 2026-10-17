@@ -100,6 +100,36 @@ describe("the cockpit's pages draw components as their stories do", () => {
 		expect(doc).toContain(".card-own {}");
 		expect(doc).not.toContain(`.card-own${SCOPE}`);
 	});
+	// promise: mockups-render-in-the-cockpit
+	const NEW_MARKUP =
+		'<html><head><meta name="indusk-new-components" content="idea-row"><style>.ir { display: grid; }</style></head><body><div data-component="idea-row" class="ir"><span class="ir">in</span></div><div data-component="card" class="ir"><span class="ir">in</span></div></body></html>';
+	const ownSelectors = (doc: string): string[] => {
+		const own = doc.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+		const selectors: string[] = [];
+		postcss.parse(own).walkRules((r) => {
+			selectors.push(...r.selectors);
+		});
+		return selectors;
+	};
+
+	// promise: mockups-render-in-the-cockpit
+	it("A1: a component the mockup declares new takes the mockup's own styles", () => {
+		const doc = mockupDocument(NEW_MARKUP, ":root{}", [], "", ["idea-row"]);
+		const [selector] = ownSelectors(doc);
+		// the guard names the declared component as the one marker it leaves out
+		expect(selector).toContain('[data-component]:not([data-component="idea-row"])');
+	});
+
+	// promise: mockups-render-in-the-cockpit
+	it("A2: a component the mockup places still takes none of its own styles, nor does anything inside it", () => {
+		const doc = mockupDocument(NEW_MARKUP, ":root{}", [], "", ["idea-row"]);
+		const [selector] = ownSelectors(doc);
+		// `card` is not declared new, so the guard still excludes it and what is inside it
+		expect(selector).toMatch(/^\.ir:not\(:where\(\[data-component\]/);
+		expect(selector).toMatch(/ \*\)\)$/);
+		expect(selector).not.toContain('"card"');
+		expect(mockupDocument(NEW_MARKUP, ":root{}", [], "")).toContain(`.ir${SCOPE}`);
+	});
 	it("a component's variant rules come after every component's plain rules, as the app's build orders them", () => {
 		const doc = mockupDocument(
 			"<html><head></head><body></body></html>",

@@ -115,7 +115,10 @@ places: the cockpit scopes each selector of them to what is outside a component
 specificity), so a mockup's `.grid { display: grid }` cannot change how a
 placed card draws. A rule that names the component's marker
 (`[data-component="card"] .grid`) is the mockup placing that component and is
-left as written. Each component's variant rules (under `@media`,
+left as written. A component the mockup declares new
+(`<meta name="indusk-new-components">`) and draws itself is the exception: its
+marker is left out of the scope, so the mockup's own styles still reach it,
+since they are its only look. Each component's variant rules (under `@media`,
 `@supports` or `@container`) load after every component's plain rules, as the
 app's build orders them, so a hidden-on-a-phone class is not undone by another
 component's `flex`.
