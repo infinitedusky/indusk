@@ -803,7 +803,12 @@ This phase tests the finished scaffold against apps shaped differently from the 
 
   </details>
 
-- [x] Shape finding — `apps/indusk-mcp/src/lib/scaffold/plan.ts` `filesFor`: take the target's layout (`hasSrc`, `srcApp`) as one object instead of two adjacent booleans, so a call reads `filesFor(runtime, t, false)` not `(runtime, hasSrc, false, srcApp)`. Rule: the name says what it is for (Shape's naming question).
+- [x] Shape finding — pass the target's layout to the function that picks a runtime's files as one object, so a call no longer hides which of two adjacent true/false values is which.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/scaffold/plan.ts` `filesFor`: take the target's layout (`hasSrc`, `srcApp`) as one object instead of two adjacent booleans, so a call reads `filesFor(runtime, t, false)` not `(runtime, hasSrc, false, srcApp)`. Rule: the name says what it is for (Shape's naming question).
+
+  </details>
 - [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; the one finding above, fixed; the rest left as is.
 
 #### Build Phase 4 Verification
