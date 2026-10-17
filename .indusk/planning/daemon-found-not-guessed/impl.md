@@ -1018,7 +1018,7 @@ This phase tests the finished plan against three ways it could fail and nobody w
   `telemetryStatus` in `apps/indusk-mcp/src/bin/commands/telemetry.ts` sends only when `state.kind === "running"`; send for `partial` too when the recorded Jaeger is alive (it holds the traces port, so it can receive). `onItsOwnPorts` in `lib/telemetry/daemon-reports.ts` compares the record's ports with the address, not what is held: add the recorded process that is not running, and the stored ports it held, to the broken symptom (`state.recorded.jaeger` / `.otelcol`). Answers row A32.
 
   </details>
-- [ ] A damaged address file stops a start by name instead of being treated as no address, and the address is always written whole.
+- [x] A damaged address file stops a start by name instead of being treated as no address, and the address is always written whole.
   <details><summary>Technical</summary>
 
   `readAddressFile` in `lib/telemetry/daemon-address.ts` returns `null` for both a missing and an unreadable file, so `startPlan` (`lib/telemetry/start-plan.ts:63-102`) chooses again and `writeAddress`'s exclusive create then fails silently; with a stranger on a block port each start may pick a different spare. Return a distinct unreadable result; `startPlan` refuses naming the file and `--reset` as the way out; `telemetry address` prints it unreadable. `writeAddress` in `lib/telemetry/daemon-reads.ts` writes a temporary file and renames it (exclusive: link, or `wx` on the temporary then rename only if the target is absent). Answers row A33.
