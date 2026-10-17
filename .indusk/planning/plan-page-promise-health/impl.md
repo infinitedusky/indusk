@@ -89,6 +89,13 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 
   </details>
 
+- [x] The package's own test reads health through `planPromiseHealth` rather than a copy of the nav's rule.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts`: the `alarmHealth` helper is replaced by `planPromiseHealth`, and the `as unknown as` cast on `readPlanParts` is gone now that the option and field exist. No assertion changes.
+
+  </details>
+
 #### Build Phase 1 Verification
 
 - [ ] The three tests pass, the files that depend on the changed modules still pass, and the plan and brief pages' looks still hold.

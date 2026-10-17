@@ -2,7 +2,7 @@ import { rmSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
 import { readPlanParts } from "../lib/plans/parts.js";
 import type { PromiseHealth, SourceHealthRead } from "../lib/promises/health.js";
-import { alarmRead, healthRows, redPlans } from "../lib/promises/health.js";
+import { planPromiseHealth, redPlans } from "../lib/promises/health.js";
 import { readPromises } from "../lib/promises/registry.js";
 import type { MarkedSpan, MarkedSpansResult } from "../lib/promises/telemetry.js";
 import { behaviourPromise, codeFilesFor, promiseProject } from "./helpers/promises-fixture.js";
@@ -12,9 +12,8 @@ import { behaviourPromise, codeFilesFor, promiseProject } from "./helpers/promis
 /**
  * A plan's parts carry each promise's health, read from the alarm source the
  * nav's red dot reads. The pages are not started: the parts are read from a
- * fixture project and handed health from fake source reads. `readPlanParts`
- * takes a `health` option and `PartPromise` a `health` field only once the
- * build phase lands, so both are reached here through a cast.
+ * fixture project and handed health from fake source reads, through the
+ * package's `planPromiseHealth` — the answer the nav's red dot reads.
  */
 
 const PLAN = "plan-under-test";
@@ -115,31 +114,15 @@ function project() {
 	return { root: p.root, registry: registry.registry };
 }
 
-/** The health the nav reads for each promise: the alarm source's rows, by name. */
-function alarmHealth(
-	registry: ReturnType<typeof project>["registry"],
-	reads: SourceHealthRead[],
-): Record<string, PromiseHealth> {
-	const rows = healthRows(registry, alarmRead(reads) ?? null);
-	return Object.fromEntries(Object.entries(rows).map(([name, row]) => [name, row.health]));
-}
-
-type WithHealth = { promises: Array<{ name: string; health?: PromiseHealth }> };
 const partsWith = (root: string, health: Record<string, PromiseHealth>) =>
-	(
-		readPlanParts as unknown as (
-			root: string,
-			plan: string,
-			options: { health: Record<string, PromiseHealth> },
-		) => Promise<WithHealth>
-	)(root, PLAN, { health });
+	readPlanParts(root, PLAN, { health });
 
 describe("A1 — a break nobody has recorded is broken on the plan's parts", () => {
 	// clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken
 	it("A1 an enforced behaviour promise with a live break carries health red", async () => {
 		const { root, registry } = project();
 		const reads = [read("local", "broken")];
-		const health = alarmHealth(registry, reads);
+		const health = planPromiseHealth(registry, reads);
 		expect(health[PROMISE], "the nav's own answer for the fixture").toBe("red");
 		const parts = await partsWith(root, health);
 		expect(parts.promises.find((p) => p.name === PROMISE)?.health).toBe("red");
@@ -152,7 +135,7 @@ describe("A3 — the plan's parts read health as the nav's red dot does", () => 
 		const { root, registry } = project();
 		const reads = [read("local", "broken"), read("production", "holding")];
 		expect(redPlans(registry, reads).has(PLAN), "the nav's red dot for the plan").toBe(false);
-		const parts = await partsWith(root, alarmHealth(registry, reads));
+		const parts = await partsWith(root, planPromiseHealth(registry, reads));
 		expect(parts.promises.find((p) => p.name === PROMISE)?.health).toBe("green");
 	});
 });
