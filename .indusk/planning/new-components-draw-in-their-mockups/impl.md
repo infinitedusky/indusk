@@ -1,7 +1,7 @@
 ---
 title: "New components draw in their mockups"
 date: 2026-10-17
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -53,7 +53,7 @@ mockup's own styles.
 
 This phase writes the two tests the fix is measured by: one showing a new component drawn in its mockup gets that mockup's styles, which fails today, and one holding that a placed component still does not, which passes today and must keep passing.
 
-- [ ] Write the two tests against the cockpit's mockup page builder, the first failing on its own assertion.
+- [x] Write the two tests against the cockpit's mockup page builder, the first failing on its own assertion.
   <details><summary>Technical</summary>
 
   `overview.test.ts`: a mockup declaring `<meta name="indusk-new-components" content="idea-row">` with `.ir { display: grid }` on its own `[data-component="idea-row"]` element, composed by `mockupDocument` — A1 asserts the rule reaches it (the scoped selector does not exclude `[data-component="idea-row"]`); A2 asserts a placed `[data-component="card"]` in the same mockup, and an element inside it, are still excluded. Both carry `promise: mockups-render-in-the-cockpit`.
