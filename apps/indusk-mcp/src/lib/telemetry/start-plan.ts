@@ -10,6 +10,7 @@ import {
 	portsOf,
 	portsOfRecord,
 	ROLE_LABEL,
+	recordedAddress,
 	runningDaemonPorts,
 	type StoredAddress,
 } from "./daemon-address.js";
@@ -63,6 +64,8 @@ export function startPlan(
 		spare?: number[];
 		/** The ports this home's running daemon holds when the address is lost with a record's Jaeger alive. */
 		running?: Partial<Ports>;
+		/** The address the running daemon recorded, when the address file is lost. */
+		recorded?: StoredAddress | null;
 	},
 ): StartPlan {
 	if (state.kind === "running") return { kind: "running" };
@@ -104,6 +107,9 @@ export function startPlan(
 		const ports = portsOf(stored);
 		const conflicts = heldOf(ports, holders);
 		return conflicts.length > 0 ? { kind: "refuse", holders: conflicts } : { kind: "start", ports };
+	}
+	if (opts.recorded) {
+		return { kind: "start", ports: portsOf(opts.recorded), store: opts.recorded };
 	}
 	const chosen = chooseAddress(holders, opts.running ?? {}, home, opts.spare ?? []);
 	if (chosen.kind === "refuse") return { kind: "refuse", holders: chosen.holders };
@@ -268,6 +274,7 @@ export async function ensureDaemon(
 			given,
 			spare: opts.spare,
 			running: real && address === null ? runningDaemonPorts(reads, home) : undefined,
+			recorded: real && address === null ? recordedAddress(reads, home) : null,
 		});
 		switch (plan.kind) {
 			case "running":
@@ -283,13 +290,18 @@ export async function ensureDaemon(
 				return { kind: "refused", text: refusalText(plan, home, address, exists), holders: [] };
 			case "takeover": {
 				if (plan.store) reads.writeAddress(plan.store, { exclusive: true });
-				const found = takeOverLocked(reads, home, { tracesPort: plan.tracesPort });
+				let found = takeOverLocked(reads, home, { tracesPort: plan.tracesPort });
 				if (found === null) {
 					return {
 						kind: "refused",
 						text: "The daemon found was gone before it could be taken over.",
 						holders: [],
 					};
+				}
+				// The record carries the address this takeover wrote, so a lost file is rebuilt from it.
+				if (plan.store && found.finder) {
+					found = { ...found, meta: { ...found.meta, address: plan.store } };
+					reads.writeRecord(found.meta, { exclusive: false });
 				}
 				return {
 					kind: "took-over",
@@ -301,7 +313,9 @@ export async function ensureDaemon(
 			}
 			case "start": {
 				if (plan.store) reads.writeAddress(plan.store, { exclusive: true });
-				const meta = await spawn({ ports: plan.ports });
+				const spawned = await spawn({ ports: plan.ports });
+				const ran = plan.store ?? address;
+				const meta = real && ran !== null ? { ...spawned, address: ran } : spawned;
 				reads.writeRecord(meta, { exclusive: false });
 				return { kind: "started", meta, stored: plan.store };
 			}

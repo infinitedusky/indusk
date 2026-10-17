@@ -3,6 +3,7 @@ import { createConnection } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { isAlive } from "../process-identity.js";
+import type { StoredAddress } from "./daemon-address.js";
 import type { DaemonReads } from "./daemon-reads.js";
 import { realDaemonReads } from "./daemon-reads.js";
 import {
@@ -59,6 +60,8 @@ export interface DaemonMeta {
 	logsPath: string;
 	/** The size of `telemetry.log` just before this daemon was spawned: where its own lines begin. Absent in a record written by a finder. */
 	logOffset?: number;
+	/** The stored address this daemon was started or taken over on; absent for a daemon from before the address existed, or one found with no record. */
+	address?: StoredAddress;
 }
 
 export type DaemonStatusResult =

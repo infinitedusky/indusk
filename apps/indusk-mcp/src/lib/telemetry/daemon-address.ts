@@ -129,14 +129,14 @@ export type ChooseResult =
 	| { kind: "refuse"; holders: PortHolder[] };
 
 /**
- * Chooses the address by the one rule. A role the running daemon of this home
- * already holds a port for (`ownPorts`) keeps that port, so the address says
- * where the daemon is; a stranger on the block port is recorded as the holder.
- * Otherwise a block port that is free, or held by this home's own daemon, is
- * kept; one held by a process that is not InDusk's is replaced by the next of
- * `spare` (free ports the caller picked), and the holder is recorded. One held
- * by another home's InDusk daemon refuses, as does a stranger when no spare
- * port is left.
+ * Chooses the address by the one rule. A block port that is free, or held by
+ * this home's own daemon, is kept. One held by a process that is not InDusk's
+ * is replaced by the port this home's running daemon already holds for that
+ * role (`ownPorts`), else the next of `spare` (free ports the caller picked),
+ * and the holder is recorded. One held by another home's InDusk daemon
+ * refuses, as does a stranger when no spare port is left. A running daemon's
+ * port never replaces a free block port: a daemon from before the address
+ * existed sits on 4318, which the block exists to avoid.
  */
 export function chooseAddress(
 	holders: Record<number, Holder | null>,
@@ -151,29 +151,22 @@ export function chooseAddress(
 	for (const role of ADDRESS_ROLES) {
 		const blockPort = PORT_BLOCK[role];
 		const holder = holders[blockPort] ?? null;
-		const proc = holder === null ? null : daemonProcessOf(holder.command);
-		const held = holder === null || (proc !== null && isOwn(proc, home)) ? null : holder;
-		const otherHomesDaemon = held !== null && proc !== null;
-		const kept = ownPorts[role];
-		if (kept !== undefined && !otherHomesDaemon) {
-			// the running daemon already holds this role's port: the address says so
-			ports[role] = kept;
-			if (held !== null) {
-				picked.push({ role, blockPort, holder: `${held.pid} ${held.command}` });
-			}
-			continue;
-		}
-		if (held === null) {
+		if (holder === null) {
 			ports[role] = blockPort;
 			continue;
 		}
-		const replacement = proc === null ? free.shift() : undefined;
+		const proc = daemonProcessOf(holder.command);
+		if (proc !== null && isOwn(proc, home)) {
+			ports[role] = blockPort;
+			continue;
+		}
+		const replacement = proc === null ? (ownPorts[role] ?? free.shift()) : undefined;
 		if (replacement === undefined) {
-			refused.push({ role, port: blockPort, ...held });
+			refused.push({ role, port: blockPort, ...holder });
 			continue;
 		}
 		ports[role] = replacement;
-		picked.push({ role, blockPort, holder: `${held.pid} ${held.command}` });
+		picked.push({ role, blockPort, holder: `${holder.pid} ${holder.command}` });
 	}
 	if (refused.length > 0) return { kind: "refuse", holders: refused };
 	return { kind: "chosen", address: { ...(ports as Ports), picked } };
@@ -218,21 +211,37 @@ export type ResetResult =
 	| { ok: true; old: StoredAddress | null; new: StoredAddress; message: string }
 	| { ok: false; message: string };
 
-/** The ports this home's running daemon holds, by role, read from its record. */
-export function runningDaemonPorts(reads: DaemonReads, home: string): Partial<Ports> {
+/** The record, when it names a Jaeger that is still this home's daemon. */
+function aliveRecord(reads: DaemonReads, home: string): DaemonMeta | null {
 	const meta = reads.record();
-	if (meta === null) return {};
+	if (meta === null) return null;
 	const alive = reads.processes().some((row) => {
 		const proc = daemonProcessOf(row.command);
 		return proc !== null && isOwn(proc, home) && row.pid === meta.jaegerPid;
 	});
-	if (!alive) return {};
+	return alive ? meta : null;
+}
+
+/** The ports this home's running daemon holds, by role, read from its record. */
+export function runningDaemonPorts(reads: DaemonReads, home: string): Partial<Ports> {
+	const meta = aliveRecord(reads, home);
+	if (meta === null) return {};
 	const recorded = portsOfRecord(meta);
 	const held: Partial<Ports> = {};
 	for (const role of ADDRESS_ROLES) {
 		if (recorded[role] > 0) held[role] = recorded[role];
 	}
 	return held;
+}
+
+/**
+ * The address a lost address file is rebuilt from: the one the running daemon
+ * recorded when it started or was taken over, picked ports and holders
+ * included. `null` when the record carries none (a daemon from before the
+ * address existed lends nothing) or its Jaeger is gone.
+ */
+export function recordedAddress(reads: DaemonReads, home: string): StoredAddress | null {
+	return aliveRecord(reads, home)?.address ?? null;
 }
 
 function lineOf(address: StoredAddress): string {
@@ -249,7 +258,11 @@ export function resetAddress(reads: DaemonReads, home: string, spare: number[] =
 	try {
 		const old = reads.address();
 		const holders = reads.holders(ADDRESS_ROLES.map((role) => PORT_BLOCK[role]));
-		const chosen = chooseAddress(holders, runningDaemonPorts(reads, home), home, spare);
+		const rebuilt = old === null ? recordedAddress(reads, home) : null;
+		const chosen: ChooseResult =
+			rebuilt !== null
+				? { kind: "chosen", address: rebuilt }
+				: chooseAddress(holders, runningDaemonPorts(reads, home), home, spare);
 		if (chosen.kind === "refuse") {
 			return {
 				ok: false,

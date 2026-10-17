@@ -289,6 +289,8 @@ describe("A38 — a lost address file comes back as the ports the running daemon
 				logsOtlpPort: PICKED.logs,
 				uiPort: PICKED.ui,
 				mcpPort: PICKED.mcp,
+				// the daemon recorded the address it runs on when it started
+				address: { ...PICKED, picked: [] },
 			}),
 			address: null,
 			processes: [jaegerCmd(1, HOME)],
