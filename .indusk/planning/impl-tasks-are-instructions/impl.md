@@ -119,13 +119,13 @@ This phase rewrites the planner's instructions, its impl template, the falsify
 and cleanup templates and the planning rules so a task is an instruction and a
 verification item an end state, then changes the promise's sentence to match.
 
-- [ ] Rewrite the planner's phase-summary paragraph so a task is an instruction and a verification item states what must hold, with a before-and-after pair.
+- [x] Rewrite the planner's phase-summary paragraph so a task is an instruction and a verification item states what must hold, with a before-and-after pair.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/planner.md` step 7, "Open each phase with a summary": replace "Each task is one plain sentence saying what will be true when it is done" with "Each task is one plain instruction saying what to do ("Make the prompt box's text area use the app's font"); each verification item is one plain statement of what must hold". Before/after pair: "The prompt box draws in the app's font" → "Make the prompt box's text area use the app's font".
 
   </details>
-- [ ] Reword every task placeholder in the planner's impl template, and in the falsify and cleanup templates, as an instruction.
+- [x] Reword every task placeholder in the planner's impl template, and in the falsify and cleanup templates, as an instruction.
   <details><summary>Technical</summary>
 
   `planner.md` `### impl.md` block; `skills/falsify.md` and `skills/cleanup.md` phase-summary shapes. Verification placeholders keep "what must hold".

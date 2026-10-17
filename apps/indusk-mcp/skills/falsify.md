@@ -60,7 +60,7 @@ When you've formed one or more specific hypotheses, **append a new phase to the 
 - [ ] {docs page to update, or "(none — internal-only fix)" with proof}
 ```
 
-**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph.
+**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain instruction saying what to do and each verification item one plain statement of what must hold, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph.
 
 <!-- template: phase_summary required -->
 ```markdown
@@ -70,13 +70,13 @@ When you've formed one or more specific hypotheses, **append a new phase to the 
 
 {Two or three plain sentences: what this phase tests about the finished plan, what it fixes if a hypothesis is confirmed, and what is true once it closes. No row labels, no abbreviations, no code.}
 
-- [ ] {One plain sentence saying what will be true once fix 1 is made}
+- [ ] {One plain instruction saying what to do for fix 1}
   <details><summary>Technical</summary>
 
   {The concrete code change: files, symbols, the hypothesis it answers.}
 
   </details>
-- [ ] {One plain sentence for the next fix}
+- [ ] {One plain instruction for the next fix}
   <details><summary>Technical</summary>
 
   {The concrete code change.}
@@ -85,7 +85,7 @@ When you've formed one or more specific hypotheses, **append a new phase to the 
 
 #### Phase N Verification
 
-- [ ] {One plain sentence saying which hypothesis now holds, failing today and passing after the fixes}
+- [ ] {One plain statement of what must hold: which hypothesis now holds, failing today and passing after the fixes}
   <details><summary>Technical</summary>
 
   T{M}: {restate the hypothesis — the test should fail today and pass after the fixes land}. T{M+1}: {the next hypothesis}.
