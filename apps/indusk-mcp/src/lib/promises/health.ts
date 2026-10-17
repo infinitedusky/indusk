@@ -529,12 +529,23 @@ export function healthRows(
  * Each promise's health from the alarm source, by name: the one answer the
  * sidebar's red dot and a plan's page both read, so neither decides its own.
  * A promise telemetry says nothing about (state, structure) has no entry.
+ * `extra` are promises a plan's own checkout registers that `registry` (the
+ * trunk's) does not yet: they read through the same rule, with the trunk's
+ * incidents and the same alarm source, so no signal is never the enforced green.
  */
 export function planPromiseHealth(
 	registry: Registry,
 	reads: SourceHealthRead[],
+	extra: PromiseEntry[] = [],
 ): Record<string, PromiseHealth> {
-	const rows = healthRows(registry, alarmRead(reads) ?? null);
+	const read = alarmRead(reads) ?? null;
+	const rows = healthRows(registry, read);
+	const known = new Set(registry.promises.map((p) => p.name));
+	for (const p of extra) {
+		if (known.has(p.name)) continue;
+		const row = healthOf(p, read, registry.incidents);
+		if (row) rows[p.name] = row;
+	}
 	return Object.fromEntries(Object.entries(rows).map(([name, row]) => [name, row.health]));
 }
 
