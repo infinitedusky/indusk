@@ -90,6 +90,13 @@ it writes no resets yet. Build Phase 1 then makes the generator tests pass.
   A1–A3 in `component-styles.test.ts`, against `componentReset(appCss, foundation)`: from compiled CSS holding `a { color: inherit }` and `textarea { font: inherit; font-size: 100% }`, the sheet holds both, each selector scoped `:where([data-component], [data-component] *)` with zero added specificity; a rule naming a class or a component marker is not in it. Red: the export is absent, so these assert on an import that resolves to `undefined` — written with `import * as styles` and `expect(styles.componentReset)` first, so the file loads.
 
   </details>
+- [x] Shape — reviewed a file this phase changed and left it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/__tests__/composition.contract.test.ts, looks-components.contract.test.ts`: brought in by merging plan/storybook-components, written and shaped in that plan, not this phase
+
+  </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Regression Guards
 
@@ -106,7 +113,7 @@ it writes no resets yet. Build Phase 1 then makes the generator tests pass.
 
 #### Test Phase 1 Context
 
-- [ ] Nothing about how the project works changes in this phase; the record says so.
+- [x] Nothing about how the project works changes in this phase; the record says so.
   <details><summary>Technical</summary>
 
   current.md: this session's section notes the plan is at Test Phase 1 with A1–A5 red.
