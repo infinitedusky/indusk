@@ -290,12 +290,13 @@ changed; and Sandy approves the changed `message.you` story.
 
 #### Build Phase 2 Context
 
-- [ ] The admin's rules say a component wraps long text with the standard utility.
+- [x] The admin's rules say a component wraps long text with the standard utility.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md` is over its 16 KB budget: instead, guard: the A5 row's test carries `promise: mockups-render-in-the-cockpit`, so a regression names the promise.
 
   </details>
+  Note: guard confirmed — `looks-components.contract.test.ts` carries `promise: mockups-render-in-the-cockpit`, so an A18 failure names the promise.
 
 #### Build Phase 2 Document
 
