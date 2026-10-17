@@ -499,27 +499,26 @@ export async function update(projectRoot: string): Promise<void> {
 				}
 			}
 
-			// Sync jaeger MCP url to the live telemetry daemon's mcpPort.
-			// `mcpPort` is OS-assigned per spawn so it rotates on every daemon
-			// start/restart; without this sync, `indusk update` couldn't fix
-			// a project whose entry had gone stale from a prior daemon run.
-			// Only writes when the daemon is running AND the URL is wrong;
-			// silent no-op otherwise.
+			// Sync this project's jaeger MCP url to the daemon's stored MCP port (or,
+			// in a home that stores none, the running daemon's). The address never
+			// moves, so this repairs an entry that went stale; it writes only when
+			// the URL differs, and never another project's entry.
 			const jaegerEntry = mcpConfig.mcpServers?.jaeger;
 			if (jaegerEntry?.type === "http" && typeof jaegerEntry.url === "string") {
 				try {
-					const { resolveLocalDaemonHere } = await import("../../lib/telemetry/status.js");
-					const daemon = await resolveLocalDaemonHere("update");
-					// A port the finder could not read from a socket is 0: never written into an entry.
-					if (daemon !== null && daemon.mcpPort > 0) {
-						const expectedUrl = `http://localhost:${daemon.mcpPort}/mcp`;
-						if (jaegerEntry.url !== expectedUrl) {
-							const { writeFileSync } = await import("node:fs");
-							mcpConfig.mcpServers.jaeger = { type: "http", url: expectedUrl };
-							writeFileSync(mcpJsonPath, `${JSON.stringify(mcpConfig, null, 2)}\n`);
-							console.info(`  synced: jaeger MCP url → ${expectedUrl}`);
-							mcpChanged = true;
-						}
+					const { resolveLocalDaemonHere, induskHome } = await import(
+						"../../lib/telemetry/status.js"
+					);
+					// A daemon whose record is gone is found first, so its port can be read.
+					await resolveLocalDaemonHere("update");
+					const { mcpPortOf } = await import("../../lib/telemetry/daemon-address.js");
+					const { realDaemonReads } = await import("../../lib/telemetry/daemon-reads.js");
+					const { upsertJaegerEntry } = await import("../../lib/mcp-config.js");
+					const port = mcpPortOf(realDaemonReads(induskHome()));
+					// A port the finder could not read from a socket is never written into an entry.
+					if (port !== null && upsertJaegerEntry(projectRoot, port)) {
+						console.info(`  synced: jaeger MCP url → http://localhost:${port}/mcp`);
+						mcpChanged = true;
 					}
 				} catch {
 					// Daemon not running, or write failed — don't block update.

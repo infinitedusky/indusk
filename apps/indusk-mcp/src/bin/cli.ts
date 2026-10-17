@@ -621,31 +621,46 @@ program
 // Telemetry daemon (Jaeger + otelcol) — same parent+subcommand + optsWithGlobals
 // pattern as `indusk ui` above. Commander@13 drops duplicated options when they
 // appear on both parent and child, so options live only on the parent.
+interface TelemetryPortFlags {
+	otlpPort?: string;
+	uiPort?: string;
+	logsPort?: string;
+	mcpPort?: string;
+}
+
 const telemetryCmd = program
 	.command("telemetry")
 	.description("Local telemetry daemon lifecycle (start/stop/restart/status)")
-	.option("--otlp-port <port>", "OTLP HTTP port for Jaeger (0 = pick free)", "4318")
-	.option("--ui-port <port>", "Jaeger UI port (0 = pick free)", "16686");
+	.option("--otlp-port <port>", "Traces port (a temporary home only; 0 = pick free)")
+	.option("--ui-port <port>", "Jaeger interface port (a temporary home only; 0 = pick free)")
+	.option("--logs-port <port>", "Logs port (a temporary home only; 0 = pick free)")
+	.option("--mcp-port <port>", "Jaeger MCP port (a temporary home only; 0 = pick free)");
 
 telemetryCmd
 	.command("start")
-	.description("Start the telemetry daemon (Jaeger + otelcol)")
-	.option(
-		"--allow-port-bump",
-		"Start on a different port when the requested one is already in use (default: refuse)",
+	.description(
+		"Start the telemetry daemon (Jaeger + otelcol) on its stored address, or take over the one already running",
 	)
 	.action(async function (this: Command) {
-		const opts = this.optsWithGlobals() as {
-			otlpPort: string;
-			uiPort: string;
-			allowPortBump?: boolean;
-		};
+		const opts = this.optsWithGlobals() as TelemetryPortFlags;
 		const { telemetryStart } = await import("./commands/telemetry.js");
-		await telemetryStart({
-			otlpPort: opts.otlpPort,
-			uiPort: opts.uiPort,
-			allowPortBump: opts.allowPortBump,
-		});
+		await telemetryStart(opts);
+	});
+
+telemetryCmd
+	.command("address")
+	.description(
+		"Print the daemon's stored address (traces, logs, interface, MCP); --json for init to hand to an application",
+	)
+	.option("--json", "Print the address as JSON")
+	.option(
+		"--reset",
+		"Choose the address again, the one way it changes (every application given the old one needs the new one)",
+	)
+	.action(async function (this: Command) {
+		const opts = this.opts() as { json?: boolean; reset?: boolean };
+		const { telemetryAddress } = await import("./commands/telemetry.js");
+		await telemetryAddress(opts);
 	});
 
 telemetryCmd
@@ -692,18 +707,11 @@ telemetryCmd
 	.command("restart")
 	.description("Stop + start — picks up new binaries from `npm i -g` of a newer indusk-mcp")
 	.action(async function (this: Command) {
-		const parent = this.parent as Command;
-		const opts = parent.opts() as { otlpPort: string; uiPort: string };
-		// Only forward ports when explicitly set; otherwise daemonRestart
-		// inherits the previously-bound ports from the running daemon's meta,
-		// which is the correct restart semantics ("same daemon, fresh processes").
-		const otlpExplicit = parent.getOptionValueSource("otlpPort") === "cli";
-		const uiExplicit = parent.getOptionValueSource("uiPort") === "cli";
+		// Ports are forwarded only when given on the command line (a temporary
+		// home); the real home restarts on its stored address.
+		const opts = this.optsWithGlobals() as TelemetryPortFlags;
 		const { telemetryRestart } = await import("./commands/telemetry.js");
-		await telemetryRestart({
-			otlpPort: otlpExplicit ? opts.otlpPort : undefined,
-			uiPort: uiExplicit ? opts.uiPort : undefined,
-		});
+		await telemetryRestart(opts);
 	});
 
 telemetryCmd
@@ -778,9 +786,9 @@ telemetryCmd
 		"Stop the daemon, clear in-memory trace storage + log sink, and restart. Human-only — not exposed as an MCP tool.",
 	)
 	.action(async function (this: Command) {
-		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
+		const opts = this.optsWithGlobals() as TelemetryPortFlags;
 		const { telemetryReset } = await import("./commands/telemetry.js");
-		await telemetryReset({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
+		await telemetryReset(opts);
 	});
 
 const workbenchCmd = program

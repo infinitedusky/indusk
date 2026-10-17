@@ -1,11 +1,13 @@
-import { existsSync } from "node:fs";
-import { removeJaegerEntry, upsertJaegerEntry } from "../../lib/mcp-config.js";
+import { existsSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { readMcpJson, removeJaegerEntry, upsertJaegerEntry } from "../../lib/mcp-config.js";
 import {
 	daemonRestart,
-	daemonStart,
 	daemonStatus,
 	daemonStop,
+	startDaemon,
 } from "../../lib/telemetry/daemon.js";
+import { addressReport, resetAddress } from "../../lib/telemetry/daemon-address.js";
 import { realDaemonReads } from "../../lib/telemetry/daemon-reads.js";
 import {
 	daemonState,
@@ -13,101 +15,73 @@ import {
 	findDaemon,
 	renderStatus,
 } from "../../lib/telemetry/daemon-state.js";
-import { deregisterProject, readRegistry, registerProject } from "../../lib/telemetry/registry.js";
+import { registerWithDaemon } from "../../lib/telemetry/register.js";
+import { deregisterProject, readRegistry } from "../../lib/telemetry/registry.js";
+import { describeDaemon, startReport } from "../../lib/telemetry/start-plan.js";
 import { induskHome, portAnswers, resolveLocalDaemonHere } from "../../lib/telemetry/status.js";
 
 /**
- * Re-write the `jaeger` MCP server entry across every registered project's
- * `.mcp.json` to point at the supplied `mcpPort`. Called after daemon
- * start / restart / register so every project's pointer stays in sync with
- * the live OS-assigned port (which rotates on every spawn).
- *
- * Silently skips projects whose path no longer exists on disk (admin-UI
- * lesson: registry is never auto-pruned — a deleted project path is a user
- * recovery action, not something to crash the daemon over). Returns counts
- * so callers can surface what happened.
+ * Re-point the registered projects whose `jaeger` entry names exactly the MCP
+ * port the daemon had before a restart. A restart on the stored address keeps
+ * the port, so nothing is written; an entry that names any other port was set
+ * by someone else and is left as it is.
  */
-function reportMcpSync(result: { updated: number; skipped: string[] }, mcpPort: number): void {
-	if (result.updated > 0) {
-		console.info(
-			`  .mcp.json: synced ${result.updated} registered project(s) to mcpPort :${mcpPort}`,
-		);
-	}
-	if (result.skipped.length > 0) {
-		console.warn(
-			`  Skipped ${result.skipped.length} project(s) (missing path or write failed): ${result.skipped.join(", ")}`,
-		);
-	}
-}
-
-function syncAllRegisteredProjectsMcp(mcpPort: number): {
-	updated: number;
-	skipped: string[];
-} {
-	const skipped: string[] = [];
+function repointMcpEntries(oldPort: number, newPort: number): void {
+	if (oldPort <= 0 || oldPort === newPort) return;
 	let updated = 0;
 	for (const p of readRegistry().projects) {
-		if (!existsSync(p.path)) {
-			skipped.push(p.name);
-			continue;
-		}
-		try {
-			upsertJaegerEntry(p.path, mcpPort);
-			updated++;
-		} catch (err) {
-			skipped.push(`${p.name} (${(err as Error).message})`);
-		}
+		if (!existsSync(p.path)) continue;
+		if (readMcpJson(p.path).mcpServers?.jaeger?.url !== `http://localhost:${oldPort}/mcp`) continue;
+		if (upsertJaegerEntry(p.path, newPort)) updated++;
 	}
-	return { updated, skipped };
+	if (updated > 0)
+		console.info(`  .mcp.json: re-pointed ${updated} project(s) to MCP port :${newPort}`);
 }
 
 export interface TelemetryStartOptions {
-	otlpPort: string;
-	uiPort: string;
-	/** Proceed on a different port when the requested one is already served. */
-	allowPortBump?: boolean;
+	otlpPort?: string;
+	uiPort?: string;
+	logsPort?: string;
+	mcpPort?: string;
+}
+
+/** Ports from the command line: each is an integer 0-65535 or the command exits. */
+function portOptions(opts: TelemetryStartOptions): {
+	otlpPort?: number;
+	uiPort?: number;
+	logsPort?: number;
+	mcpPort?: number;
+} {
+	const out: Record<string, number> = {};
+	for (const [key, flag] of [
+		["otlpPort", "--otlp-port"],
+		["uiPort", "--ui-port"],
+		["logsPort", "--logs-port"],
+		["mcpPort", "--mcp-port"],
+	] as const) {
+		const raw = opts[key];
+		if (raw === undefined) continue;
+		const port = Number.parseInt(raw, 10);
+		if (!Number.isFinite(port) || port < 0 || port > 65535) {
+			console.error(`Invalid ${flag}: ${raw}`);
+			process.exit(1);
+		}
+		out[key] = port;
+	}
+	return out;
 }
 
 /**
- * Start the telemetry daemon (Jaeger + otelcol). If already running, prints
- * the current state without spawning a second set of processes.
+ * Start the telemetry daemon (Jaeger + otelcol): reports one that runs, takes
+ * over one whose record is lost, starts one on the stored address, or refuses
+ * naming the holder of a port. Never a second daemon.
  */
 export async function telemetryStart(opts: TelemetryStartOptions): Promise<void> {
-	const status = await daemonStatus();
-	if (status.running) {
-		console.info(
-			`Telemetry daemon is already running:\n` +
-				`  OTLP:      http://localhost:${status.otlpPort}\n` +
-				`  Jaeger UI: http://localhost:${status.uiPort}\n` +
-				`  PIDs:      jaeger=${status.jaegerPid} otelcol=${status.otelcolPid}`,
-		);
-		return;
-	}
-
-	const otlpRequested = Number.parseInt(opts.otlpPort, 10);
-	const uiRequested = Number.parseInt(opts.uiPort, 10);
-	if (!Number.isFinite(otlpRequested) || otlpRequested < 0 || otlpRequested > 65535) {
-		console.error(`Invalid --otlp-port: ${opts.otlpPort}`);
-		process.exit(1);
-	}
-	if (!Number.isFinite(uiRequested) || uiRequested < 0 || uiRequested > 65535) {
-		console.error(`Invalid --ui-port: ${opts.uiPort}`);
-		process.exit(1);
-	}
-
-	console.info("Starting telemetry daemon (Jaeger + otelcol)...");
+	const given = portOptions(opts);
 	try {
-		const meta = await daemonStart({
-			otlpPort: otlpRequested,
-			uiPort: uiRequested,
-			allowPortBump: opts.allowPortBump,
-		});
-		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
-		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
-		console.info(`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`);
-		console.info(`  Logs:      ${meta.logsPath}`);
-		console.info(`  Daemon log: ~/.indusk/telemetry.log`);
-		reportMcpSync(syncAllRegisteredProjectsMcp(meta.mcpPort), meta.mcpPort);
+		const out = startReport(await startDaemon("start", given));
+		console[out.code === 0 ? "info" : "error"](out.text);
+		if (out.code !== 0) process.exit(out.code);
 	} catch (err) {
 		console.error(`Failed to start telemetry daemon: ${(err as Error).message}`);
 		process.exit(1);
@@ -186,28 +160,22 @@ export async function telemetryStop(): Promise<void> {
 	}
 }
 
-export interface TelemetryRestartOptions {
-	otlpPort?: string;
-	uiPort?: string;
-}
+export type TelemetryRestartOptions = TelemetryStartOptions;
 
 /**
- * Restart = stop + start. Picks up new binaries after `npm i -g` of a newer
- * indusk-mcp + new platform-package version (T5 contract). When ports are not
- * explicitly supplied, `daemonRestart` inherits them from the previously
- * running daemon's meta file — restart means "same daemon, fresh processes."
+ * Restart = stop + start on the same address. The real home comes back on its
+ * stored address, a temporary home on the ports it held; picks up new binaries
+ * after `npm i -g` of a newer indusk-mcp + new platform-package version.
  */
 export async function telemetryRestart(opts: TelemetryRestartOptions = {}): Promise<void> {
 	console.info("Restarting telemetry daemon...");
 	try {
-		const meta = await daemonRestart({
-			otlpPort: opts.otlpPort !== undefined ? Number.parseInt(opts.otlpPort, 10) : undefined,
-			uiPort: opts.uiPort !== undefined ? Number.parseInt(opts.uiPort, 10) : undefined,
-		});
-		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
-		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
-		console.info(`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`);
-		reportMcpSync(syncAllRegisteredProjectsMcp(meta.mcpPort), meta.mcpPort);
+		const given = portOptions(opts);
+		// A daemon whose record is gone is found first (and its record written), so stop can see it.
+		const before = await resolveLocalDaemonHere("telemetry restart");
+		const meta = await daemonRestart(given);
+		console.info(describeDaemon(meta));
+		repointMcpEntries(before?.mcpPort ?? 0, meta.mcpPort);
 	} catch (err) {
 		console.error(`Failed to restart telemetry daemon: ${(err as Error).message}`);
 		process.exit(1);
@@ -242,62 +210,36 @@ export async function telemetryStatus(): Promise<void> {
 
 /**
  * Register a project with the telemetry daemon (internal — called by the
- * extension's on_enable hook). If the daemon isn't running, auto-starts it
- * so the newly-registered project has a live daemon to emit to. Also
- * upserts a `jaeger` MCP server entry in the project's `.mcp.json` pointing
- * at the daemon's current mcpPort — giving the agent direct access to
- * Jaeger's 8 MCP tools (search_traces, get_trace_topology, get_span_details,
- * etc.).
+ * extension's on_enable hook, and so by `init`, `update` and enabling it).
+ * Takes over or starts the one daemon, never a second, and writes only this
+ * project's `jaeger` MCP entry, at the stored MCP port, when it differs.
  */
 export async function telemetryRegister(projectPath: string): Promise<void> {
-	const entry = registerProject(projectPath);
-	console.info(`Registered project: ${entry.name} (${entry.path})`);
-	let status = await daemonStatus();
-	if (!status.running && process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART === "1") {
-		// The test suites set this (test-daemons-never-leak): every test that ran
-		// `init` against a temporary home started a detached pair here and nothing
-		// stopped it — 860 found running on 2026-10-03. Registration still
-		// happens; only the opportunistic start is skipped.
-		console.info("Daemon not running — not starting it (INDUSK_SKIP_TELEMETRY_AUTOSTART=1).");
+	const result = await registerWithDaemon(projectPath);
+	for (const line of result.lines) {
+		console[result.code === 0 ? "info" : "error"](line);
+	}
+	if (result.code !== 0) process.exit(result.code);
+}
+
+/**
+ * Print the stored address (`--json` for `init` to hand to an application), or
+ * choose it again on purpose (`--reset`), the one way it ever changes.
+ */
+export async function telemetryAddress(opts: { json?: boolean; reset?: boolean }): Promise<void> {
+	const home = induskHome();
+	const reads = realDaemonReads(home);
+	if (opts.reset) {
+		const { findFreePort } = await import("../../lib/telemetry/daemon.js");
+		const spare = await Promise.all([0, 0, 0, 0].map(() => findFreePort(0)));
+		const result = resetAddress(reads, home, spare);
+		console[result.ok ? "info" : "error"](result.message);
+		if (!result.ok) process.exit(1);
 		return;
 	}
-	if (!status.running) {
-		console.info("Daemon not running — starting it now...");
-		try {
-			// allowPortBump on purpose: this auto-start is opportunistic, not a
-			// user asking for :4318. The port guard belongs to explicit
-			// `telemetry start`, where the caller named a port and silently
-			// binding another is the bug. Applying it here made `indusk init`
-			// FAIL on any machine already running a daemon — a regression shipped
-			// in 1.36.2 and caught by the telemetry suite.
-			const meta = await daemonStart({ allowPortBump: true });
-			console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
-			console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
-			console.info(`  Jaeger MCP: http://localhost:${meta.mcpPort}/mcp`);
-			status = { running: true, ...meta };
-		} catch (err) {
-			console.error(`Project registered but daemon failed to start: ${(err as Error).message}`);
-			process.exit(1);
-		}
-	}
-	if (status.running) {
-		// Sync ALL registered projects (not just this one) — daemon's mcpPort
-		// is OS-assigned per spawn, so other projects' .mcp.json may be stale
-		// from a previous daemon run.
-		const result = syncAllRegisteredProjectsMcp(status.mcpPort);
-		console.info(`  .mcp.json: wired jaeger MCP server at http://localhost:${status.mcpPort}/mcp`);
-		const others = Math.max(0, result.updated - 1);
-		if (others > 0) {
-			console.info(
-				`  Refreshed ${others} other registered project(s)' .mcp.json to the same mcpPort`,
-			);
-		}
-		if (result.skipped.length > 0) {
-			console.warn(
-				`  Skipped ${result.skipped.length} project(s) (missing path or write failed): ${result.skipped.join(", ")}`,
-			);
-		}
-	}
+	const out = addressReport(reads, { json: opts.json });
+	console[out.code === 0 ? "info" : "error"](out.text);
+	if (out.code !== 0) process.exit(out.code);
 }
 
 /**
@@ -457,32 +399,23 @@ export async function telemetryServices(): Promise<void> {
 }
 
 /**
- * Reset the daemon: stop + restart with fresh in-memory Jaeger storage +
- * truncate logs.jsonl. Human-triggered only; not exposed as an MCP tool.
+ * Reset the daemon: stop + restart on the same address with fresh in-memory
+ * Jaeger storage + truncate logs.jsonl. Human-triggered only; not exposed as an
+ * MCP tool.
  */
 export async function telemetryReset(opts: TelemetryStartOptions): Promise<void> {
-	const { existsSync, writeFileSync } = await import("node:fs");
-	const { homedir } = await import("node:os");
-	const { join } = await import("node:path");
 	console.info("Stopping daemon + clearing buffers...");
 	// A daemon whose record is gone is found first (and its record written), so stop can see it.
 	await resolveLocalDaemonHere("telemetry reset");
-	await daemonStop();
-	const logsPath = join(
-		process.env.INDUSK_HOME ?? join(homedir(), ".indusk"),
-		"telemetry",
-		"logs.jsonl",
-	);
-	if (existsSync(logsPath)) writeFileSync(logsPath, "");
+	const logsPath = join(induskHome(), "telemetry", "logs.jsonl");
 	try {
-		const meta = await daemonStart({
-			otlpPort: Number.parseInt(opts.otlpPort, 10),
-			uiPort: Number.parseInt(opts.uiPort, 10),
+		const meta = await daemonRestart(portOptions(opts), {
+			onStopped: () => {
+				if (existsSync(logsPath)) writeFileSync(logsPath, "");
+			},
 		});
 		console.info("Daemon restarted with fresh buffers.");
-		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
-		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
-		reportMcpSync(syncAllRegisteredProjectsMcp(meta.mcpPort), meta.mcpPort);
+		console.info(describeDaemon(meta));
 	} catch (err) {
 		console.error(`Reset failed: ${(err as Error).message}`);
 		process.exit(1);
