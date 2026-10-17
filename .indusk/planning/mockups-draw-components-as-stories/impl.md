@@ -264,12 +264,13 @@ changed; and Sandy approves the changed `message.you` story.
   `message.you` in the cockpit's Looks page, now wrapping; approval is Sandy's.
 
   </details>
-- [ ] Shape review of the changed component and mockup.
+- [x] Shape review of the changed component and mockup.
   <details><summary>Technical</summary>
 
   Against the enabled extensions' rules; findings as unchecked items here.
 
   </details>
+  Note: reviewed `useFittedFrame.ts`, `ui/ProjectCard.tsx`, `ProjectCard.tsx`, `ProjectCard.stories.tsx`, `Message.tsx`, `looks-components.contract.test.ts` (`prepareShapeReview`: no unreadable rules) — nothing to change: `measure` and `leadingSpace` each one job and named for it; the card draws, its wrapper maps registry facts; Message and the test are one-line changes.
 
 - [x] A project card shorter than its row keeps its lines together at the top.
   <details><summary>Technical</summary>
