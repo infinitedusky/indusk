@@ -59,3 +59,41 @@ describe.each(["falsify", "cleanup"])("A18 — the %s skill's opted-in phase tem
 		expect(r.exitCode, r.stderr).toBe(0);
 	});
 });
+
+/**
+ * promise: an-impl-phase-explains-itself — A2 of the impl-tasks-are-instructions
+ * impl (the falsify and cleanup half). A task placeholder asks for an
+ * instruction, a verification placeholder for what must hold.
+ */
+function placeholderLines(template: string): { gate: string; line: string }[] {
+	const found: { gate: string; line: string }[] = [];
+	let gate = "";
+	for (const line of template.split("\n")) {
+		if (/^###\s/.test(line)) gate = "";
+		else if (/^####\s/.test(line)) gate = line;
+		else if (/^- \[ \] \{/.test(line)) found.push({ gate, line });
+	}
+	return found;
+}
+
+describe.each(["falsify", "cleanup"])("A2 — the %s template's placeholders", (skill) => {
+	const lines = () => placeholderLines(optedInTemplate(skill) ?? "");
+
+	it("every task placeholder asks for an instruction", () => {
+		const tasks = lines().filter((p) => p.gate === "");
+		expect(tasks.length, `${skill}.md has no task placeholders`).toBeGreaterThan(0);
+		for (const { line } of tasks) expect(line, line).toMatch(/\binstruction\b/i);
+	});
+
+	it("every Context and Document placeholder asks for an instruction (A6)", () => {
+		const gateTasks = lines().filter((p) => /(Context|Document)\s*$/.test(p.gate));
+		expect(gateTasks.length, `${skill}.md has no Context or Document placeholders`).toBeGreaterThanOrEqual(2);
+		for (const { line } of gateTasks) expect(line, line).toMatch(/\binstruction\b/i);
+	});
+
+	it("every verification placeholder asks for what must hold", () => {
+		const items = lines().filter((p) => /Verification\s*$/.test(p.gate));
+		expect(items.length, `${skill}.md has no verification placeholders`).toBeGreaterThan(0);
+		for (const { line } of items) expect(line, line).toMatch(/must hold/i);
+	});
+});

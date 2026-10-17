@@ -126,7 +126,7 @@ The phase title **must start with "Cleanup"** (`### Phase N: Cleanup — {summar
 
 ### For an impl that has opted in to phase summaries
 
-An impl with `phase_summary: required` gets the phase in the new shape: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels in an indented Technical fold. The skill carries that template beside the original, marked `<!-- template: phase_summary required -->`, and the save check accepts it as written. A box line quoted inside a task's fold or a code block never holds the phase open. See [the planner](/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand).
+An impl with `phase_summary: required` gets the phase in the new shape: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain instruction saying what to do, and the code, paths and row labels in an indented Technical fold. The skill carries that template beside the original, marked `<!-- template: phase_summary required -->`, and the save check accepts it as written. A box line quoted inside a task's fold or a code block never holds the phase open. See [the planner](/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand).
 
 ## When to skip
 
