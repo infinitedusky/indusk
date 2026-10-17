@@ -596,7 +596,7 @@ next phase then makes what init prints and the skills teach match all of this.
   New `apps/indusk-mcp/templates/signal.ts` (imports `@opentelemetry/api` only) and `templates/signal.py` (`opentelemetry.trace` only), per ADR decision 6. The outcome written is `upheld` or `broken`. Project and marker are read from the settings file (`./telemetry-settings`); in Python from the instrumentation module's rendered values.
 
   </details>
-- [ ] Add the test-run marker to the settings: a run under a test runner is marked on every span's resource.
+- [x] Add the test-run marker to the settings: a run under a test runner is marked on every span's resource.
   <details><summary>Technical</summary>
 
   `templates/telemetry-settings.ts`: `testRun = Boolean(env.VITEST || env.JEST_WORKER_ID || env.MODE === "test" || env.NODE_ENV === "test")`; `resource["indusk.run"] = "test"` when true. `instrumentation.py`: `"pytest" in sys.modules` or `PYTEST_VERSION`.

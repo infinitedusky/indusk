@@ -14,6 +14,9 @@
  *   OTEL_SERVICE_NAME                   — the service name
  *   OTEL_RESOURCE_ATTRIBUTES            — `deployment.environment=production` sets the environment
  *
+ * A run under a test runner (Vitest, Jest, a Vite test build, NODE_ENV=test) is marked
+ * `indusk.run=test` on the resource, so what reads these spans can tell a test's from a user's.
+ *
  * No imports: the instrumentation, the logger and the browser file all read it.
  */
 
@@ -59,15 +62,19 @@ function resourceAttribute(env: Env, key: string): string | undefined {
 /** The settings for this run, from its environment and the rendered values. */
 export function telemetrySettings(env: Env, r: Rendered = RENDERED): TelemetrySettings {
 	const serviceName = env.OTEL_SERVICE_NAME || r.service;
+	const testRun = Boolean(
+		env.VITEST || env.JEST_WORKER_ID || env.MODE === "test" || env.NODE_ENV === "test",
+	);
 	return {
 		serviceName,
 		tracesUrl: endpoint(env, "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", r.traces, "/v1/traces"),
 		logsUrl: endpoint(env, "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", r.logs, "/v1/logs"),
-		testRun: false,
+		testRun,
 		resource: {
 			"service.name": serviceName,
 			"indusk.project": r.project,
 			"deployment.environment": resourceAttribute(env, "deployment.environment") ?? "development",
+			...(testRun ? { "indusk.run": "test" } : {}),
 		},
 	};
 }

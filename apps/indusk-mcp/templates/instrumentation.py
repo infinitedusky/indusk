@@ -29,6 +29,7 @@ Then auto-install all available instrumentations:
 """
 
 import os
+import sys
 import logging
 
 from opentelemetry import trace
@@ -63,11 +64,15 @@ def _resource_attribute(key):
 SERVICE = os.environ.get("OTEL_SERVICE_NAME") or RENDERED["service"]
 TRACES_URL = _endpoint("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", RENDERED["traces"], "/v1/traces")
 LOGS_URL = _endpoint("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", RENDERED["logs"], "/v1/logs")
+# A run under pytest is marked on the resource, so what reads these spans can tell a test's from a user's.
+TEST_RUN = "pytest" in sys.modules or bool(os.environ.get("PYTEST_VERSION"))
 RESOURCE_ATTRIBUTES = {
     SERVICE_NAME: SERVICE,
     "indusk.project": RENDERED["project"],
     "deployment.environment": _resource_attribute("deployment.environment") or "development",
 }
+if TEST_RUN:
+    RESOURCE_ATTRIBUTES["indusk.run"] = "test"
 
 provider = TracerProvider(resource=Resource.create(RESOURCE_ATTRIBUTES))
 provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=TRACES_URL)))
