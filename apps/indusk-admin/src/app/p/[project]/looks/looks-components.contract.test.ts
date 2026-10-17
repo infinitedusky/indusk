@@ -17,7 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type DevServer,
   makeHome,
-  startNextDev,
+  startNextBuilt,
 } from "@/__tests__/helpers/next-dev";
 
 /**
@@ -64,7 +64,7 @@ beforeAll(async () => {
     { name: FIXTURE_PROJECT, path: fixtureRoot },
     { name: REPO_PROJECT, path: REPO },
   ]);
-  server = await startNextDev({ home });
+  server = await startNextBuilt({ home });
   browser = await chromium.launch();
 }, 400_000);
 
