@@ -2,7 +2,7 @@
 name: mockups-render-in-the-cockpit
 kind: state
 lifetime: holds
-state: known-broken
+state: enforced
 domain: admin
 owner: mockups-draw-components-as-stories
 sites:

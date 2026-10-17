@@ -2,7 +2,7 @@
 id: i-2026-10-16-mockups-render-in-the-cockpit
 promise: mockups-render-in-the-cockpit
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -11,6 +11,7 @@ tests:
   - "apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts > A18 — each story opens on the Looks page at its component's size, and at each device's width on request, served by the admin > A18 every story of the admin is framed to its component, and takes each reference device's width when chosen"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T20:25:39Z'
 ---
 
 ## Symptom
@@ -1210,8 +1211,14 @@ Commits since the last green slow run (c804aaf) touching `apps`, `packages`, `ex
 
 ## Root cause
 
-_Unwritten — a person writes this._
+Two layers. First, both checks had gone stale. The composition check (A30, `composition.contract.test.ts`) matched a placed component by its top-level position in the mockup; since `component-content` a component mockup places components inside its own, so the match landed on the wrong box. It also read `start` alignment as something other than left, and sized boxes that hold the mockup's own words. The story-frame check (A18, `looks-components.contract.test.ts`) ran the admin's 113 stories under `next dev` at about 11 s each, past its 580 s limit — it had only ever stopped early, on `message.you`.
+
+Second, once the checks were fixed they reported real differences: a component's generated mockup stylesheet carried its classes but not the app's element resets (Tailwind preflight), so `project-card` (an `<a>`) drew in link blue and `prompt-box`'s textarea in the browser's monospace; `home.default`'s own `.grid` rule matched the card root's `grid` utility; and `message.you` overflowed its frame after e5915cbc4 removed Message's `overflow-wrap` class.
 
 ## Fix
 
-_Not yet fixed._
+The checks, on `plan/storybook-components` (landed): cc1e18618 (A30 finds a placed component by name and occurrence), 04a75ed0a (A30 reads `start` as left and does not size a box holding the mockup's words), 742861018 (A18 reads stories from a built admin) and 29b156c3e (A18's limit raised to 1 800 s).
+
+The drawing, by `mockups-draw-components-as-stories` (landed 2026-10-17): one `_reset.css` of the app's element rules scoped to components with `:where(...)`, loaded under every mockup and story; a mockup's own rules scoped to its page (`pageOnly`); Message wraps with `wrap-anywhere`; an end-aligned or auto-centred story is fitted to its frame. The composition check now runs at every reference device.
+
+Proven 2026-10-17 on main (d435f127d): A30 passed (191 s), A18 passed (1 665 s).

@@ -2,7 +2,7 @@
 name: a-mockup-composes-approved-components
 kind: structure
 lifetime: holds
-state: known-broken
+state: enforced
 domain: gates
 owner: storybook-components
 sites:
