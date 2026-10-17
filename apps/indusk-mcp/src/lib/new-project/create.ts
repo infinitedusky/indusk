@@ -17,7 +17,13 @@ import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { induskMcpPackageRoot } from "../package-root.js";
 import { installProblems } from "./install.js";
 import { isUnderParent, parentSetBy, readParent, repositoryAround } from "./parent.js";
-import { loadProposal, type Proposal, ProposalError, readProposal } from "./proposal.js";
+import {
+	loadProposal,
+	type Proposal,
+	ProposalError,
+	readProposal,
+	TELEMETRY_RECOMMENDATION,
+} from "./proposal.js";
 import {
 	type CreationRecord,
 	type CreationStepId,
@@ -236,7 +242,7 @@ const TELEMETRY_EXTENSIONS = ["local-telemetry", "otel"] as const;
  * promise: a-recommendation-can-be-declined
  */
 function disableDeclinedTelemetry(root: string, proposal: Proposal): void {
-	const telemetry = proposal.recommendations.find((rec) => rec.name === "telemetry");
+	const telemetry = proposal.recommendations.find((rec) => rec.name === TELEMETRY_RECOMMENDATION);
 	if (!telemetry || telemetry.kept) return;
 	const config = readConfig(root) ?? ({} as InduskConfig);
 	const disabled = new Set([...(config.disabled_extensions ?? []), ...TELEMETRY_EXTENSIONS]);
