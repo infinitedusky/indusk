@@ -19,6 +19,8 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
+- **impl-tasks-are-instructions (closed 2026-10-17)** — a task in a new impl reads as an instruction and a verification item as what must hold; a whole-repo gone test guards the old wording. See [archive](planning/archive/impl-tasks-are-instructions/).
+- **daemon-found-not-guessed (closed 2026-10-17)** — one telemetry daemon per machine on its stored address (`indusk telemetry address`: 24318 traces, 24319 logs, 24316 interface, 24317 MCP), found from what runs when its record is lost, never a second; each clause reports itself as a span. An application that sent to 4318 needs the stored address. Open: the extension manifest's health checks, 2,663 dead test entries in the telemetry project registry, and the plan page reading a promise's registry state instead of its health (a bugfix plan). See [archive](planning/archive/daemon-found-not-guessed/).
 - **plans-are-promises (closed 2026-10-16)** — a promise can be stated as clauses (`clauses: required` in a brief, `declare --clause`, `clause:` rows) and a plan closes per clause; accepted and landed by a person next. Open: a promise of only resting clauses cannot close, `change`/`replace` carry no clauses, `indusk plans start` fails under `init --local`. See [archive](planning/archive/plans-are-promises/).
 - **brief-as-the-contract (closed 2026-10-13)** — the brief is the contract: looks in the brief, approval of the brief, amendments wait for the person, a brief page with the agent beside it, a plan starts as a draft outside the repo. See [archive](planning/archive/brief-as-the-contract/) for full detail.
 - **cockpit-redraw (closed 2026-10-14)** — the nav redrawn from the original cockpit and dragged wider, the brief page drawn, re-approval a person's; the admin's look check names a missing page unchecked and goes on. See [archive](planning/archive/cockpit-redraw/).
@@ -3178,5 +3180,66 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 ### Cursor
 
 (empty)
+
+---
+
+## Session 5feb490a — impl-tasks-are-instructions — Test Phase 1
+
+**Session ID**: 5feb490a-2253-4dc8-a75e-50679a24f52e
+**Last updated**: 2026-10-17T17:53:43.707Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+impl-tasks-are-instructions (worktree dusk-worktrees/impl-tasks-are-instructions, branch plan/impl-tasks-are-instructions) is at Test Phase 1 with its wording tests red: rows A1-A3 fail on their own assertions, A4 save-check guards green.
+
+### Open Questions
+
+None.
+
+### Cursor
+
+Next: Build Phase 1 (rewrite planner step 7, templates, shipped planning rules, resync copies, change the promise sentence).
+
+---
+
+## Session 3163f43a — starting catchup
+
+**Session ID**: 3163f43a-b150-41cc-9159-e18d687cbd21
+**Last updated**: 2026-10-17T02:32:18.040Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 3e5fed2c — mockups-draw-components-as-stories — Test Phase 1
+
+**Session ID**: 3e5fed2c-7d82-4f90-bbab-eff486c8cb83
+**Last updated**: 2026-10-17T03:18:20.848Z
+
+### In Flight
+
+`mockups-draw-components-as-stories` (bugfix closing the storybook-components incidents on `mockups-render-in-the-cockpit` and `a-mockup-composes-approved-components`) is at the end of Test Phase 1, in worktree `dusk-worktrees/mockups-draw-components-as-stories`. All five new checks are red on the defects: the generator's reset tests (A1–A3, `component-styles.test.ts`) fail because `componentReset` is not exported; the composition check reports only the project card and prompt box findings; the story-frame check fails only on `message.you`. Nothing about how the project works changes in this phase.
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+Next: Build Phase 1 of the impl — `componentReset` in `apps/indusk-mcp/src/lib/looks/component-styles.ts`, `_reset.css` written by `indusk looks stories`, mockup and story documents loading it. The browser checks need `pnpm --filter @infinitedusky/indusk-mcp build` before they load.
 
 ---

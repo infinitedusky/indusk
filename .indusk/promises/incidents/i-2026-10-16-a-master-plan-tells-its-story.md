@@ -2,7 +2,7 @@
 id: i-2026-10-16-a-master-plan-tells-its-story
 promise: a-master-plan-tells-its-story
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -11,6 +11,7 @@ tests:
   - "apps/indusk-admin/src/__tests__/plan-stories.contract.test.ts > A6 — plan-stories' screens and stories are approved and held > A6 each is held by value at every reference device"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:32:03Z'
 ---
 
 ## Symptom
@@ -1212,8 +1213,8 @@ Commits since the last green slow run (c804aaf) touching `apps`, `packages`, `ex
 
 ## Root cause
 
-_Unwritten — a person writes this._
+The promise held; the test was stale. `plan-stories.contract.test.ts` A6 booted `next dev`, and looks-check-speed (closed 2026-10-16) made the looks check refuse a development server (`apps/indusk-mcp/src/lib/looks/served.ts`), so the check never opened a screen or story. The same cause as i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief (cockpit-redraw A10); a system-tier test, so no phase of looks-check-speed ran it.
 
 ## Fix
 
-_Not yet fixed._
+2026-10-17 — fixed with cockpit-redraw's Maintenance (landed 2735cb7d): A6 runs against a built admin (`startNextBuilt`, `apps/indusk-admin/src/__tests__/helpers/next-dev.ts`). Re-run in plan-stories' worktree: all three pass.

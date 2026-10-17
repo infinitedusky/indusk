@@ -120,9 +120,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   (`promise: hidden-detail-is-only-read`); see `/decisions/phase-summaries`
 - **A new impl opts in with `phase_summary: required` and is written for a
   reader without the plan's shorthand**: each phase opens with a paragraph
-  saying what it does for the whole plan, each task is one plain sentence for
-  someone who has worked on the project but knows none of the plan's
-  abbreviations or labels, and names, code and row labels go in the task's
+  saying what it does for the whole plan, each task is one plain
+  instruction saying what to do and each verification item a plain statement of
+  what must hold, for someone who has worked on the project but knows none of
+  the plan's abbreviations or labels, and names, code and row labels go in the task's
   folded `<details><summary>Technical</summary>`. The save check refuses a
   missing paragraph, a row label in the paragraph, and code or a row label on a
   task line; whether a sentence is plain is a person's, at approval. The rule is

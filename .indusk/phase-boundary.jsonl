@@ -388,3 +388,15 @@
 {"plan":"finished-rituals-stay-done","phase":1,"kind":"build","sha":"3d0f0eefb19e8179892d59de6f14e335b793ee1c","timestamp":"2026-10-16T19:02:53.787Z"}
 {"plan":"finished-rituals-stay-done","phase":2,"kind":"build","sha":"fb5af8a6cc2208a3ecf8328ea4d3a33ab6ec5d91","timestamp":"2026-10-16T19:34:10.064Z"}
 {"plan":"finished-rituals-stay-done","phase":3,"kind":"build","sha":"859186852275e8a832e21953a8ddc751798087d8","timestamp":"2026-10-16T19:38:54.312Z"}
+{"plan":"daemon-found-not-guessed","phase":1,"kind":"test","sha":"cb62f389f1c29666e548113e5344cdd6992195bc","timestamp":"2026-10-17T01:46:36.661Z"}
+{"plan":"daemon-found-not-guessed","phase":1,"kind":"build","sha":"069b543cb15d949b5a0784b2c70d10b3f6ac94e9","timestamp":"2026-10-17T02:06:20.187Z"}
+{"plan":"daemon-found-not-guessed","phase":2,"kind":"build","sha":"214f770fd4b130625c68c2b673aa9b2c6e41f891","timestamp":"2026-10-17T02:31:27.578Z"}
+{"plan":"daemon-found-not-guessed","phase":3,"kind":"build","sha":"959373c2d1f9f0c8a364dea438f7e23257496685","timestamp":"2026-10-17T02:44:46.947Z"}
+{"plan":"daemon-found-not-guessed","phase":4,"kind":"build","sha":"42e9c10614efd845130c6507ab2d80648bb8cbe1","timestamp":"2026-10-17T03:04:36.245Z"}
+{"plan":"daemon-found-not-guessed","phase":5,"kind":"build","sha":"6c73184152554b265e4ebb9cc4b553290c4e3774","timestamp":"2026-10-17T03:18:14.868Z"}
+{"plan":"daemon-found-not-guessed","phase":6,"kind":"build","sha":"3e71ba5b25f0b7fbfdc90157fe5dac14486dc58a","timestamp":"2026-10-17T03:40:42.093Z"}
+{"plan":"daemon-found-not-guessed","phase":7,"kind":"build","sha":"bea5517d4ddc07f12a125de90b3e1566aef394a4","timestamp":"2026-10-17T03:48:39.214Z"}
+{"plan":"daemon-found-not-guessed","phase":8,"kind":"build","sha":"aca486869884cd7ea291a7dd690ed4ff15a3bd6f","timestamp":"2026-10-17T11:45:25.480Z"}
+{"plan":"impl-tasks-are-instructions","phase":1,"kind":"test","sha":"fc00d26864b8bc3a6663c4fc6fbfac1186e73b96","timestamp":"2026-10-17T17:52:12.770Z"}
+{"plan":"impl-tasks-are-instructions","phase":1,"kind":"build","sha":"5155fdbf37166d768451229dd8ddc1b45a5b59a8","timestamp":"2026-10-17T17:54:46.553Z"}
+{"plan":"impl-tasks-are-instructions","phase":2,"kind":"build","sha":"4d1c35ca468b0d08833ed1515860d7b8c5fd68b3","timestamp":"2026-10-17T18:06:20.285Z"}

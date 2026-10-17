@@ -23,11 +23,14 @@ export function markPromise(
 		promise: string;
 		outcome: "upheld" | "broken";
 		project?: string;
+		/** The part of the promise this signal concerns. */
+		clause?: string;
 		symptom?: string;
 	},
 ): void {
 	span.setAttribute(PROMISE_MARK.promise, mark.promise);
 	if (mark.project) span.setAttribute(PROMISE_MARK.project, mark.project);
+	if (mark.clause) span.setAttribute(PROMISE_MARK.clause, mark.clause);
 	span.setAttribute(PROMISE_MARK.outcome, mark.outcome === "broken" ? WRITTEN_BROKEN : "upheld");
 	if (mark.outcome === "broken") {
 		span.addEvent(PROMISE_MARK.violatedEvent, {

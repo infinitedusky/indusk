@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, openSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { join } from "node:path";
@@ -25,24 +25,34 @@ import { join } from "node:path";
  * immediately after `daemonStart` resolves — the PID/meta files are the
  * durable handoff to subsequent `telemetry status`/`telemetry stop` invocations.
  *
- * PID-reuse hardening: `status` composes `isAlive(pid)` with
- * `isPortListening(port)` (`verifyIdentity`) so a recycled PID is not reported
- * running. `stop` judges ownership by the process's command line instead
- * (`stop.ts`): a slow port must never make it skip its own processes.
+ * PID-reuse hardening: `status` and `stop` both judge a recorded process by
+ * its command line (`daemon-state.ts`, `stop.ts`), never by a port: a slow
+ * port must never make a read lose the daemon. Only `stop` removes the record.
  */
 
-import { realProcessReads } from "../process-identity.js";
+import { ADDRESS_ROLES, type Ports } from "./daemon-address.js";
+import { homeKind, realTempRoots } from "./daemon-process.js";
+import { type DaemonReads, realDaemonReads } from "./daemon-reads.js";
+import { daemonReports, reportFinding } from "./daemon-reports.js";
+import { daemonState } from "./daemon-state.js";
+import {
+	type DaemonStartOptions,
+	type EnsureResult,
+	ensureDaemon,
+	optionsOf,
+	restartPorts,
+	startOptions,
+} from "./start-plan.js";
 import {
 	cleanupFiles,
 	type DaemonMeta,
-	daemonStatus,
 	induskHome,
 	isPortListening,
 	metaFilePath,
-	pidFilePath,
 } from "./status.js";
-import { stopDaemon } from "./stop.js";
+import { realStopDeps, stopDaemon } from "./stop.js";
 
+export type { DaemonStartOptions } from "./start-plan.js";
 export {
 	type DaemonMeta,
 	type DaemonStatusResult,
@@ -59,16 +69,6 @@ function logFilePath(): string {
 function ensureHome(): void {
 	const h = induskHome();
 	if (!existsSync(h)) mkdirSync(h, { recursive: true });
-}
-
-export interface DaemonStartOptions {
-	otlpPort?: number; // 0 = auto-pick; default 4318
-	uiPort?: number; // 0 = auto-pick; default 16686
-	/**
-	 * Start on a different port when the requested one is already served by
-	 * something this daemon does not own. Off by default — see `assertRequestedPortsFree`.
-	 */
-	allowPortBump?: boolean;
 }
 
 export interface DaemonStopResult {
@@ -165,10 +165,8 @@ async function waitForPortListening(port: number, timeoutMs: number): Promise<bo
 
 // Poll until a port is rebind-able (or timeout). After `daemonStop()` the OS
 // can hold the just-released socket in TIME_WAIT / cleanup for hundreds of ms
-// to a couple of seconds; without this, `daemonRestart` would race and
-// `findFreePort(4318)` would fall through to `pickAnyFreePort()` — drifting
-// the OTLP port off the user's pinned value and breaking every downstream app
-// pointing at the old port.
+// to a couple of seconds; without this, `daemonRestart` would race and find
+// its own stored port still held.
 async function waitForPortFree(port: number, timeoutMs: number): Promise<boolean> {
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {
@@ -187,7 +185,7 @@ async function waitForPortFree(port: number, timeoutMs: number): Promise<boolean
  * `packages/telemetry-binaries-shared/jaeger-config.yaml` including the
  * self-metrics-off setting (`service.telemetry.metrics.level: none`).
  */
-function renderJaegerConfig(ports: {
+export function renderJaegerConfig(ports: {
 	otlpHttp: number;
 	otlpGrpc: number;
 	ui: number;
@@ -219,6 +217,10 @@ extensions:
         memory:
           max_traces: 100000
   jaeger_query:
+    # Jaeger traces its own query handlers and exports to :4317, where nothing
+    # listens: two thirds of the daemon's log. This is the only setting that
+    # silences it (service.telemetry.traces and OTEL_* do not).
+    enable_tracing: false
     storage:
       traces: some_storage
     http:
@@ -311,15 +313,15 @@ service:
 `;
 }
 
-// ---- daemonStart / daemonStop / daemonStatus / daemonRestart ---------------
+// ---- daemonStart / daemonStop / daemonRestart --------------------------------
 
 /**
- * Thrown when a requested port is already served by a process we do not own.
+ * Thrown when a start is refused because a port it needs is held by a process
+ * that is not this daemon's.
  *
  * Typed so callers can tell it apart from a real start failure: an explicit
- * `telemetry start` should surface it and stop, but the opportunistic auto-start
- * on extension enable must NOT fail the whole command over it — a daemon is
- * evidently already serving those ports, which is the state auto-start wanted.
+ * `telemetry start` surfaces it and stops, but registering a project records
+ * the project and prints it rather than failing the whole command.
  */
 export class PortsOccupiedError extends Error {
 	readonly ports: { name: string; port: number }[];
@@ -330,83 +332,37 @@ export class PortsOccupiedError extends Error {
 	}
 }
 
-/**
- * Refuse to start when a requested port is already served by something we do
- * not own.
- *
- * `findFreePort` silently falls back to a random high port when the requested
- * one is taken, and that silence is how the reported failure happened: a leaked
- * jaeger held `:4318`, this daemon came up on a random port instead, and the
- * dev stack — configured for the canonical port — kept exporting into the
- * stray, which answered `404` because it is not an OTLP receiver. Every trace
- * vanished, and every component reported healthy.
- *
- * The caller already asked for a specific port. Coming up somewhere else and
- * saying nothing is the one behaviour that cannot be right. A port of `0` means
- * "any", so it is exempt.
- *
- * Note this deliberately does NOT adopt the listener: without its PIDs the
- * daemon cannot be managed, so claiming to reuse it would be a lie. Refuse,
- * name the port, and point at the command that fixes the common cause.
- */
-export async function assertRequestedPortsFree(opts: DaemonStartOptions): Promise<void> {
-	if (opts.allowPortBump) return;
-
-	const requested: { name: string; port: number }[] = [
-		{ name: "OTLP", port: opts.otlpPort ?? 4318 },
-		{ name: "Jaeger UI", port: opts.uiPort ?? 16686 },
-	].filter((p) => p.port !== 0);
-
-	const occupied: { name: string; port: number }[] = [];
-	for (const p of requested) {
-		if (await isPortListening(p.port)) occupied.push(p);
-	}
-	if (occupied.length === 0) return;
-
-	const detail = occupied.map((p) => `${p.name} :${p.port}`).join(", ");
-	throw new PortsOccupiedError(
-		`Refusing to start: ${detail} already in use by a process this daemon does not own.\n` +
-			`Starting anyway would bind a random port instead, and anything configured for the ` +
-			`requested port would keep talking to whatever is there — silently.\n` +
-			`  If it is a leaked telemetry process:  indusk telemetry reap\n` +
-			`  If it is another tool you want to keep: indusk telemetry start --allow-port-bump\n` +
-			`  Or choose explicitly:                  indusk telemetry start --otlp-port <n> --ui-port <n>`,
-		occupied,
-	);
+/** `n` free ports, picked together so no two are the same. */
+async function pickFreePorts(n: number): Promise<number[]> {
+	return Promise.all(Array.from({ length: n }, () => pickAnyFreePort()));
 }
 
-export async function daemonStart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {
+/**
+ * Spawns Jaeger and the collector on the ports a start decided on (0 for a role
+ * means any free port, which a temporary home asks for), waits for both to be
+ * ready, and returns the record for the caller to write. Decides nothing: what
+ * to start, and whether to, is `ensureDaemon`'s.
+ */
+export async function spawnDaemonProcesses(request: { ports: Ports }): Promise<DaemonMeta> {
 	ensureHome();
-
-	// Fail fast if already running (up-stream uiStart-style guard)
-	const existing = await daemonStatus();
-	if (existing.running) {
-		throw new Error(
-			`Telemetry daemon is already running (Jaeger PID ${existing.jaegerPid}, otelcol PID ${existing.otelcolPid}, OTLP :${existing.otlpPort}, UI :${existing.uiPort}). Run 'indusk telemetry stop' first.`,
-		);
-	}
-
-	await assertRequestedPortsFree(opts);
-
 	const jaegerBin = resolveBinary("jaeger");
 	const otelcolBin = resolveBinary("otelcol");
+	const { ports } = request;
 
-	// Pick 8 ports simultaneously to avoid sequential-pickFreePort collision
+	// Pick every port simultaneously to avoid sequential-pickFreePort collision
 	// (see telemetry-ui-reachable.test.ts lesson from Phase 2).
-	const [otlpHttp, otlpGrpc, ui, uiGrpc, jaegerHealth, logsOtlp, otelcolHealth, mcp] =
+	const [otlpHttp, logsOtlp, ui, mcp, otlpGrpc, uiGrpc, jaegerHealth, otelcolHealth] =
 		await Promise.all([
-			findFreePort(opts.otlpPort ?? 4318),
-			findFreePort(0),
-			findFreePort(opts.uiPort ?? 16686),
-			findFreePort(0),
-			findFreePort(0),
-			findFreePort(0),
-			findFreePort(0),
-			findFreePort(0),
+			...ADDRESS_ROLES.map((role) => (ports[role] === 0 ? pickAnyFreePort() : ports[role])),
+			pickAnyFreePort(),
+			pickAnyFreePort(),
+			pickAnyFreePort(),
+			pickAnyFreePort(),
 		]);
 
-	// Write configs to INDUSK_HOME/telemetry-{jaeger,collector}.yaml so they
-	// survive parent exit and are inspectable post-mortem.
+	// Write configs to INDUSK_HOME/telemetry-{jaeger,collector}.yaml right before
+	// the spawn, so they survive parent exit, are inspectable post-mortem, and
+	// name the ports the processes are about to hold.
 	const jaegerConfig = join(induskHome(), "telemetry-jaeger.yaml");
 	const collectorConfig = join(induskHome(), "telemetry-collector.yaml");
 	const logsPath = join(induskHome(), "telemetry", "logs.jsonl");
@@ -428,6 +384,8 @@ export async function daemonStart(opts: DaemonStartOptions = {}): Promise<Daemon
 		renderCollectorConfig({ otlpHttp: logsOtlp, health: otelcolHealth }, logsPath),
 	);
 
+	// Where this daemon's own lines begin in the log, for the self-tracing count.
+	const logOffset = existsSync(logFilePath()) ? statSync(logFilePath()).size : 0;
 	const logFd = openSync(logFilePath(), "a");
 
 	// Spawn Jaeger first
@@ -481,7 +439,7 @@ export async function daemonStart(opts: DaemonStartOptions = {}): Promise<Daemon
 		);
 	}
 
-	const meta: DaemonMeta = {
+	return {
 		jaegerPid: jaegerChild.pid,
 		otelcolPid: otelcolChild.pid,
 		otlpPort: otlpHttp,
@@ -495,12 +453,70 @@ export async function daemonStart(opts: DaemonStartOptions = {}): Promise<Daemon
 		otelcolBinary: otelcolBin,
 		platform: currentPlatformTag(),
 		logsPath,
+		logOffset,
 	};
+}
 
-	writeFileSync(pidFilePath(), String(meta.jaegerPid));
-	writeFileSync(metaFilePath(), JSON.stringify(meta, null, 2));
+/**
+ * Start the daemon in this home the one way: report, take over, start on the
+ * stored address (choosing it first when none is stored) or refuse naming the
+ * holder of a port. `by` names the command that asks.
+ */
+export async function startDaemon(
+	by: string,
+	opts: DaemonStartOptions = {},
+): Promise<EnsureResult> {
+	ensureHome();
+	const home = induskHome();
+	const reads = realDaemonReads(home);
+	const given = startOptions(opts, home);
+	const needsChoosing = homeKind(home, realTempRoots()) === "real" && reads.address() === null;
+	const spare = needsChoosing ? await pickFreePorts(ADDRESS_ROLES.length) : [];
+	const result = await ensureDaemon(by, reads, home, spawnDaemonProcesses, { given, spare });
+	await reportStart(reads, home, by, result);
+	return result;
+}
 
-	return meta;
+/**
+ * Once the daemon is ready, tell it what the start knows: it holds its own
+ * ports and nothing runs beside it, and, after a takeover, what was found and
+ * that its record had been lost. Nothing for a daemon that was already running
+ * or a refusal: no InDusk daemon is there to receive it.
+ */
+async function reportStart(
+	reads: DaemonReads,
+	home: string,
+	by: string,
+	result: EnsureResult,
+): Promise<void> {
+	if (result.kind !== "started" && result.kind !== "took-over") return;
+	const state = daemonState(reads, home);
+	if (state.meta === null) return;
+	if (result.kind === "took-over") {
+		await reportFinding(reads, result.found, by);
+		await reads.report?.(state.meta.otlpPort, daemonReports("takeover", state));
+		return;
+	}
+	await reads.report?.(
+		state.meta.otlpPort,
+		daemonReports(by === "restart" ? "restarted" : "started", state),
+	);
+}
+
+function metaOrThrow(result: EnsureResult): DaemonMeta {
+	if (result.kind === "refused") throw new PortsOccupiedError(result.text, []);
+	return result.meta;
+}
+
+/** `startDaemon` for a caller that wants the record and a thrown error for anything else. */
+export async function daemonStart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {
+	const result = await startDaemon("start", opts);
+	if (result.kind === "running") {
+		throw new Error(
+			`Telemetry daemon is already running (Jaeger PID ${result.meta.jaegerPid}, otelcol PID ${result.meta.otelcolPid}, OTLP :${result.meta.otlpPort}, UI :${result.meta.uiPort}). Run 'indusk telemetry stop' first.`,
+		);
+	}
+	return metaOrThrow(result);
 }
 
 export async function daemonStop(): Promise<DaemonStopResult> {
@@ -517,12 +533,7 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 
 	// Ownership is the command line, never the port (telemetry-stop-stops-what-it-started):
 	// a slow port once made stop signal nothing, delete the record and report success.
-	const result = await stopDaemon(meta, induskHome(), {
-		alive: realProcessReads.alive,
-		command: realProcessReads.command,
-		kill: (pid, signal) => process.kill(pid, signal),
-		sleep,
-	});
+	const result = await stopDaemon(meta, induskHome(), realStopDeps);
 	if (result.clearRecord) cleanupFiles();
 	return {
 		stopped: true,
@@ -532,35 +543,32 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 	};
 }
 
-export async function daemonRestart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {
-	// Restart means "same daemon, fresh processes" — inherit the previously
-	// bound ports before stopping so the new spawn rebinds the same addresses
-	// (and doesn't fall back to default 4318/16686, which collide with the
-	// machine-global daemon when the test/dev daemon was started with port 0).
-	// Caller-supplied opts win when explicitly set.
-	let inheritedOpts: DaemonStartOptions = opts;
-	const metaFile = metaFilePath();
-	if (existsSync(metaFile)) {
-		try {
-			const prev = JSON.parse(readFileSync(metaFile, "utf-8")) as DaemonMeta;
-			inheritedOpts = {
-				otlpPort: opts.otlpPort ?? prev.otlpPort,
-				uiPort: opts.uiPort ?? prev.uiPort,
-			};
-		} catch {
-			// Malformed meta — fall through to caller opts (or defaults).
-		}
-	}
+/**
+ * Restart means "same daemon, fresh processes, same address": the real home
+ * comes back on its stored address, a temporary home on the ports the stopped
+ * daemon held (explicit options win there). `onStopped` runs between the stop
+ * and the start (reset truncates the log sink there).
+ */
+export async function daemonRestart(
+	opts: DaemonStartOptions = {},
+	hooks: { onStopped?: () => void } = {},
+): Promise<DaemonMeta> {
+	const home = induskHome();
+	const explicit = startOptions(opts, home);
+	const previous = restartPorts(daemonState(realDaemonReads(home), home), home);
 	await daemonStop();
-	// Poll the inherited ports until the OS has actually released them. A fixed
-	// sleep (used to be 200 ms) is unreliable: on machines where TIME_WAIT
-	// outlives the sleep, `daemonStart` calls `findFreePort(inheritedOpts.otlpPort)`,
-	// sees the port still occupied, and falls through to `pickAnyFreePort()` —
-	// drifting the OTLP port off the user's pinned value. 5 s ceiling is well
-	// above observed worst-case release time on macOS/Linux loopback.
-	const portsToWait = [inheritedOpts.otlpPort, inheritedOpts.uiPort].filter(
-		(p): p is number => typeof p === "number" && p > 0,
+	hooks.onStopped?.();
+	const ports = { ...previous, ...explicit } as Partial<Ports>;
+	// Poll the ports until the OS has actually released them. A fixed sleep is
+	// unreliable: on machines where TIME_WAIT outlives it, the new daemon would
+	// find its own port still held and be refused. 5 s is well above the
+	// observed worst-case release time on macOS/Linux loopback.
+	await Promise.all(
+		Object.values(ports)
+			.filter((p): p is number => typeof p === "number" && p > 0)
+			.map((p) => waitForPortFree(p, 5_000)),
 	);
-	await Promise.all(portsToWait.map((p) => waitForPortFree(p, 5_000)));
-	return daemonStart(inheritedOpts);
+	// The real home comes back on its stored address and is given no ports.
+	const toStart = homeKind(home, realTempRoots()) === "real" ? {} : optionsOf(ports);
+	return metaOrThrow(await startDaemon("restart", toStart));
 }

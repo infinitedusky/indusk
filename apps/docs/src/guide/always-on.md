@@ -114,6 +114,10 @@ fly ips allocate-v4 --yes -c docker/fly.always-on.toml   # dedicated, $2/month
   The query port, 16687, is not 80 or 443, so Fly's shared IPv4 does not route
   it: reading the server over IPv4 needs a dedicated IPv4. IPv6 is free, but
   many home networks have none.
+- **The recording server keeps the standard ports.** On Fly the server is a
+  dedicated machine, so it keeps the standard 4318 for traces and 16687 as its
+  query port; the daemon on your laptop runs on InDusk's own block (24316 to
+  24319) and never takes 4318.
 - **Name the public query address** in `INDUSK_SERVER_PUBLIC_QUERY_URL`, as
   the reference config does (`https://<app>.fly.dev:16687`). Without it, Slack
   messages name the trace but cannot link to it, because the server's own

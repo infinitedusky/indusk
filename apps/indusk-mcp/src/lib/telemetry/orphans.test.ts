@@ -1,44 +1,88 @@
 import { spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { listTelemetryProcesses, reapOrphans } from "./orphans.js";
+import { daemonConfigPath } from "./daemon-process.js";
+import { realDaemonReads } from "./daemon-reads.js";
+import { daemonState } from "./daemon-state.js";
+import { runReap } from "./reap-plan.js";
+import { realStopDeps } from "./stop.js";
 
 /**
- * The orphan test is the whole point of the command, so it is exercised against
- * real processes with real argv rather than a mocked `ps`. A mock would assert
- * that the regex matches the string I chose to feed it, which is the shape of
- * the bug this command exists to clean up: a check that passes because it was
- * only ever shown the case its author imagined.
+ * Reap against real processes with real argv rather than a mocked `ps`. A mock
+ * would assert that the parser matches the string its author chose, which is
+ * the shape of the bug `reap` exists to clean up: a check that passes because
+ * it was only ever shown the case its author imagined.
  *
  * Stand-ins for the shipped binaries are `sleep` processes exec'd through a
- * directory laid out like the real package, so the argv the reaper parses is
- * produced by the OS, not by the test.
+ * directory laid out like the real package, so the argv `reap` parses is
+ * produced by the OS, not by the test. The home is the fixture root: a stray
+ * is a process out of that home the record does not name, config file present
+ * or gone.
+ *
+ * System tier: it starts real processes.
  */
 
 const REAL_BIN_SHAPE = "node_modules/@infinitedusky/telemetry-binaries-test-arch/bin";
 
-describe("telemetry orphan detection", { timeout: 30000 }, () => {
+describe("telemetry reap against real processes", { timeout: 30000 }, () => {
 	let root: string;
 	let spawned: number[];
 
-	/** Start a fake jaeger/otelcol whose argv looks like the real thing. */
-	function fakeDaemon(binary: "jaeger" | "otelcol", configPath: string, scheme = ""): number {
-		const binDir = join(root, REAL_BIN_SHAPE);
-		const binPath = join(binDir, binary);
-		const child = spawn(binPath, [`--config=${scheme}${configPath}`], {
-			detached: true,
-			stdio: "ignore",
-		});
+	/** A fake jaeger/otelcol out of `home` whose argv looks like the real thing. */
+	function fakeDaemon(binary: "jaeger" | "otelcol", home: string, scheme = ""): number {
+		const child = spawn(
+			join(root, REAL_BIN_SHAPE, binary),
+			[`--config=${scheme}${daemonConfigPath(home, binary)}`],
+			{
+				detached: true,
+				stdio: "ignore",
+			},
+		);
 		child.unref();
 		if (!child.pid) throw new Error("fake daemon did not start");
 		spawned.push(child.pid);
 		return child.pid;
 	}
 
+	/** A record naming the given pair, so the home's daemon is recorded and the rest are strays. */
+	function recordOf(jaegerPid: number, otelcolPid: number): void {
+		writeFileSync(
+			join(root, "telemetry.json"),
+			JSON.stringify({
+				jaegerPid,
+				otelcolPid,
+				otlpPort: 1,
+				uiPort: 1,
+				mcpPort: 1,
+				logsOtlpPort: 1,
+				jaegerHealthPort: 1,
+				otelcolHealthPort: 1,
+				startedAt: new Date().toISOString(),
+				jaegerBinary: join(root, REAL_BIN_SHAPE, "jaeger"),
+				otelcolBinary: join(root, REAL_BIN_SHAPE, "otelcol"),
+				platform: "test-arch",
+				logsPath: join(root, "telemetry", "logs.jsonl"),
+			}),
+		);
+	}
+
+	const alive = (pid: number): boolean => {
+		try {
+			process.kill(pid, 0);
+			return true;
+		} catch {
+			return false;
+		}
+	};
+
+	const reap = (opts: { dryRun?: boolean } = {}) =>
+		runReap(realDaemonReads(root), root, realStopDeps, opts);
+
 	beforeEach(() => {
-		root = mkdtempSync(join(tmpdir(), "orphan-test-"));
+		// realpath: a stray's home is read from its argv, which the OS prints resolved.
+		root = realpathSync(mkdtempSync(join(tmpdir(), "orphan-test-")));
 		spawned = [];
 		const binDir = join(root, REAL_BIN_SHAPE);
 		mkdirSync(binDir, { recursive: true });
@@ -58,88 +102,66 @@ describe("telemetry orphan detection", { timeout: 30000 }, () => {
 		rmSync(root, { recursive: true, force: true });
 	});
 
-	it("finds a telemetry process and reads its config path", () => {
-		const config = join(root, "live.yaml");
-		writeFileSync(config, "x: 1\n");
-		const pid = fakeDaemon("otelcol", config);
-
-		const found = listTelemetryProcesses().find((p) => p.pid === pid);
-		expect(found, "the reaper must see a process shaped like the real binary").toBeDefined();
-		expect(found?.binary).toBe("otelcol");
-		expect(found?.configPath).toBe(config);
+	it("finds a daemon process and reads its config path", () => {
+		writeFileSync(daemonConfigPath(root, "otelcol"), "x: 1\n");
+		const pid = fakeDaemon("otelcol", root);
+		const found = realDaemonReads(root)
+			.processes()
+			.find((p) => p.pid === pid);
+		expect(found?.command, "reap must see a process shaped like the real binary").toContain(
+			daemonConfigPath(root, "otelcol"),
+		);
 	});
 
-	it("a process whose config still exists is NOT an orphan", () => {
-		const config = join(root, "live.yaml");
-		writeFileSync(config, "x: 1\n");
-		const pid = fakeDaemon("otelcol", config);
-
-		expect(listTelemetryProcesses().find((p) => p.pid === pid)?.orphaned).toBe(false);
+	it("strips jaeger's file: scheme before judging the path", () => {
+		writeFileSync(daemonConfigPath(root, "jaeger"), "x: 1\n");
+		const live = fakeDaemon("otelcol", root);
+		writeFileSync(daemonConfigPath(root, "otelcol"), "x: 1\n");
+		const pid = fakeDaemon("jaeger", root, "file:");
+		recordOf(0, live);
+		const state = daemonState(realDaemonReads(root), root);
+		expect(state.strays.map((p) => p.pid)).toEqual([pid]);
 	});
 
-	it("a process whose config was deleted IS an orphan", () => {
-		const config = join(root, "doomed.yaml");
-		writeFileSync(config, "x: 1\n");
-		const pid = fakeDaemon("otelcol", config);
-		rmSync(config); // exactly what deleting a temp INDUSK_HOME does
+	it("a stray whose config file is gone, and one whose config file still exists, are both stopped; the recorded one is left alone", async () => {
+		writeFileSync(daemonConfigPath(root, "otelcol"), "x: 1\n");
+		const recorded = fakeDaemon("otelcol", root);
+		const present = fakeDaemon("jaeger", root);
+		writeFileSync(daemonConfigPath(root, "jaeger"), "x: 1\n");
+		const orphan = fakeDaemon("jaeger", root);
+		recordOf(0, recorded);
+		rmSync(daemonConfigPath(root, "jaeger")); // exactly what deleting a config underneath it does
 
-		expect(listTelemetryProcesses().find((p) => p.pid === pid)?.orphaned).toBe(true);
-	});
-
-	it("strips jaeger's file: scheme before testing the path", () => {
-		const config = join(root, "jaeger.yaml");
-		writeFileSync(config, "x: 1\n");
-		const pid = fakeDaemon("jaeger", config, "file:");
-
-		const found = listTelemetryProcesses().find((p) => p.pid === pid);
-		expect(found?.configPath, "file: prefix must not leak into the path test").toBe(config);
-		expect(found?.orphaned).toBe(false);
-	});
-
-	it("reap kills the orphan and leaves the live one alone", async () => {
-		const liveConfig = join(root, "live.yaml");
-		writeFileSync(liveConfig, "x: 1\n");
-		const livePid = fakeDaemon("otelcol", liveConfig);
-
-		const deadConfig = join(root, "dead.yaml");
-		writeFileSync(deadConfig, "x: 1\n");
-		const orphanPid = fakeDaemon("otelcol", deadConfig);
-		rmSync(deadConfig);
-
-		const result = reapOrphans();
-		expect(result.killed).toContain(orphanPid);
-		expect(result.killed).not.toContain(livePid);
-
-		await new Promise((r) => setTimeout(r, 500));
-		expect(() => process.kill(orphanPid, 0), "orphan should be gone").toThrow();
-		expect(() => process.kill(livePid, 0), "live daemon must survive").not.toThrow();
-	});
-
-	it("dry-run identifies the orphan without signalling it", async () => {
-		const config = join(root, "dead.yaml");
-		writeFileSync(config, "x: 1\n");
-		const pid = fakeDaemon("otelcol", config);
-		rmSync(config);
-
-		const result = reapOrphans({ dryRun: true });
-		expect(result.orphans.map((o) => o.pid)).toContain(pid);
-		expect(result.killed).toEqual([]);
-
+		const out = await reap();
+		expect(out.stopped.map((p) => p.pid).sort()).toEqual([orphan, present].sort());
 		await new Promise((r) => setTimeout(r, 300));
-		expect(() => process.kill(pid, 0), "dry-run must not kill anything").not.toThrow();
+		expect(alive(orphan) || alive(present), "both strays are gone").toBe(false);
+		expect(alive(recorded), "the recorded daemon must survive").toBe(true);
 	});
 
-	it("never signals a PID the registry claims, even if its config is gone", async () => {
-		const config = join(root, "dead.yaml");
-		writeFileSync(config, "x: 1\n");
-		const pid = fakeDaemon("otelcol", config);
-		rmSync(config);
+	it("another home's daemon is never touched from this home", async () => {
+		const other = realpathSync(mkdtempSync(join(tmpdir(), "orphan-other-")));
+		try {
+			writeFileSync(daemonConfigPath(root, "otelcol"), "x: 1\n");
+			const recorded = fakeDaemon("otelcol", root);
+			recordOf(0, recorded);
+			const strangerHome = fakeDaemon("jaeger", other);
+			const out = await reap();
+			expect(out.stopped).toEqual([]);
+			expect(alive(strangerHome), "another home's daemon must survive").toBe(true);
+		} finally {
+			rmSync(other, { recursive: true, force: true });
+		}
+	});
 
-		const result = reapOrphans({ protectPids: [pid] });
-		expect(result.protectedPids).toContain(pid);
-		expect(result.killed).not.toContain(pid);
-
+	it("dry-run names the stray without signalling it", async () => {
+		writeFileSync(daemonConfigPath(root, "otelcol"), "x: 1\n");
+		const recorded = fakeDaemon("otelcol", root);
+		const stray = fakeDaemon("jaeger", root);
+		recordOf(0, recorded);
+		const out = await reap({ dryRun: true });
+		expect(out.text).toContain(`Would stop jaeger ${stray}`);
 		await new Promise((r) => setTimeout(r, 300));
-		expect(() => process.kill(pid, 0), "protected PID must survive").not.toThrow();
+		expect(alive(stray), "dry-run must not kill anything").toBe(true);
 	});
 });

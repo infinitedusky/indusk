@@ -103,19 +103,19 @@ export function phaseSummaryProblems(implBody, required) {
 			lastTask = text;
 			if (text === "") {
 				problems.push(
-					`A task in ${phase} has no sentence: a task is one plain sentence for someone who knows the project but none of its shorthand.`,
+					`A task in ${phase} has no instruction: a task is one plain instruction saying what to do, for someone who knows the project but none of its shorthand.`,
 				);
 				continue;
 			}
 			if (text.includes("`")) {
 				problems.push(
-					`The task "${text}" in ${phase} carries code on its line: a task is one plain sentence for someone who knows the project but none of its shorthand; code and row labels belong in its Technical detail.`,
+					`The task "${text}" in ${phase} carries code on its line: a task is one plain instruction saying what to do, for someone who knows the project but none of its shorthand; code and row labels belong in its Technical detail.`,
 				);
 			}
 			const labels = [...new Set(text.match(ROW_LABEL_G) ?? [])];
 			if (labels.length > 0) {
 				problems.push(
-					`The task "${text}" in ${phase} names the row label ${labels.join(", ")}: a task is one plain sentence for someone who knows the project but none of its shorthand; row labels belong in its Technical detail.`,
+					`The task "${text}" in ${phase} names the row label ${labels.join(", ")}: a task is one plain instruction saying what to do, for someone who knows the project but none of its shorthand; row labels belong in its Technical detail.`,
 				);
 			}
 			continue;

@@ -1,6 +1,6 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -211,33 +211,69 @@ export interface FakeQueryPort {
 	close: () => Promise<void>;
 }
 
+const FAKE_JAEGER = `#!/usr/bin/env node
+const http = require("node:http");
+http.createServer((_req, res) => {
+	res.writeHead(200, { "content-type": "text/html" });
+	res.end(process.env.FAKE_BODY ?? "");
+}).listen(0, "127.0.0.1", function () {
+	console.log(this.address().port);
+});
+`;
+const FAKE_OTELCOL = `#!/usr/bin/env node
+setInterval(() => {}, 1_000_000);
+`;
+
 /**
  * Something that is not Jaeger, answering on the port the daemon record in
- * `home` names (day-monitor A26). The record's identity check passes — both
- * recorded PIDs are this process's, and the stub listens on every recorded
- * port — so a reader gets as far as the query and meets `body` with a 200.
+ * `home` names (day-monitor A26). A reader gets as far as the query and meets
+ * `body` with a 200.
  *
- * The stub answers from the calling process: a CLI run against it must be
- * spawned asynchronously, since `spawnSync` would block the answer.
+ * The record is only believed when its two processes look like InDusk's
+ * daemon by their command line (daemon-found-not-guessed), so the stand-in is
+ * two real child processes run from a script at
+ * `<tmp>/telemetry-binaries-test-arch/bin/{jaeger,otelcol}` with
+ * `--config` in `home`, the way `orphans.test.ts` shapes its fakes. The
+ * Jaeger one serves `body`; the collector one idles. Both are killed by
+ * `close()`.
  */
 export async function startFakeQueryPort(
 	home: string,
 	body = "<html>not jaeger</html>",
 ): Promise<FakeQueryPort> {
-	const { createServer } = await import("node:http");
-	const { writeFileSync } = await import("node:fs");
-	const server = createServer((_req, res) => {
-		res.writeHead(200, { "content-type": "text/html" });
-		res.end(body);
+	const binDir = join(
+		mkdtempSync(join(tmpdir(), "fake-daemon-")),
+		"telemetry-binaries-test-arch",
+		"bin",
+	);
+	mkdirSync(binDir, { recursive: true });
+	const jaegerBin = join(binDir, "jaeger");
+	const otelcolBin = join(binDir, "otelcol");
+	writeFileSync(jaegerBin, FAKE_JAEGER, { mode: 0o755 });
+	writeFileSync(otelcolBin, FAKE_OTELCOL, { mode: 0o755 });
+
+	const jaeger = spawn(jaegerBin, [`--config=file:${join(home, "telemetry-jaeger.yaml")}`], {
+		env: { ...process.env, FAKE_BODY: body },
+		stdio: ["ignore", "pipe", "inherit"],
 	});
-	await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
-	const port = (server.address() as import("node:net").AddressInfo).port;
-	writeFileSync(join(home, "telemetry.pid"), String(process.pid));
+	const otelcol = spawn(otelcolBin, [`--config=${join(home, "telemetry-collector.yaml")}`], {
+		stdio: "ignore",
+	});
+	if (jaeger.pid === undefined || otelcol.pid === undefined) {
+		throw new Error("startFakeQueryPort: could not start the stand-in daemon");
+	}
+	const port = await new Promise<number>((resolvePort, reject) => {
+		jaeger.stdout?.once("data", (chunk: Buffer) => resolvePort(Number.parseInt(String(chunk), 10)));
+		jaeger.once("error", reject);
+		jaeger.once("exit", () => reject(new Error("startFakeQueryPort: the stand-in exited")));
+	});
+
+	writeFileSync(join(home, "telemetry.pid"), String(jaeger.pid));
 	writeFileSync(
 		join(home, "telemetry.json"),
 		JSON.stringify({
-			jaegerPid: process.pid,
-			otelcolPid: process.pid,
+			jaegerPid: jaeger.pid,
+			otelcolPid: otelcol.pid,
 			otlpPort: port,
 			uiPort: port,
 			mcpPort: port,
@@ -247,5 +283,12 @@ export async function startFakeQueryPort(
 			startedAt: new Date().toISOString(),
 		}),
 	);
-	return { port, close: () => new Promise<void>((r) => server.close(() => r())) };
+	return {
+		port,
+		close: async () => {
+			jaeger.kill("SIGKILL");
+			otelcol.kill("SIGKILL");
+			rmSync(join(binDir, "..", ".."), { recursive: true, force: true });
+		},
+	};
 }

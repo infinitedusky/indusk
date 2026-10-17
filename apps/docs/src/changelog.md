@@ -4,6 +4,29 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Changed
+
+- **A task in a new impl is written as an instruction and a verification item as what must hold** (impl-tasks-are-instructions): the planner, the falsify and cleanup templates and the shipped planning rules say "Make the prompt box's text area use the app's font", not "The prompt box draws in the app's font"; impls already written still validate. A cold audit then found the old wording still taught in the bugfix, refactor and feature templates, the OTel, Context and Document gate tasks, the Shape step's written item, the save check's refusal messages and four guide pages; all now say instruction, and a test (`task-wording-gone.test.ts`) fails while any shipped file teaches a task as a statement of what will be true. See [Phase summaries for a reader without the shorthand](/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand).
+- **The local daemon runs on InDusk's own ports, chosen once and never moved on its own** (daemon-found-not-guessed): 24318 for traces, 24319 for logs, 24316 for the interface and 24317 for MCP, or a free port picked once in place of any held at first setup; the address is stored in `~/.indusk/telemetry-address.json` and every start, restart and automatic start uses it. A recording server keeps the standard 4318. See [the daemon's ports](/reference/telemetry/overview#the-daemons-ports).
+- **An application no longer reaches the local daemon on the SDK's default 4318** (daemon-found-not-guessed): point it at the stored address (`indusk telemetry address`), as `init` will hand it.
+- **`start` and `init` take over a running InDusk daemon, and a stored port later held by another process is refused, naming it** (daemon-found-not-guessed): registering a project (which `init`, `update` and enabling the extension run) starts no second daemon and writes only that project's own `.mcp.json` entry, and only when it differs.
+- **The evaluator's log records go to the daemon's logs port** (daemon-found-not-guessed): they were posted to the traces port, which Jaeger answers 404.
+- **No read deletes the telemetry daemon's record; a slow port reads as slow, not gone** (daemon-found-not-guessed): a process is InDusk's daemon by its binary and config path, `indusk telemetry status` names a stale record and leaves it, lists the daemon processes the record does not name as strays, and only `stop` removes the record. See [what counts as InDusk's daemon](/reference/telemetry/overview#what-counts-as-the-daemon).
+- **A telemetry daemon whose record is lost is found from the process list, and every reader follows it** (daemon-found-not-guessed): the next command that looks reads this home's Jaeger and collector from `ps`, their ports from the sockets they listen on, and writes the record again; promise status and watch, the promise health tool, the admin, the evaluator, `update`, `demo` and `telemetry reset` all ask the one resolver. A port that cannot be read is said to be unknown, never guessed. See [a lost record is found](/reference/telemetry/overview#a-lost-record-is-found).
+
+- **`telemetry reap` stops this home's strays and orphans** (daemon-found-not-guessed): every Jaeger or collector of this home that the record does not name, and every daemon whose config file, and so whose home, is gone, and nothing else; it prints each one stopped, names any that would not stop and exits non-zero, and with no record, or a record naming only dead processes, stops no stray and says to run `telemetry start` first. It never stops the recorded daemon or a live daemon of another home. See [`indusk telemetry reap`](/reference/telemetry/cli#indusk-telemetry-reap).
+- **Jaeger no longer logs failing to trace itself** (daemon-found-not-guessed): `jaeger_query.enable_tracing: false` in every Jaeger configuration InDusk renders or ships, which had been two thirds of the daemon's log; `indusk telemetry status` counts any such lines written since the running daemon started.
+- **The local daemon reports whether it is the one every reader follows** (daemon-found-not-guessed): as the promise `the-daemon-readers-follow-is-the-one-running`, in six parts, each sent by the InDusk command that knows the answer, as spans under the service `indusk-telemetry`. See [the promise's signal](/reference/telemetry/overview#the-promises-signal).
+- **`promises status` says when a promise is broken or broke and was fixed** (daemon-found-not-guessed): a behaviour promise's break-count line now opens with `broken — ` while a break is live, or `broke — fixed — ` when every break's incident is fixed, by the same rule the admin and the editor use, each source judged by its own rule (the local section by its newest signal beside a production source), so the three agree.
+
+### Added
+
+- **`indusk telemetry address`** (daemon-found-not-guessed): prints the stored address (`--json` for `init` to hand to an application); `--reset` chooses it again and is the only way it changes. Port options (`--otlp-port`, `--ui-port`, new `--logs-port` and `--mcp-port`) remain only for a temporary home.
+
+### Removed
+
+- **`indusk telemetry start --allow-port-bump`** (daemon-found-not-guessed): a port is never bumped.
+
 ## [1.71.0] — 2026-10-16
 
 ### Fixed

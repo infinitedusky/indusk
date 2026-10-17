@@ -283,6 +283,7 @@ extensions:
           ttl:
             spans: ${settings.retentionHours}h
   jaeger_query:
+    enable_tracing: false
     storage:
       traces: server_storage
     http:

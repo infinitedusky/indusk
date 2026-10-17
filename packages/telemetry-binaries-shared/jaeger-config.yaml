@@ -50,6 +50,7 @@ extensions:
         memory:
           max_traces: 100000
   jaeger_query:
+    enable_tracing: false
     storage:
       traces: some_storage
     http:

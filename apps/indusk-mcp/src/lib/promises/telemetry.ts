@@ -1,5 +1,5 @@
 import { sanitizeGroupId } from "../config.js";
-import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
+import { daemonMetaPath, resolveLocalDaemonHere } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
 import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome, readOutcome } from "./vocabulary.js";
 
@@ -82,7 +82,7 @@ function lookOf(tags: JaegerTag[] | undefined): LookKey | null {
  * way to reach Jaeger.
  */
 export interface JaegerEndpoint {
-	/** e.g. `http://localhost:16686` — no trailing slash. */
+	/** e.g. `http://localhost:<interface port>` — no trailing slash. */
 	queryUrl: string;
 	headers?: Record<string, string>;
 }
@@ -130,7 +130,7 @@ export interface PromiseMarks {
 }
 
 export interface MarkedSpansResult {
-	/** The query endpoint that answered, e.g. `http://localhost:16686`. */
+	/** The query endpoint that answered, e.g. `http://localhost:<interface port>`. */
 	queryUrl: string;
 	since: Date;
 	/** One entry per requested promise, present even when nothing was marked. */
@@ -337,11 +337,11 @@ export async function markedSpans(opts: {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	let endpoint = opts.endpoint;
 	if (!endpoint) {
-		const status = await daemonStatus();
-		if (!status.running) {
+		const daemon = await resolveLocalDaemonHere("promises");
+		if (daemon === null) {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
-		endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+		endpoint = jaegerEndpoint(`http://localhost:${daemon.uiPort}`);
 	}
 	const queryUrl = endpoint.queryUrl;
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
