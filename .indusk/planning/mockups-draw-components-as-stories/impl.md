@@ -165,12 +165,13 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
 
   </details>
   Note: regenerated with `tsx src/bin/cli.ts looks stories admin`; only `_reset.css` is committed. The same run also rewrote `components.json`, dropping `history-panel`'s `entries`/`open`/`className` properties (prop extraction from the Storybook build came back empty for it, twice) and moving `renderedFrom`; that change is outside this plan and was left uncommitted, to be looked at on its own.
-- [ ] Shape review of the changed generator and cockpit code.
+- [x] Shape review of the changed generator and cockpit code.
   <details><summary>Technical</summary>
 
   Against the enabled extensions' rules; findings as unchecked items here.
 
   </details>
+  Reviewed `component-styles.ts`, `mockups.ts`, `overview.ts`, `stories.ts` against the rules: one finding, fixed in place — the "names no class and no marker" predicate was written twice (`elementRulesOf` and `componentReset`) though `componentReset` is defined as `elementRulesOf`'s rules, so they could drift; it is now one named `isElementSelector`. Left as is: the trailing positional `base`/`reset` parameters of `storyDocument` (settled shape of the call, two optionals with defaults; an options object is a cross-file call-site change for `/cleanup`).
 
 #### Build Phase 1 Verification
 

@@ -311,6 +311,10 @@ export function baseStylesheet(appCss: string, foundation: Foundation): string {
 	return sheetOf(out, contextOf(root, foundation));
 }
 
+/** A selector naming no class and no component marker: an element, universal or page rule of the app. */
+const isElementSelector = (selector: string): boolean =>
+	selectorClasses(selector).length === 0 && selectorMarks(selector).length === 0;
+
 /** Where a story's frame holds a component: the marker's own element and everything inside it. */
 const COMPONENT_SCOPE = ":where([data-component], [data-component] *)";
 
@@ -355,10 +359,7 @@ export function componentReset(appCss: string, foundation: Foundation): string {
 	out.append(
 		keepRules(
 			root.nodes,
-			(selector) =>
-				selectorClasses(selector).length === 0 &&
-				selectorMarks(selector).length === 0 &&
-				!PAGE_SELECTOR.test(selector),
+			(selector) => isElementSelector(selector) && !PAGE_SELECTOR.test(selector),
 		),
 	);
 	out.walkRules((rule) => {
@@ -381,12 +382,7 @@ export function componentReset(appCss: string, foundation: Foundation): string {
  */
 export function elementRulesOf(appCss: string): string {
 	const out = postcss.root();
-	out.append(
-		keepRules(
-			postcss.parse(appCss).nodes,
-			(selector) => selectorClasses(selector).length === 0 && selectorMarks(selector).length === 0,
-		),
-	);
+	out.append(keepRules(postcss.parse(appCss).nodes, isElementSelector));
 	out.walk((n) => {
 		n.cleanRaws();
 	});
