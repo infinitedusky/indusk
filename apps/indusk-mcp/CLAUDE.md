@@ -207,13 +207,12 @@ pointer; the pointer holds the story.
   trunk's file (`createPlanWorktree` → `provisionMcpJson`), since git no longer brings
   it; anything that creates the file creates it through `ensureMcpJson`, so a file
   the daemon's sync made still names `indusk`.
-- The local daemon is native Jaeger + otelcol (`indusk telemetry *`; jaeger_mcp
-  in each project's `.mcp.json`) — see `.indusk/planning/archive/local-telemetry/adr.md`.
-  Jaeger v2 is an OTel Collector distribution; self-metrics off via
-  `service.telemetry.metrics.level: none`; binaries are platform-split
-  optionalDependencies (bump via `packages/telemetry-binaries-shared/UPSTREAM.json`);
-  the telemetry registry stores realpath-normalized paths. OTel
-  auto-instrumentation must load before other imports.
+- The local daemon is native Jaeger + otelcol (`indusk telemetry *`; see
+  `archive/local-telemetry/adr.md`): self-metrics off (`service.telemetry.metrics.level:
+  none`), its own tracing off (`jaeger_query.enable_tracing: false`, the only setting
+  that silences it). `reap` stops this home's strays, never another home's or a
+  stranger's — guarded by `telemetry-reap-plan.test.ts`, `telemetry-own-only.test.ts`.
+  Binaries are platform-split; registry paths are realpaths; OTel instrumentation loads first.
 - `papers.destinations[]` and `promises.domains[]` are ensured on `update`
   through `ensureConfigBlock`; `resolveDestination` is the one resolver and a
   `repo` destination is refused outside a workbench. `indusk papers publish`
