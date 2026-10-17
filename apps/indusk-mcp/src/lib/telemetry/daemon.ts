@@ -30,7 +30,6 @@ import { join } from "node:path";
  * port must never make a read lose the daemon. Only `stop` removes the record.
  */
 
-import { realProcessReads } from "../process-identity.js";
 import { ADDRESS_ROLES, type Ports } from "./daemon-address.js";
 import { homeKind, realTempRoots } from "./daemon-process.js";
 import { realDaemonReads } from "./daemon-reads.js";
@@ -50,7 +49,7 @@ import {
 	isPortListening,
 	metaFilePath,
 } from "./status.js";
-import { stopDaemon } from "./stop.js";
+import { realStopDeps, stopDaemon } from "./stop.js";
 
 export type { DaemonStartOptions } from "./start-plan.js";
 export {
@@ -498,12 +497,7 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 
 	// Ownership is the command line, never the port (telemetry-stop-stops-what-it-started):
 	// a slow port once made stop signal nothing, delete the record and report success.
-	const result = await stopDaemon(meta, induskHome(), {
-		alive: realProcessReads.alive,
-		command: realProcessReads.command,
-		kill: (pid, signal) => process.kill(pid, signal),
-		sleep,
-	});
+	const result = await stopDaemon(meta, induskHome(), realStopDeps);
 	if (result.clearRecord) cleanupFiles();
 	return {
 		stopped: true,

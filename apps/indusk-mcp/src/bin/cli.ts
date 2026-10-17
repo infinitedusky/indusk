@@ -694,9 +694,9 @@ telemetryCmd
 telemetryCmd
 	.command("reap")
 	.description(
-		"Kill telemetry processes whose --config path no longer exists (orphans from deleted temp homes)",
+		"Stop this home's strays: daemon processes the record does not name, config file present or gone",
 	)
-	.option("--dry-run", "List what would be killed without signalling anything")
+	.option("--dry-run", "List what would be stopped without signalling anything")
 	.action(async function (this: Command) {
 		const opts = this.opts() as { dryRun?: boolean };
 		const { telemetryReap } = await import("./commands/telemetry.js");

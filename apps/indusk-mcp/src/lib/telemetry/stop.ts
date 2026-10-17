@@ -1,4 +1,4 @@
-import { isOwnProcess, type ProcessDeps } from "../process-identity.js";
+import { isOwnProcess, type ProcessDeps, realProcessReads } from "../process-identity.js";
 import { daemonConfigPath } from "./daemon-process.js";
 import type { DaemonMeta } from "./status.js";
 
@@ -32,6 +32,14 @@ export interface StopResult {
 	stillRunning: number[];
 }
 
+/** The operating system's reads and signals, for `stop` and `reap`. */
+export const realStopDeps: StopDeps = {
+	alive: realProcessReads.alive,
+	command: realProcessReads.command,
+	kill: (pid, signal) => process.kill(pid, signal),
+	sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+};
+
 const GRACE_MS = 3000;
 const POLL_MS = 100;
 
@@ -55,16 +63,28 @@ export async function stopDaemon(
 		.filter((p) => deps.alive(p.pid) && !own.includes(p.pid))
 		.map((p) => p.pid);
 
-	for (const pid of own) signal(deps, pid, "SIGTERM");
-	for (let waited = 0; waited < GRACE_MS && own.some((pid) => deps.alive(pid)); waited += POLL_MS) {
-		await deps.sleep(POLL_MS);
-	}
-	for (const pid of own.filter((p) => deps.alive(p))) signal(deps, pid, "SIGKILL");
-	await deps.sleep(POLL_MS);
-
-	const stillRunning = own.filter((pid) => deps.alive(pid));
+	const stillRunning = await terminate(own, deps);
 	const stopped = stillRunning.length === 0;
 	return { stopped, clearRecord: stopped, signaled: own, strangers, stillRunning };
+}
+
+/**
+ * SIGTERM, a grace period, then SIGKILL; the pids still running afterwards.
+ * Shared by `stop` and `reap`: both end only processes they have already
+ * judged InDusk's own.
+ */
+export async function terminate(pids: number[], deps: StopDeps): Promise<number[]> {
+	for (const pid of pids) signal(deps, pid, "SIGTERM");
+	for (
+		let waited = 0;
+		waited < GRACE_MS && pids.some((pid) => deps.alive(pid));
+		waited += POLL_MS
+	) {
+		await deps.sleep(POLL_MS);
+	}
+	for (const pid of pids.filter((p) => deps.alive(p))) signal(deps, pid, "SIGKILL");
+	await deps.sleep(POLL_MS);
+	return pids.filter((pid) => deps.alive(pid));
 }
 
 function signal(deps: StopDeps, pid: number, sig: NodeJS.Signals): void {

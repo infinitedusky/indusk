@@ -1,7 +1,7 @@
 // clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared
 // promise: the-daemon-readers-follow-is-the-one-running
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -20,6 +20,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const REPO_ROOT = resolve(__dirname, "../../../..");
 const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
+const SPAWN_MODULE = join(REPO_ROOT, "apps/indusk-mcp/dist/lib/telemetry/daemon.js");
 const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
 
 interface Meta {
@@ -78,21 +79,21 @@ describe("reap stops the stray beside the recorded daemon", () => {
 			const recorded = readMeta();
 			everyPid.push(recorded.jaegerPid, recorded.otelcolPid);
 
-			// Lose the record, as a read once did, and start another beside it.
-			const keep = { json: join(home, "keep.json"), pid: join(home, "keep.pid") };
-			copyFileSync(join(home, "telemetry.json"), keep.json);
-			copyFileSync(join(home, "telemetry.pid"), keep.pid);
-			rmSync(join(home, "telemetry.json"));
-			rmSync(join(home, "telemetry.pid"));
-			const second = cli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
-			expect(second.code, second.stderr || second.stdout).toBe(0);
-			const stray = readMeta();
+			// A second daemon beside it, as a lost record once left: `start` now takes a
+			// running daemon over instead of starting another, so the stray is spawned
+			// the way the old start did, straight from the package, in the same home.
+			const spawned = spawnSync(
+				"node",
+				[
+					"-e",
+					`import(${JSON.stringify(SPAWN_MODULE)}).then((m) => m.spawnDaemonProcesses({ ports: { traces: 0, logs: 0, ui: 0, mcp: 0 } })).then((meta) => console.log(JSON.stringify(meta)))`,
+				],
+				{ env: { ...process.env, INDUSK_HOME: home }, encoding: "utf-8" },
+			);
+			expect(spawned.status, spawned.stderr).toBe(0);
+			const stray = JSON.parse(spawned.stdout.trim().split("\n").pop() ?? "{}") as Meta;
 			everyPid.push(stray.jaegerPid, stray.otelcolPid);
 			expect(stray.jaegerPid).not.toBe(recorded.jaegerPid);
-
-			// The record names the first daemon again.
-			copyFileSync(keep.json, join(home, "telemetry.json"));
-			copyFileSync(keep.pid, join(home, "telemetry.pid"));
 
 			cli(["telemetry", "reap"]);
 

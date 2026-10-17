@@ -15,10 +15,12 @@ import {
 	findDaemon,
 	renderStatus,
 } from "../../lib/telemetry/daemon-state.js";
+import { runReap } from "../../lib/telemetry/reap-plan.js";
 import { registerWithDaemon } from "../../lib/telemetry/register.js";
 import { deregisterProject, readRegistry } from "../../lib/telemetry/registry.js";
 import { describeDaemon, startReport } from "../../lib/telemetry/start-plan.js";
 import { induskHome, portAnswers, resolveLocalDaemonHere } from "../../lib/telemetry/status.js";
+import { realStopDeps } from "../../lib/telemetry/stop.js";
 
 /**
  * Re-point the registered projects whose `jaeger` entry names exactly the MCP
@@ -88,54 +90,26 @@ export async function telemetryStart(opts: TelemetryStartOptions): Promise<void>
 	}
 }
 
-/**
- * Stop the telemetry daemon. Reports whether it was running, the PIDs it
- * signaled, and whether SIGKILL was required.
- */
 export interface TelemetryReapOptions {
 	dryRun?: boolean;
 }
 
 /**
- * Kill telemetry processes whose config no longer exists.
- *
- * The daemon is spawned detached so it survives its terminal, and its PIDs live
- * only in `$INDUSK_HOME/telemetry.json`. Anything that deletes that home severs
- * the only handle on the processes — they keep running against a config path
- * that is gone, holding memory and, worse, binding ports the real daemon wants.
+ * Stop this home's strays: daemon processes of this home the record does not
+ * name, whether or not their config file is still there. Never the recorded
+ * daemon, another home's, a test's, or a process that is not InDusk's.
  */
 export async function telemetryReap(opts: TelemetryReapOptions = {}): Promise<void> {
-	const { reapOrphans } = await import("../../lib/telemetry/orphans.js");
-	const status = await daemonStatus();
-	// The running daemon is never a candidate, whatever its config looks like.
-	const protectPids = status.running ? [status.jaegerPid, status.otelcolPid] : [];
-
-	const result = reapOrphans({ dryRun: opts.dryRun, protectPids });
-
-	if (result.orphans.length === 0) {
-		console.info("No orphaned telemetry processes found.");
-		if (result.protectedPids.length > 0) {
-			console.info(`  (${result.protectedPids.length} skipped — claimed by the running daemon)`);
-		}
-		return;
-	}
-
-	const verb = opts.dryRun ? "Would reap" : "Reaped";
-	console.info(`${verb} ${result.orphans.length} orphaned telemetry process(es):`);
-	for (const o of result.orphans) {
-		console.info(`  ${o.binary} pid=${o.pid} — config gone: ${o.configPath}`);
-	}
-	if (result.protectedPids.length > 0) {
-		console.info(`  skipped ${result.protectedPids.length} claimed by the running daemon`);
-	}
-	if (result.failed.length > 0) {
-		for (const f of result.failed) {
-			console.error(`  could not signal pid=${f.pid}: ${f.reason}`);
-		}
-		process.exitCode = 1;
-	}
+	const home = induskHome();
+	const out = await runReap(realDaemonReads(home), home, realStopDeps, { dryRun: opts.dryRun });
+	console[out.code === 0 ? "info" : "error"](out.text);
+	if (out.code !== 0) process.exitCode = out.code;
 }
 
+/**
+ * Stop the telemetry daemon. Reports whether it was running, the PIDs it
+ * signaled, and whether SIGKILL was required.
+ */
 export async function telemetryStop(): Promise<void> {
 	const result = await daemonStop();
 	if (!result.stopped) {
