@@ -54,7 +54,7 @@ hold, so a person reading a phase can tell the work from the checks.
 | A2 | Every task placeholder in the impl, falsify and cleanup templates asks for an instruction; every verification placeholder for what must hold | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 | A3 | The planning rules a project is shipped say the same, and its copy matches the package's | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
 | A4 | The templates still pass the save check as written, and an impl written before still validates | Test Phase 1 | Test Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts, apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
-| A5 | No file outside the archives and history teaches a task as a statement of what will be true | Build Phase 2 | Build Phase 2 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/task-wording-gone.test.ts |
+| A5 | No file outside the archives and history teaches a task as a statement of what will be true | Build Phase 2 | Build Phase 2 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/task-wording-gone.test.ts |
 | A6 | The gate tasks under each phase's OTel, Context and Document headings in the templates also ask for instructions | Build Phase 2 | Build Phase 2 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 
 ## Checklist
@@ -200,7 +200,7 @@ messages and three docs pages. This phase first writes one test that fails
 while any file outside the archives still teaches a task as an outcome, then
 rewords every place it names, so the change cannot be partial again.
 
-- [ ] Write a test that fails while any file outside the archives and history still teaches a task as a statement of what will be true, and see it fail.
+- [x] Write a test that fails while any file outside the archives and history still teaches a task as a statement of what will be true, and see it fail.
   <details><summary>Technical</summary>
 
   A5 in `apps/indusk-mcp/src/__tests__/task-wording-gone.test.ts`, carrying `promise: an-impl-phase-explains-itself`: scan the package's `skills/`, `templates/`, `hooks/`, `src/lib/` (non-test) and `apps/docs/src/` (excluding `changelog.md`, `decisions/`, `lessons/`) and the project's `.claude/`; fail naming each file and line where a task (not a promise, brief or ADR line) is taught as "what will be true" or "one plain sentence" without "instruction". Grep first: `grep -rn -i 'what will be true\|one plain sentence' apps/indusk-mcp/{skills,templates,hooks,src/lib} apps/docs/src .claude`. Promise and brief wording is correct and exempt.
