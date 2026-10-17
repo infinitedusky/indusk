@@ -82,7 +82,7 @@ function lookOf(tags: JaegerTag[] | undefined): LookKey | null {
  * way to reach Jaeger.
  */
 export interface JaegerEndpoint {
-	/** e.g. `http://localhost:16686` — no trailing slash. */
+	/** e.g. `http://localhost:<interface port>` — no trailing slash. */
 	queryUrl: string;
 	headers?: Record<string, string>;
 }
@@ -130,7 +130,7 @@ export interface PromiseMarks {
 }
 
 export interface MarkedSpansResult {
-	/** The query endpoint that answered, e.g. `http://localhost:16686`. */
+	/** The query endpoint that answered, e.g. `http://localhost:<interface port>`. */
 	queryUrl: string;
 	since: Date;
 	/** One entry per requested promise, present even when nothing was marked. */

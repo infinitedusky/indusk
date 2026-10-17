@@ -1,5 +1,11 @@
-import type { StoredAddress } from "./daemon-address.js";
-import { type DaemonProcess, daemonProcessOf, isOwn } from "./daemon-process.js";
+import { JAEGER_DEFAULT_PORTS, ROLE_LABEL, type StoredAddress } from "./daemon-address.js";
+import {
+	type DaemonProcess,
+	daemonProcessOf,
+	homeKind,
+	isOwn,
+	realTempRoots,
+} from "./daemon-process.js";
 import type { DaemonReads, ProcessRow, RenderedPorts } from "./daemon-reads.js";
 import type { DaemonMeta } from "./status.js";
 
@@ -89,6 +95,8 @@ export function daemonState(reads: DaemonReads, home: string): DaemonState {
 	else if (recorded.jaeger || recorded.otelcol) kind = "partial";
 	else kind = "stale";
 
+	// The stored address belongs to the real home: a temporary home never reads one.
+	const address = homeKind(home, realTempRoots()) === "real" ? reads.address() : null;
 	return {
 		kind,
 		home,
@@ -97,9 +105,29 @@ export function daemonState(reads: DaemonReads, home: string): DaemonState {
 		strays: kind === "found" ? [] : unnamed.map(own),
 		found: kind === "found" ? unnamed.map(own) : [],
 		orphans: orphanRows.map(own),
-		address: reads.address(),
-		portDifferences: [],
+		address,
+		portDifferences:
+			meta !== null && (kind === "running" || kind === "partial")
+				? portDifferencesOf(meta, address)
+				: [],
 	};
+}
+
+/** Each port the record holds that is not the stored address's, said as `traces on 4318 (expected 24318)`. A port the finder could not read (0) is not a difference. */
+function portDifferencesOf(meta: DaemonMeta, address: StoredAddress | null): string[] {
+	if (address === null) return [];
+	return (
+		[
+			["traces", meta.otlpPort],
+			["ui", meta.uiPort],
+			["mcp", meta.mcpPort],
+			["logs", meta.logsOtlpPort],
+		] as const
+	).flatMap(([role, port]) =>
+		port > 0 && port !== address[role]
+			? [`${ROLE_LABEL[role]} on ${port} (expected ${address[role]})`]
+			: [],
+	);
 }
 
 /** What one port answered when asked, and how long the asking waited. */
@@ -110,8 +138,8 @@ export interface PortAnswer {
 
 const RECORDED_PORTS = [
 	["OTLP", "otlpPort"],
+	["Logs", "logsOtlpPort"],
 	["Jaeger UI", "uiPort"],
-	["logs", "logsOtlpPort"],
 	["MCP", "mcpPort"],
 ] as const;
 
@@ -143,6 +171,16 @@ export function renderStatus(state: DaemonState, answers: Record<number, PortAns
 				}
 				lines.push(`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`);
 				lines.push(`  Started:   ${meta.startedAt}`);
+				for (const p of state.address?.picked ?? []) {
+					lines.push(
+						`  ${ROLE_LABEL[p.role]} port was picked once: ${p.blockPort} was held${p.holder ? ` by ${p.holder}` : ""}`,
+					);
+				}
+				if (state.portDifferences.length > 0) {
+					lines.push(
+						`  differs from the stored address: ${state.portDifferences.join("; ")}; \`indusk telemetry restart\` brings it onto the stored address`,
+					);
+				}
 				for (const { name, port } of recordedPorts(meta)) {
 					const a = port > 0 ? answers[port] : undefined;
 					if (a?.answer === "timeout") {
@@ -188,8 +226,6 @@ export function renderStatus(state: DaemonState, answers: Record<number, PortAns
 
 // ---- finding a daemon whose record is gone ---------------------------------
 
-/** Jaeger's own default receiver and interface ports: where a daemon started before the stored address listens. */
-const JAEGER_DEFAULTS = { otlpPort: 4318, uiPort: 16686 } as const;
 /** A rendered config written this long after a process started is still that process's own. */
 const YAML_SKEW_MS = 5_000;
 /** The collector a Jaeger started, when nothing else pairs them, is the same home's one started this soon after. */
@@ -238,23 +274,43 @@ function trustedPorts(
 	);
 }
 
+/** The roles a process holds a port of the stored address for: the address labels the sockets it names. */
+function labelledByAddress(
+	address: StoredAddress | null,
+	jaeger: LocatedProcess,
+	otelcol: LocatedProcess,
+): RenderedPorts {
+	if (address === null) return {};
+	const held = (p: LocatedProcess, port: number): number | undefined =>
+		p.ports.includes(port) ? port : undefined;
+	const labelled: RenderedPorts = {
+		otlpPort: held(jaeger, address.traces),
+		uiPort: held(jaeger, address.ui),
+		mcpPort: held(jaeger, address.mcp),
+		logsOtlpPort: held(otelcol, address.logs),
+	};
+	return Object.fromEntries(Object.entries(labelled).filter(([, port]) => port !== undefined));
+}
+
 function labelPorts(
 	reads: DaemonReads,
 	jaeger: LocatedProcess,
 	otelcol: LocatedProcess,
 ): RenderedPorts {
 	const rendered = reads.renderedPorts();
+	const fromAddress = labelledByAddress(reads.address(), jaeger, otelcol);
 	const fromYaml: RenderedPorts = {
 		...trustedPorts(reads, jaeger, ["otlpPort", "uiPort", "mcpPort", "jaegerHealthPort"], rendered),
 		...trustedPorts(reads, otelcol, ["logsOtlpPort", "otelcolHealthPort"], rendered),
 	};
 	const defaults =
 		fromYaml.otlpPort === undefined &&
-		jaeger.ports.includes(JAEGER_DEFAULTS.otlpPort) &&
-		jaeger.ports.includes(JAEGER_DEFAULTS.uiPort)
-			? JAEGER_DEFAULTS
+		fromAddress.otlpPort === undefined &&
+		jaeger.ports.includes(JAEGER_DEFAULT_PORTS.traces) &&
+		jaeger.ports.includes(JAEGER_DEFAULT_PORTS.ui)
+			? { otlpPort: JAEGER_DEFAULT_PORTS.traces, uiPort: JAEGER_DEFAULT_PORTS.ui }
 			: {};
-	return { ...defaults, ...fromYaml };
+	return { ...defaults, ...fromAddress, ...fromYaml };
 }
 
 function pairProcesses(
@@ -322,23 +378,13 @@ function metaOf(
 	};
 }
 
-/**
- * What a finder would take over, judged from reads alone and written nowhere:
- * this home's Jaeger and collector paired, their ports read from the sockets
- * they listen on. Several daemons: the one holding `tracesPort` (Jaeger's own
- * 4318 until Build Phase 3 supplies the stored address), the rest strays;
- * none holding it: none taken. A lone pair is taken whatever its ports.
- */
-function locateDaemon(
-	reads: DaemonReads,
-	home: string,
-	tracesPort: number,
-): { pair: Pair; strays: OwnProcess[] } | null {
+/** This home's Jaegers and collectors, each paired with the collector started with it, ports labelled and none guessed. */
+function pairsOf(reads: DaemonReads, home: string): { located: LocatedProcess[]; pairs: Pair[] } {
 	const own = reads.processes().flatMap((row) => {
 		const proc = daemonProcessOf(row.command);
 		return proc && isOwn(proc, home) ? [{ row, proc }] : [];
 	});
-	if (own.length === 0) return null;
+	if (own.length === 0) return { located: [], pairs: [] };
 	const listening = reads.listening(own.map((d) => d.row.pid));
 	const located: LocatedProcess[] = own.map(({ row, proc }) => ({
 		row,
@@ -352,6 +398,39 @@ function locateDaemon(
 	).map(
 		([jaeger, otelcol]): Pair => ({ jaeger, otelcol, ports: labelPorts(reads, jaeger, otelcol) }),
 	);
+	return { located, pairs };
+}
+
+/** A pair found running with no record, as `startPlan` judges it. */
+export interface Candidate {
+	jaegerPid: number;
+	otelcolPid: number;
+	/** The traces port the pair holds, when it could be read. */
+	tracesPort?: number;
+}
+
+/** The pairs of this home's daemon processes running with no record to name them. */
+export function candidatesOf(reads: DaemonReads, home: string): Candidate[] {
+	return pairsOf(reads, home).pairs.map((p) => ({
+		jaegerPid: p.jaeger.row.pid,
+		otelcolPid: p.otelcol.row.pid,
+		tracesPort: p.ports.otlpPort,
+	}));
+}
+
+/**
+ * What a finder would take over, judged from reads alone and written nowhere:
+ * this home's Jaeger and collector paired, their ports read from the sockets
+ * they listen on. Several daemons: the one holding `tracesPort` (the stored
+ * address's, else Jaeger's own default), the rest strays; none holding it:
+ * none taken. A lone pair is taken whatever its ports.
+ */
+function locateDaemon(
+	reads: DaemonReads,
+	home: string,
+	tracesPort: number,
+): { pair: Pair; strays: OwnProcess[] } | null {
+	const { located, pairs } = pairsOf(reads, home);
 	// One daemon is the daemon; only among several does the traces port decide.
 	const taken = pairs.length === 1 ? pairs[0] : pairs.find((p) => p.ports.otlpPort === tracesPort);
 	if (!taken) return null;
@@ -373,6 +452,24 @@ export function describeFinding(found: Found): string | null {
 	const unread =
 		found.unknownRoles.length > 0 ? `; ports not read: ${found.unknownRoles.join(", ")}` : "";
 	return `  record was missing: found from the process list and its sockets, written again${unread}`;
+}
+
+function tracesPortOf(reads: DaemonReads, opts: { tracesPort?: number }): number {
+	return opts.tracesPort ?? reads.address()?.traces ?? JAEGER_DEFAULT_PORTS.traces;
+}
+
+/**
+ * `findDaemon` for a caller that already holds the home's lock (`ensureDaemon`,
+ * which decides and writes under one): takes over the daemon holding
+ * `tracesPort`, writing the record with an exclusive create.
+ */
+export function takeOverLocked(
+	reads: DaemonReads,
+	home: string,
+	opts: { tracesPort?: number } = {},
+): Found | null {
+	const located = locateDaemon(reads, home, tracesPortOf(reads, opts));
+	return located === null ? null : recordFound(reads, home, located);
 }
 
 /** Under the lock: writes the record when no command has, or reads back the one that did. */
@@ -400,7 +497,6 @@ function recordFound(
  * `unknownRoles` and recorded as port 0. The record is created with an
  * exclusive create under `<home>/telemetry.lock`: when two commands find the
  * daemon at once, one writes and is `finder`, the other reads that record back.
- * The stored address, which this never writes, arrives in Build Phase 3.
  *
  * `by` names the command that looked, for the report Build Phase 5 sends.
  */
@@ -410,7 +506,7 @@ export async function findDaemon(
 	_by: string,
 	opts: { tracesPort?: number } = {},
 ): Promise<Found | null> {
-	const located = locateDaemon(reads, home, opts.tracesPort ?? JAEGER_DEFAULTS.otlpPort);
+	const located = locateDaemon(reads, home, tracesPortOf(reads, opts));
 	if (located === null) return null;
 	const release = await reads.lock();
 	try {
@@ -427,7 +523,7 @@ export function findDaemonSync(
 	_by: string,
 	opts: { tracesPort?: number } = {},
 ): Found | null {
-	const located = locateDaemon(reads, home, opts.tracesPort ?? JAEGER_DEFAULTS.otlpPort);
+	const located = locateDaemon(reads, home, tracesPortOf(reads, opts));
 	if (located === null) return null;
 	const release = reads.lockSync();
 	try {
