@@ -143,7 +143,7 @@ verification item an end state, then changes the promise's sentence to match.
   `.claude/skills/{planner,falsify,cleanup}.md` and `.indusk/planning/CLAUDE.md` from the package (`indusk update` or the sync script); `skill-sync-parity.test.ts` must pass.
 
   </details>
-- [ ] Change the promise's sentence to say tasks are instructions and verification items what must hold.
+- [x] Change the promise's sentence to say tasks are instructions and verification items what must hold.
   <details><summary>Technical</summary>
 
   `indusk promises change an-impl-phase-explains-itself --plan impl-tasks-are-instructions --statement "Every phase of a new impl opens with a plain summary saying what it does for the whole plan; every task is one plain instruction saying what to do, and every verification item one plain statement of what must hold, each with its technical detail beneath it, written for someone who has worked on the project but knows none of its shorthand: no row labels, no abbreviations, nothing named by a nickname or an unclear pronoun; an impl that leaves out the paragraph or the sentence, or puts a row label in either, is refused." --reason "a checklist of outcomes hid the work from the checks (Sandy)"`
