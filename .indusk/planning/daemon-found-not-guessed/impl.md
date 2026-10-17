@@ -1182,7 +1182,7 @@ A reader who did not build this plan found two places where the code does not do
   `pairProcesses` in `lib/telemetry/daemon-find.ts:109` pairs by start time within 20 seconds only; when an address is stored, first pair the Jaeger holding the stored traces port with the collector holding the stored logs port, then fall back to start time for the rest, as the ADR's finding decision said. Answers row A40.
 
   </details>
-- [ ] Readers reach the recorded Jaeger while it runs, even when its collector has stopped.
+- [x] Readers reach the recorded Jaeger while it runs, even when its collector has stopped.
   <details><summary>Technical</summary>
 
   `resolveLocalDaemonVia` and `resolveLocalDaemonSync` in `lib/telemetry/daemon-state.ts:287-299` return a daemon only for `running` or `found`; for `partial` with `state.recorded.jaeger` alive, return the record's meta `via: "record"` (traces and the interface are Jaeger's; only logs need the collector). Readers and `status` then agree: the daemon is there and broken. Answers row A41.
