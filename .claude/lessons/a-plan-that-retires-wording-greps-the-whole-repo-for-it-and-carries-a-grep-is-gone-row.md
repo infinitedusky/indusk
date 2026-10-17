@@ -1,0 +1,7 @@
+# A plan that retires a piece of wording must find every place it appears with a whole-repo grep and carry a "grep is gone" row in Test Phase 1 — not list the files from memory
+
+Why: impl-tasks-are-instructions changed "a task states what will be true" to "a task is an instruction". The first pass listed three skills from memory. A cold audit then found seven more places still teaching the old rule: the bugfix, refactor and feature workflow templates, the gate tasks inside the skill templates, the Shape step's written item, the save check's refusal messages (the enforcer is where an agent meets a rule) and four docs guide pages. A second build phase was needed.
+
+What to do: at research or Test Phase 1, grep the whole repo for the old phrase (skills, templates, hooks, src/lib, docs, installed .claude copies), and write a repo-wide "the phrase is gone" test row with an explicit exemption list (changelog, decisions, lessons, archives). Make the plan's Files Affected table the full grep result. Run the guard against a reworded violation too, since a matcher keyed on one exact string misses a rewrite (see the lesson on guard tests over prose).
+
+Pointer: .indusk/planning/archive/impl-tasks-are-instructions/audit.md; apps/indusk-mcp/src/__tests__/task-wording-gone.test.ts. Related: a-promise-worded-wherever-gets-a-row-for-every-render-site-found-by-grep, grep-for-a-moved-path-everywhere-at-research-not-just-code.

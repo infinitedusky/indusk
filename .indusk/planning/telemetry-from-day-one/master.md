@@ -61,7 +61,7 @@ each child is one plan with one landing.
    2026-10-17 (Sandy) so it lands now rather than behind it. A task in a new
    impl reads as work to do and a verification item as what must hold; the
    planner, its templates and the shipped planning rules say so. Clauses per
-   phase stay with 3b, read from the rows.
+   phase stay with 3b, read from the rows. Landed 2026-10-17 (`fb166688`).
 
 2. **`a-new-project-starts-instrumented`** ("Init sets up telemetry (New
    Projects)", retitled 2026-10-17) — blocked by `daemon-found-not-

@@ -82,3 +82,80 @@ describe("phase-summaries A16 — the planner's impl instructions ask for writin
 		expect(text).toMatch(/\bAfter:/i);
 	});
 });
+
+/**
+ * promise: an-impl-phase-explains-itself — A1 to A3 of the
+ * impl-tasks-are-instructions impl.
+ *
+ * A task reads as work to do and a verification item as what must hold. The
+ * planner's instructions are the product, so these read them as text.
+ */
+
+/** Placeholder checkbox lines `- [ ] {…}`, each with the `####` gate heading it sits under (or "" for a phase's own tasks). */
+function placeholders(text: string): { gate: string; line: string }[] {
+	const found: { gate: string; line: string }[] = [];
+	let gate = "";
+	for (const line of text.split("\n")) {
+		if (/^###\s/.test(line)) gate = "";
+		else if (/^####\s/.test(line)) gate = line;
+		else if (/^- \[ \] \{/.test(line)) found.push({ gate, line });
+	}
+	return found;
+}
+
+describe("impl-tasks-are-instructions A1 — the planner says a task is an instruction", () => {
+	const step7 = () => between(planner, /^7\. \*\*If ADR is accepted\*\*/m, /^8\. /m);
+
+	it("says a task is one plain instruction saying what to do, and a verification item what must hold", () => {
+		const text = step7();
+		expect(text).toContain("one plain instruction");
+		expect(text).toContain("what to do");
+		expect(text).toContain("what must hold");
+	});
+
+	it("gives a before-and-after pair for a task written as an instruction", () => {
+		const text = step7();
+		expect(text).toContain("Make the prompt box");
+		expect(text).toMatch(/\bBefore:[^]*\bAfter:[^]*Make the prompt box/i);
+	});
+
+	it("no longer says a task states what will be true when it is done", () => {
+		expect(step7()).not.toContain("what will be true when it is done");
+	});
+});
+
+describe("impl-tasks-are-instructions A2 — the impl template's placeholders ask for instructions", () => {
+	it("every task placeholder asks for an instruction", () => {
+		const tasks = placeholders(implTemplate()).filter((p) => p.gate === "");
+		expect(tasks.length, "no task placeholders found").toBeGreaterThan(0);
+		for (const { line } of tasks) expect(line, line).toMatch(/\binstruction\b/i);
+	});
+
+	it("every verification placeholder asks for what must hold", () => {
+		const items = placeholders(implTemplate()).filter((p) => /Verification\s*$/.test(p.gate));
+		expect(items.length, "no verification placeholders found").toBeGreaterThan(0);
+		for (const { line } of items) expect(line, line).toMatch(/must hold/i);
+	});
+});
+
+describe("impl-tasks-are-instructions A6 — the gate tasks ask for instructions too", () => {
+	it("every OTel, Context and Document placeholder asks for an instruction", () => {
+		const gateTasks = placeholders(implTemplate()).filter((p) => /(OTel|Context|Document)\s*$/.test(p.gate));
+		expect(gateTasks.length, "no OTel, Context or Document placeholders found").toBeGreaterThanOrEqual(3);
+		for (const { line } of gateTasks) expect(line, line).toMatch(/\binstruction\b/i);
+	});
+});
+
+describe("impl-tasks-are-instructions A3 — the shipped planning rules say the same", () => {
+	const REPO = resolve(PKG, "../..");
+	const rules = readFileSync(join(PKG, "templates/planning/CLAUDE.md"), "utf-8");
+	const entry = () => between(rules, /^- \*\*A new impl opts in with `phase_summary: required`/m, /^- /m);
+
+	it("says a task is one plain instruction and a verification item what must hold, and the project's copy matches", () => {
+		const text = entry();
+		expect(text).toMatch(/one plain\s+instruction/);
+		expect(text).toMatch(/what\s+must\s+hold/);
+		expect(text).not.toMatch(/each task is one plain\s+sentence/);
+		expect(readFileSync(join(REPO, ".indusk/planning/CLAUDE.md"), "utf-8")).toBe(rules);
+	});
+});

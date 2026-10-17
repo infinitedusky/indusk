@@ -401,3 +401,6 @@
 {"plan":"plan-page-promise-health","phase":1,"kind":"build","sha":"cdc10809b4a29ebe98555a7adc3ef93dae58113f","timestamp":"2026-10-17T18:05:30.969Z"}
 {"plan":"plan-page-promise-health","phase":2,"kind":"build","sha":"59280cf24d63d5b30db86ebbaecfd09350102acc","timestamp":"2026-10-17T18:20:00.633Z"}
 {"plan":"plan-page-promise-health","phase":3,"kind":"build","sha":"2b3dedaf280f5cfc08954a774962244c66c5a1b4","timestamp":"2026-10-17T18:25:58.609Z"}
+{"plan":"impl-tasks-are-instructions","phase":1,"kind":"test","sha":"fc00d26864b8bc3a6663c4fc6fbfac1186e73b96","timestamp":"2026-10-17T17:52:12.770Z"}
+{"plan":"impl-tasks-are-instructions","phase":1,"kind":"build","sha":"5155fdbf37166d768451229dd8ddc1b45a5b59a8","timestamp":"2026-10-17T17:54:46.553Z"}
+{"plan":"impl-tasks-are-instructions","phase":2,"kind":"build","sha":"4d1c35ca468b0d08833ed1515860d7b8c5fd68b3","timestamp":"2026-10-17T18:06:20.285Z"}

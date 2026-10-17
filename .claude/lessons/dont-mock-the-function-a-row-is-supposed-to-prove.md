@@ -1,0 +1,3 @@
+# A test row never mocks the function the promise is about — fake only the outermost I/O, so deleting the behavior turns a row red
+
+In plan-page-promise-health every plan-page test mocked readPlanHealth, the exact wiring the promise was about, so deleting either page's health line left all rows green; only the audit caught it. A node render over a fixture project with only the telemetry read (readHealth) faked proved both pages. Rule: a row's test must fail when the behavior it names is removed; fake the outermost I/O (the telemetry read, the filesystem), never the unit under proof. Check by deleting the line and watching the row go red. Source: highlight h-20261017-015, plan-page-promise-health retrospective.
