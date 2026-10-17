@@ -15,3 +15,9 @@ Loaded by Claude Code when a file under `src/lib/scaffold/` is read
   `instrumentation.py`; a template without one is copied as it is. No port
   number appears here: `settingsValues` takes the stored address, else
   `PORT_BLOCK`.
+- **A file InDusk recorded and a person deleted stays deleted**: `decideFile` says
+  `removed`, `apply.ts` prints one `left out:` line and keeps the record; `init
+  --force` writes it back (T29 in `plan.test.ts` and `update-scaffold-refresh.test.ts`).
+- **The Next.js setup file goes where the pages are**: `src/instrumentation.ts` when
+  `src/app` or `src/pages` exists, else the root; Next.js loads it from nowhere else
+  (T25 in `init-scaffold-placement.test.ts`).
