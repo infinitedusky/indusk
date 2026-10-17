@@ -15,6 +15,7 @@ indusk telemetry start      # Start the daemon on its stored address, or take ov
 indusk telemetry stop       # Stop the daemon
 indusk telemetry restart    # Stop then start, on the same stored address
 indusk telemetry status     # Report state + the four ports + PIDs
+indusk telemetry reap       # Stop this home's strays (--dry-run lists them)
 indusk telemetry address    # Print the stored address (--json for init, --reset to choose again)
 ```
 
@@ -111,6 +112,25 @@ Or, if SIGKILL was required:
 Warning: Telemetry daemon (jaeger=72113 otelcol=72117) did not exit within 3s; forced with SIGKILL.
 ```
 
+## `indusk telemetry reap`
+
+Stops every **stray** of this home: a Jaeger or collector run out of this home's config files that the record does not name, whether its config file still exists or not. A lost record is how they appear, when a start that did not know the daemon was running started another beside it. `reap` never touches the recorded daemon, a daemon of another home (a test's, for one), or a process that is not InDusk's; each process is read again by its command line just before it is signalled, so a process id the operating system has since given to another program is left alone.
+
+With no record, nothing is known to be the daemon, so `reap` stops nothing and says to run `indusk telemetry start` first, which takes the running daemon over.
+
+```sh
+indusk telemetry reap --dry-run   # list the strays, signal nothing
+indusk telemetry reap
+```
+
+```
+Strays of this home (2):
+  stopped jaeger 60107
+  stopped otelcol 60109
+```
+
+A stray that does not stop within three seconds is sent SIGKILL; one that still does not stop is named (`jaeger 60107 would not stop; stop it by hand`) and the exit code is non-zero.
+
 ## `indusk telemetry restart`
 
 Equivalent to `stop` + waiting for the OS to release the ports + `start`, **on the same stored address** (a temporary home comes back on the ports it held). A daemon started before the address was stored, on other ports, is moved onto it by a restart; `status` says which ports differ. Picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` triggers a platform-package refresh — the daemon's next spawn uses the newly-installed binaries.
@@ -134,6 +154,8 @@ Report current daemon state. The recorded Jaeger and otelcol are judged by their
 | record missing | no record, but this home's daemon processes run |
 | not running, record kept | the record names processes that are gone or are something else now; it is named and left for `start` to overwrite and `stop` to remove |
 | not running | no record and nothing runs |
+
+If the log holds lines of Jaeger failing to trace itself since the daemon started (a daemon started before its own tracing was switched off), status prints their count and the first of them and says `restart` starts it quiet.
 
 Each port is also asked once. A port that does not answer in time prints `:<port> did not answer in <ms> ms (slow, not gone)`; one that refuses prints `:<port> refused (starting, or that receiver failed)`. Any InDusk Jaeger or collector of this home that the record does not name is listed as a stray, with its process id, start time, ports and install, and `indusk telemetry reap` stops them.
 

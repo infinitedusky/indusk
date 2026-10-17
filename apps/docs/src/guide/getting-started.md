@@ -122,12 +122,12 @@ Each check is a shell command declared in the extension's manifest, so the faili
 
 ### Telemetry: the daemon looks up but no traces arrive
 
-Usually a stray daemon holding the port your exporter targets. A telemetry process whose `--config` path no longer exists is an orphan — from a deleted temp home or worktree — and it answers on the port without being an OTLP receiver.
+Usually a stray daemon: an InDusk Jaeger or collector of this home that the record does not name, left by a start that did not know the daemon was running. `status` lists them, with the time each started and the ports it holds.
 
 ```bash
 indusk telemetry status           # the real daemon's ports; finds a daemon whose record is gone
-indusk telemetry reap --dry-run   # what is orphaned
-indusk telemetry reap             # kill them
+indusk telemetry reap --dry-run   # which strays of this home would be stopped
+indusk telemetry reap             # stop them (never the recorded daemon, another home's, or a stranger's)
 ```
 
 If the record (`~/.indusk/telemetry.json`) went missing while the daemon kept running, nothing needs repairing by hand: the next command that looks (`status`, a promise reader, the evaluator) finds the daemon from the process list and its listening sockets and writes the record again.
