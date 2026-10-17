@@ -3,6 +3,9 @@ import { createConnection } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { isAlive } from "../process-identity.js";
+import type { DaemonReads } from "./daemon-reads.js";
+import { realDaemonReads } from "./daemon-reads.js";
+import { daemonState, type PortAnswer } from "./daemon-state.js";
 
 /**
  * The read side of the local telemetry daemon: where it records itself, and
@@ -68,9 +71,9 @@ export type DaemonStatusResult =
  * timeout is tried once more before it is believed, because the 500 ms is
  * measured on the caller's own event loop: a loop held by other work (the
  * admin rendering a page) fires the timer before it delivers a connect that
- * already happened, and a listening port reads as closed. `daemonStatus`
- * deletes the daemon's record on that answer (promise-timeline, discovered at
- * Build Phase 4).
+ * already happened, and a listening port reads as closed. Nothing decides
+ * whether the daemon runs from this answer any more: `daemonStatus` judges the
+ * recorded processes by their command lines, and no read removes the record.
  */
 export async function isPortListening(port: number, attempts = 2): Promise<boolean> {
 	for (let i = 0; i < attempts; i++) {
@@ -96,11 +99,6 @@ function connectOnce(port: number): Promise<"connected" | "refused" | "timeout">
 // One liveness check for every process InDusk reads (small-fixes A23).
 export { isAlive };
 
-export async function verifyIdentity(pid: number, port: number): Promise<boolean> {
-	if (!isAlive(pid)) return false;
-	return isPortListening(port);
-}
-
 export function cleanupFiles(): void {
 	for (const p of [pidFilePath(), metaFilePath()]) {
 		if (existsSync(p)) rmSync(p, { force: true });
@@ -125,26 +123,18 @@ export function liveOtlpEndpointSync(): string | null {
 	}
 }
 
-export async function daemonStatus(): Promise<DaemonStatusResult> {
-	const pidFile = pidFilePath();
-	const metaFile = metaFilePath();
-	if (!existsSync(pidFile) || !existsSync(metaFile)) return { running: false };
-
-	let meta: DaemonMeta;
-	try {
-		meta = JSON.parse(readFileSync(metaFile, "utf-8")) as DaemonMeta;
-	} catch {
-		return { running: false };
-	}
-
-	// Identity gate: BOTH processes alive AND both listening on their ports
-	const jaegerOk = await verifyIdentity(meta.jaegerPid, meta.uiPort);
-	const otelcolOk = await verifyIdentity(meta.otelcolPid, meta.otelcolHealthPort);
-	if (!jaegerOk || !otelcolOk) {
-		cleanupFiles();
-		return { running: false };
-	}
-
+/**
+ * Whether the daemon runs, judged by what its recorded processes are now (their
+ * command lines), never by a port answering. A slow port is a running daemon;
+ * a record whose processes are gone reads not running and stays where it is.
+ * Only `stop` removes the record, and `start` writes over a stale one.
+ */
+export async function daemonStatus(
+	reads: DaemonReads = realDaemonReads(induskHome()),
+): Promise<DaemonStatusResult> {
+	const state = daemonState(reads, induskHome());
+	if (state.kind !== "running" || state.meta === null) return { running: false };
+	const meta = state.meta;
 	return {
 		running: true,
 		jaegerPid: meta.jaegerPid,
@@ -154,4 +144,17 @@ export async function daemonStatus(): Promise<DaemonStatusResult> {
 		mcpPort: meta.mcpPort,
 		startedAt: meta.startedAt,
 	};
+}
+
+/** How each port a record names answers, and how long each wait was. */
+export async function portAnswers(meta: DaemonMeta): Promise<Record<number, PortAnswer>> {
+	const ports = [meta.otlpPort, meta.uiPort, meta.logsOtlpPort, meta.mcpPort];
+	const answered = await Promise.all(
+		ports.map(async (port) => {
+			const started = Date.now();
+			const answer = await connectOnce(port);
+			return [port, { answer, waitedMs: Date.now() - started }] as const;
+		}),
+	);
+	return Object.fromEntries(answered);
 }

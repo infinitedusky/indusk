@@ -25,10 +25,9 @@ import { join } from "node:path";
  * immediately after `daemonStart` resolves — the PID/meta files are the
  * durable handoff to subsequent `telemetry status`/`telemetry stop` invocations.
  *
- * PID-reuse hardening: `status` composes `isAlive(pid)` with
- * `isPortListening(port)` (`verifyIdentity`) so a recycled PID is not reported
- * running. `stop` judges ownership by the process's command line instead
- * (`stop.ts`): a slow port must never make it skip its own processes.
+ * PID-reuse hardening: `status` and `stop` both judge a recorded process by
+ * its command line (`daemon-state.ts`, `stop.ts`), never by a port: a slow
+ * port must never make a read lose the daemon. Only `stop` removes the record.
  */
 
 import { realProcessReads } from "../process-identity.js";
