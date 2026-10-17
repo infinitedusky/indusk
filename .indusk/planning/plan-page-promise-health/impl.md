@@ -59,6 +59,7 @@ This phase writes the three tests that say what the plan page must show: a broke
   A1 and A3 in new `apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts`: a fixture project through `helpers/promises-fixture.ts` with a plan owning an enforced behaviour promise; `readPlanParts(root, plan, { health })` with `health` from fake source reads (local break, no incident; for A3 also a `production` read holding) — today the option is ignored, so `promises[0].health` is undefined and the assertion fails. A1's and A2's drawing halves in `apps/indusk-admin/src/__tests__/plan-parts.test.tsx`: render `PlanParts` with parts whose promises carry `health` (`red`, `fixed`, `green`, `unverified`, `amber`, a state promise with none) and assert each dot's colour class is the Promises page's for that health (`bg-bad`, `bg-ink-soft`, `bg-ok`, `bg-idle`, `bg-warn`; the state promise its registry colour) — today every enforced promise is `bg-ok`. Each file carries `promise: a-promise-reads-the-same-on-its-plan-page` and each test its clause comment.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Test Phase 1 Verification
 
