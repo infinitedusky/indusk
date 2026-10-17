@@ -131,7 +131,7 @@ verification item an end state, then changes the promise's sentence to match.
   `planner.md` `### impl.md` block; `skills/falsify.md` and `skills/cleanup.md` phase-summary shapes. Verification placeholders keep "what must hold".
 
   </details>
-- [ ] Reword the shipped planning rules to match.
+- [x] Reword the shipped planning rules to match.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/templates/planning/CLAUDE.md`, the `phase_summary: required` entry: "each task is one plain instruction … each verification item a plain statement of what must hold".
