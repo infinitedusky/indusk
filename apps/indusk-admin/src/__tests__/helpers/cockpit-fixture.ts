@@ -559,6 +559,10 @@ export function planningReaderMock() {
   };
 }
 
+export function planHealthMock() {
+  return { __esModule: true, readPlanHealth: async () => ({}) };
+}
+
 export function promisesReaderMock() {
   return {
     __esModule: true,

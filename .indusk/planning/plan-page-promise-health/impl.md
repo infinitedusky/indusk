@@ -185,25 +185,25 @@ This plan taught a plan's page to colour each promise by its health. Along the w
   In `apps/indusk-admin/src/lib/plan-health.ts`, `readPlanHealth` builds `known` and filters `own.promises` by it; `planPromiseHealth` in `apps/indusk-mcp/src/lib/promises/health.ts` does the same skip (`if (known.has(p.name)) continue`). Pass `own?.promises ?? []` and delete the reader's `known`/`extra`, so the rule of which promise the trunk answers for lives only in the package, where the doc comment on `planPromiseHealth` states it. Behaviour unchanged; A4 holds it.
 
   </details>
-- [ ] Move the six identical stand-ins for the plan page's health read into the shared cockpit test helper, beside the stand-ins for the other readers.
+- [x] Move the six identical stand-ins for the plan page's health read into the shared cockpit test helper, beside the stand-ins for the other readers.
   <details><summary>Technical</summary>
 
   Add `planHealthMock()` returning `{ __esModule: true, readPlanHealth: async () => ({}) }` to `apps/indusk-admin/src/__tests__/helpers/cockpit-fixture.ts`, next to `planningReaderMock`/`promisesReaderMock`; replace the inline `vi.mock("@/lib/plan-health", …)` in `cockpit-phone.test.tsx` and `plan/[name]/{page,header,decision,master,workflows}.test.tsx` with `vi.mock("@/lib/plan-health", async () => (await import("@/__tests__/helpers/cockpit-fixture")).planHealthMock())`, keeping the one-line comment. Basis: rule of three (six copies) and the fixture's established idiom. The `@infinitedusky/indusk-mcp/plans/parts` stand-in beside it is also repeated but predates this plan and one of the six copies differs; left for its own change.
 
   </details>
-- [ ] Review the package's health module, which is over the size threshold, and leave it as it is.
+- [x] Review the package's health module, which is over the size threshold, and leave it as it is.
   <details><summary>Technical</summary>
 
   Reviewed `apps/indusk-mcp/src/lib/promises/health.ts` (572 lines, cap 400) — left as-is: this plan added the 25-line `planPromiseHealth`, which composes `alarmRead`, `healthRows` and `healthOf` and is what `redPlans` beside it now reads; moving it out would separate the nav's roll-up from the per-promise answer it is built on. Splitting the module's older reading and incident halves is not this plan's output.
 
   </details>
-- [ ] Review the changelog, which is over the size threshold, and leave it as it is.
+- [x] Review the changelog, which is over the size threshold, and leave it as it is.
   <details><summary>Technical</summary>
 
   Reviewed `apps/docs/src/changelog.md` (1116 lines, cap 400) — left as-is: an append-only log; this plan added one Fixed line.
 
   </details>
-- [ ] Review the remaining changed files, all under the threshold, and leave them as they are.
+- [x] Review the remaining changed files, all under the threshold, and leave them as they are.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/parts.ts` (an optional `health` option threaded through), `plan/[name]/page.tsx` and `brief/page.tsx` (one argument each — the two call sites are the same two lines, but each page already repeats the `readPlanParts` call around them; folding them belongs to whatever unifies the two pages' reads), and the two test files `plan-parts.test.tsx` and `plan-parts-health.test.ts` (each tests one side of the boundary; no shared fixture between the admin's browser project and the package's node tests).
