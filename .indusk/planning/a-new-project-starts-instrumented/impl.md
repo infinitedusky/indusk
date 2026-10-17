@@ -67,7 +67,7 @@ assertions in [test-plan.md](test-plan.md).
 | T8 | A scaffolded app's spans say `development` when nothing sets the environment, the set environment when one is set, and carry the InDusk project id the readers compare against | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran | apps/indusk-mcp/src/__tests__/telemetry-settings.test.ts |
 | T9 | After a person edits a scaffolded file, `update` leaves it byte for byte and writes the newer version beside it, saying so; an unedited file stays as written with nothing beside it | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts |
 | T10 | For every combination of present or missing, edited or not, recorded or not, the scaffold's decision is create, refresh, leave alone or write beside, and never overwrites an edit or a file InDusk did not write | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts |
-| T11 | On a fresh Next.js app, one `indusk init` and the first `next dev` put the project's service in the local Jaeger with the project and `development` on its spans, no file edited by hand | Build Phase 3 | Build Phase 3 | planned | live check | a rehearsal of the brief's first expectation on a real Next.js app, recorded once; the unit rows prove the clauses | manual: create-next-app in a temporary workbench's code repo, indusk init, next dev, search the local Jaeger for the service |
+| T11 | On a fresh Next.js app, one `indusk init` and the first `next dev` put the project's service in the local Jaeger with the project and `development` on its spans, no file edited by hand | Build Phase 3 | Build Phase 3 | passing | live check | a rehearsal of the brief's first expectation on a real Next.js app, recorded once; the unit rows prove the clauses | manual: create-next-app in a temporary workbench's code repo, indusk init, next dev, search the local Jaeger for the service |
 | T12 | Every signal key the Node and Python helpers and the settings file write is one the vocabulary defines, and every key the vocabulary defines for an app is written by each; a key changed on one side only fails, naming it | Build Phase 2 | Build Phase 2 | passing | unit | clause: an-app-writes-its-signal-from-a-helper-it-owns/one-vocabulary | apps/indusk-mcp/src/__tests__/signal-vocabulary-pin.test.ts |
 | T13 | A signal the helper writes, upheld or broken with its symptom, with clause, value, bound, plan and phase, reads back through the package's span reader as that promise, clause and verdict | Build Phase 2 | Build Phase 2 | passing | unit | clause: an-app-writes-its-signal-from-a-helper-it-owns/a-signal-names-its-promise-and-clause | apps/indusk-mcp/src/__tests__/signal-helper.test.ts |
 | T14 | A signal the helper writes from an app exporting to a real daemon in a temporary home is found in its Jaeger and read as the promise, clause and verdict given, with project and environment | Build Phase 2 | Build Phase 2 | passing | contract | clause: an-app-writes-its-signal-from-a-helper-it-owns/a-signal-names-its-promise-and-clause | apps/indusk-mcp/src/__tests__/signal-helper-daemon.contract.test.ts |
@@ -702,10 +702,18 @@ record that its first run reports.
   `apps/docs/src/reference/tools/otel.md` (~line 329, and the Dash0 / `pnpm ce env:build` section ~313–323 → the scaffold per runtime), `examples/seat-holds/README.md:35` (→ `indusk telemetry address`), `.claude/settings.json` (the curl allow entry naming `localhost:4318`), `.indusk/extensions/local-telemetry/.env.example` (refreshed by `indusk update` in this repo).
 
   </details>
-- [ ] Run the live check on a fresh Next.js app and record what it showed in this plan.
+- [x] Run the live check on a fresh Next.js app and record what it showed in this plan.
   <details><summary>Technical</summary>
 
   T11: in a temporary workbench (`indusk init --workbench`), `npx create-next-app@latest <repo>` inside the declared repo, `indusk update`, `pnpm add` the printed packages, `next dev`, load the page; `mcp__jaeger__get_services` lists the repo's name, and a span's process tags carry `indusk.project` and `deployment.environment=development`. Record the date, the commands and what was seen under this item.
+
+  </details>
+
+  Live check, 2026-10-17 (T11). Commands: `npx create-next-app@latest live-app --ts --app --no-src-dir --skip-install` (Next.js 16.4.2) in a temporary sibling folder; `indusk init --workbench --wrapped-repo live-app --sibling-parent <folder> --no-index` in a temporary workbench (the built CLI of this branch, `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`); `pnpm install` and `pnpm add` of the printed packages; `next dev -p 3917`; one request to `/` (HTTP 200). Nothing edited by hand. What it showed: init wrote `instrumentation.ts`, `src/logger.ts`, `src/instrumentation.web.ts`, `src/telemetry-settings.ts`, `src/signal.ts` and `.mcp.json` into the code repo, none at the workbench root; the local daemon (running, traces address 24318) then listed a new service `live-app` beside the existing ones, and its traces' process tags carried `indusk.project=wb` (the workbench's project id) and `deployment.environment=development`. The service is the code repo's name and the project the workbench's id, as the plan's note says. Read through the daemon's Jaeger HTTP API (`/api/services`, `/api/traces?service=live-app`), the same backend the `jaeger` MCP serves.
+- [x] Fix the missing space in the signal helper's created line, found by the live check.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/scaffold/plan.ts` `HELPER` printed "signal helper —upheld"; now "signal helper — upheld".
 
   </details>
 - [ ] Review the text this phase wrote against the extensions' writing rules, and add what the review finds here as unchecked items.
@@ -723,7 +731,7 @@ record that its first run reports.
   (goes green) T6, T16, T17, T18, T19: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/app-port-4318-gone.test.ts src/__tests__/init-next-steps.test.ts src/__tests__/telemetry-skills-name-the-daemon.test.ts src/__tests__/log-line-not-signal.test.ts src/__tests__/local-telemetry-skill-tools.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/promise-words.test.ts src/__tests__/otel-docs-claims.test.ts`
 
   </details>
-- [ ] The live check on a fresh Next.js app is recorded with what it showed.
+- [x] The live check on a fresh Next.js app is recorded with what it showed.
   <details><summary>Technical</summary>
 
   T11: the record under the live-check task above.

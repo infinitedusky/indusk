@@ -110,7 +110,7 @@ export interface ScaffoldFile {
 }
 
 const SETTINGS = "OpenTelemetry settings — the daemon's address, service, project, environment";
-const HELPER = "OpenTelemetry signal helper —upheld and broken, in InDusk's vocabulary";
+const HELPER = "OpenTelemetry signal helper — upheld and broken, in InDusk's vocabulary";
 
 /**
  * The files a runtime gets. `hasSrc` puts a Node or browser app's files in its `src/`. An app
