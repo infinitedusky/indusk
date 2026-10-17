@@ -7,7 +7,7 @@ subplans:
   - daemon-found-not-guessed
   - a-new-project-starts-instrumented
   - mark-first
-  - a-phase-shows-its-clauses
+  - a-plan-page-shows-its-clauses
   - production-is-heard
   - production-keeps-only-what-it-should
   - a-look-comes-due
@@ -100,19 +100,21 @@ each child is one plan with one landing.
    scaffold plan adds them and its helper is pinned to them; Signal first's
    readers read them and nothing else.
 
-3b. **`a-phase-shows-its-clauses`** — after Signal first (Sandy, 2026-10-16),
-   which supplies its last step. The plan page shows, for each phase being
-   built, the promises and clauses it affects, and a clause list for the whole
-   plan with each clause's step on one ladder, read from files and signals,
-   never typed: **not yet addressed** (no phase that names it has closed) →
-   **upheld in code** (its phase closed, and code carries the clause's token)
-   → **verified** (every test row naming it passes, its files carrying the
-   token) → **holding** (its signal reported upheld through the daemon). Each
-   step can read broken — code removed, a test failing, a signal reporting
-   broken — and the page shows the highest step reached and any break below
-   it. Derived from the rows, never declared per phase: phases and clauses are
-   many-to-many. A change to the plan page, so its looks are drawn and approved
-   in the cockpit before it builds.
+3b. **`a-plan-page-shows-its-clauses`** — after Signal first (Sandy, 2026-10-16),
+   which supplies its last step. A plan page shows its clauses prominently
+   wherever they are relevant, in two places first: **each build phase** lists
+   the promises and clauses it affects, and **a clause list for the whole
+   plan** shows every clause's state as the plan is executed. The state is one
+   ladder, read from files and signals, never typed: **not yet addressed** (no
+   phase that names it has closed) → **upheld in code** (its phase closed, and
+   code carries the clause's token) → **verified** (every test row naming it
+   passes, its files carrying the token) → **holding** (its signal reported
+   upheld through the daemon). Each step can read broken — code removed, a test
+   failing, a signal reporting broken — and the page shows the highest step
+   reached and any break below it. A phase's clauses are derived from its rows,
+   never declared per phase: phases and clauses are many-to-many. A change to
+   the plan page, so its looks are drawn and approved in the cockpit before it
+   builds.
 
 4. **`production-is-heard`** — blocked by `a-new-project-starts-instrumented`;
    before Homework Gate's first deploy; in parallel with the next. Production
