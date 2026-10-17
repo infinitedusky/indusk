@@ -54,6 +54,7 @@ export const SYSTEM = [
 	"src/__tests__/telemetry-init-fresh.test.ts",
 	"src/__tests__/telemetry-mcp-port-sync.test.ts",
 	"src/__tests__/telemetry-restart-port-pin.test.ts",
+	"src/__tests__/telemetry-slow-not-gone.test.ts",
 	"src/__tests__/telemetry-ui-reachable.test.ts",
 	"src/__tests__/test-daemons-guard.test.ts",
 	"src/__tests__/update-scm-jj-removed.test.ts",
