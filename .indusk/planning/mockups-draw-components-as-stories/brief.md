@@ -49,8 +49,7 @@ None.
 
 ### This plan makes
 
-- **`project-card.in-progress`**. A project with a plan being worked: its shape, an in-progress badge and when it was last seen, drawn by the card itself.
-- **`project-card.workbench`**. A workbench project, the same way.
+None.
 
 ### Existing looks
 
@@ -62,7 +61,7 @@ None.
 **Changes**
 
 - **`message.you`**. Long unbroken text wraps inside the bubble instead of widening it; the approved story stays held until a person approves the new one.
-- **`project-card.default`**. The card draws its own shape badge and last-seen line instead of taking them from the page.
+- **`project-card.default`**. The card draws its own shape badge, in-progress badge and last-seen line instead of taking them from the page; its stories gain an in-progress project and a workbench project beside the default one.
 - **`home.default`**. Its project cards draw in the card's ink, not link blue, with the card's own spacing; it places a card of each kind (default, in progress, workbench), and its primary button is ink, not dusk.
 
 **Replaces**
