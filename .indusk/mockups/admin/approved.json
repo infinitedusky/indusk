@@ -8132,6 +8132,23 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:18.618Z",
 			"plan": "mockups-draw-components-as-stories"
+		},
+		{
+			"mockup": "new-project.conversation",
+			"mockupHash": "60be3e13e72e3e8533d98a5c80af9dfbebabd4fb0906366922bb597ae7dcf99d",
+			"componentsHash": "8883abd43ab2481752edf58a25bfbbc9ebe45ca426fc06bb30d54b3b91738a6f",
+			"components": {
+				"message.you": "458bccd1de5cd77cda514c58e4f09fa12d4c15fa123e0d8390a0c631079c32a9",
+				"message.agent-folded": "c277af5511d05dfbc12eaf4fc24ac3a546b8dbf96f7312213923a822273aa104",
+				"knowledge-list.default": "4f4c60447468d7bd4bf4cbb1ce000409483b2c7146f8d603ad40ca16f887ba2b",
+				"knowledge-list.css": "3ed41e464559d87068eb714f423e304a5f9776143fda708cea97191180717f22",
+				"message.css": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-17T17:11:18.839Z",
+			"plan": "mockups-draw-components-as-stories"
 		}
 	]
 }
