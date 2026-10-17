@@ -8,6 +8,8 @@ import {
 	chooseAddress,
 	daemonAddress,
 	PORT_BLOCK,
+	portDifferences,
+	portsOfRecord,
 	resetAddress,
 	type StoredAddress,
 } from "../lib/telemetry/daemon-address.js";
@@ -149,5 +151,31 @@ describe("A30 — the address changes only on purpose", () => {
 			.map((f) => relative(SRC, f))
 			.sort();
 		expect(writers).toEqual(["lib/telemetry/daemon-address.ts", "lib/telemetry/start-plan.ts"]);
+	});
+});
+
+describe("A35 — one definition reads a record's ports, one compares them with the address", () => {
+	it("reads the record's four ports by role", () => {
+		const meta = rec(1, 2, { otlpPort: 1, logsOtlpPort: 2, uiPort: 3, mcpPort: 4 });
+		expect(portsOfRecord(meta)).toEqual({ traces: 1, logs: 2, ui: 3, mcp: 4 });
+	});
+
+	it("a record on the stored address has no differences", () => {
+		expect(portDifferences(rec(1, 2), PORT_BLOCK)).toEqual([]);
+	});
+
+	it("a record on another port names the role, the port held and the port expected", () => {
+		expect(portDifferences(rec(1, 2, { otlpPort: 4318, mcpPort: 62843 }), PORT_BLOCK)).toEqual([
+			{ role: "traces", held: 4318, expected: 24318 },
+			{ role: "mcp", held: 62843, expected: 24317 },
+		]);
+	});
+
+	it("a port the finder could not read (0) is no difference", () => {
+		expect(portDifferences(rec(1, 2, { uiPort: 0 }), PORT_BLOCK)).toEqual([]);
+	});
+
+	it("with no stored address there is nothing to differ from", () => {
+		expect(portDifferences(rec(1, 2, { otlpPort: 4318 }), null)).toEqual([]);
 	});
 });

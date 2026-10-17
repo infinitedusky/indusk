@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { daemonProcessOf, isOwn } from "./daemon-process.js";
 import type { DaemonReads } from "./daemon-reads.js";
+import type { DaemonMeta } from "./status.js";
 
 /**
  * The local daemon's address: four ports, chosen once at first setup, kept in
@@ -64,6 +65,23 @@ export function addressFilePath(home: string): string {
 /** The stored ports of an address, without the record of what was picked. */
 export function portsOf(address: Ports): Ports {
 	return { traces: address.traces, logs: address.logs, ui: address.ui, mcp: address.mcp };
+}
+
+/** The four ports a record holds, by role. A port a finder could not read is 0. */
+export function portsOfRecord(_meta: DaemonMeta): Ports {
+	return { traces: 0, logs: 0, ui: 0, mcp: 0 };
+}
+
+/** A port a record holds that is not the stored address's. */
+export interface PortDifference {
+	role: AddressRole;
+	held: number;
+	expected: number;
+}
+
+/** Each port the record holds that is not the stored address's; a port read as 0 is no difference, no address gives none. */
+export function portDifferences(_meta: DaemonMeta, _address: Ports | null): PortDifference[] {
+	return [];
 }
 
 export type AddressRead =
