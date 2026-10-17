@@ -2,7 +2,7 @@
 id: i-2026-10-16-a-plan-can-start-from-the-admin
 promise: a-plan-can-start-from-the-admin
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -10,6 +10,7 @@ tests:
   - "apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts > A5 — Claude Code still speaks the three exchanges > a write is asked about in a planning session, and a denial is heard"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:30:03Z'
 ---
 
 ## Symptom
