@@ -47,6 +47,7 @@ export const SYSTEM = [
 	"src/__tests__/release-junit.contract.test.ts",
 	"src/__tests__/session-protocol-contract.test.ts",
 	"src/__tests__/telemetry-cli-lifecycle.test.ts",
+	"src/__tests__/telemetry-daemon-found-live.test.ts",
 	"src/__tests__/telemetry-existing-project-upgrade.test.ts",
 	"src/__tests__/telemetry-explicit-disable.test.ts",
 	"src/__tests__/telemetry-extension-disable.test.ts",
