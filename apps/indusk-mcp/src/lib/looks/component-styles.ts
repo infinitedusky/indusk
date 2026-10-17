@@ -311,6 +311,128 @@ export function baseStylesheet(appCss: string, foundation: Foundation): string {
 	return sheetOf(out, contextOf(root, foundation));
 }
 
+/** A selector naming no class and no component marker: an element, universal or page rule of the app. */
+const isElementSelector = (selector: string): boolean =>
+	selectorClasses(selector).length === 0 && selectorMarks(selector).length === 0;
+
+/** Where a story's frame holds a component: the marker's own element and everything inside it. */
+const COMPONENT_SCOPE = ":where([data-component], [data-component] *)";
+
+/** A selector that names the page itself; the page is not a component, so `_base.css` and the page hold these. */
+const PAGE_SELECTOR = /(^|[\s>+~(])(html|body|:root|:host)(?![\w-])/;
+
+/** Index of the first `::` outside brackets and parentheses, or -1: the pseudo-element a scope must come before. */
+function pseudoElementAt(selector: string): number {
+	let depth = 0;
+	for (let i = 0; i < selector.length; i++) {
+		const c = selector[i];
+		if (c === "(" || c === "[") depth++;
+		else if (c === ")" || c === "]") depth--;
+		else if (depth === 0 && c === ":" && selector[i + 1] === ":") return i;
+	}
+	return -1;
+}
+
+/** `selector` with `guard` appended, before its pseudo-element when it has one: after it the selector is invalid and a browser drops the whole rule. */
+function guarded(selector: string, guard: string): string {
+	const s = selector.trim();
+	const at = pseudoElementAt(s);
+	return at === -1 ? `${s}${guard}` : `${s.slice(0, at)}${guard}${s.slice(at)}`;
+}
+
+/** `a:hover` -> `a:hover:where(<scope>)`, `::before` -> `:where(<scope>)::before`: the scope adds no specificity. */
+const scoped = (selector: string): string => guarded(selector, COMPONENT_SCOPE);
+
+/** What a mockup's own rule must not reach: any element of a component. `:not(:where())` adds no specificity. */
+const OUTSIDE_COMPONENTS = `:not(${COMPONENT_SCOPE})`;
+
+/**
+ * A mockup's own style rules, cut to its page. A mockup's `.grid { display: grid }`
+ * would otherwise reach a placed component that also uses a `grid` class and draw
+ * it differently from its story, so each selector gains the inverse of
+ * `componentReset`'s scope. A selector that names a component's marker
+ * (`[data-component="card"] .grid`) is the mockup placing that component and
+ * is left as written; rules inside `@keyframes` have no selector to scope.
+ *
+ * promise: mockups-render-in-the-cockpit
+ */
+export function pageOnly(css: string): string {
+	let root: postcss.Root;
+	try {
+		root = postcss.parse(css);
+	} catch {
+		return css;
+	}
+	root.walkRules((rule) => {
+		const parent = rule.parent;
+		if (parent?.type === "atrule" && /keyframes$/i.test((parent as postcss.AtRule).name)) return;
+		rule.selectors = rule.selectors.map((selector) =>
+			selectorMarks(selector).length > 0 ? selector : guarded(selector, OUTSIDE_COMPONENTS),
+		);
+	});
+	return root.toString();
+}
+
+const VARIANT_AT_RULES = /^(media|supports|container)$/i;
+
+/**
+ * A component's stylesheet cut into its plain rules and its variant rules, a
+ * rule under `@media`, `@supports` or `@container`, or one that nests such a
+ * block (`.max-\[759px\]:hidden { @media … }`). The app's build writes every
+ * variant after every plain utility, so a variant beats a plain rule of the
+ * same specificity; a mockup loads one sheet per component, and `.flex` in a
+ * later sheet would beat an earlier sheet's `max-[759px]:hidden`. The cockpit
+ * therefore puts all the variants after all the plain rules, each in the order
+ * its sheet wrote it. Only where a rule sits changes; no hash reads this.
+ *
+ * promise: mockups-render-in-the-cockpit
+ */
+export function splitVariants(css: string): { plain: string; variants: string } {
+	let root: postcss.Root;
+	try {
+		root = postcss.parse(css);
+	} catch {
+		return { plain: css, variants: "" };
+	}
+	const variants = postcss.root();
+	for (const node of [...(root.nodes ?? [])]) {
+		const isVariant =
+			(node.type === "atrule" && VARIANT_AT_RULES.test(node.name)) ||
+			(node.type === "rule" &&
+				node.some((n) => n.type === "atrule" && VARIANT_AT_RULES.test(n.name)));
+		if (isVariant) variants.append(node);
+	}
+	return { plain: root.toString(), variants: variants.toString() };
+}
+
+/**
+ * The app's element resets as a sheet that reaches only components,
+ * `components/_reset.css`. A story renders in the served Storybook under the
+ * app's element rules (`a { color: inherit }`, `textarea { font: inherit }`),
+ * and no component's slice holds them, so a component drawn in a mockup came
+ * out in the browser's defaults. These are those rules (`elementRulesOf`'s: no
+ * class, no marker), each selector written under `:where([data-component],
+ * [data-component] *)` so they add no specificity and touch nothing outside a
+ * component. Rules naming the page (`html`, `body`, `:root`, `:host`) are left
+ * out: `_base.css` holds `body`, and a mockup's page is its own.
+ *
+ * promise: mockups-render-in-the-cockpit
+ */
+export function componentReset(appCss: string, foundation: Foundation): string {
+	const root = postcss.parse(appCss);
+	const out = postcss.root();
+	out.append(
+		keepRules(
+			root.nodes,
+			(selector) => isElementSelector(selector) && !PAGE_SELECTOR.test(selector),
+		),
+	);
+	out.walkRules((rule) => {
+		rule.selectors = rule.selectors.map(scoped);
+	});
+	return sheetOf(out, contextOf(root, foundation));
+}
+
 /**
  * The rules of the app's compiled CSS that no class and no component marker
  * names — element, universal, `html`, `:root` and `body` rules, wherever they
@@ -325,12 +447,7 @@ export function baseStylesheet(appCss: string, foundation: Foundation): string {
  */
 export function elementRulesOf(appCss: string): string {
 	const out = postcss.root();
-	out.append(
-		keepRules(
-			postcss.parse(appCss).nodes,
-			(selector) => selectorClasses(selector).length === 0 && selectorMarks(selector).length === 0,
-		),
-	);
+	out.append(keepRules(postcss.parse(appCss).nodes, isElementSelector));
 	out.walk((n) => {
 		n.cleanRaws();
 	});

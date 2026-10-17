@@ -388,6 +388,12 @@
 {"plan":"finished-rituals-stay-done","phase":1,"kind":"build","sha":"3d0f0eefb19e8179892d59de6f14e335b793ee1c","timestamp":"2026-10-16T19:02:53.787Z"}
 {"plan":"finished-rituals-stay-done","phase":2,"kind":"build","sha":"fb5af8a6cc2208a3ecf8328ea4d3a33ab6ec5d91","timestamp":"2026-10-16T19:34:10.064Z"}
 {"plan":"finished-rituals-stay-done","phase":3,"kind":"build","sha":"859186852275e8a832e21953a8ddc751798087d8","timestamp":"2026-10-16T19:38:54.312Z"}
+{"plan":"mockups-draw-components-as-stories","phase":1,"kind":"test","sha":"43ab2abe84a9623d8e1c2f944bcfbc1f18bfbce9","timestamp":"2026-10-17T03:04:13.373Z"}
+{"plan":"mockups-draw-components-as-stories","phase":1,"kind":"build","sha":"4ba5668c3326a796fc86ce7028e2fde769db2180","timestamp":"2026-10-17T03:38:07.513Z"}
+{"plan":"mockups-draw-components-as-stories","phase":2,"kind":"build","sha":"941d43c018f81ea5107c201d91131c68ed3795d8","timestamp":"2026-10-17T03:45:12.776Z"}
+{"plan":"mockups-draw-components-as-stories","phase":3,"kind":"build","sha":"9da0ebdfc9d8af3578293966d1e1542a8e112eca","timestamp":"2026-10-17T17:52:35.585Z"}
+{"plan":"mockups-draw-components-as-stories","phase":4,"kind":"build","sha":"b175f6cc0a77a603d85695134021b254eb492001","timestamp":"2026-10-17T18:03:41.837Z"}
+{"plan":"mockups-draw-components-as-stories","phase":5,"kind":"build","sha":"72b5f5c9fe4eceb943d1a5315405b0311133c872","timestamp":"2026-10-17T18:28:09.836Z"}
 {"plan":"daemon-found-not-guessed","phase":1,"kind":"test","sha":"cb62f389f1c29666e548113e5344cdd6992195bc","timestamp":"2026-10-17T01:46:36.661Z"}
 {"plan":"daemon-found-not-guessed","phase":1,"kind":"build","sha":"069b543cb15d949b5a0784b2c70d10b3f6ac94e9","timestamp":"2026-10-17T02:06:20.187Z"}
 {"plan":"daemon-found-not-guessed","phase":2,"kind":"build","sha":"214f770fd4b130625c68c2b673aa9b2c6e41f891","timestamp":"2026-10-17T02:31:27.578Z"}

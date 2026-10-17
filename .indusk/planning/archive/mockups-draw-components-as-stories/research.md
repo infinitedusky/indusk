@@ -50,6 +50,26 @@ The story's component draws 7,796 px wide in a 4,164 px frame. On 2026-10-14
 e5915cbc4 removed Message's arbitrary `overflow-wrap` class because the looks
 lint refused it; long unbroken text no longer wraps. Moderate confidence.
 
+### What the checks report at Test Phase 1 (2026-10-16)
+
+Run on this branch after merging `plan/storybook-components`, with
+`indusk-mcp` built and Storybook built fresh:
+
+- **The composition check** (`composition.contract.test.ts`, A30) reports
+  twelve findings and nothing else. Project card in `home.default`: `color`
+  `rgb(24,32,43)` in the story, `rgb(0,0,238)` in the mockup, on the card and
+  its heading; `gap` 4 px against 16 px; the heading and both paragraphs
+  ~296.7 px wide against 300 px. Prompt box in `new-project.start` and
+  `new-project.no-parent`: the textarea's font is IBM Plex Sans 15 px / 24 px
+  in the story, monospace 13.33 px / `normal` in the mockup.
+- **The story-frame check** (`looks-components.contract.test.ts`, A18) fails
+  on `message.you` alone: frame 4164 × 156, component 7795.6 × 156. Its other
+  test, A7, passes.
+
+Both match the findings above; no other component differs. Running them needs
+`pnpm --filter @infinitedusky/indusk-mcp build` first — without it the
+composition check fails to load `@infinitedusky/indusk-mcp/looks/overview`.
+
 ## Decisions
 
 - One bugfix plan for the three defects, not incident maintenance: the reset

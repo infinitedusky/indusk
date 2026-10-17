@@ -169,6 +169,15 @@ export interface LooksApp {
 	styles: ComponentStyle[];
 	/** `components/_base.css`, the app's compiled `body` rules a story's frame draws under; "" when absent. */
 	base: string;
+	/** `components/_reset.css`, the app's element rules scoped to components, which a mockup and a story frame both draw under; "" when absent. */
+	reset: string;
+	/**
+	 * The catalog's `baseRulesHash`: the hash of the app's element rules the
+	 * stories were rendered under, which `_reset.css` carries into the cockpit.
+	 * An approval binds it. Absent when the app has no catalog or the catalog
+	 * records none.
+	 */
+	baseRulesHash?: string;
 	mockups: Mockup[];
 }
 
@@ -272,6 +281,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	const styles = await readStyles(dir, join(MOCKUPS_DIR, app));
 	const basePath = join(dir, "components", BASE_STYLESHEET);
 	const base = existsSync(basePath) ? await readFile(basePath, "utf-8") : "";
+	const resetPath = join(dir, "components", RESET_STYLESHEET);
+	const reset = existsSync(resetPath) ? await readFile(resetPath, "utf-8") : "";
 	const stories = await readStories(
 		dir,
 		join(MOCKUPS_DIR, app),
@@ -279,6 +290,14 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		await readContentMaps(join(dir, "components.json")),
 	);
 	const snapshots = new Map<string, SnapshotBytes>(stories.map((s) => [s.name, s]));
+	const catalogRules = await readJson<{ baseRulesHash?: unknown } | null>(
+		join(dir, "components.json"),
+		null,
+	);
+	const baseRulesHash =
+		typeof catalogRules?.baseRulesHash === "string" && catalogRules.baseRulesHash !== ""
+			? catalogRules.baseRulesHash
+			: undefined;
 
 	const screensDir = join(dir, "screens");
 	const names = existsSync(screensDir)
@@ -328,6 +347,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		stories,
 		styles,
 		base,
+		reset,
+		...(baseRulesHash === undefined ? {} : { baseRulesHash }),
 		mockups,
 	};
 }
@@ -399,12 +420,15 @@ async function readStories(
 /** The app's base stylesheet in `<app>/components/`, beside the components' own; not a component's. */
 export const BASE_STYLESHEET = "_base.css";
 
+/** The app's element resets in `<app>/components/`, scoped to components; not a component's either. */
+export const RESET_STYLESHEET = "_reset.css";
+
 /** The stylesheets in `<app>/components/`, `<name>.css`, sorted by component; none when the app has none. */
 async function readStyles(dir: string, rel: string): Promise<ComponentStyle[]> {
 	const componentsDir = join(dir, "components");
 	if (!existsSync(componentsDir)) return [];
 	const files = (await readdir(componentsDir))
-		.filter((f) => f.endsWith(".css") && f !== BASE_STYLESHEET)
+		.filter((f) => f.endsWith(".css") && f !== BASE_STYLESHEET && f !== RESET_STYLESHEET)
 		.sort();
 	const styles: ComponentStyle[] = [];
 	for (const fileName of files) {

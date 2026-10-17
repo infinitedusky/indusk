@@ -35,11 +35,48 @@ function measure(frame: HTMLIFrameElement): FittedSize | null {
   const previous = frame.style.height;
   frame.style.height = "1px";
   const r = el.getBoundingClientRect();
+  const lead = leadingSpace(el);
   frame.style.height = previous;
+  // The space before the component, taken on both sides. Not its own `left`:
+  // a component aligned to the end (`justify-self-end`) sits at the frame's
+  // far edge, so `right + left` would grow the frame by the frame's own width.
   return {
-    width: Math.max(1, Math.ceil(r.right + r.left)),
+    width: Math.max(1, Math.ceil(r.width + 2 * lead)),
     height: Math.max(1, Math.ceil(r.bottom + r.top)),
   };
+}
+
+/**
+ * The space a component aligned to the start would have before it: its
+ * container's content edge plus its own left margin. A margin of `auto` is
+ * the space a centred component happens to have in this frame, not space it
+ * asks for: its computed value is the used one, half the frame's spare width,
+ * so it counts as none — otherwise the frame is never fitted narrower than
+ * itself.
+ */
+function leadingSpace(el: Element): number {
+  const view = el.ownerDocument.defaultView;
+  const parent = el.parentElement;
+  if (!view || !parent) return 0;
+  const px = (v: string) => Number.parseFloat(v) || 0;
+  const s = view.getComputedStyle(parent);
+  return (
+    parent.getBoundingClientRect().left +
+    px(s.borderLeftWidth) +
+    px(s.paddingLeft) +
+    leftMargin(el, view)
+  );
+}
+
+/** An element's left margin in pixels; 0 when it is `auto`, whose computed value is the used one. */
+function leftMargin(el: Element, view: Window): number {
+  const margin = (
+    el as { computedStyleMap?: () => { get(p: string): unknown } }
+  )
+    .computedStyleMap?.()
+    .get("margin-left");
+  if (margin !== undefined && `${margin}` === "auto") return 0;
+  return Number.parseFloat(view.getComputedStyle(el).marginLeft) || 0;
 }
 
 /** The component a story drew, once Storybook has drawn it. */
