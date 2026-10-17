@@ -225,12 +225,13 @@ changed; and Sandy approves the changed `message.you` story.
 
   </details>
   Note: `wrap-anywhere` added to the bubble's class list; `looks lint admin` reports no Message finding (only three unrelated `plan-looks` needs-a-story lines, which pre-date this plan). Re-rendered: only Message's six snapshots, `message.css` (gains `.wrap-anywhere`) and their hashes in `components.json` changed; this run did not drop `history-panel`'s props, so `components.json` is committed whole.
-- [ ] The promise's sentence says each component is drawn as its story draws it, and each story fits its frame.
+- [x] The promise's sentence says each component is drawn as its story draws it, and each story fits its frame.
   <details><summary>Technical</summary>
 
   `indusk promises change mockups-render-in-the-cockpit --plan mockups-draw-components-as-stories --statement "Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with each component drawn as its own story draws it, and each story fitted to its frame, with nothing to run beside the cockpit." --reason "components drew without the resets their stories have, and a story overflowed its frame"`
 
   </details>
+  Note: ran as written; output: `mockups-render-in-the-cockpit changed by mockups-draw-components-as-stories; its History keeps the sentence it replaced.` Only `.indusk/promises/mockups-render-in-the-cockpit.md` changed.
 - [ ] Pause for a person: Sandy approves the changed message story.
   <details><summary>Technical</summary>
 
