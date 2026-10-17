@@ -131,3 +131,16 @@ nothing.
 - Trajectory: 15 rows (A1–A6, T1–T9), all passing
 - Composition check: every admin mockup at three devices, 203 s
 - Approvals bound to the element rules: 22 of 192 looks
+
+## Close-out checks
+
+- Everyday suite (`pnpm test`, 2026-10-17): 3134 passed, 1 failed — the impl
+  corpus check, which refused this plan's impl (three Shape notes with code on
+  the task line, one verification note citing storybook-components' row IDs;
+  both fixed before archiving) and `archive/nav-row-legible`, already on `main`
+  and not this plan's (its Phase 1 Verification cites rows A14 and A22 it does
+  not have).
+- Nested-context probe (`context-tiers.e2e.test.ts`): 4/4 green.
+  `pnpm e2e -- context-tiers` does not filter and runs every e2e file;
+  `day-monitor.e2e.test.ts` failed there waiting 60 s for a violation in
+  Jaeger, unrelated to this plan.
