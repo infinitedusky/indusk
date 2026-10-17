@@ -78,8 +78,8 @@ assertions in [test-plan.md](test-plan.md).
 | T19 | Every tool the local-telemetry skill tells a person to call exists, with the parameters it names | Test Phase 1 | Build Phase 3 | written | unit | a regression guard over the skill's diagnosis pattern, which names a tool that does not exist and parameters the log tool drops | apps/indusk-mcp/src/__tests__/local-telemetry-skill-tools.test.ts |
 | T20 | A project created with telemetry declined records the reason, enables neither telemetry extension and gets no instrumentation | Test Phase 1 | Build Phase 1 | written | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-telemetry-declined.test.ts |
 | T21 | A workbench's declared code repo gets a `.mcp.json` from `init` and `update`, and one that exists is never rewritten | Test Phase 1 | Build Phase 1 | written | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/workbench-code-repo-mcp-json.test.ts |
-| T22 | A click in a scaffolded browser app still carries its trace to the project's own services | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-click-and-its-server-work-share-a-trace | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| T23 | Nothing `init` writes into an app names a vendor, and what it prints names each file and its SDK | Test Phase 1 | Test Phase 1 | planned | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
+| T22 | A click in a scaffolded browser app still carries its trace to the project's own services | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-click-and-its-server-work-share-a-trace | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T23 | Nothing `init` writes into an app names a vendor, and what it prints names each file and its SDK | Test Phase 1 | Test Phase 1 | passing | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
 | T24 | The seat-holds example writes its signal through a copy of the helper template, and `init` on a fresh copy adds no second OpenTelemetry setup | Test Phase 1 | Build Phase 2 | written | unit | the carried item: the demo's hand-written signal becomes the helper and its dead second scaffold goes | apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
 
 ## Checklist
@@ -142,7 +142,7 @@ makes the placement, naming, address and environment tests pass.
   T24 in `demo-signal-helper.test.ts`: `examples/seat-holds/src/signal.ts` equals `apps/indusk-mcp/templates/signal.ts` byte for byte (both read inside the test, so a missing file fails the assertion, not the load); `src/server.ts` imports `./signal.js` and `src/telemetry.ts` no longer sets `indusk.promise` by hand; a fresh copy (as `demo-example.test.ts` makes one) run through `indusk init` gains no `src/instrumentation.ts`, `src/logger.ts` or `src/filtering-exporter.ts`. Red today on all three.
 
   </details>
-- [ ] Run the two existing tests that guard the browser trace and the vendor-free scaffold, and confirm they pass before anything changes.
+- [x] Run the two existing tests that guard the browser trace and the vendor-free scaffold, and confirm they pass before anything changes.
   <details><summary>Technical</summary>
 
   T22: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.templates.config.ts`; T23: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/init-browser-telemetry.test.ts`.
@@ -366,13 +366,13 @@ makes the placement, naming, address and environment tests pass.
 
 #### Test Phase 1 Verification
 
-- [ ] Every test this phase writes exists and fails on its own assertion, not on a missing file or import.
+- [x] Every test this phase writes exists and fails on its own assertion, not on a missing file or import.
   <details><summary>Technical</summary>
 
   (write red) T1, T2, T3, T4, T6, T7, T9, T16, T17, T18, T19, T20, T21, T24: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/init-scaffold-placement.test.ts src/__tests__/init-scaffold-runtimes.test.ts src/__tests__/unknown-service-gone.test.ts src/__tests__/app-port-4318-gone.test.ts src/__tests__/update-scaffold-refresh.test.ts src/__tests__/init-next-steps.test.ts src/__tests__/telemetry-skills-name-the-daemon.test.ts src/__tests__/log-line-not-signal.test.ts src/__tests__/local-telemetry-skill-tools.test.ts src/__tests__/new-project-telemetry-declined.test.ts src/__tests__/workbench-code-repo-mcp-json.test.ts src/__tests__/demo-signal-helper.test.ts` — each red on an assertion naming today's file or line.
 
   </details>
-- [ ] The two guard tests pass.
+- [x] The two guard tests pass.
   <details><summary>Technical</summary>
 
   T22 and T23 green, by the commands in the last task above.
