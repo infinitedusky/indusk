@@ -167,7 +167,7 @@ function writeTarget(
 				console.info(`  create: ${file.projectPath} (${file.purpose})`);
 				break;
 			case "refresh":
-				if (readFileSync(abs, "utf-8") !== file.rendered) {
+				if (!file.current) {
 					writeFileSync(abs, file.rendered);
 					console.info(`  refresh: ${file.projectPath} (${file.purpose})`);
 				}

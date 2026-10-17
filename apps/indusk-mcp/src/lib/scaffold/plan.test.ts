@@ -5,7 +5,7 @@
 // rendering. A file whose content is not what InDusk recorded is never overwritten.
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { decideFile } from "./plan.js";
+import { decideFile, scaffoldPlan } from "./plan.js";
 
 const h = (s: string) => createHash("sha256").update(s).digest("hex");
 const NEW = "rendered v2";
@@ -29,5 +29,41 @@ describe("what the scaffold does with one file", () => {
 				"refresh",
 			);
 		}
+	});
+});
+
+describe("the scaffold for a target, from what was read", () => {
+	const target = (files: Record<string, string>) => ({
+		name: "homework-gate",
+		rel: "",
+		exists: true,
+		present: (f: string) => f in files,
+		hasSrc: false,
+		current: (p: string) => files[p] ?? null,
+	});
+	const reads = (record: Record<string, string>) => ({
+		record,
+		force: false,
+		render: (template: string, service: string) => `${template} for ${service}`,
+	});
+
+	it("a target with no app marker gets no files; one with a package file gets the Node files", () => {
+		expect(scaffoldPlan([target({ "README.md": "" })], reads({}))[0]?.runtime).toBeNull();
+		const [node] = scaffoldPlan([target({ "package.json": "{}" })], reads({}));
+		expect(node?.runtime).toBe("node");
+		expect(node?.files.map((f) => [f.path, f.action])).toContainEqual([
+			"instrumentation.ts",
+			"create",
+		]);
+	});
+
+	it("a recorded file already at the newest rendering is a refresh that changes nothing", () => {
+		const rendered = "instrumentation.ts for homework-gate";
+		const [node] = scaffoldPlan(
+			[target({ "package.json": "{}", "instrumentation.ts": rendered })],
+			reads({ "instrumentation.ts": h(rendered) }),
+		);
+		const file = node?.files.find((f) => f.path === "instrumentation.ts");
+		expect(file).toMatchObject({ action: "refresh", current: true });
 	});
 });

@@ -170,6 +170,8 @@ export interface PlannedFile extends ScaffoldFile {
 	projectPath: string;
 	rendered: string;
 	action: FileAction;
+	/** The file on disk already is the rendering: a refresh writes and says nothing. */
+	current: boolean;
 }
 
 export interface PlannedTarget {
@@ -191,13 +193,14 @@ export function scaffoldPlan(targets: TargetRead[], reads: ScaffoldReads): Plann
 		const files = filesFor(runtime, t.hasSrc).map((file) => {
 			const projectPath = joinRel(t.rel, file.path);
 			const rendered = reads.render(file.template, t.name);
+			const onDisk = t.current(file.path);
 			const { action } = decideFile({
-				current: t.current(file.path),
+				current: onDisk,
 				recorded: reads.record[projectPath] ?? null,
 				rendered,
 				force: reads.force,
 			});
-			return { ...file, projectPath, rendered, action };
+			return { ...file, projectPath, rendered, action, current: onDisk === rendered };
 		});
 		return { name: t.name, rel: t.rel, runtime, files };
 	});

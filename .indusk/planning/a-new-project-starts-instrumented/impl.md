@@ -501,7 +501,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   Shape step: TypeScript and testing extensions' rules over `lib/scaffold/`, the templates and the two commands.
 
   </details>
-- [ ] Shape: Move the decision that a refreshed file is already current (so neither written nor printed) out of apply.ts, which re-reads the file to decide it, into scaffoldPlan, which already holds the current content; apply then only writes what the plan says
+- [x] Shape: Move the decision that a refreshed file is already current (so neither written nor printed) out of apply.ts, which re-reads the file to decide it, into scaffoldPlan, which already holds the current content; apply then only writes what the plan says
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/scaffold/apply.ts`. Rule: code that decides takes its reads (lesson: code-that-decides-takes-its-clock-and-its-reads); Shape: is there a seam a test can reach
