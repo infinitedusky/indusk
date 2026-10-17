@@ -9,7 +9,7 @@ Every service is instrumented from day one. `init` creates the instrumentation f
 
 ## What's Already Set Up
 
-After `init`, your project has instrumentation files for your runtime. See the OTel reference docs in the indusk-docs site for the full list per runtime.
+After `init`, your project has instrumentation files for your runtime. See the OTel reference docs for the full list per runtime. The spans go to the local daemon by default: `indusk telemetry address` prints where it listens, and a set `OTEL_EXPORTER_OTLP_ENDPOINT` wins. The service is named after the project, and every span carries `indusk.project` and `deployment.environment` (`development` unless something sets it), from `telemetry-settings.ts`.
 
 ## Core Principle: Signal Density Over Volume
 
@@ -153,7 +153,7 @@ console.log('Hand started for room ' + roomCode);
 |-------|---------|------------|
 | `error` | Something is broken | Unhandled errors, failed operations |
 | `warn` | Degraded but functional | Approaching limits, fallback behavior |
-| `info` | Business events | State transitions, completed operations |
+| `info` | What happened, for diagnosis | Completed operations, state changes worth reading around a failure |
 | `debug` | Development details | Disable in production |
 
 ### Structured logging safeguards
@@ -179,13 +179,27 @@ function getTraceContext() {
   const span = trace.getSpan(context.active());
   if (!span) return {};
   const ctx = span.spanContext();
-  return { traceId: ctx.traceId, spanId: ctx.spanId };
+  // The keys the log transport itself writes, so the log and the span line up
+  return { trace_id: ctx.traceId, span_id: ctx.spanId, trace_flags: `0${ctx.traceFlags.toString(16)}` };
 }
 
 logger.info({ ...getTraceContext(), orderId }, 'order placed');
 ```
 
 Wrap this in a helper so every log call includes trace context automatically. Without it, logs are isolated events that can't be connected to the request that produced them.
+
+## A Promise's Signal Is a Span
+
+A behaviour promise's signal is a span, written with the app's `signal` helper (`./signal`, which `init` writes and you own), one call per verdict, from the place the behaviour happens:
+
+```typescript
+import { signal } from './signal';
+
+signal.upheld({ promise: 'a-hold-is-released', clause: 'on-time', value: 812, bound: 1000 });
+signal.broken({ promise: 'a-hold-is-released', clause: 'on-time', symptom: 'released 5.1 s late' });
+```
+
+A log line is for diagnosis and is never the signal. What a promise held to goes in a span, where the readers look.
 
 ## Error Propagation
 
@@ -238,12 +252,12 @@ For database queries, never include literal parameter values — use parameteriz
 
 After instrumenting a service, verify:
 
-1. **Service appears in backend** — search for your `OTEL_SERVICE_NAME` in Dash0
+1. **Service appears in the local daemon** — `indusk telemetry address` says where it listens; the `get_services` tool of the `jaeger` MCP server lists your service name
 2. **Resource attributes present** — `service.name`, `service.version`, `deployment.environment`
 3. **Expected span names appear** — list your endpoints and business operations, verify each produces a span
 4. **Attributes are populated** — check that domain attributes (`room.code`, `player.count`) are present
 5. **Errors are tracked** — trigger an error, verify it appears with exception details and trace context
-6. **Logs correlate with traces** — verify `traceId` and `spanId` appear in log records
+6. **Logs correlate with traces** — verify `trace_id` and `span_id` appear in log records
 
 ## Framework-Specific Notes
 
@@ -274,8 +288,8 @@ After instrumenting a service, verify:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `OTEL_SERVICE_NAME` | Service name | Set by init |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Backend URL | Not set (console) |
+| `OTEL_SERVICE_NAME` | Service name | Named in `telemetry-settings.ts` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Backend URL | The daemon's stored traces address (`indusk telemetry address`) |
 | `OTEL_EXPORTER_OTLP_HEADERS` | Auth headers | Not set |
 | `OTEL_ENABLED_CATEGORIES` | Active categories | All |
 | `LOG_LEVEL` | Pino log level | `info` |
