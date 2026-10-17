@@ -9,9 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
-approved_brief: "2307b439d7bf35bc8ce025d10fbb5f5900d9b75b46aa3682c8f33e7339b7c0ed"
+approved_brief: "53b3f01e5d99ecfa434d6f209dca520a6fa8cd2311f0604c70a0ec051a944452"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-17T18:47:32.552Z"
+approved_at: "2026-10-17T23:55:41.690Z"
 cleanup: skipped
 cleanup_reason: "reviewed every changed file; flagged ones are old large files touched lightly, no copy reaches three"
 ---
