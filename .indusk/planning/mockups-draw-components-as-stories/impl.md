@@ -400,30 +400,34 @@ This plan taught approvals to remember the app's element rules, but it did so be
   `storyDocument(story, tokensCss, sheets: Pick<LooksApp, "styles" | "base" | "reset">)` in `overview.ts`, replacing the positional `styles, base = "", reset = ""` that Build Phase 1's Shape review left for this ritual; `storiesOf` passes `app`, and `overview.test.ts`'s two calls pass an object. `mockupDocument` keeps its trailing `reset`: one optional after the styles, one caller.
 
   </details>
-- [ ] The five looks modules over the size threshold were reviewed and stay as they are: this plan added a few lines to each, and none grew a second job.
+- [x] The five looks modules over the size threshold were reviewed and stay as they are: this plan added a few lines to each, and none grew a second job.
   <details><summary>Technical</summary>
 
   `listOversizedChangedFiles` flags `approvals.ts` (410), `approve.ts` (512), `component-styles.ts` (411), `mockups.ts` (590), `stories.ts` (583), all pre-existing. Their additions are a field, a predicate, a sheet writer and a read; splitting any of them is not this plan's output to decompose.
 
   </details>
-- [ ] The second read of the catalog in the app reader was reviewed and stays: it cannot use the catalog's own reader without an import cycle.
+  Note: reconfirmed — `approvals.ts` 424, `approve.ts` 500, `component-styles.ts` 411, `mockups.ts` 590, `stories.ts` 583 lines; this phase shrank `approve.ts` and added a binding helper to `approvals.ts`, neither grew a second job.
+- [x] The second read of the catalog in the app reader was reviewed and stays: it cannot use the catalog's own reader without an import cycle.
   <details><summary>Technical</summary>
 
   `readApp` in `mockups.ts` reads `components.json` for `baseRulesHash` beside `readContentMaps`, rather than through `readCatalog` in `components.ts`, which imports `mockups.ts`; the comment on `readContentMaps` records the cycle. Merging the two reads in one file is local craft that Build Phase 3's Shape review passed.
 
   </details>
-- [ ] The reset sheet's builder was reviewed and stays beside the base sheet's builder rather than sharing a helper with it: there are two, not three.
+  Note: reconfirmed — `components.ts` imports `mockups.js`, so `readApp` cannot call `readCatalog` without a cycle.
+- [x] The reset sheet's builder was reviewed and stays beside the base sheet's builder rather than sharing a helper with it: there are two, not three.
   <details><summary>Technical</summary>
 
   `componentReset` and `baseStylesheet` in `component-styles.ts` share the parse → `keepRules` → `sheetOf` shape; the predicate they differ on is already one named `isElementSelector`.
 
   </details>
-- [ ] The project card, its page wrapper, the frame fitting and Message were reviewed and stay: each change is one job in the file that already owns it.
+  Note: reconfirmed — `baseStylesheet` and `componentReset` differ only by predicate and scoping, with `isElementSelector` already one named predicate; two builders, not three.
+- [x] The project card, its page wrapper, the frame fitting and Message were reviewed and stay: each change is one job in the file that already owns it.
   <details><summary>Technical</summary>
 
   `ui/ProjectCard.tsx` is the presentational component and `components/ProjectCard.tsx` adapts registry data to it, per the react extension's one-component-per-file; `useFittedFrame.ts`'s `leadingSpace`/`leftMargin` serve only `measure`; `Message.tsx` gained one class.
 
   </details>
+  Note: reconfirmed — `ui/ProjectCard.tsx` is presentational and `components/ProjectCard.tsx` adapts registry data; no change in this phase.
 
 #### Build Phase 4 Verification
 
