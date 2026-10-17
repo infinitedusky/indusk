@@ -495,10 +495,22 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   `apps/indusk-mcp/src/lib/new-project/create.ts`: before the `init --workbench` spawn, when the proposal's `telemetry` recommendation is not kept, write `disabled_extensions: ["local-telemetry", "otel"]` into `.indusk/config.json` (created if absent; `writeConfig` must keep the key when init writes the config later — check it merges). `recordChoices` still records the reason.
 
   </details>
-- [ ] Review the code this phase wrote against the enabled extensions' rules, and add what the review finds here as unchecked items.
+- [x] Review the code this phase wrote against the enabled extensions' rules, and add what the review finds here as unchecked items.
   <details><summary>Technical</summary>
 
   Shape step: TypeScript and testing extensions' rules over `lib/scaffold/`, the templates and the two commands.
+
+  </details>
+- [ ] Shape: Move the decision that a refreshed file is already current (so neither written nor printed) out of apply.ts, which re-reads the file to decide it, into scaffoldPlan, which already holds the current content; apply then only writes what the plan says
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/scaffold/apply.ts`. Rule: code that decides takes its reads (lesson: code-that-decides-takes-its-clock-and-its-reads); Shape: is there a seam a test can reach
+
+  </details>
+- [ ] Shape: Give the inline block that enables the otel extension after the scaffold created files a name, so init reads as steps
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/bin/commands/init.ts`. Rule: Shape: should this inline block have been a named function
 
   </details>
 
