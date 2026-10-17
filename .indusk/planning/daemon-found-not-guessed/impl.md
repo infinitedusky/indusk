@@ -698,10 +698,13 @@ This phase makes InDusk find its daemon when the record is gone. A command that 
   Note (2026-10-16): A10, A13 and A28 green (12 tests across the two files). `vitest related` over the listed files: 843 of 844 pass; the one red is `port-guard.test.ts` "names the process holding the taken port, by process id and command", row A3 of Test Phase 1, red by design until Build Phase 3 (`Passes at: Build Phase 3`). `otel.test.ts`'s four daemon cases now describe a machine through `DaemonReads` (a process whose command line is the daemon) instead of writing a record naming the test process, since the evaluator's endpoint now follows the same identity rule as every reader. A13's carried body asserted `queryUrl`/`otlpUrl` on the result of `resolveLocal`; the function answers with a `MarkSource`, so the test asserts the same two URLs at `endpoint.queryUrl` and `intakeUrl`. A10's `/proc` parser case passes from the start: its subject, `listeningFromProc`, was written before the test file.
 
   </details>
-- [ ] On this machine, with the record copied aside and removed, the worktree's status command finds the running daemon and writes the record back.
+- [x] On this machine, with the record copied aside and removed, the worktree's status command finds the running daemon and writes the record back.
   <details><summary>Technical</summary>
 
   `cp ~/.indusk/telemetry.json ~/.indusk/telemetry.pid /tmp/ && rm ~/.indusk/telemetry.json ~/.indusk/telemetry.pid && node apps/indusk-mcp/dist/bin/cli.js telemetry status; ls ~/.indusk/telemetry.json` — expected: status prints jaeger 43599 running with 4318 and 16686, names MCP and logs as roles it could not read or as 62843 and 62841, and the record exists again. No reports are sent at this phase, so nothing breaks the promise. If the record is not back, restore it from `/tmp` before anything else runs.
+
+
+  Note (2026-10-16, run against `~/.indusk` after `pnpm build`; record copied to `/tmp` first, back afterwards, no daemon started or stopped): `telemetry status` printed `Telemetry daemon: running`, OTLP `http://localhost:4318`, Jaeger UI `:16686`, logs `:62841`, MCP `:62843`, `PIDs: jaeger=43599 otelcol=43600`, then `record was missing: found from the process list and its sockets, written again`. All four roles were read, none unknown: the rendered yaml pre-dates the processes' start and every port it names is held, so it was trusted. `ls` showed `telemetry.json` and `telemetry.pid` back; the rebuilt record equals the original except `startedAt`, which `ps` gives to the second (`22:49:44.000Z` against `22:49:44.642Z`). Still the same one Jaeger and one collector.
 
   </details>
 
