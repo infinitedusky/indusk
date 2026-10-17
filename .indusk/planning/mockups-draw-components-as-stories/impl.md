@@ -357,12 +357,13 @@ This phase tests two things the finished plan claims but nothing checks. First, 
 
 #### Build Phase 3 Context
 
-- [ ] The package's rules say an approval is bound to the element rules its look is drawn under.
+- [x] The package's rules say an approval is bound to the element rules its look is drawn under.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the looks entries beside Build Phase 1's `_reset.css` line: a story or mockup approval records `baseRulesHash`; a change to the app's element rules reopens it.
 
   </details>
+  Note: added to the `_reset.css` entry in `apps/indusk-mcp/CLAUDE.md`.
 
 #### Build Phase 3 Document
 
