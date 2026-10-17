@@ -81,6 +81,10 @@ edited by hand.
 | T9 | After a person edits a scaffolded file, `indusk update` leaves it byte for byte as they left it and writes the newer version beside it, saying so; a scaffolded file nobody edited stays as InDusk wrote it, with nothing written beside it. | unit |
 | T10 | For every combination of a file present or missing, edited or not, and recorded as written by InDusk or not, `update` makes the safe choice: create, refresh to the newer version, leave alone, or write beside — never overwrite an edit or a file InDusk did not write. | unit |
 
+### `the-daemon-is-the-one-running` — rests on `the-daemon-readers-follow-is-the-one-running`
+
+- Signal: the promise it rests on, read where that promise is read (`indusk-telemetry`'s daemon reports through the local daemon); this clause holds while that promise is in force.
+
 ## `an-app-writes-its-signal-from-a-helper-it-owns`
 
 A scaffolded project carries a small signal helper it owns, with no InDusk

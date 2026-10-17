@@ -24,9 +24,12 @@ clauses:
   - name: a-newer-template-is-offered-not-forced
     kind: limit
     statement: "`indusk update` never overwrites a template file a project has changed; a newer version is written beside it."
+  - name: the-daemon-is-the-one-running
+    kind: rests-on
+    rests_on: the-daemon-readers-follow-is-the-one-running
 ---
 
 A project InDusk scaffolds sends its spans, named after the project and carrying where they ran, to the local daemon from its first run, with no file edited by hand.
 
 ## History
-- 2026-10-16 — declared (a-new-project-starts-instrumented), from its planning conversation.
+- 2026-10-17 — declared (a-new-project-starts-instrumented), from its planning conversation.
