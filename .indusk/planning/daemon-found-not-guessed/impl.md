@@ -15,7 +15,7 @@ gate_policy: ask
 
 ## Goal
 
-Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-follow-is-the-one-running` (every reader of promises, every InDusk command and every application on a machine reaches the same one local telemetry daemon), and its six clauses, the way the [ADR](adr.md) decided: four fixed ports in the real InDusk home (4318 traces, 4319 logs, 16686 interface, 16687 MCP), one definition of an InDusk daemon process by its binary and config path, a record that no read deletes and that whoever finds a running daemon writes again, a `start` and a `register` that take over a found daemon and refuse by name when a stranger holds a fixed port, a `reap` that stops this home's strays, Jaeger's own tracing switched off, and each clause's signal sent as a span by the InDusk command that knows the answer, at the moment it knows it. The rows below come one for one from the clause plan in [test-plan.md](test-plan.md); the findings behind them, with file and line on trunk, are in [research.md](research.md).
+Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-follow-is-the-one-running` (every reader of promises, every InDusk command and every application on a machine reaches the same one local telemetry daemon), and its six clauses, the way the [ADR](adr.md) decided: one address per machine, chosen once at first setup and stored in the real InDusk home (InDusk's own block, 24318 traces, 24319 logs, 24316 interface, 24317 MCP, or a free port picked once for any block port held then), kept, read by every reader and command and printed for `init`, one definition of an InDusk daemon process by its binary and config path, a record that no read deletes and that whoever finds a running daemon writes again, a `start` and a `register` that take over a found daemon and, once the address is stored, refuse by name when a stranger holds one of its ports, a `reap` that stops this home's strays, Jaeger's own tracing switched off, and each clause's signal sent as a span by the InDusk command that knows the answer, at the moment it knows it. The rows below come one for one from the clause plan in [test-plan.md](test-plan.md); the findings behind them, with file and line on trunk, are in [research.md](research.md).
 
 ## Scope
 
@@ -24,17 +24,18 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 - One set of reads (the record, the process list, the listening sockets, a port's holder, a file's stat, the log, the clock) handed to pure functions that decide the daemon's state, what `start` does, what `reap` stops, what `.mcp.json` entry changes and what each report says.
 - `daemonStatus` no longer deletes the record; one resolver behind every reader (promise readers, the span reader, look standing, the evaluator, `update`, `demo`, `telemetry reset`).
 - Finding a lost daemon from the process list and its sockets, and writing its record again under the home's lock with an exclusive create.
-- Fixed ports in the real home, port options only in a temporary home, the port bump and `--allow-port-bump` removed, `restart` keeping all four ports, `register` taking over or starting the one daemon and writing only its own project's MCP entry, `.mcp.json` written only on a change.
+- The stored address: chosen once at first setup in `<home>/telemetry-address.json` (the block, or a free port picked once for any block port a stranger holds), never moved, read by every reader and command (`status`, promise readers, the evaluator, `demo`, the `jaeger` MCP entry), and printed by `indusk telemetry address` (`--json`) and an exported `daemonAddress` for `init` to hand to an application.
+- Every start in the real home on the stored address, a later stranger on a stored port refused by name, port options only in a temporary home, the port bump and `--allow-port-bump` removed, `restart` keeping the stored address, `register` taking over or starting the one daemon and writing only its own project's MCP entry, `.mcp.json` written only on a change.
 - `reap` stopping this home's strays as well as orphans, scoped to this home.
 - `jaeger_query.enable_tracing: false` in the local daemon's config, the shipped config files and the always-on server's config.
 - The reporter that sends each clause's signal, the `indusk.clause` attribute, and the reports wired into `status`, `start`, `restart`, `register`, `reap`, the finders and the promise readers.
-- Restarting this machine's daemon onto the four ports and running the live check.
+- Restarting this machine's daemon onto its stored address and running the live check.
 
 ### Out of Scope
 - Keeping traces across a restart: the store stays in memory (Sandy, 2026-10-16).
 - Several daemons per machine, each on its own ports: `instance-ports`' per-instance-ports promise is superseded.
-- Writing the daemon's address into an application, and the evaluator's log export posting to the traces port (`eval/otel.ts:307-309`): both belong to [a-new-project-starts-instrumented](../a-new-project-starts-instrumented/) unless Sandy takes the one-line log fix here (see Notes).
-- A fixed port for Jaeger's OTLP gRPC receiver.
+- Writing the stored address into each application `init` scaffolds (this plan only stores and prints it), and the evaluator's log export posting to the traces port (`eval/otel.ts:307-309`): both belong to [a-new-project-starts-instrumented](../a-new-project-starts-instrumented/) unless Sandy takes the one-line log fix here (see Notes).
+- A port in the stored address for Jaeger's OTLP gRPC receiver.
 - Pruning the dead entries in the project registry, and rotating the daemon's log.
 - Reading the `indusk.clause` attribute in promise readers: that is `mark-first`'s, the later child of the telemetry-from-day-one master that teaches readers to key a break by its clause.
 
@@ -45,31 +46,32 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | Test Phase 1 | the contract tests that start a real Jaeger in a temporary home (lifecycle on given ports, slow-not-gone, reap of a stray, no self-tracing lines), the `.mcp.json` entry tests, the refusal naming its holder in `port-guard.test.ts`, the stale-record case of `telemetry-daemon-state.test.ts` and the live check, all red; the register of every deferred body | `daemon.ts`, `status.ts`, `orphans.ts`, `mcp-config.ts` and the CLI as they stand |
 | Build Phase 1 | `lib/telemetry/daemon-process.ts` (`daemonProcessOf`, `homeKind`, own/temporary/orphan), `lib/telemetry/daemon-reads.ts` (`DaemonReads`, `realDaemonReads`), the whole-list `ps` read in `lib/process-identity.ts`, `lib/telemetry/daemon-state.ts` (`daemonState`, `renderStatus`); `daemonStatus` with no `cleanupFiles`; the record-writing stand-in for tests | the red tests of Test Phase 1 |
 | Build Phase 2 | `findDaemon` (ports from sockets, pairing, several daemons, record written under `<home>/telemetry.lock` with `flag: "wx"`), `resolveLocalDaemon` used by every reader, `liveOtlpEndpointSync` over it | `DaemonReads`, `daemonState` |
-| Build Phase 3 | `lib/telemetry/start-plan.ts` (`FIXED_PORTS`, `startPlan`, `ensureDaemon`), the preflight naming holders, `daemonStart` on fixed ports, `restart` keeping four ports, `register` and `.mcp.json` changes (`jaegerEntryChange`, write on difference, own entry only, `ensureMcpJson` with `jaeger`), `--allow-port-bump` removed | `findDaemon`, `daemonState`, the resolver |
+| Build Phase 3 | `lib/telemetry/daemon-address.ts` (`PORT_BLOCK`, `chooseAddress`, `daemonAddress`, `<home>/telemetry-address.json`), `indusk telemetry address`, `lib/telemetry/start-plan.ts` (`startPlan`, `ensureDaemon`), the preflight naming holders, `daemonStart` on the stored address, `findDaemon` labelling by it, `restart` keeping it, `register` and `.mcp.json` changes (`jaegerEntryChange`, write on difference, own entry only, `ensureMcpJson` with `jaeger`), `--allow-port-bump` removed | `findDaemon`, `daemonState`, the resolver |
 | Build Phase 4 | `lib/telemetry/reap-plan.ts` (`reapPlan`), `reap` over it scoped to this home, `enable_tracing: false` in every Jaeger config InDusk renders or ships, `selfTracingLines`, `logOffset` on the record | `daemonState`, `startPlan` |
-| Build Phase 5 | `PROMISE_MARK.clause`, `watcherSpanBody` with events and a service name, `lib/telemetry/daemon-reports.ts` (`daemonReports`, `sendDaemonReports`, the throttle), reports wired into every command and reader; this machine's daemon on the four ports; the live check recorded | everything above |
+| Build Phase 5 | `PROMISE_MARK.clause`, `watcherSpanBody` with events and a service name, `lib/telemetry/daemon-reports.ts` (`daemonReports`, `sendDaemonReports`, the throttle), reports wired into every command and reader; this machine's daemon on its stored address; the live check recorded | everything above |
 
 ## Test Trajectory
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | On a machine with no daemon, `telemetry start` gives the daemon 4318, 4319, 16686 and 16687, and `start` and `status` both print all four | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
-| A2 | A daemon started in a temporary home binds every port the test gives it: a trace sent to its traces port appears in its interface, and a log record sent to its logs port is accepted and written to its logs file | Test Phase 1 | Build Phase 3 | planned | contract | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports | apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts |
-| A3 | When a fixed port is held by a process that is not InDusk's, a start starts nothing, exits non-zero, and names the port and the holder's process id and command | Test Phase 1 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports | apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts |
-| A4 | The automatic start run by `init`, `update` and enabling the extension never moves the daemon to another port; a stranger on a fixed port is refused by name as `start` refuses; no start in the real home uses any port but the four | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports | apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts |
-| A5 | For an InDusk daemon on ports other than the fixed four, `status` says which ports differ and `restart` brings it back on the four | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
-| A6 | `status` sends an upheld report for one-daemon-on-fixed-ports when one InDusk Jaeger and one collector hold the four fixed ports, and otherwise a broken one naming each extra process or each fixed port not held | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
+| A1 | With no address stored and the block free, the first start, by hand or automatic, gives the daemon 24318 (traces), 24319 (logs), 24316 (interface) and 24317 (MCP), stores that address in the InDusk home, and `start` and `status` both print all four | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
+| A2 | A daemon started in a temporary home binds every port the test gives it: a trace sent to its traces port appears in its interface, and a log record sent to its logs port is accepted and written to its logs file | Test Phase 1 | Build Phase 3 | planned | contract | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts |
+| A3 | At first setup, a block port held by a process that is not InDusk's is replaced by a free port picked once and stored, and the start prints the held port, its holder and the port picked, and exits zero; once an address is stored, a start that finds one of its ports held by such a process starts nothing, picks nothing, leaves the address as it was, exits non-zero, and names the port and the holder's process id and command | Test Phase 1 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts |
+| A4 | Once an address is stored, every start in the real home uses it: `start`, `restart` and the automatic start run by `init`, `update` and enabling the extension never pick again or move the daemon; the address is the same after stop and start, after a restart, and after the record is lost and rebuilt from the process list; explicit port options are refused in the real home | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts |
+| A5 | For an InDusk daemon on ports other than its stored address, such as one started before this change on 4318 and 16686, `status` says which ports differ and `restart` brings it onto the stored address | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
+| A6 | `status` sends an upheld report for one-daemon-on-its-own-ports when one InDusk Jaeger and one collector hold the four ports of the stored address, and otherwise a broken one naming each extra process or each stored port not held | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
+| A29 | Every InDusk reader and command (`status`, the promise readers, the evaluator, `demo`, and the `jaeger` MCP entry register and `update` write) takes the daemon's ports from the stored address or the record, never from a port number in its code; `indusk telemetry address` prints the stored address, `--json` for `init` to hand to an application, and one exported function returns the same; with none stored it says so, exits non-zero and chooses nothing | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
 | A7 | No status read, extension health check, promise reader, admin page or evaluator lookup removes the record; a slow port reads as running and slow, naming the port and the wait; a stale record with nothing running reads not running, is named, and stays | Test Phase 1 | Build Phase 1 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-daemon-state.test.ts |
 | A8 | With a real daemon in a temporary home and the reading process kept busy longer than the port check waits, a status read reports the daemon slow, not gone, and its record is still there afterwards | Test Phase 1 | Build Phase 1 | planned | contract | clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-slow-not-gone.test.ts |
 | A9 | A promise reader that reaches the daemon through its record sends an upheld report for a-read-never-loses-the-daemon at its probe, throttled; a reader that first had to find the daemon sends the finding's broken report instead | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
 | A10 | With the record missing while an InDusk daemon runs, `status` reports it running with its process ids and its ports read from its listening sockets, and the record is written again | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-daemon-found.test.ts |
-| A11 | With the record missing and an InDusk daemon on the fixed ports, `start` takes it over: writes the record, starts nothing, prints the takeover with process ids and ports, exits zero | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
-| A12 | With the record missing and several InDusk daemons running, `start` takes over the one holding the fixed ports (judged by 4318, the port applications reach) and lists every other as a stray for `reap`; when none holds them, it takes over none, starts nothing and lists them all | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
+| A11 | With the record missing and an InDusk daemon on its stored address, `start` takes it over: writes the record, starts nothing, prints the takeover with process ids and ports, exits zero | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
+| A12 | With the record missing and several InDusk daemons running, `start` takes over the one holding the stored traces port, the port applications are handed, and lists every other as a stray for `reap`; when none holds it, it takes over none, starts nothing and lists them all | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
 | A13 | With the record missing and the daemon running, `promises status`, the admin's promise page and the editor's health line read the running daemon's traces | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts |
 | A14 | A finding sends the found daemon an upheld report for a-lost-daemon-is-found and a broken one for a-read-never-loses-the-daemon naming when the daemon started; a start that started a daemon sends upheld when nothing runs beside it, broken naming the one it missed otherwise | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
-| A15 | On this machine, with the record moved aside, `start` takes the daemon over and then `status` finds it; one InDusk Jaeger and one collector remain on the four ports; `promises status` shows the promise broken naming a-read-never-loses-the-daemon; the interface shows both upheld finding reports | Test Phase 1 | Build Phase 5 | planned | live check | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-daemon-found-live.test.ts |
-| A16 | With an InDusk daemon running, `init`, `update` and enabling the extension start none and register against it; with none running and the fixed ports free, they start exactly one on the fixed ports | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second | apps/indusk-mcp/src/__tests__/telemetry-register.test.ts |
-| A17 | Registering a project points its own MCP entry at 16687 and leaves every other registered project's entry as it was, whatever port it names | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second | apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts |
+| A15 | On this machine, with the record moved aside, `start` takes the daemon over and then `status` finds it; one InDusk Jaeger and one collector remain on the stored address (24318, 24319, 24316, 24317 here, where the block is free); `promises status` shows the promise broken naming a-read-never-loses-the-daemon; the interface shows both upheld finding reports | Test Phase 1 | Build Phase 5 | planned | live check | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-daemon-found-live.test.ts |
+| A16 | With an InDusk daemon running, `init`, `update` and enabling the extension start none and register against it; with none running, they start exactly one, on the stored address, choosing it first when none is stored | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second | apps/indusk-mcp/src/__tests__/telemetry-register.test.ts |
+| A17 | Registering a project points its own MCP entry at the stored MCP port and leaves every other registered project's entry as it was, whatever port it names | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second | apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts |
 | A18 | Registering sends an upheld report for nothing-starts-a-second when it found or started the one daemon and changed no other entry, and a broken one naming both process ids of a second daemon or each other entry it changed | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
 | A19 | `status` lists every InDusk Jaeger and collector the record does not name, each with process id, start time, ports and install, and says `reap` stops them | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-daemon-state.test.ts |
 | A20 | `reap` stops every stray of this home, including one whose config file still exists, and leaves the recorded daemon and every process that is not InDusk's untouched | Build Phase 4 | Build Phase 4 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
@@ -77,9 +79,9 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A22 | With two daemons in a temporary home and the record naming one, `reap` stops the other and the recorded one still receives traces | Test Phase 1 | Build Phase 4 | planned | contract | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-strays.test.ts |
 | A23 | The shipped Jaeger with the config InDusk renders writes no line of failing to send its own traces over half a minute while traces and logs sent to it still arrive | Test Phase 1 | Build Phase 4 | planned | contract | clause: the-daemon-readers-follow-is-the-one-running/the-log-is-readable | apps/indusk-mcp/src/__tests__/telemetry-self-tracing.test.ts |
 | A24 | `status` sends upheld for the-log-is-readable when the log since the daemon started holds no self-tracing line, and broken giving their count and the first of them | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/the-log-is-readable | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
-| A25 | Taking over and reaping judge a process by its command line: a stranger on 4318 and a temporary-home daemon are never signalled or taken over from the real home; after a takeover, `stop` stops that daemon and says, non-zero, if a process would not stop | Build Phase 4 | Build Phase 4 | planned | unit | a regression guard over indusk-stops-only-its-own-daemons: stop and ui stop judge a process by its command line and signal only their own | apps/indusk-mcp/src/__tests__/telemetry-own-only.test.ts |
-| A26 | A test's daemon runs in a temporary home on the ports it is given, never the fixed four, only in the system tier; the guard script and the package recognise a daemon process the same way | Build Phase 1 | Build Phase 3 | planned | unit | a regression guard over everyday-tests-never-wait: the everyday suite starts no server, and fixed ports belong to the real home only | apps/indusk-mcp/src/__tests__/telemetry-test-homes.test.ts |
-| A27 | Starting, restarting or taking over leaves a `.mcp.json` that already names 16687 unchanged; `update` in a checkout with none writes one naming `indusk` and `jaeger` at 16687 | Test Phase 1 | Build Phase 3 | planned | unit | a regression guard over the-mcp-config-is-not-tracked and a-clone-without-an-mcp-config-gets-the-keep-list: the file stays untracked and a checkout without one gets the keep-list | apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts |
+| A25 | Taking over and reaping judge a process by its command line: a stranger on a stored port and a temporary-home daemon are never signalled or taken over from the real home; after a takeover, `stop` stops that daemon and says, non-zero, if a process would not stop | Build Phase 4 | Build Phase 4 | planned | unit | a regression guard over indusk-stops-only-its-own-daemons: stop and ui stop judge a process by its command line and signal only their own | apps/indusk-mcp/src/__tests__/telemetry-own-only.test.ts |
+| A26 | A test's daemon runs in a temporary home on the ports it is given, never the block or the real home's stored address, which it never reads or writes, only in the system tier; the guard script and the package recognise a daemon process the same way | Build Phase 1 | Build Phase 3 | planned | unit | a regression guard over everyday-tests-never-wait: the everyday suite starts no server, and the stored address belongs to the real home only | apps/indusk-mcp/src/__tests__/telemetry-test-homes.test.ts |
+| A27 | Starting, restarting or taking over leaves a `.mcp.json` that already names the stored MCP port unchanged; `update` in a checkout with none writes one naming `indusk` and `jaeger` at the stored MCP port | Test Phase 1 | Build Phase 3 | planned | unit | a regression guard over the-mcp-config-is-not-tracked and a-clone-without-an-mcp-config-gets-the-keep-list: the file stays untracked and a checkout without one gets the keep-list | apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts |
 | A28 | The evaluator exports to the daemon the record names, or to the one found when the record is missing, and writes no "endpoint unset; falling back to no-op logger" line while a daemon runs | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard over every-commit-evaluated: each evaluation's report reaches the local Jaeger | apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts |
 
 ### Deferred Verification
@@ -87,7 +89,7 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 - **This machine runs one InDusk daemon for a month** (the clause plan's untestable row U1: `status` lists one Jaeger and one collector, and the log holds no start without a shutdown before it)
   - reason: needs 30 days of this machine's real use, through inits, updates, restarts and sleeps
   - would require: time after landing
-  - mitigation: the brief's first expectation, looked at 30 days after landing; until then, the report each `telemetry status` sends for `one-daemon-on-fixed-ports`
+  - mitigation: the brief's first expectation, looked at 30 days after landing; until then, the report each `telemetry status` sends for `one-daemon-on-its-own-ports`
 - **Readers stop losing the daemon** (U2: no evaluator "endpoint unset; falling back to no-op logger" lines while the daemon runs, 2,303 before this plan)
   - reason: needs weeks of commits evaluated across every project on the machine
   - would require: time after landing
@@ -114,7 +116,7 @@ Before any code changes, this phase writes every test that today's code can alre
 - [ ] The lifecycle test asks a daemon in a temporary home for four given ports and checks that traces and log records both arrive, failing today.
   <details><summary>Technical</summary>
 
-  Rewrite `apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts` (system tier, already in `vitest.tiers.ts` SYSTEM) for A2: its docblock's "auto-bumped if taken" goes; T1 and T3 start with `--otlp-port <p1> --ui-port <p2> --logs-port <p3> --mcp-port <p4>` (four free ports picked by the test) and assert all four printed by `start` and `status`; POST one OTLP trace to `<p1>/v1/traces` and read it from `<p2>/api/services`; POST one OTLP log record to `<p3>/v1/logs` and assert a 2xx and the line in the home's logs file; T5 asserts new process ids on the same four ports after `restart`. Add the comment `// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports`. Red today: `--logs-port` and `--mcp-port` are unknown options.
+  Rewrite `apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts` (system tier, already in `vitest.tiers.ts` SYSTEM) for A2: its docblock's "auto-bumped if taken" goes; T1 and T3 start with `--otlp-port <p1> --ui-port <p2> --logs-port <p3> --mcp-port <p4>` (four free ports picked by the test) and assert all four printed by `start` and `status`; POST one OTLP trace to `<p1>/v1/traces` and read it from `<p2>/api/services`; POST one OTLP log record to `<p3>/v1/logs` and assert a 2xx and the line in the home's logs file; T5 asserts new process ids on the same four ports after `restart`. Add the comment `// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports`. Red today: `--logs-port` and `--mcp-port` are unknown options.
 
   </details>
 - [ ] A new system test keeps a reader busy past the port check and expects the daemon read as slow with its record kept, failing today.
@@ -138,13 +140,13 @@ Before any code changes, this phase writes every test that today's code can alre
 - [ ] A new unit test expects a project's MCP file to be left alone when it already names the daemon, and a new checkout with the telemetry extension enabled to get the daemon's entry, failing today.
   <details><summary>Technical</summary>
 
-  New `apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts` for A27 (A17's cases join it in Build Phase 3), opening with `// clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second`. Case 1: a temp project whose `.mcp.json` names `jaeger` at `http://localhost:16687/mcp`; set its mtime to a fixed past time with `utimesSync`, call `upsertJaegerEntry(project, 16687)`, assert the mtime is unchanged. Case 2: a temp project with `local-telemetry` enabled in its `.indusk` config and no `.mcp.json`; call `ensureMcpJson(project)`; assert `indusk` and `jaeger: { type: "http", url: "http://localhost:16687/mcp" }`. Case 3: `git check-ignore .mcp.json` in a temp repo carrying the repository's ignore rule still answers ignored. Red today: `upsertJaegerEntry` always writes (`mcp-config.ts:86-95`) and `ensureMcpJson` writes only `indusk` (`mcp-config.ts:54-70`).
+  New `apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts` for A27 (A17's cases join it in Build Phase 3), opening with `// clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second`. Case 1: a temp project whose `.mcp.json` names `jaeger` at `http://localhost:24317/mcp`; set its mtime to a fixed past time with `utimesSync`, call `upsertJaegerEntry(project, 24317)`, assert the mtime is unchanged. Case 2: a temporary `INDUSK_HOME` holding a `telemetry-address.json` whose MCP port is 24317, and a temp project with `local-telemetry` enabled in its `.indusk` config and no `.mcp.json`; call `ensureMcpJson(project)`; assert `indusk` and `jaeger: { type: "http", url: "http://localhost:24317/mcp" }`, the stored MCP port. Case 3: `git check-ignore .mcp.json` in a temp repo carrying the repository's ignore rule still answers ignored. Red today: `upsertJaegerEntry` always writes (`mcp-config.ts:86-95`) and `ensureMcpJson` writes only `indusk` (`mcp-config.ts:54-70`).
 
   </details>
 - [ ] A start refused because one of its ports is taken is expected to name the process holding that port, by process id and command, failing today.
   <details><summary>Technical</summary>
 
-  In `apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts`, add a case for A3 with the comment `// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports`: `occupy()` a port in this test process, `daemonStart({ otlpPort: taken, uiPort: 0 })` in the temporary home, and expect the rejection to match `new RegExp(\`${taken} is held by ${process.pid} \\(.*node\`)`. The guard rejects before any spawn, so no daemon is started. Red today: `assertRequestedPortsFree` (`daemon.ts:352-376`) says "already in use by a process this daemon does not own" without naming it. Build Phase 3 rewrites the rest of the file around `startPlan`; this case stays, since port options remain allowed in a temporary home.
+  In `apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts`, add a case for A3 with the comment `// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports`: `occupy()` a port in this test process, `daemonStart({ otlpPort: taken, uiPort: 0 })` in the temporary home, and expect the rejection to match `new RegExp(\`${taken} is held by ${process.pid} \\(.*node\`)`. The guard rejects before any spawn, so no daemon is started. Red today: `assertRequestedPortsFree` (`daemon.ts:352-376`) says "already in use by a process this daemon does not own" without naming it. Build Phase 3 rewrites the rest of the file around `startPlan` and adds A3's two real-home halves over injected reads (a block port held at first setup: a port picked once and stored; a stored port held later: refused, address unchanged); this case stays, since port options remain allowed in a temporary home and a temporary home never picks.
 
   </details>
 - [ ] A new unit test expects a status read to leave a record naming processes that are gone where it is, failing today.
@@ -163,14 +165,15 @@ Before any code changes, this phase writes every test that today's code can alre
   // live check: runs only with INDUSK_LIVE_CHECK=daemon-found-not-guessed, against ~/.indusk, once
   const live = process.env.INDUSK_LIVE_CHECK === "daemon-found-not-guessed";
   describe.runIf(live)("the daemon is found on this machine", () => {
-    it("start takes over, status finds, one daemon stays on the four ports, the reports arrive", async () => {
+    it("start takes over, status finds, one daemon stays on the stored address, the reports arrive", async () => {
       const aside = moveRecordAside(); // restored in finally if anything throws
       try {
         expect(cli(["telemetry", "start"]).stdout).toMatch(/took over the running daemon/);
         moveRecordAside();
         expect(cli(["telemetry", "status"]).stdout).toMatch(/running/);
         expect(existsSync(join(REAL_HOME, "telemetry.json"))).toBe(true);
-        expect(ownDaemonProcesses()).toEqual({ jaeger: 1, otelcol: 1, ports: [4318, 4319, 16686, 16687] });
+        const address = JSON.parse(readFileSync(join(REAL_HOME, "telemetry-address.json"), "utf8"));
+        expect(ownDaemonProcesses()).toEqual({ jaeger: 1, otelcol: 1, ports: [address.traces, address.logs, address.ui, address.mcp] });
         expect(cli(["promises", "status"], REPO).stdout).toMatch(/the-daemon-readers-follow-is-the-one-running .*broken.*a-read-never-loses-the-daemon/s);
         expect(await upheldReports("a-lost-daemon-is-found", sinceStart)).toBeGreaterThanOrEqual(2);
       } finally { aside.restoreIfMissing(); }
@@ -199,8 +202,8 @@ Before any code changes, this phase writes every test that today's code can alre
     const reads = fakeReads({ record: rec(101, 102), processes: [jaegerCmd(101, HOME), collectorCmd(102, HOME)] });
     const state = daemonState(reads, HOME);
     expect(state.kind).toBe("running");
-    const lines = renderStatus(state, { 4318: { answer: "timeout", waitedMs: 500 } });
-    expect(lines.join("\n")).toMatch(/:4318 did not answer in 500 ms \(slow, not gone\)/);
+    const lines = renderStatus(state, { 24318: { answer: "timeout", waitedMs: 500 } });
+    expect(lines.join("\n")).toMatch(/:24318 did not answer in 500 ms \(slow, not gone\)/);
     expect(reads.removed).toEqual([]);
   });
   it("a stale record with nothing running reads not running, is named, and stays", () => {
@@ -228,7 +231,7 @@ Before any code changes, this phase writes every test that today's code can alre
   });
   ```
 
-- **A26** — its subject is `daemonProcessOf` and `homeKind` in `lib/telemetry/daemon-process.ts`, introduced in Build Phase 1; the fixed-port half joins in Build Phase 3 with `startPlan`. Body reviewed:
+- **A26** — its subject is `daemonProcessOf` and `homeKind` in `lib/telemetry/daemon-process.ts`, introduced in Build Phase 1; the stored-address half joins in Build Phase 3 with `startPlan`. Body reviewed:
 
   ```typescript
   import { daemonProcessOf, homeKind } from "../lib/telemetry/daemon-process.js";
@@ -242,7 +245,7 @@ Before any code changes, this phase writes every test that today's code can alre
     expect(homeKind("/private/var/folders/x/T/h-1", TEMP_ROOTS)).toBe("temporary");
     expect(homeKind(join(homedir(), ".indusk"), TEMP_ROOTS)).toBe("real");
   });
-  // Build Phase 3: startPlan for a temporary home never returns a fixed port
+  // Build Phase 3: startPlan for a temporary home never returns a block port and never reads or writes the real home's address
   ```
 
 #### Deferred to Build Phase 2
@@ -253,6 +256,7 @@ Before any code changes, this phase writes every test that today's code can alre
   // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
   import { findDaemon } from "../lib/telemetry/daemon-state.js";
   it("finds a running daemon from ps and its sockets and writes the record again", async () => {
+    // this machine's daemon on 2026-10-16, started before this change: 4318 and 16686 are labelled as Jaeger's own defaults
     const reads = fakeReads({
       record: null,
       processes: [jaegerCmd(43599, HOME), collectorCmd(43600, HOME)],
@@ -275,9 +279,10 @@ Before any code changes, this phase writes every test that today's code can alre
   // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
   import { resolveLocal } from "../lib/promises/sources.js";
   it("a reader follows the running daemon when the record is missing", async () => {
-    const reads = fakeReads({ record: null, processes: [jaegerCmd(1, HOME), collectorCmd(2, HOME)], listening: FIXED });
+    // ports labelled from a trusted yaml: the stored address arrives in Build Phase 3
+    const reads = fakeReads({ record: null, processes: [jaegerCmd(1, HOME), collectorCmd(2, HOME)], listening: ON_BLOCK, yaml: { ports: BLOCK, mtimeAfterStart: false } });
     const local = await resolveLocal({ reads, home: HOME });
-    expect(local).toMatchObject({ queryUrl: "http://localhost:16686", otlpUrl: "http://localhost:4318" });
+    expect(local).toMatchObject({ queryUrl: "http://localhost:24316", otlpUrl: "http://localhost:24318" });
   });
   ```
 
@@ -287,50 +292,59 @@ Before any code changes, this phase writes every test that today's code can alre
   // a regression guard over every-commit-evaluated
   import { liveOtlpEndpointSync } from "../lib/telemetry/status.js";
   it("the evaluator exports to the found daemon when the record is missing", () => {
-    const reads = fakeReads({ record: null, processes: [jaegerCmd(1, HOME), collectorCmd(2, HOME)], listening: FIXED });
-    expect(liveOtlpEndpointSync({ reads, home: HOME })).toBe("http://localhost:4318");
+    const reads = fakeReads({ record: null, processes: [jaegerCmd(1, HOME), collectorCmd(2, HOME)], listening: ON_BLOCK, yaml: { ports: BLOCK, mtimeAfterStart: false } });
+    expect(liveOtlpEndpointSync({ reads, home: HOME })).toBe("http://localhost:24318");
   });
   it("writes no no-op-logger line while a daemon runs", () => { /* initEvalOtel with the injected endpoint; system.log has no "falling back to no-op logger" */ });
   ```
 
 #### Deferred to Build Phase 3
 
-- **A1** — its subject is `startPlan` and `FIXED_PORTS` in `lib/telemetry/start-plan.ts`, introduced in Build Phase 3. Body reviewed:
+- **A1** — its subjects are `PORT_BLOCK` and `chooseAddress` in `lib/telemetry/daemon-address.ts` and `startPlan` in `lib/telemetry/start-plan.ts`, introduced in Build Phase 3. Body reviewed:
 
   ```typescript
-  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports
-  import { FIXED_PORTS, startPlan } from "../lib/telemetry/start-plan.js";
-  it("no daemon in the real home: start on the four fixed ports", () => {
-    expect(startPlan(none(), noHolders(), REAL)).toEqual({ kind: "start", ports: FIXED_PORTS });
-    expect(FIXED_PORTS).toEqual({ traces: 4318, logs: 4319, ui: 16686, mcp: 16687 });
+  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+  import { PORT_BLOCK } from "../lib/telemetry/daemon-address.js";
+  import { startPlan } from "../lib/telemetry/start-plan.js";
+  it("no address stored, the block free: start on the block and store it", () => {
+    expect(PORT_BLOCK).toEqual({ traces: 24318, logs: 24319, ui: 24316, mcp: 24317 });
+    expect(startPlan(none(), noHolders(), REAL, { address: null })).toEqual({ kind: "start", ports: PORT_BLOCK, store: { ...PORT_BLOCK, picked: [] } });
   });
   it("status prints all four ports", () => {
-    expect(renderStatus(running(FIXED_PORTS), {}).join("\n")).toMatch(/4318.*4319.*16686.*16687/s);
+    expect(renderStatus(running(PORT_BLOCK), {}).join("\n")).toMatch(/24318.*24319.*24316.*24317/s);
   });
   ```
 
-- **A4** — its subject is `ensureDaemon("register")` over `startPlan`, introduced in Build Phase 3. Body reviewed:
+- **A4** — its subject is `ensureDaemon("register")` over `startPlan` with a stored address, introduced in Build Phase 3. Body reviewed:
 
   ```typescript
-  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports
-  it("the automatic start refuses as start does and never moves a port", async () => {
-    const r = await ensureDaemon("register", fakeReads({ record: null, holders: { 4318: STRANGER } }), REAL, spawnSpy);
-    expect(r.kind).toBe("refuse");
-    expect(spawnSpy).not.toHaveBeenCalled();
+  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+  const STORED = { ...PORT_BLOCK, logs: 51234, picked: [{ role: "logs", blockPort: 24319 }] };
+  it.each(["start", "restart", "register"])("%s with an address stored uses it and never picks again", async (by) => {
+    const reads = fakeReads({ record: null, address: STORED });
+    await ensureDaemon(by, reads, REAL, spawnSpy);
+    expect(spawnSpy.mock.calls[0][0].ports).toEqual({ traces: 24318, logs: 51234, ui: 24316, mcp: 24317 });
+    expect(reads.addressWrites).toEqual([]);
+  });
+  it("the record lost and rebuilt from the process list leaves the address as it was", async () => {
+    const reads = fakeReads({ record: null, address: STORED, processes: OWN, listening: { 1: [24318, 24316, 24317], 2: [51234] } });
+    await findDaemon(reads, REAL, "status");
+    expect(reads.address()).toEqual(STORED);
+    expect(reads.addressWrites).toEqual([]);
   });
   it("the real home refuses explicit port options by name", () => {
     expect(() => startOptions({ otlpPort: 5000 }, REAL)).toThrow(/--otlp-port .* only in a temporary home/);
   });
   ```
 
-- **A5** — its subject is `daemonState`'s port differences and `restartPorts`, introduced in Build Phase 3. Body reviewed:
+- **A5** — its subject is `daemonState`'s port differences against the stored address and `restartPorts`, introduced in Build Phase 3. Body reviewed:
 
   ```typescript
-  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports
-  it("a daemon on old ports: status names each port that differs, restart moves it to the four", () => {
-    const state = daemonState(fakeReads({ record: rec(1, 2, { mcp: 62843, logs: 62841 }), processes: OWN, listening: OLD }), REAL);
-    expect(renderStatus(state, {}).join("\n")).toMatch(/MCP on 62843 \(expected 16687\).*logs on 62841 \(expected 4319\)/s);
-    expect(restartPorts(state, REAL)).toEqual(FIXED_PORTS);
+  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+  it("a daemon started before this change: status names each port that differs, restart moves it onto the stored address", () => {
+    const state = daemonState(fakeReads({ record: rec(1, 2, { traces: 4318, ui: 16686, mcp: 62843, logs: 62841 }), address: { ...PORT_BLOCK, picked: [] }, processes: OWN, listening: OLD }), REAL);
+    expect(renderStatus(state, {}).join("\n")).toMatch(/traces on 4318 \(expected 24318\).*MCP on 62843 \(expected 24317\).*logs on 62841 \(expected 24319\)/s);
+    expect(restartPorts(state, REAL)).toEqual(PORT_BLOCK);
   });
   ```
 
@@ -338,10 +352,10 @@ Before any code changes, this phase writes every test that today's code can alre
 
   ```typescript
   // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
-  it("record missing, own daemon on the fixed ports: take it over, start nothing, exit zero", async () => {
-    const out = await runStart(fakeReads({ record: null, processes: OWN, listening: FIXED }), REAL, spawnSpy);
+  it("record missing, own daemon on its stored address: take it over, start nothing, exit zero", async () => {
+    const out = await runStart(fakeReads({ record: null, address: { ...PORT_BLOCK, picked: [] }, processes: OWN, listening: ON_BLOCK }), REAL, spawnSpy);
     expect(out.code).toBe(0);
-    expect(out.text).toMatch(/took over the running daemon: jaeger 1, otelcol 2 on 4318, 4319, 16686, 16687/);
+    expect(out.text).toMatch(/took over the running daemon: jaeger 1, otelcol 2 on 24318, 24319, 24316, 24317/);
     expect(spawnSpy).not.toHaveBeenCalled();
   });
   ```
@@ -350,12 +364,37 @@ Before any code changes, this phase writes every test that today's code can alre
 
   ```typescript
   // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
-  it("several daemons: take the one on 4318, list the rest as strays", () => {
-    const plan = startPlan(found([onFixed(1, 2), onOther(3, 4)]), noHolders(), REAL);
+  it("several daemons: take the one on the stored traces port, list the rest as strays", () => {
+    const plan = startPlan(found([onBlock(1, 2), onOther(3, 4)]), noHolders(), REAL, { address: { ...PORT_BLOCK, picked: [] } });
     expect(plan).toMatchObject({ kind: "takeover", jaegerPid: 1, strays: [3, 4] });
   });
-  it("none on 4318: take none, start nothing, list them all", () => {
-    expect(startPlan(found([onOther(1, 2), onOther(3, 4)]), noHolders(), REAL)).toMatchObject({ kind: "refuse-several", listed: [1, 2, 3, 4] });
+  it("none on the stored traces port: take none, start nothing, list them all", () => {
+    expect(startPlan(found([onOther(1, 2), onOther(3, 4)]), noHolders(), REAL, { address: { ...PORT_BLOCK, picked: [] } })).toMatchObject({ kind: "refuse-several", listed: [1, 2, 3, 4] });
+  });
+  ```
+
+- **A29** — its subjects are `daemonAddress`, the `telemetry address` command and the readers' use of the stored address, introduced in Build Phase 3. Body reviewed:
+
+  ```typescript
+  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+  import { daemonAddress } from "../lib/telemetry/daemon-address.js";
+  it("telemetry address prints the stored address, --json for init", async () => {
+    const reads = fakeReads({ address: { ...PORT_BLOCK, logs: 51234, picked: [{ role: "logs", blockPort: 24319 }] } });
+    expect(daemonAddress(reads)).toEqual({ traces: "http://localhost:24318", logs: "http://localhost:51234", ui: "http://localhost:24316", mcp: "http://localhost:24317/mcp" });
+    expect(JSON.parse((await runAddress(reads, ["--json"])).text)).toEqual(daemonAddress(reads));
+  });
+  it("with no address stored it says so, exits non-zero and chooses nothing", async () => {
+    const reads = fakeReads({ address: null });
+    const out = await runAddress(reads, []);
+    expect(out.code).not.toBe(0);
+    expect(out.text).toMatch(/no address stored/);
+    expect(reads.addressWrites).toEqual([]);
+  });
+  it.each(READER_MODULES)("%s names no daemon port number in its code", (file) => {
+    expect(readFileSync(file, "utf8")).not.toMatch(/\b(4318|4319|16686|16687|24316|24317|24318|24319)\b/);
+  });
+  it("register and update write the jaeger entry at the stored MCP port", () => {
+    expect(jaegerEntryChange(null, { ...PORT_BLOCK, mcp: 52000 })?.url).toBe("http://localhost:52000/mcp");
   });
   ```
 
@@ -364,14 +403,14 @@ Before any code changes, this phase writes every test that today's code can alre
   ```typescript
   // clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second
   it.each(["init", "update", "extension enable"])("%s with a daemon running registers against it and starts none", async (via) => {
-    const r = await registerVia(via, fakeReads({ record: null, processes: OWN, listening: FIXED }), spawnSpy);
+    const r = await registerVia(via, fakeReads({ record: null, address: { ...PORT_BLOCK, picked: [] }, processes: OWN, listening: ON_BLOCK }), spawnSpy);
     expect(r.daemon).toBe("found");
     expect(spawnSpy).not.toHaveBeenCalled();
   });
-  it("no daemon and the ports free: exactly one start, on the fixed ports", async () => {
-    await registerVia("init", fakeReads({ record: null }), spawnSpy);
+  it("no daemon and no address stored: exactly one start, on the address it chose", async () => {
+    await registerVia("init", fakeReads({ record: null, address: null }), spawnSpy);
     expect(spawnSpy).toHaveBeenCalledTimes(1);
-    expect(spawnSpy.mock.calls[0][0].ports).toEqual(FIXED_PORTS);
+    expect(spawnSpy.mock.calls[0][0].ports).toEqual(PORT_BLOCK);
   });
   ```
 
@@ -379,11 +418,11 @@ Before any code changes, this phase writes every test that today's code can alre
 
   ```typescript
   // clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second
-  it("register writes its own entry at 16687 and leaves every other project's as it was", async () => {
+  it("register writes its own entry at the stored MCP port and leaves every other project's as it was", async () => {
     writeMcp(other, "http://localhost:62843/mcp");
     const before = readFileSync(join(other, ".mcp.json"), "utf8");
-    await registerVia("extension enable", fakeReads({ record: rec(1, 2), processes: OWN, listening: FIXED }), spawnSpy, { project: mine, registry: [mine, other] });
-    expect(readMcp(mine).mcpServers.jaeger.url).toBe("http://localhost:16687/mcp");
+    await registerVia("extension enable", fakeReads({ record: rec(1, 2), address: { ...PORT_BLOCK, picked: [] }, processes: OWN, listening: ON_BLOCK }), spawnSpy, { project: mine, registry: [mine, other] });
+    expect(readMcp(mine).mcpServers.jaeger.url).toBe("http://localhost:24317/mcp");
     expect(readFileSync(join(other, ".mcp.json"), "utf8")).toBe(before);
   });
   ```
@@ -421,8 +460,8 @@ Before any code changes, this phase writes every test that today's code can alre
 
   ```typescript
   // a regression guard over indusk-stops-only-its-own-daemons
-  it("a stranger on 4318 and a temporary-home daemon are never taken over or reaped from the real home", () => {
-    const state = daemonState(fakeReads({ record: null, processes: [jaegerCmd(5, TEMP_HOME), STRANGER_CMD(6)], holders: { 4318: STRANGER(6) } }), REAL);
+  it("a stranger on a stored port and a temporary-home daemon are never taken over or reaped from the real home", () => {
+    const state = daemonState(fakeReads({ record: null, address: { ...PORT_BLOCK, picked: [] }, processes: [jaegerCmd(5, TEMP_HOME), STRANGER_CMD(6)], holders: { 24318: STRANGER(6) } }), REAL);
     expect(startPlan(state, holdersOf(state), REAL).kind).toBe("refuse");
     expect(reapPlan(state)).toEqual([]);
   });
@@ -438,15 +477,20 @@ Before any code changes, this phase writes every test that today's code can alre
 - **A6** — its subject is `daemonReports` in `lib/telemetry/daemon-reports.ts`, introduced in Build Phase 5. Body reviewed:
 
   ```typescript
-  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-fixed-ports
+  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
   import { daemonReports } from "../lib/telemetry/daemon-reports.js";
-  it("status: upheld on the four ports, broken naming the extra process and the ports not held", () => {
-    expect(daemonReports("status", running(FIXED_PORTS))).toContainEqual(
-      expect.objectContaining({ clause: "one-daemon-on-fixed-ports", outcome: "upheld" }));
-    const broken = daemonReports("status", withStray(running({ ...FIXED_PORTS, mcp: 62843 }), 201));
-    const r = broken.find((x) => x.clause === "one-daemon-on-fixed-ports");
+  it("status: upheld on the stored address, broken naming the extra process and the ports not held", () => {
+    expect(daemonReports("status", running(PORT_BLOCK))).toContainEqual(
+      expect.objectContaining({ clause: "one-daemon-on-its-own-ports", outcome: "upheld" }));
+    const broken = daemonReports("status", withStray(running({ ...PORT_BLOCK, mcp: 62843 }), 201));
+    const r = broken.find((x) => x.clause === "one-daemon-on-its-own-ports");
     expect(r?.outcome).toBe("broken");
-    expect(r?.symptom).toMatch(/^one-daemon-on-fixed-ports: .*jaeger 201.*MCP on 62843, expected 16687/);
+    expect(r?.symptom).toMatch(/^one-daemon-on-its-own-ports: .*jaeger 201.*MCP on 62843, expected 24317/);
+  });
+  it("status: ports picked at first setup are upheld, with the held block port as an attribute", () => {
+    const picked = { ...PORT_BLOCK, logs: 51234, picked: [{ role: "logs", blockPort: 24319, holder: "otelcol-contrib 812" }] };
+    const r = daemonReports("status", running(picked)).find((x) => x.clause === "one-daemon-on-its-own-ports");
+    expect(r).toMatchObject({ outcome: "upheld", attributes: expect.objectContaining({ "indusk.daemon.picked": "logs:24319" }) });
   });
   ```
 
@@ -478,7 +522,7 @@ Before any code changes, this phase writes every test that today's code can alre
       .toMatch(/^a-read-never-loses-the-daemon: the record was missing while jaeger 43599 \(started .*\) ran; found by status/);
   });
   it("a start with another daemon beside it: broken naming the one it missed", () => {
-    const r = daemonReports("started", withStray(running(FIXED_PORTS), 201));
+    const r = daemonReports("started", withStray(running(PORT_BLOCK), 201));
     expect(r.find((x) => x.clause === "a-lost-daemon-is-found")).toMatchObject({ outcome: "broken" });
   });
   ```
@@ -488,12 +532,12 @@ Before any code changes, this phase writes every test that today's code can alre
   ```typescript
   // clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second
   it("register: upheld when it found the one daemon and changed no other entry", () => {
-    expect(daemonReports("register", { ...running(FIXED_PORTS), registered: { project: "/p", daemon: "found", otherEntriesChanged: [] } }))
+    expect(daemonReports("register", { ...running(PORT_BLOCK), registered: { project: "/p", daemon: "found", otherEntriesChanged: [] } }))
       .toContainEqual(expect.objectContaining({ clause: "nothing-starts-a-second", outcome: "upheld" }));
   });
   it("register: broken naming a second daemon by both process ids, or each other entry changed", () => {
-    const r = daemonReports("register", { ...withStray(running(FIXED_PORTS), 201, 202), registered: { project: "/p", daemon: "started", otherEntriesChanged: [{ path: "/q", from: ":62843", to: ":16687" }] } });
-    expect(r.find((x) => x.clause === "nothing-starts-a-second")?.symptom).toMatch(/201.*202.*\/q.*62843.*16687/s);
+    const r = daemonReports("register", { ...withStray(running(PORT_BLOCK), 201, 202), registered: { project: "/p", daemon: "started", otherEntriesChanged: [{ path: "/q", from: ":62843", to: ":24317" }] } });
+    expect(r.find((x) => x.clause === "nothing-starts-a-second")?.symptom).toMatch(/201.*202.*\/q.*62843.*24317/s);
   });
   ```
 
@@ -502,9 +546,9 @@ Before any code changes, this phase writes every test that today's code can alre
   ```typescript
   // clause: the-daemon-readers-follow-is-the-one-running/the-log-is-readable
   it("status: upheld with no self-tracing line since start, broken with the count and the first", () => {
-    expect(daemonReports("status", { ...running(FIXED_PORTS), selfTracing: { count: 0 } }))
+    expect(daemonReports("status", { ...running(PORT_BLOCK), selfTracing: { count: 0 } }))
       .toContainEqual(expect.objectContaining({ clause: "the-log-is-readable", outcome: "upheld" }));
-    const r = daemonReports("status", { ...running(FIXED_PORTS), selfTracing: { count: 17, first: LINE } });
+    const r = daemonReports("status", { ...running(PORT_BLOCK), selfTracing: { count: 17, first: LINE } });
     expect(r.find((x) => x.clause === "the-log-is-readable")?.symptom).toMatch(/^the-log-is-readable: 17 lines .*4317/);
   });
   ```
@@ -560,7 +604,7 @@ This phase gives InDusk one way to tell its own daemon processes apart from ever
 - [ ] The state and stray tests pass, the busy-reader system test passes, and the files that depend on the changed modules still pass.
   <details><summary>Technical</summary>
 
-  `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-daemon-state.test.ts src/__tests__/telemetry-test-homes.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-process.ts src/lib/telemetry/daemon-reads.ts src/lib/telemetry/daemon-state.ts src/lib/telemetry/status.ts src/lib/telemetry/orphans.ts src/lib/telemetry/stop.ts src/lib/process-identity.ts src/__tests__/helpers/local-jaeger.ts src/lib/eval/otel.test.ts` — A7, A19 green; A26 written (its fixed-port half waits for Build Phase 3). `pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-slow-not-gone.test.ts src/__tests__/monitor-status.test.ts src/__tests__/watcher-probe.test.ts src/__tests__/watcher-falsification.test.ts` — A8 green, the three stand-in users green. `cd ../indusk-admin && pnpm exec vitest run src/__tests__/http-promise-health.test.ts src/__tests__/http-watcher-blind.test.ts` — green. Rows' State updated in the same edit.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-daemon-state.test.ts src/__tests__/telemetry-test-homes.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-process.ts src/lib/telemetry/daemon-reads.ts src/lib/telemetry/daemon-state.ts src/lib/telemetry/status.ts src/lib/telemetry/orphans.ts src/lib/telemetry/stop.ts src/lib/process-identity.ts src/__tests__/helpers/local-jaeger.ts src/lib/eval/otel.test.ts` — A7, A19 green; A26 written (its stored-address half waits for Build Phase 3). `pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-slow-not-gone.test.ts src/__tests__/monitor-status.test.ts src/__tests__/watcher-probe.test.ts src/__tests__/watcher-falsification.test.ts` — A8 green, the three stand-in users green. `cd ../indusk-admin && pnpm exec vitest run src/__tests__/http-promise-health.test.ts src/__tests__/http-watcher-blind.test.ts` — green. Rows' State updated in the same edit.
 
   </details>
 
@@ -569,7 +613,7 @@ This phase gives InDusk one way to tell its own daemon processes apart from ever
 - [ ] The root context file records the decision in one line.
   <details><summary>Technical</summary>
 
-  root (Key Decisions): `- The daemon is found, not guessed: one daemon on fixed ports (4318 traces, 4319 logs, 16686 UI, 16687 MCP), recognised by binary + config path, its record never deleted by a read and rebuilt from the process list; nothing starts a second — see /decisions/daemon-found-not-guessed` — always-on because every session that runs `init`, `update`, a telemetry command or a promise reader depends on which daemon it reaches, across every area of the repository, and a session that guesses a port or reads a record as truth reintroduces the defect.
+  root (Key Decisions): `- The daemon is found, not guessed: one daemon on one address chosen once and stored in ~/.indusk (InDusk's block 24316-24319, or ports picked once when held at first setup; a recording server keeps 4318), read by every reader and handed out by \`indusk telemetry address\`, recognised by binary + config path, its record never deleted by a read and rebuilt from the process list; nothing starts a second — see /decisions/daemon-found-not-guessed` — always-on because every session that runs `init`, `update`, a telemetry command or a promise reader depends on which daemon it reaches, across every area of the repository, and a session that guesses a port or reads a record as truth reintroduces the defect.
 
   </details>
 - [ ] The package's context file says how a daemon process is recognised and that no read removes its record.
@@ -597,7 +641,7 @@ This phase makes InDusk find its daemon when the record is gone. A command that 
 - [ ] A command that finds no usable record finds the running daemon from the process list and its listening sockets, and writes the record again exactly once.
   <details><summary>Technical</summary>
 
-  In `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts`: `findDaemon(reads, home, by: string): Promise<Found | null>`. Ports from `reads.listening`; roles labelled by the fixed numbers (4318, 4319, 16686, 16687), else from the rendered yaml only when its mtime is not after the process start (about 5 s allowed) and every port it names is among the sockets, else `null` and listed in `unknownRoles`. Pair a Jaeger with the collector holding 4319, else the same-home collector started closest after it within 20 s. Several own daemons: take the one holding 4318, the rest become strays; none on 4318: take none. Write with `reads.writeRecord(meta, { exclusive: true })` (`flag: "wx"`) under `<home>/telemetry.lock` via `acquireLockAsync` (`apps/indusk-mcp/src/lib/agents/lock.ts:120`); only the finder whose create succeeds is reported as the finder. `realDaemonReads.listening` falls back to `/proc/<pid>/fd` socket inodes joined to the LISTEN rows of `/proc/net/tcp` and `/proc/net/tcp6` when `lsof` is not on the PATH (`listeningFromProc`, a pure parser). Author A10 in `apps/indusk-mcp/src/__tests__/telemetry-daemon-found.test.ts`, including the `/proc` fixture case.
+  In `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts`: `findDaemon(reads, home, by: string): Promise<Found | null>`. Ports from `reads.listening`; roles labelled by Jaeger's own defaults (4318 traces, 16686 interface, which a daemon started before this change uses), else from the rendered yaml only when its mtime is not after the process start (about 5 s allowed) and every port it names is among the sockets, else `null` and listed in `unknownRoles`; Build Phase 3 puts labelling by the stored address first. Pair a Jaeger with the collector holding the logs port (the stored one from Build Phase 3), else the same-home collector started closest after it within 20 s. Several own daemons: take the one holding the traces port (the stored one from Build Phase 3), the rest become strays; none on it: take none. The finder never writes the stored address. Write with `reads.writeRecord(meta, { exclusive: true })` (`flag: "wx"`) under `<home>/telemetry.lock` via `acquireLockAsync` (`apps/indusk-mcp/src/lib/agents/lock.ts:120`); only the finder whose create succeeds is reported as the finder. `realDaemonReads.listening` falls back to `/proc/<pid>/fd` socket inodes joined to the LISTEN rows of `/proc/net/tcp` and `/proc/net/tcp6` when `lsof` is not on the PATH (`listeningFromProc`, a pure parser). Author A10 in `apps/indusk-mcp/src/__tests__/telemetry-daemon-found.test.ts`, including the `/proc` fixture case.
 
   </details>
 - [ ] Every reader of the local daemon goes through one resolver that follows the record and finds the daemon when the record is gone.
@@ -640,28 +684,35 @@ This phase makes InDusk find its daemon when the record is gone. A command that 
 
   </details>
 
-### Build Phase 3: Fixed ports, take over the running daemon, never start a second
+### Build Phase 3: InDusk's own ports, chosen once; take over the running daemon, never start a second
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-This phase puts the daemon on its four fixed ports and makes starting it safe. In the real InDusk home a start always uses 4318 for traces, 4319 for logs, 16686 for the interface and 16687 for the MCP server; a temporary home, as tests use, takes the ports it is given and never these four. Before starting, the command checks the four ports: a daemon of its own is taken over where it stands, and a port held by anything else stops the start with the port, the process and its command named. The port bump and its option are removed, and restart keeps all four ports. Registering a project, which enabling the extension, init and update all run, takes over or starts the one daemon and writes only its own project's MCP entry, and an MCP file is rewritten only when its address changes. The tests that pinned the old behaviour are rewritten. The next phase clears strays and quiets the log.
+This phase gives the daemon one address of its own and makes starting it safe. The first time InDusk sets up its daemon on a machine it chooses that address: its own block of ports, 24318 for traces, 24319 for logs, 24316 for the interface and 24317 for the MCP server, with a free port picked once in place of any of those another program already holds. The address is stored in the InDusk home and never changes after that; every start, restart and automatic start uses it, every reader and command reads it, and a command prints it so that setting up a new project can hand it to the application. A temporary home, as tests use, takes the ports it is given and never touches the stored address. Before starting, the command checks the stored ports: a daemon of its own is taken over where it stands, and a port later held by anything else stops the start with the port, the process and its command named, leaving the address as it was. The port bump and its option are removed. Registering a project, which enabling the extension, init and update all run, takes over or starts the one daemon and writes only its own project's MCP entry, and an MCP file is rewritten only when its address changes. The tests that pinned the old behaviour are rewritten. The next phase clears strays and quiets the log.
 
-- [ ] A start in the real home decides from what is running and what holds the four fixed ports whether to report, take over, start or refuse, and never moves a port.
+- [ ] The daemon's address is chosen once, stored in the InDusk home, and printed so that setting up a project can hand it to an application.
   <details><summary>Technical</summary>
 
-  New `apps/indusk-mcp/src/lib/telemetry/start-plan.ts`: `FIXED_PORTS = { traces: 4318, logs: 4319, ui: 16686, mcp: 16687 }`; `startPlan(state, holders, home) → { kind: "running" } | { kind: "takeover"; meta; strays } | { kind: "start"; ports } | { kind: "refuse"; holders } | { kind: "refuse-several"; listed }`; `refusalText` naming port, process id and command, suggesting `reap` only for an InDusk holder of another home or an orphan; `ensureDaemon(by, reads, home, spawn)`. `daemonStart` (`apps/indusk-mcp/src/lib/telemetry/daemon.ts`) renders the yaml right before it spawns, binds the MCP port to 16687 instead of `findFreePort(0)` (`daemon.ts:405, 228-230`) and the logs port to 4319 in the real home; remove `allowPortBump` (`daemon.ts:64-72, 352-353`) and `--allow-port-bump` (`apps/indusk-mcp/src/bin/cli.ts:634-647`); add `--logs-port` and `--mcp-port`; all four port options accepted only when `homeKind` is temporary and refused by name otherwise. `daemonRestart` keeps all four ports (`daemon.ts:541-553`). Start, takeover and every record write hold `<home>/telemetry.lock`. `start` and `status` print all four ports. Author A1, A5, A11, A12 in `apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts`; rewrite `apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts` for A4 and add `startPlan`'s refusal cases to A3's (lines 95-102 deleted; 54-85 become "names the holder", with `reap` suggested only for an InDusk holder of another home or an orphan; line 87 holds in temporary homes only; Test Phase 1's holder-naming case stays); add A26's fixed-port case to `telemetry-test-homes.test.ts`.
+  New `apps/indusk-mcp/src/lib/telemetry/daemon-address.ts`: `PORT_BLOCK = { traces: 24318, logs: 24319, ui: 24316, mcp: 24317 }` (the only place those numbers appear); `chooseAddress(holders, ownDaemonPorts, home, findFree) → { kind: "chosen"; address } | { kind: "refuse"; holders }` (a block port free or held by this home's daemon is kept; one held by a process that is not InDusk's is replaced by a port this home's running daemon already holds for that role, else by `findFreePort(0)`, recorded in `picked` with the holder; one held by another home's InDusk daemon refuses); `readAddress(reads)`, and `daemonAddress(reads | home)` returning the traces, logs, interface and MCP URLs, exported from the package for `init`. `DaemonReads` gains `address()` and `writeAddress(a)`, writing `<home>/telemetry-address.json` with `flag: "wx"` under `<home>/telemetry.lock`; nothing else writes or removes it, `stop` included. New command `indusk telemetry address [--json]` in `apps/indusk-mcp/src/bin/cli.ts` and `apps/indusk-mcp/src/bin/commands/telemetry.ts`: prints the address, or says none is stored and exits 1, never choosing. `findDaemon` labels roles by the stored address before Jaeger's defaults. The readers that resolve the daemon (`status`, `resolveLocalDaemon`, `liveOtlpEndpointSync`, `demo`, `update`'s jaeger sync) take ports from the record or the address, never a literal. Author A29 in `apps/indusk-mcp/src/__tests__/telemetry-address.test.ts`, and A3's first-setup cases (a held block port picked once and stored, another home's daemon refused) in `apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts`.
+
+  </details>
+
+- [ ] A start in the real home decides from what is running, the stored address and what holds its ports whether to report, take over, start or refuse, and never moves a port.
+  <details><summary>Technical</summary>
+
+  New `apps/indusk-mcp/src/lib/telemetry/start-plan.ts`: `startPlan(state, holders, home, { address }) → { kind: "running" } | { kind: "takeover"; meta; strays } | { kind: "start"; ports; store? } | { kind: "refuse"; holders } | { kind: "refuse-several"; listed }`, calling `chooseAddress` when no address is stored and never otherwise; `refusalText` naming port, process id and command, suggesting `reap` only for an InDusk holder of another home or an orphan; `ensureDaemon(by, reads, home, spawn)`. `daemonStart` (`apps/indusk-mcp/src/lib/telemetry/daemon.ts`) renders the yaml right before it spawns and, in the real home, binds all four roles to the stored address, the MCP port instead of `findFreePort(0)` (`daemon.ts:405, 228-230`); remove `allowPortBump` (`daemon.ts:64-72, 352-353`) and `--allow-port-bump` (`apps/indusk-mcp/src/bin/cli.ts:634-647`); add `--logs-port` and `--mcp-port`; all four port options accepted only when `homeKind` is temporary and refused by name otherwise. `daemonRestart` restarts on the stored address (`daemon.ts:541-553`). Start, takeover and every record or address write hold `<home>/telemetry.lock`. `start` and `status` print all four ports and whether any was picked. Author A1, A5, A11, A12 in `apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts`; rewrite `apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts` for A4 and add `startPlan`'s later-collision refusal (address unchanged, nothing picked) to A3's (lines 95-102 deleted; 54-85 become "names the holder", with `reap` suggested only for an InDusk holder of another home or an orphan; line 87 holds in temporary homes only; Test Phase 1's holder-naming case stays); add A26's case (a temporary home never reads or writes the real home's address and never gets the block) to `telemetry-test-homes.test.ts`.
 
   </details>
 - [ ] Registering a project takes over or starts the one daemon and writes only that project's MCP entry, and only when its address changes.
   <details><summary>Technical</summary>
 
-  `telemetryRegister` (`apps/indusk-mcp/src/bin/commands/telemetry.ts:257-266`) calls `ensureDaemon("register")` instead of `daemonStart({ allowPortBump: true })`; on a refusal it still records the project, prints the refusal and exits 1 (the hook runner at `apps/indusk-mcp/src/bin/commands/extensions.ts:800-808` prints it for `init`, `update` and enabling). `syncAllRegisteredProjectsMcp` (`telemetry.ts:36-55`): register's call (`:280`) becomes an upsert of its own project only; `start` (`:103`) and `reset` (`:476`) drop it; `restart` (`:203`) re-points only entries naming exactly the old MCP port, and writes nothing when ports did not change. `jaegerEntryChange(current, port)` in `apps/indusk-mcp/src/lib/mcp-config.ts`; `upsertJaegerEntry` writes only on a change; `ensureMcpJson` adds `jaeger: { type: "http", url: "http://localhost:16687/mcp" }` when `local-telemetry` is enabled. `INDUSK_SKIP_TELEMETRY_AUTOSTART=1` still skips the start. Author A16 in `apps/indusk-mcp/src/__tests__/telemetry-register.test.ts` and A17 in `telemetry-mcp-entries.test.ts`.
+  `telemetryRegister` (`apps/indusk-mcp/src/bin/commands/telemetry.ts:257-266`) calls `ensureDaemon("register")` instead of `daemonStart({ allowPortBump: true })`; on a refusal it still records the project, prints the refusal and exits 1 (the hook runner at `apps/indusk-mcp/src/bin/commands/extensions.ts:800-808` prints it for `init`, `update` and enabling). `syncAllRegisteredProjectsMcp` (`telemetry.ts:36-55`): register's call (`:280`) becomes an upsert of its own project only; `start` (`:103`) and `reset` (`:476`) drop it; `restart` (`:203`) re-points only entries naming exactly the old MCP port, and writes nothing when ports did not change. `jaegerEntryChange(current, port)` in `apps/indusk-mcp/src/lib/mcp-config.ts`; `upsertJaegerEntry` writes only on a change; `ensureMcpJson` adds `jaeger: { type: "http", url: "http://localhost:<stored mcp>/mcp" }` when `local-telemetry` is enabled and an address is stored, and no `jaeger` entry when none is. `INDUSK_SKIP_TELEMETRY_AUTOSTART=1` still skips the start. Author A16 in `apps/indusk-mcp/src/__tests__/telemetry-register.test.ts` and A17 in `telemetry-mcp-entries.test.ts`.
 
   </details>
 - [ ] The system tests that pinned per-start ports and every-project syncing are rewritten to the new rules.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/src/__tests__/telemetry-mcp-port-sync.test.ts`: lines 77-96 become "restart keeps all four ports and leaves every entry byte-for-byte unchanged"; its second test is reversed (another project's stale URL is left alone); its third (`update` repairs its own project's entry) stays. `apps/indusk-mcp/src/__tests__/telemetry-restart-port-pin.test.ts` covers all four ports.
+  `apps/indusk-mcp/src/__tests__/telemetry-mcp-port-sync.test.ts`: lines 77-96 become "restart keeps the stored address and leaves every entry byte-for-byte unchanged"; its second test is reversed (another project's stale URL is left alone); its third (`update` repairs its own project's entry) stays. `apps/indusk-mcp/src/__tests__/telemetry-restart-port-pin.test.ts` covers all four ports.
 
   </details>
 
@@ -670,7 +721,7 @@ This phase puts the daemon on its four fixed ports and makes starting it safe. I
 - [ ] The start, register, port-guard and MCP-entry tests pass, and the files that depend on the changed modules still pass.
   <details><summary>Technical</summary>
 
-  `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-start-plan.test.ts src/lib/telemetry/port-guard.test.ts src/__tests__/telemetry-register.test.ts src/__tests__/telemetry-mcp-entries.test.ts src/__tests__/telemetry-test-homes.test.ts && pnpm exec vitest related --run src/lib/telemetry/start-plan.ts src/lib/telemetry/daemon.ts src/bin/commands/telemetry.ts src/bin/cli.ts src/lib/mcp-config.ts` — A1, A3, A4, A5, A11, A12, A16, A17, A26, A27 green; rows' State updated in the same edit.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-start-plan.test.ts src/lib/telemetry/port-guard.test.ts src/__tests__/telemetry-address.test.ts src/__tests__/telemetry-register.test.ts src/__tests__/telemetry-mcp-entries.test.ts src/__tests__/telemetry-test-homes.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-address.ts src/lib/telemetry/start-plan.ts src/lib/telemetry/daemon.ts src/lib/telemetry/daemon-state.ts src/bin/commands/telemetry.ts src/bin/cli.ts src/lib/mcp-config.ts` — A1, A3, A4, A5, A11, A12, A16, A17, A26, A27, A29 green; rows' State updated in the same edit.
 
   </details>
 - [ ] The rewritten system tests pass: a temporary-home daemon on four given ports, restart keeping them, and project entries left alone.
@@ -682,25 +733,25 @@ This phase puts the daemon on its four fixed ports and makes starting it safe. I
 - [ ] The check against this machine's own daemon runs again and now gets past the takeover and the finding, failing only on the ports and the reports later steps provide.
   <details><summary>Technical</summary>
 
-  `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 still red, now on the four ports (MCP still on 62843, logs on 62841) and on the reports; `start` took over and `status` found the daemon; `ls ~/.indusk/telemetry.json` shows the record present afterwards.
+  `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 still red, now on the stored address (the daemon still on 4318, 16686, 62843 and 62841 until the restart in Build Phase 5) and on the reports; `start` took over and `status` found the daemon; `ls ~/.indusk/telemetry.json ~/.indusk/telemetry-address.json` shows the record present afterwards and the address chosen; `node apps/indusk-mcp/dist/bin/cli.js telemetry address` prints it (24318, 24319, 24316, 24317 if the block was free).
 
   </details>
 
 #### Build Phase 3 Context
 
-- [ ] The package's context file states the fixed ports, the temporary-home rule and that a project's MCP entry is written only on a change.
+- [ ] The package's context file states how the daemon's address is chosen and kept, the temporary-home rule and that a project's MCP entry is written only on a change.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": replace "the daemon's sync edits only the local copy's `jaeger` port" with "`register` writes only its own project's `jaeger` entry, at 16687, and only when it differs; nothing re-points another project's entry". New rule: "The real home's daemon runs on 4318, 4319, 16686, 16687 and never bumps; a port held by a stranger is refused by name; port options are accepted only in a temporary home. — guarded by `port-guard.test.ts` and `telemetry-start-plan.test.ts`." "Tests" section: Jaeger tests start the daemon in a temporary home on ports the test gives it.
+  `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": replace "the daemon's sync edits only the local copy's `jaeger` port" with "`register` writes only its own project's `jaeger` entry, at the stored MCP port, and only when it differs; nothing re-points another project's entry". New rule: "The real home's daemon runs on the address in `<home>/telemetry-address.json`, chosen once (`PORT_BLOCK` 24316-24319, or a port picked once for a block port held at first setup) and never moved; no code names a daemon port but `daemon-address.ts`; a stored port later held by a stranger is refused by name; port options are accepted only in a temporary home; `indusk telemetry address` is how anything else learns it. — guarded by `port-guard.test.ts`, `telemetry-start-plan.test.ts` and `telemetry-address.test.ts`." "Tests" section: Jaeger tests start the daemon in a temporary home on ports the test gives it.
 
   </details>
 
 #### Build Phase 3 Document
 
-- [ ] The telemetry reference, the getting-started guide, the always-on guide and the extension's own files describe fixed ports, taking over and the refusal, and no longer mention a port bump.
+- [ ] The telemetry reference, the getting-started guide, the always-on guide and the extension's own files describe the daemon's own ports and how the address is chosen and handed out, taking over and the refusal, and no longer mention a port bump.
   <details><summary>Technical</summary>
 
-  `apps/docs/src/reference/telemetry/cli.md`: `start` taking over, the four fixed ports, port options limited to temporary homes, `restart` keeping ports; remove `--allow-port-bump` and the text at lines 32-33; add a Mermaid flow (record, then process list and sockets, ending at running, takeover, start on the four, or refuse naming the holder). `apps/docs/src/reference/telemetry/overview.md`: a fixed ports table and the enable-time steps at lines 95-98 rewritten. `apps/docs/src/guide/getting-started.md:133`: the 1.36.2 sentence replaced. `apps/docs/src/guide/always-on.md` (lines 114-118, 251, 269): one sentence that the laptop's 16687 is the daemon's MCP server and the server's is its query port on Fly. `apps/indusk-mcp/extensions/local-telemetry/skill.md:83` and `apps/indusk-mcp/extensions/local-telemetry/.env.example` (auto-bump paragraph; MCP line becomes `http://localhost:16687/mcp`). Changelog (Unreleased): "Changed: the local daemon always runs on 4318, 4319, 16686 and 16687; `start` and `init` take over a running InDusk daemon, and a port held by another process is refused, naming it. Removed: `--allow-port-bump`."
+  `apps/docs/src/reference/telemetry/cli.md`: `start` taking over, the stored address and how it is chosen, `telemetry address` (`--json`), port options limited to temporary homes, `restart` keeping the address; remove `--allow-port-bump` and the text at lines 32-33; add a Mermaid flow (record, then process list and sockets, ending at running, takeover, start on the stored address after choosing it if none is stored, or refuse naming the holder). `apps/docs/src/reference/telemetry/overview.md`: a ports table (the block 24318 traces, 24319 logs, 24316 interface, 24317 MCP; a port picked once for any held at first setup; stored in `~/.indusk/telemetry-address.json`, never moved; why 4318 is left to a person's other tools) and the enable-time steps at lines 95-98 rewritten. `apps/docs/src/guide/getting-started.md:133`: the 1.36.2 sentence replaced. `apps/docs/src/guide/always-on.md` (lines 114-118, 251, 269): one sentence that a recording server keeps the standard 4318 and 16687 as its query port on Fly, being a dedicated machine, while the laptop daemon runs on InDusk's block. `apps/indusk-mcp/extensions/local-telemetry/skill.md:83` and `apps/indusk-mcp/extensions/local-telemetry/.env.example` (auto-bump paragraph; MCP line becomes the stored MCP URL, `http://localhost:24317/mcp` when the block was free, read with `indusk telemetry address`). Changelog (Unreleased): "Changed: the local daemon runs on InDusk's own ports (24318 traces, 24319 logs, 24316 interface, 24317 MCP), or on ports picked once in place of any held at first setup, and the address never moves; a recording server keeps 4318. Changed: an application no longer reaches the local daemon on the SDK's default 4318. Added: `indusk telemetry address`. Changed: `start` and `init` take over a running InDusk daemon, and a stored port later held by another process is refused, naming it. Removed: `--allow-port-bump`."
 
   </details>
 
@@ -760,7 +811,7 @@ This phase finishes the clean-up commands and the log. Reap now stops every daem
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-This phase makes the promise heard in the running system. Each part of the promise is reported as a span sent to the local daemon by the InDusk command that knows the answer, at the moment it knows it: status reports the ports, strays and log; start and restart report once their daemon is ready or taken over; register reports at its end; reap reports what remains; a command that finds a lost daemon reports the finding, and also reports that the record had been lost, since nothing could report it at the moment it was lost; and a promise reader that reaches the daemon through an intact record reports that, at most once a quarter hour per project. The reports carry the promise, upheld or broken, and the part of the promise they concern, under their own service so the reader's frequent heartbeat cannot crowd them out. Then this machine's daemon is restarted onto the four fixed ports and the live check runs once against it, with its result recorded here. This is the last build phase; the close-out rituals follow.
+This phase makes the promise heard in the running system. Each part of the promise is reported as a span sent to the local daemon by the InDusk command that knows the answer, at the moment it knows it: status reports the ports, strays and log; start and restart report once their daemon is ready or taken over; register reports at its end; reap reports what remains; a command that finds a lost daemon reports the finding, and also reports that the record had been lost, since nothing could report it at the moment it was lost; and a promise reader that reaches the daemon through an intact record reports that, at most once a quarter hour per project. The reports carry the promise, upheld or broken, and the part of the promise they concern, under their own service so the reader's frequent heartbeat cannot crowd them out. Then this machine's daemon is restarted onto its stored address and the live check runs once against it, with its result recorded here. This is the last build phase; the close-out rituals follow.
 
 - [ ] Each report names the part of the promise it concerns, and is sent without the evaluator's tracing setup.
   <details><summary>Technical</summary>
@@ -771,7 +822,7 @@ This phase makes the promise heard in the running system. Each part of the promi
 - [ ] Status, start, restart, register, reap and every finder send their reports at the moment they know the answer.
   <details><summary>Technical</summary>
 
-  Wire per the ADR's D9 table: `status` (one-daemon-on-fixed-ports, the-log-is-readable on every run that finds a daemon); `start` and `restart` once ready or after a takeover (one-daemon-on-fixed-ports; a start that spawned also a-lost-daemon-is-found after reading the process list); `register` at its end (nothing-starts-a-second, with the project and found, took over or started; nothing on a refusal); `reap` at its end to the recorded daemon (strays-are-cleared; nothing when no daemon is recorded); every finder whose exclusive create succeeded (a-lost-daemon-is-found upheld and a-read-never-loses-the-daemon broken, symptom `a-read-never-loses-the-daemon: the record was missing while jaeger <pid> (started <t>) ran; found by <command>`). The evaluator's post is fire-and-forget. A refused start sends nothing: no InDusk daemon is there to receive it.
+  Wire per the ADR's D9 table: `status` (one-daemon-on-its-own-ports, the-log-is-readable on every run that finds a daemon); `start` and `restart` once ready or after a takeover (one-daemon-on-its-own-ports; a start that spawned also a-lost-daemon-is-found after reading the process list); `register` at its end (nothing-starts-a-second, with the project and found, took over or started; nothing on a refusal); `reap` at its end to the recorded daemon (strays-are-cleared; nothing when no daemon is recorded); every finder whose exclusive create succeeded (a-lost-daemon-is-found upheld and a-read-never-loses-the-daemon broken, symptom `a-read-never-loses-the-daemon: the record was missing while jaeger <pid> (started <t>) ran; found by <command>`). The evaluator's post is fire-and-forget. A refused start sends nothing: no InDusk daemon is there to receive it.
 
   </details>
 - [ ] A promise reader that reaches the daemon through its record reports it, at most once a quarter hour per project.
@@ -780,10 +831,10 @@ This phase makes the promise heard in the running system. Each part of the promi
   In `resolveLocal`'s probe path (`apps/indusk-mcp/src/lib/promises/sources.ts:306-311`): when resolved via the record, send a separate `indusk-telemetry` span (a-read-never-loses-the-daemon upheld, the reader's `indusk.project`) beside the `indusk-watcher` probe, throttled by the mtime of a stamp file in the home (`<home>/telemetry-read-report.<project>.stamp`) against an injected clock, 15 minutes. Author A9 in `telemetry-daemon-reports.test.ts`.
 
   </details>
-- [ ] This machine's daemon is restarted onto the four fixed ports, and every registered project that named its old MCP port is pointed at the new one.
+- [ ] This machine's daemon is restarted onto its stored address, and every registered project that named its old MCP port is pointed at the new one.
   <details><summary>Technical</summary>
 
-  `pnpm build` then `node apps/indusk-mcp/dist/bin/cli.js telemetry restart`; expected: jaeger and otelcol with new process ids on 4318, 4319, 16686, 16687, and `.mcp.json` entries that named `http://localhost:62843/mcp` now name `http://localhost:16687/mcp` (the restart re-points only those). The in-memory store is emptied by this restart, so every promise reads no signal until its next report. Check with `lsof -nP -iTCP:4318,4319,16686,16687 -sTCP:LISTEN`.
+  `pnpm build` then `node apps/indusk-mcp/dist/bin/cli.js telemetry address` (the address chosen in Build Phase 3; 24318, 24319, 24316, 24317 if the block was free) and `node apps/indusk-mcp/dist/bin/cli.js telemetry restart`; expected: jaeger and otelcol with new process ids on the stored address, nothing left listening on 4318 or 16686, and `.mcp.json` entries that named `http://localhost:62843/mcp` now name the stored MCP URL (the restart re-points only those). The in-memory store is emptied by this restart, so every promise reads no signal until its next report. Check with `lsof -nP -iTCP:24316-24319 -sTCP:LISTEN` (or the stored ports, if any were picked). Anything on this machine that sent traces to 4318 now reaches nothing until it is given the stored address.
 
   </details>
 - [ ] Sandy has agreed that the live check sends one real broken report, and no promise watch runs while it does.
@@ -804,7 +855,7 @@ This phase makes the promise heard in the running system. Each part of the promi
 - [ ] The live check passes on this machine and its result is recorded in this plan.
   <details><summary>Technical</summary>
 
-  `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 green: `start` took over, `status` found the daemon, one Jaeger and one collector on 4318, 4319, 16686, 16687, `indusk promises status` in this repository shows the promise broken naming `a-read-never-loses-the-daemon`, and the interface (`http://localhost:16686`, service `indusk-telemetry`) shows two upheld `a-lost-daemon-is-found` reports. Record the date, the process ids and the result in Notes.
+  `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 green: `start` took over, `status` found the daemon, one Jaeger and one collector on the stored address, `indusk promises status` in this repository shows the promise broken naming `a-read-never-loses-the-daemon`, and the interface (the stored interface port, `http://localhost:24316` if the block was free, service `indusk-telemetry`) shows two upheld `a-lost-daemon-is-found` reports. Record the date, the process ids and the result in Notes.
 
   </details>
 - [ ] Jaeger's memory store is checked to return a fresh broken report once more traces than the query limit are stored.
@@ -819,7 +870,7 @@ This phase makes the promise heard in the running system. Each part of the promi
 - [ ] The package's context file says where this promise's reports come from and why they do not use the evaluator's tracing setup.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": "The daemon promise's reports are sent by `daemon-reports.ts` through the SDK-free span path (`watcherSpanBody`), under `indusk-telemetry`, with `indusk.clause`; never through `initEvalOtel`, which is off when the record is missing and follows `OTEL_EXPORTER_OTLP_ENDPOINT`. A loss is reported by whoever finds it. — guarded by `telemetry-daemon-reports.test.ts`, `signal-writers.test.ts`." And `current.md` (Project, shared): this machine's daemon is on the four fixed ports; projects whose `.mcp.json` named another old port move on their own `indusk update`.
+  `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": "The daemon promise's reports are sent by `daemon-reports.ts` through the SDK-free span path (`watcherSpanBody`), under `indusk-telemetry`, with `indusk.clause`; never through `initEvalOtel`, which is off when the record is missing and follows `OTEL_EXPORTER_OTLP_ENDPOINT`. A loss is reported by whoever finds it. — guarded by `telemetry-daemon-reports.test.ts`, `signal-writers.test.ts`." And `current.md` (Project, shared): this machine's daemon is on its stored address (`indusk telemetry address`); applications that sent to 4318 need that address; projects whose `.mcp.json` named another old port move on their own `indusk update`.
 
   </details>
 
@@ -839,24 +890,25 @@ This phase makes the promise heard in the running system. Each part of the promi
 | `apps/indusk-mcp/src/lib/telemetry/daemon-process.ts` | new: one parser and three predicates for an InDusk daemon process |
 | `apps/indusk-mcp/src/lib/telemetry/daemon-reads.ts` | new: `DaemonReads`, `realDaemonReads` (ps, lsof, `/proc`) |
 | `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts` | new: `daemonState`, `renderStatus`, `findDaemon`, `resolveLocalDaemon`, `selfTracingLines` |
-| `apps/indusk-mcp/src/lib/telemetry/start-plan.ts` | new: `FIXED_PORTS`, `startPlan`, `ensureDaemon` |
+| `apps/indusk-mcp/src/lib/telemetry/daemon-address.ts` | new: `PORT_BLOCK`, `chooseAddress`, `readAddress`, `daemonAddress` (exported for `init`); `<home>/telemetry-address.json` |
+| `apps/indusk-mcp/src/lib/telemetry/start-plan.ts` | new: `startPlan`, `ensureDaemon` |
 | `apps/indusk-mcp/src/lib/telemetry/reap-plan.ts` | new: `reapPlan` |
 | `apps/indusk-mcp/src/lib/telemetry/daemon-reports.ts` | new: `daemonReports`, `sendDaemonReports`, the throttle |
 | `apps/indusk-mcp/src/lib/telemetry/status.ts` | `daemonStatus` stops deleting the record; `liveOtlpEndpointSync` over the resolver |
-| `apps/indusk-mcp/src/lib/telemetry/daemon.ts` | fixed ports, no bump, `enable_tracing: false`, restart keeps four ports, `logOffset` |
+| `apps/indusk-mcp/src/lib/telemetry/daemon.ts` | the stored address, no bump, `enable_tracing: false`, restart keeps the address, `logOffset` |
 | `apps/indusk-mcp/src/lib/telemetry/orphans.ts`, `stop.ts` | use `daemonProcessOf`; reap scoped to this home |
 | `apps/indusk-mcp/src/lib/telemetry/server.ts` | `enable_tracing: false` in the server's Jaeger config |
 | `apps/indusk-mcp/src/lib/process-identity.ts` | `psAll()` whole-list read |
 | `apps/indusk-mcp/src/lib/mcp-config.ts` | `jaegerEntryChange`; write on change; `ensureMcpJson` adds `jaeger` |
 | `apps/indusk-mcp/src/lib/promises/vocabulary.ts`, `probe.ts`, `sources.ts`, `telemetry.ts`, `look-standing.ts` | `indusk.clause`; span body events and service; readers through the resolver; reader report |
-| `apps/indusk-mcp/src/bin/commands/telemetry.ts`, `update.ts`, `demo.ts`, `apps/indusk-mcp/src/bin/cli.ts` | register via `ensureDaemon`, own entry only; options; resolver |
+| `apps/indusk-mcp/src/bin/commands/telemetry.ts`, `update.ts`, `demo.ts`, `apps/indusk-mcp/src/bin/cli.ts` | register via `ensureDaemon`, own entry only; options; `telemetry address`; resolver |
 | `apps/indusk-mcp/scripts/check-test-daemons.js` | parity copy of `daemonProcessOf` |
 | `apps/indusk-mcp/templates/server/Dockerfile` | remove the "Noise, not an error" comment |
 | `packages/telemetry-binaries-*/jaeger-config.yaml` | `enable_tracing: false` |
 | `apps/indusk-mcp/vitest.tiers.ts` | new system-tier files |
 | `apps/indusk-mcp/src/__tests__/telemetry-*.test.ts`, `apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts`, `orphans.test.ts`, `port-listening.test.ts`, `apps/indusk-mcp/src/lib/eval/otel.test.ts`, `apps/indusk-mcp/src/__tests__/helpers/local-jaeger.ts`, `apps/indusk-mcp/src/__tests__/helpers/daemon-reads.ts` | new and rewritten tests and helpers |
 | `apps/indusk-admin/src/__tests__/http-promise-health.test.ts`, `http-watcher-blind.test.ts` | follow the stand-in's new shape |
-| `apps/indusk-mcp/extensions/local-telemetry/skill.md`, `.env.example` | fixed ports, no bump |
+| `apps/indusk-mcp/extensions/local-telemetry/skill.md`, `.env.example` | the stored address, no bump |
 | `apps/docs/src/reference/telemetry/cli.md`, `overview.md`, `apps/docs/src/guide/getting-started.md`, `always-on.md`, `apps/docs/src/changelog.md`, `apps/docs/src/decisions/daemon-found-not-guessed.md` | docs |
 | `CLAUDE.md`, `apps/indusk-mcp/CLAUDE.md` | Key Decisions line; telemetry rules |
 
@@ -868,6 +920,6 @@ This phase makes the promise heard in the running system. Each part of the promi
 ## Notes
 
 - **Signal, not tests.** Each clause's signal is a span the running daemon receives, sent by the InDusk command that knows the answer. Unit rows assert only what `daemonReports` decides from the reads it is handed; the live check is the one place a report is shown reaching a reader. A lost daemon cannot receive a span at the moment it is lost, so that break is reported by whoever finds it.
-- **Left for Sandy** (from the ADR's review): whether `init` and the admin's new-project flow exit non-zero when a stranger holds a fixed port (today: `register` exits 1, `init` finishes with the refusal printed); whether to take the one-line fix of the evaluator posting logs to the traces port (`eval/otel.ts:307-309`) here; whether the clauses that report only when a telemetry command runs should also report from a reader's probe, throttled; the 15-minute throttle and the `indusk-telemetry` service split; making `lsof` a stated requirement instead of the `/proc` fallback; and that an SDK exporting over gRPC to 4317 reaches nothing.
+- **Left for Sandy** (from the ADR's review): whether `init` and the admin's new-project flow exit non-zero when a stranger later holds a port of the stored address (at first setup nothing refuses; in that later case `register` exits 1 and `init` finishes with the refusal printed); whether to offer an explicit command to re-choose the address when a stranger squats a stored port; whether to take the one-line fix of the evaluator posting logs to the traces port (`eval/otel.ts:307-309`) here; whether the clauses that report only when a telemetry command runs should also report from a reader's probe, throttled; the 15-minute throttle and the `indusk-telemetry` service split; making `lsof` a stated requirement instead of the `/proc` fallback; and that an SDK exporting to its default (4318 over HTTP, 4317 over gRPC) reaches nothing on the laptop until the application is given the stored address.
 - **Projects still naming an old MCP port.** The restart in Build Phase 5 re-points only entries naming exactly the daemon's old MCP port (62843 on 2026-10-16). Any project naming another old port, such as 54677, moves at its own next `indusk update`.
 - **Live check result:** recorded here at Build Phase 5.
