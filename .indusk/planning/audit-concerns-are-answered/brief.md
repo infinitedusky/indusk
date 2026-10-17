@@ -1,7 +1,7 @@
 ---
 title: "Audit concerns are answered by the plan's agent"
 date: 2026-10-17
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "The audit finds what could go wrong; the plan's agent, who has the context, answers each concern with a fix, a signal that would show it breaking, or the reason nothing is needed — and every \"nothing needed\" is put in front of the person."
@@ -34,10 +34,9 @@ replace.
 ### This plan makes
 
 1. **`an-audit-concern-gets-a-solution`** (state). Each concern an audit raises is answered by the plan's agent with a fix, a signal that would show it breaking, or the reason nothing is needed.
-   - **`the-audit-finds`** (split). The auditor raises each concern and says what would show it breaking; it does not choose the remedy.
+   - **`the-audit-finds`** (split). The auditor raises each concern and says what would show it breaking, and suggests no remedy.
    - **`the-plan-answers`** (split). The plan's agent answers each concern with a fix, a signal (the invariant checked, where it is emitted, how often it would fire, which clause it upholds) or nothing with the reason.
    - **`a-dismissal-reaches-the-person`** (split). Every concern answered "nothing needed" is shown to the person with its reason.
-   - **`signals-name-their-clause`** (rests on `a-clause-is-proved-twice`).
 
 ### Existing promises
 
@@ -60,11 +59,11 @@ None.
 
 ## Looks
 
-None — to be confirmed: whether showing a dismissal to the person needs a place on the plan page.
+None — a dismissal reaches the person in `audit.md` and in the audit step's report in the session; no screen changes.
 
 ## Depends On
 
-- `.indusk/planning/mark-first/` — a signal answer names the clause it upholds, which needs clauses linked to their telemetry.
+- `.indusk/planning/mark-first/` — a signal answer names the clause it upholds, which needs clauses linked to their telemetry. Its promise `a-clause-is-proved-twice` is not yet in the trunk's registry, so this plan does not rest a clause on it; it builds after `mark-first` lands.
 
 ## Blocks
 
