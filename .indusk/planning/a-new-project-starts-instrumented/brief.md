@@ -1,5 +1,5 @@
 ---
-title: "A new project reports from its first run"
+title: "A new project is fully wired for telemetry"
 date: 2026-10-16
 status: accepted
 workflow: feature
@@ -7,7 +7,7 @@ clauses: required
 description: "A project InDusk scaffolds sends its spans, named and placed, to the local daemon from its first run, writes its promise signals from a small helper it owns in the one vocabulary every InDusk reader reads, and is told the truth about how."
 ---
 
-# A new project reports from its first run — Brief
+# A new project is fully wired for telemetry — Brief
 
 The second of seven children of
 [telemetry-from-day-one](../telemetry-from-day-one/master.md), after
