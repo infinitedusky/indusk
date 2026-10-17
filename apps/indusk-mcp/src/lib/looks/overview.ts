@@ -10,6 +10,7 @@ import {
 	type StoryApprovalEntry,
 	storyApprovalOf,
 } from "./approvals.js";
+import { pageOnly } from "./component-styles.js";
 import { storybookIds } from "./components.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
@@ -124,11 +125,17 @@ const TOKENS_LINK = /<link\b[^>]*\bhref=["'][^"']*tokens\.css["'][^>]*>/i;
  * tokens and the component sheets, so a component draws as its story does.
  */
 export function mockupDocument(
-	html: string,
+	ownHtml: string,
 	tokensCss: string,
 	styles: readonly Pick<ComponentStyle, "component" | "css">[] = [],
 	reset = "",
 ): string {
+	// The mockup's own rules reach its page and no component it places (`pageOnly`);
+	// the sheets added below are the foundation's and the components' own.
+	const html = ownHtml.replace(
+		/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
+		(_all, open: string, css: string, close: string) => `${open}${pageOnly(css)}${close}`,
+	);
 	const style = [
 		`<style data-foundation>\n${tokensCss}</style>`,
 		...(reset ? [`<style data-component-style="_reset">\n${reset}</style>`] : []),
