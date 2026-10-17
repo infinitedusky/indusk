@@ -18,6 +18,9 @@ clauses:
   - name: a-dismissal-reaches-the-person
     kind: split
     statement: "Every concern answered \"nothing needed\" is shown to the person with its reason."
+  - name: an-audit-teaches
+    kind: split
+    statement: "Each process gap behind an audit's findings — a way of planning or building that could let the same kind of finding through again — is named and flagged for a lesson; an audit with none says so."
 ---
 
 Each concern an audit raises is answered by the plan's agent with a fix, a signal that would show it breaking, or the reason nothing is needed.

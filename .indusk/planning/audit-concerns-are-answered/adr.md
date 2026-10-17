@@ -30,7 +30,7 @@ the auditor writing, under each finding, what would show it breaking and no reme
 the auditor suggesting a remedy for the agent to accept or replace; a separate answers file; and a gate that blocks the retrospective on unanswered concerns.
 
 **To achieve:**
-concerns that end in a fix, a watched signal or a recorded reason, and a person who sees every concern that was waved away.
+concerns that end in a fix, a watched signal or a recorded reason, a person who sees every concern that was waved away, and the process gaps behind them turned into lessons.
 
 **Accepting:**
 that the building agent still chooses, so the person's look at the dismissals is the only check on its bias; and that the audit stays advisory.
@@ -52,6 +52,8 @@ Split out of `mark-first` on 2026-10-17 (Sandy).
 **D3. One reader.** `readAuditAnswers(text)` in `apps/indusk-mcp/src/lib/audit/answers.ts` returns each finding with its `breaks` and `answer`, the incomplete and unanswered ones, and the dismissals. `indusk plans audit-answers <plan>` prints them and exits 2 naming each unanswered or incomplete finding, or a signal answer with no clause. A2, A4, A5. A `- nothing` under a heading is not a finding.
 
 **D4. The dismissals reach the person.** The audit skill's last step runs `indusk plans audit-answers`, and shows the person every `nothing` answer with its finding and reason before handing to the retrospective. A5.
+
+**D6. An audit teaches.** After the answers, the plan's agent writes a closing `## What let these through?` section in `audit.md`: each cause as `- <cause> — findings: <question/line refs> — highlight: <id>`, written as a `mcp__indusk__highlight` with tag `audit-cause` so the evaluator decides whether it becomes a lesson; or `- no process gap — <reason>`. One cause question per audit, not per finding, and only a gap that could recur is flagged — a one-off slip is not — so lessons do not drown in noise. `readAuditAnswers` reads the section and reports an audit with findings and none as incomplete. A9, A10. Added 2026-10-17 (Sandy).
 
 **D5. Still advisory.** The retrospective's gate still reads only that `audit.md` exists; an older `audit.md` with no answers passes it. A6.
 

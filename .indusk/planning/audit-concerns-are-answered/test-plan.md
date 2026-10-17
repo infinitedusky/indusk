@@ -44,6 +44,15 @@ signal that would show it breaking, or the reason nothing is needed.
 |----|-----------------------------------|-------|
 | A5 | Reading an audit lists every "nothing needed" answer with its finding and reason, and the audit's instructions say to show that list to the person before the retrospective. | unit |
 
+### `an-audit-teaches` — each process gap behind an audit's findings is named and flagged for a lesson; an audit with none says so
+
+- Signal: emitted by the same read. Upheld when an audit with findings carries a "What let these through?" section naming each cause with the findings it covers and its highlight, or "no process gap" with the reason; broken reports an audit with findings and no such section.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A9 | The audit's instructions tell the plan's agent, after answering, to ask once across all findings what in the planning or building let them through, to group findings by cause, to flag each recurring process gap as a highlight for a lesson, and to say "no process gap" with a reason when there is none. | unit |
+| A10 | Reading an audit with findings but no "What let these through?" section reports it incomplete; one whose causes each name their findings and highlight, or that says "no process gap" with a reason, passes. | unit |
+
 ## Not for a promise
 
 | ID | Assertion (user-visible behavior) | Level | Why |

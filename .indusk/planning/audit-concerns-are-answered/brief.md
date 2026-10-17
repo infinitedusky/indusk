@@ -4,7 +4,7 @@ date: 2026-10-17
 status: accepted
 workflow: feature
 clauses: required
-description: "The audit finds what could go wrong; the plan's agent, who has the context, answers each concern with a fix, a signal that would show it breaking, or the reason nothing is needed — and every \"nothing needed\" is put in front of the person."
+description: "The audit finds what could go wrong; the plan's agent, who has the context, answers each concern with a fix, a signal that would show it breaking, or the reason nothing is needed — every \"nothing needed\" is put in front of the person, and the process gaps that let the findings through become lessons."
 ---
 
 # Audit concerns are answered by the plan's agent — Brief
@@ -12,7 +12,7 @@ description: "The audit finds what could go wrong; the plan's agent, who has the
 Split out of [mark-first](../mark-first/) (Tests and telemetry linked to
 clauses) on 2026-10-17 (Sandy), where it was the promise
 `an-audit-concern-gets-a-solution`, withdrawn there and to be declared here.
-Sandy's point: an audit, a fresh reader, is good at finding what is wrong; the
+Sandy, 2026-10-17, after an audit found seven gaps caused by one way of working (scoping from memory instead of grepping): audits should result in learning — ask what we did wrong that led to the findings, and learn from it. Sandy's earlier point: an audit, a fresh reader, is good at finding what is wrong; the
 plan's agent, with the build's context, is better at deciding what to do about
 it. The guard against the builder waving away a concern about its own work is
 that a person sees each "nothing needed".
@@ -29,6 +29,10 @@ replace.
    - Measure: in `audit.md` files after this lands, the share of concerns with an answer (fix, signal or reason); expect all.
    - Look: at the next three plans that run the audit.
 
+2. **Audits teach.**
+   - Measure: lessons the evaluator writes from audit-cause highlights, per audit run; expect most audits with findings to name a gap, and fewer repeat findings of the same kind over time.
+   - Look: after the next five audits.
+
 ## Promises
 
 ### This plan makes
@@ -37,6 +41,7 @@ replace.
    - **`the-audit-finds`** (split). The auditor raises each concern and says what would show it breaking, and suggests no remedy.
    - **`the-plan-answers`** (split). The plan's agent answers each concern with a fix, a signal (the invariant checked, where it is emitted, how often it would fire, which clause it upholds) or nothing with the reason.
    - **`a-dismissal-reaches-the-person`** (split). Every concern answered "nothing needed" is shown to the person with its reason.
+   - **`an-audit-teaches`** (split). Each process gap behind an audit's findings — a way of planning or building that could let the same kind of finding through again — is named and flagged for a lesson; an audit with none says so.
 
 ### Existing promises
 

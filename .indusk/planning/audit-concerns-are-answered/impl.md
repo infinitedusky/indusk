@@ -56,6 +56,8 @@ the person.
 | A6 | An `audit.md` written before this plan still lets the retrospective start | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard over an-audit-blocks-nothing | apps/indusk-mcp/src/__tests__/audit-gate.test.ts |
 | A7 | The reader is still handed only the documents, the approved impl and the diff | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard over a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
 | A8 | The project's copy of the audit skill matches the package's | Test Phase 1 | Build Phase 2 | planned | unit | so the change reaches every project that updates | apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts |
+| A9 | The audit's instructions tell the plan's agent to ask once what let the findings through, group them by cause, flag each recurring process gap for a lesson, or say there is none | Test Phase 1 | Build Phase 2 | planned | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A10 | Reading an audit with findings but no "What let these through?" section reports it incomplete; one naming each cause with its findings and highlight, or no gap with a reason, passes | Build Phase 1 | Build Phase 1 | planned | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 
 ## Checklist
 
@@ -76,13 +78,13 @@ their bodies, since the reader they import does not exist until Build Phase 1.
 - [ ] Write the tests that read the audit skill for the reader's "what would show it breaking" line, the plan's agent's answers and the dismissal list, and see them fail.
   <details><summary>Technical</summary>
 
-  A1, A3 and the instruction half of A5 in `apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts`, reading `skills/audit.md` as text in the style of `planner-impl-summary-template.test.ts`: the reader's prompt asks for `- breaks when:` under each finding and no remedy; a step tells the plan's agent to answer with `- answer: fix —`, `- answer: signal — …; clause: <promise>/<clause>` or `- answer: nothing —`; the last step runs `indusk plans audit-answers {plan}` and shows the dismissals.
+  A1, A3 and the instruction half of A5 in `apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts`, reading `skills/audit.md` as text in the style of `planner-impl-summary-template.test.ts`: the reader's prompt asks for `- breaks when:` under each finding and no remedy; a step tells the plan's agent to answer with `- answer: fix —`, `- answer: signal — …; clause: <promise>/<clause>` or `- answer: nothing —`; the last step runs `indusk plans audit-answers {plan}` and shows the dismissals. A9 in the same file: a step tells the plan's agent, after answering, to ask once across all findings what let them through, group findings by cause, write each recurring process gap as a `mcp__indusk__highlight` (tag `audit-cause`) and record it under `## What let these through?`, or write `- no process gap — <reason>`.
 
   </details>
 
 #### Deferred to Build Phase 1
 
-- **A2, A4 and the reader half of A5** — their subject, `readAuditAnswers` in `lib/audit/answers.ts`, is a new module; the test file would fail to load, not to assert. Body reviewed:
+- **A2, A4, the reader half of A5, and A10** (an audit with findings and no `## What let these through?` section is incomplete) — their subject, `readAuditAnswers` in `lib/audit/answers.ts`, is a new module; the test file would fail to load, not to assert. Body reviewed:
 
   ```typescript
   import { describe, expect, it } from "vitest";
@@ -149,13 +151,13 @@ to show the person what was dismissed.
 - [ ] Write the reader's tests from the recorded bodies.
   <details><summary>Technical</summary>
 
-  A2, A4, A5 (reader half) in `apps/indusk-mcp/src/lib/audit/answers.test.ts`, from the bodies above.
+  A2, A4, A5 (reader half) and A10 in `apps/indusk-mcp/src/lib/audit/answers.test.ts`, from the bodies above; A10 also checks that a cause naming its findings and highlight, or `- no process gap — <reason>`, passes.
 
   </details>
-- [ ] Add the reader that returns each finding with what would show it breaking and its answer, and lists the incomplete, the unanswered, the signal answers with no clause and the dismissals.
+- [ ] Add the reader that returns each finding with what would show it breaking and its answer, and lists the incomplete, the unanswered, the signal answers with no clause and the dismissals, and reads the causes section.
   <details><summary>Technical</summary>
 
-  `readAuditAnswers(text: string): AuditAnswers` in `apps/indusk-mcp/src/lib/audit/answers.ts`; a `- nothing` line under a heading is not a finding; findings are top-level `- ` lines under a `##` heading, their `breaks when:` and `answer:` lines indented beneath.
+  `readAuditAnswers(text: string): AuditAnswers` in `apps/indusk-mcp/src/lib/audit/answers.ts`; a `- nothing` line under a heading is not a finding; findings are top-level `- ` lines under a `##` heading, their `breaks when:` and `answer:` lines indented beneath. The `## What let these through?` section is the plan's agent's, not a question: each `- <cause> — findings: <refs> — highlight: <id>` or `- no process gap — <reason>`; an audit with at least one finding and no such section is incomplete.
 
   </details>
 - [ ] Add the command that prints the dismissals and refuses an audit with an open finding.
@@ -176,7 +178,7 @@ to show the person what was dismissed.
 - [ ] The reader's tests pass.
   <details><summary>Technical</summary>
 
-  A2, A4, A5 (reader half): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/audit/answers.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/audit/answers.ts src/bin/cli.ts`
+  A2, A4, A5 (reader half), A10: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/audit/answers.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/audit/answers.ts src/bin/cli.ts`
 
   </details>
 
@@ -222,7 +224,7 @@ the docs.
 - [ ] Make the last step run the answers command and show the person every dismissal.
   <details><summary>Technical</summary>
 
-  `indusk plans audit-answers {plan}`; on exit 2, answer what it names and run it again; print the dismissals to the person before `indusk plans next-session`. Replace "Read the findings with the person; whether any is acted on is their choice."
+  Before it, a step: ask once across all findings what in the planning or building let them through; group findings by cause; for each process gap that could recur, write `mcp__indusk__highlight({ tag: "audit-cause", note, level: "important" })` and list it under `## What let these through?` with its findings and highlight id; a one-off slip is not a gap; with none, write `- no process gap — <reason>`. Then `indusk plans audit-answers {plan}`; on exit 2, answer what it names and run it again; print the dismissals to the person before `indusk plans next-session`. Replace "Read the findings with the person; whether any is acted on is their choice."
 
   </details>
 - [ ] Resync the project's copy of the audit skill.
@@ -243,7 +245,7 @@ the docs.
 - [ ] The skill-wording tests, the copy check and both guards pass.
   <details><summary>Technical</summary>
 
-  A1, A3, A5, A6, A7, A8: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/audit-skill-answers.test.ts src/lib/audit/answers.test.ts src/__tests__/audit-gate.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/skill-sync-parity.test.ts`
+  A1, A3, A5, A6, A7, A8, A9: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/audit-skill-answers.test.ts src/lib/audit/answers.test.ts src/__tests__/audit-gate.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/skill-sync-parity.test.ts`
 
   </details>
 
