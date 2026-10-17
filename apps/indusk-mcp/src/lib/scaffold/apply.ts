@@ -146,6 +146,27 @@ function readTarget(projectRoot: string, name: string, dir: string): TargetRead 
 
 const MARKER_NAMES = RUNTIME_MARKERS.flatMap((m) => m.files).join(", ");
 
+/** The install and wiring lines for a target that was just scaffolded for the first time. */
+function printFirstScaffoldLines(target: PlannedTarget, runtime: Runtime): void {
+	const toTarget = (projectPath: string) =>
+		target.rel === "" ? projectPath : relative(target.rel, projectPath);
+	const helper = target.files.find((f) => f.role === "helper");
+	if (target.ownSetup) {
+		if (helper)
+			for (const line of ownSetupLines(toTarget(helper.projectPath))) console.info(`  ${line}`);
+		return;
+	}
+	const setup = target.files.find((f) => f.role === "setup");
+	for (const line of guidance(runtime, toTarget(setup?.projectPath ?? ""))) {
+		console.info(`  ${line}`);
+	}
+	if (helper) {
+		// Only the line saying how to call it: the "wrote only the helper" line is for an app with its own setup.
+		for (const line of ownSetupLines(toTarget(helper.projectPath)).slice(1))
+			console.info(`  ${line}`);
+	}
+}
+
 /** Write what the plan says for one target, print a line per change, and update the record. */
 function writeTarget(
 	projectRoot: string,
@@ -200,22 +221,7 @@ function writeTarget(
 				break;
 		}
 	}
-	if (!firstScaffold) return;
-	const toTarget = (projectPath: string) =>
-		target.rel === "" ? projectPath : relative(target.rel, projectPath);
-	const helper = target.files.find((f) => f.role === "helper");
-	if (target.ownSetup) {
-		if (helper)
-			for (const line of ownSetupLines(toTarget(helper.projectPath))) console.info(`  ${line}`);
-		return;
-	}
-	const setup = target.files.find((f) => f.role === "setup");
-	for (const line of guidance(target.runtime, toTarget(setup?.projectPath ?? ""))) {
-		console.info(`  ${line}`);
-	}
-	if (helper)
-		for (const line of ownSetupLines(toTarget(helper.projectPath)).slice(1))
-			console.info(`  ${line}`);
+	if (firstScaffold) printFirstScaffoldLines(target, target.runtime);
 }
 
 /** Scaffold OpenTelemetry into every target of the project, printing an `[OpenTelemetry]` section. */

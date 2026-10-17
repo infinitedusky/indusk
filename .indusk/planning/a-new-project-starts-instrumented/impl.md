@@ -614,10 +614,22 @@ next phase then makes what init prints and the skills teach match all of this.
   `examples/seat-holds/src/signal.ts` (a copy of the template) and `src/telemetry-settings.ts` rendered for seat-holds; `markRelease` in `src/telemetry.ts` calls `signal.upheld` / `signal.broken({ symptom })`; the example's provider stays. Update the example's promise `sites` if they name the old lines (`examples/seat-holds/.indusk/promises/`), through `indusk promises` in that folder, never by hand.
 
   </details>
-- [ ] Review the code this phase wrote against the enabled extensions' rules, and add what the review finds here as unchecked items.
+- [x] Review the code this phase wrote against the enabled extensions' rules, and add what the review finds here as unchecked items.
   <details><summary>Technical</summary>
 
   Shape step over the vocabulary, the two helpers, the settings change and the example.
+
+  </details>
+- [x] Shape: Move the first-scaffold install and wiring lines out of writeTarget, which writes files and also decides what to tell the person, into a named printFirstScaffoldLines
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/scaffold/apply.ts`. Rule: Shape: does this unit have one reason to change
+
+  </details>
+- [ ] Shape: Pass the measurement to _write by keyword instead of eight positional arguments, so a verdict cannot swap value and bound without being seen
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/templates/signal.py`. Rule: Shape: does the name say what the code is for / is there a seam a test can reach
 
   </details>
 
