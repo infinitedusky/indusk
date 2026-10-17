@@ -139,3 +139,21 @@ describe("A3 — the plan's parts read health as the nav's red dot does", () => 
 		expect(parts.promises.find((p) => p.name === PROMISE)?.health).toBe("green");
 	});
 });
+
+describe("A4 — a promise only the plan's checkout registers reads no signal, not green", () => {
+	// clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike
+	it("A4 an enforced behaviour promise absent from the trunk's registry is unverified", async () => {
+		const { root, registry: checkout } = project();
+		// The trunk has not merged the plan's branch: it lacks the promise.
+		const trunk = { ...checkout, promises: checkout.promises.filter((p) => p.name !== PROMISE) };
+		const extra = checkout.promises.filter((p) => !trunk.promises.some((t) => t.name === p.name));
+		// The alarm source answers and holds, with no marks for this promise.
+		const silent: SourceHealthRead = {
+			...read("production", "holding"),
+			marks: { queryUrl: "http://fake", since: at(0), byPromise: new Map() } as MarkedSpansResult,
+		};
+		const health = planPromiseHealth(trunk, [silent], extra);
+		const parts = await partsWith(root, health);
+		expect(parts.promises.find((p) => p.name === PROMISE)?.health).toBe("unverified");
+	});
+});
