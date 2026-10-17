@@ -178,10 +178,11 @@ describe("A16 — a look drawn while the page is open appears there", () => {
       await open(page, `/p/${PROJECT}/plan/${PLAN}`);
       const looks = page.locator('[data-part="looks"]');
       await looks.waitFor({ timeout: 30_000 });
-      // Every part but the status is collapsed by default (Sandy, 2026-10-13):
-      // the person opens Looks once, and what the agent draws appears there.
-      await looks.locator("summary").click();
+      // An empty part is a plain row, never a disclosure (130935361): the
+      // look is drawn while the page is open, Looks becomes a collapsed part
+      // (Sandy, 2026-10-13), and opened, the look is there.
       writeMockup("plan.working", MOCKUP);
+      await looks.locator("summary").click({ timeout: 15_000 });
       const row = page.locator(
         '[data-testid="plan-look"][data-look="plan.working"]',
       );

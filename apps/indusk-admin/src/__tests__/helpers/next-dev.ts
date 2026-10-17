@@ -59,27 +59,79 @@ export async function startNextDev(options: {
   /** String overlay on the inherited environment — not a full ProcessEnv. */
   env?: Record<string, string>;
 }): Promise<DevServer> {
-  const port = await findFreePort();
   // Its own build directory, so it never meets another `next dev`'s lock (the
-  // admin's own, a person's): one fixed name, so `tsconfig.json` names it once.
-  const distDir = ".next-tests";
+  // admin's own, a person's).
+  return serveUntilReady("dev", testEnv(options));
+}
+
+/** The test server's build directory: one fixed name, so `tsconfig.json` names it once. */
+const TEST_DIST_DIR = ".next-tests";
+
+function testEnv(options: {
+  home: string;
+  env?: Record<string, string>;
+}): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    INDUSK_HOME: options.home,
+    INDUSK_ADMIN_DIST_DIR: TEST_DIST_DIR,
+    ...options.env,
+  };
+}
+
+/**
+ * Build the admin and serve the build (`next build` then `next start`) on a
+ * free port with `INDUSK_HOME` pointed at `home`. For a test that runs the
+ * looks check, which refuses a development server (looks-check-speed): the
+ * check holds what a person is served, so it is given a build. Shares
+ * `.next-tests` with `startNextDev` — the node project runs these files
+ * serially — and removes it on stop.
+ */
+export async function startNextBuilt(options: {
+  home: string;
+  env?: Record<string, string>;
+}): Promise<DevServer> {
+  const env = testEnv(options);
+  const built = await new Promise<{ code: number | null; out: string }>(
+    (done) => {
+      const build = spawn("pnpm", ["exec", "next", "build"], {
+        cwd: ADMIN_ROOT,
+        env,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let out = "";
+      build.stdout?.on("data", (c) => {
+        out += c.toString();
+      });
+      build.stderr?.on("data", (c) => {
+        out += c.toString();
+      });
+      build.on("close", (code) => done({ code, out }));
+    },
+  );
+  if (built.code !== 0) {
+    throw new Error(
+      `next build failed (exit ${built.code}):\n${built.out.slice(-4000)}`,
+    );
+  }
+  return serveUntilReady("start", env);
+}
+
+/** `next <command>` on a free port, resolved at "✓ Ready"; stop removes the test build directory. */
+async function serveUntilReady(
+  command: "dev" | "start",
+  env: NodeJS.ProcessEnv,
+): Promise<DevServer> {
+  const port = await findFreePort();
   const server: ChildProcess = spawn(
     "pnpm",
-    ["exec", "next", "dev", "--port", String(port)],
-    {
-      cwd: ADMIN_ROOT,
-      env: {
-        ...process.env,
-        INDUSK_HOME: options.home,
-        INDUSK_ADMIN_DIST_DIR: distDir,
-        ...options.env,
-      },
-      stdio: ["ignore", "pipe", "pipe"],
-    },
+    ["exec", "next", command, "--port", String(port)],
+    { cwd: ADMIN_ROOT, env, stdio: ["ignore", "pipe", "pipe"] },
   );
   await new Promise<void>((resolveReady, rejectReady) => {
     const timeout = setTimeout(
-      () => rejectReady(new Error("next dev did not become ready in 30s")),
+      () =>
+        rejectReady(new Error(`next ${command} did not become ready in 30s`)),
       30_000,
     );
     server.stdout?.on("data", (chunk) => {
@@ -105,7 +157,10 @@ export async function startNextDev(options: {
         await sleep(200);
         if (!server.killed) server.kill("SIGKILL");
       }
-      rmSync(path.join(ADMIN_ROOT, distDir), { recursive: true, force: true });
+      rmSync(path.join(ADMIN_ROOT, TEST_DIST_DIR), {
+        recursive: true,
+        force: true,
+      });
     },
   };
 }

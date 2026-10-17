@@ -2,7 +2,7 @@
 name: a-master-plan-tells-its-story
 kind: state
 lifetime: holds
-state: known-broken
+state: enforced
 domain: admin
 owner: plan-stories
 sites:
