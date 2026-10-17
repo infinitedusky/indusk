@@ -13,13 +13,7 @@ import {
 	rec,
 } from "../../__tests__/helpers/daemon-reads.js";
 import { PORT_BLOCK, type StoredAddress } from "./daemon-address.js";
-import {
-	ensureDaemon,
-	refusalText,
-	startOptions,
-	startPlan,
-	startReport,
-} from "./start-plan.js";
+import { ensureDaemon, refusalText, startOptions, startPlan, startReport } from "./start-plan.js";
 
 /**
  * The startup port guard.
@@ -143,7 +137,9 @@ describe("A3 — first setup picks once; a stored address is never moved", () =>
 		expect(reads.address()).toEqual(HOME_ADDRESS);
 		const out = startReport(result);
 		expect(out.code).not.toBe(0);
-		expect(out.text).toMatch(/logs port 24319 is held by 4242 \(\/opt\/homebrew\/bin\/otelcol-contrib/);
+		expect(out.text).toMatch(
+			/logs port 24319 is held by 4242 \(\/opt\/homebrew\/bin\/otelcol-contrib/,
+		);
 		expect(out.text).toMatch(/telemetry address --reset/);
 	});
 
@@ -151,7 +147,9 @@ describe("A3 — first setup picks once; a stored address is never moved", () =>
 		const other = { pid: 8, command: jaegerCmd(8, "/home/other/.indusk").command };
 		const plan = startPlan({ kind: "none" }, { 24318: other }, HOME, { address: HOME_ADDRESS });
 		expect(refusalText(plan, HOME, HOME_ADDRESS)).toMatch(/indusk telemetry reap/);
-		const stranger = startPlan({ kind: "none" }, { 24318: STRANGER }, HOME, { address: HOME_ADDRESS });
+		const stranger = startPlan({ kind: "none" }, { 24318: STRANGER }, HOME, {
+			address: HOME_ADDRESS,
+		});
 		expect(refusalText(stranger, HOME, HOME_ADDRESS)).not.toMatch(/telemetry reap/);
 	});
 
@@ -190,7 +188,10 @@ describe("A4 — once an address is stored, every start in the real home uses it
 			address: STORED,
 			processes: [jaegerCmd(1, HOME), collectorCmd(2, HOME)],
 			listening: { 1: [24318, 24316, 24317], 2: [51234] },
-			yaml: { ports: { otlpPort: 24318, uiPort: 24316, mcpPort: 24317, logsOtlpPort: 51234 }, mtimeAfterStart: false },
+			yaml: {
+				ports: { otlpPort: 24318, uiPort: 24316, mcpPort: 24317, logsOtlpPort: 51234 },
+				mtimeAfterStart: false,
+			},
 		});
 		const result = await ensureDaemon("status", reads, HOME, spawnSpy());
 		expect(result.kind).toBe("took-over");
@@ -202,7 +203,9 @@ describe("A4 — once an address is stored, every start in the real home uses it
 		expect(() => startOptions({ otlpPort: 5000 }, HOME)).toThrow(
 			/--otlp-port .* only in a temporary home/,
 		);
-		expect(() => startOptions({ mcpPort: 5000 }, HOME)).toThrow(/--mcp-port .* only in a temporary home/);
+		expect(() => startOptions({ mcpPort: 5000 }, HOME)).toThrow(
+			/--mcp-port .* only in a temporary home/,
+		);
 	});
 
 	it("a temporary home takes the ports it is given and never reads or writes an address", async () => {

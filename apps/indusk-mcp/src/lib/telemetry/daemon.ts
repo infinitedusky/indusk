@@ -39,6 +39,7 @@ import {
 	type DaemonStartOptions,
 	type EnsureResult,
 	ensureDaemon,
+	optionsOf,
 	restartPorts,
 	startOptions,
 } from "./start-plan.js";
@@ -537,14 +538,7 @@ export async function daemonRestart(
 			.filter((p): p is number => typeof p === "number" && p > 0)
 			.map((p) => waitForPortFree(p, 5_000)),
 	);
-	const toStart: DaemonStartOptions =
-		homeKind(home, realTempRoots()) === "real"
-			? {}
-			: {
-					otlpPort: ports.traces,
-					logsPort: ports.logs,
-					uiPort: ports.ui,
-					mcpPort: ports.mcp,
-				};
+	// The real home comes back on its stored address and is given no ports.
+	const toStart = homeKind(home, realTempRoots()) === "real" ? {} : optionsOf(ports);
 	return metaOrThrow(await startDaemon("restart", toStart));
 }

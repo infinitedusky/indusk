@@ -13,11 +13,7 @@ import {
 import { join } from "node:path";
 import { acquireLock, acquireLockAsync } from "../agents/lock.js";
 import { type PsRow, psAll } from "../process-identity.js";
-import {
-	addressFilePath,
-	readAddressFile,
-	type StoredAddress,
-} from "./daemon-address.js";
+import { addressFilePath, readAddressFile, type StoredAddress } from "./daemon-address.js";
 import { daemonConfigPath } from "./daemon-process.js";
 import type { DaemonMeta } from "./status.js";
 

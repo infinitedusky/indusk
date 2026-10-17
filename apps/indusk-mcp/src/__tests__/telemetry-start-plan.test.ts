@@ -7,10 +7,13 @@ import { daemonState, renderStatus } from "../lib/telemetry/daemon-state.js";
 import {
 	type Candidate,
 	ensureDaemon,
+	optionsOf,
 	restartPorts,
 	type StartState,
+	startOptions,
 	startPlan,
 	startReport,
+	startStateOf,
 } from "../lib/telemetry/start-plan.js";
 import {
 	BLOCK,
@@ -139,5 +142,33 @@ describe("A12 — several own daemons and no record", () => {
 		const out = startReport(await ensureDaemon("start", reads, HOME, spawnSpy()));
 		expect(out.code).toBe(0);
 		expect(out.text).toMatch(/strays.*3.*4.*reap/s);
+	});
+});
+
+describe("the seams a start is read through", () => {
+	it("startStateOf: a running daemon, found pairs, or nothing to take over", () => {
+		const state = (kind: "running" | "found" | "none") =>
+			daemonState(
+				fakeReads({
+					record: kind === "running" ? rec(1, 2) : null,
+					address: STORED,
+					processes: kind === "none" ? [] : OWN,
+					listening: ON_BLOCK,
+				}),
+				HOME,
+			);
+		expect(startStateOf(state("running"), [])).toEqual({ kind: "running" });
+		expect(startStateOf(state("found"), [onBlock(1, 2)])).toEqual({
+			kind: "found",
+			candidates: [onBlock(1, 2)],
+		});
+		// a found process with no partner is nothing to take over
+		expect(startStateOf(state("found"), [])).toEqual({ kind: "none" });
+		expect(startStateOf(state("none"), [])).toEqual({ kind: "none" });
+	});
+
+	it("optionsOf is the inverse of startOptions in a temporary home", () => {
+		const ports = { traces: 5000, logs: 5001, ui: 5002, mcp: 5003 };
+		expect(startOptions(optionsOf(ports), "/tmp/h-1")).toEqual(ports);
 	});
 });

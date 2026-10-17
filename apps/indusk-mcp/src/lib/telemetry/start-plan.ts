@@ -150,6 +150,16 @@ const OPTION_FLAGS: [keyof DaemonStartOptions, keyof Ports, string][] = [
 	["mcpPort", "mcp", "--mcp-port"],
 ];
 
+/** The start options that give exactly these ports: the inverse of `startOptions`, for a restart that keeps a temporary home's ports. */
+export function optionsOf(ports: Partial<Ports>): DaemonStartOptions {
+	const options: DaemonStartOptions = {};
+	for (const [key, role] of OPTION_FLAGS) {
+		const port = ports[role];
+		if (port !== undefined) options[key] = port;
+	}
+	return options;
+}
+
 /** The ports a start was given. Accepted only in a temporary home: the real home's daemon runs on its stored address. */
 export function startOptions(opts: DaemonStartOptions, home: string): Partial<Ports> {
 	const given: Partial<Ports> = {};
@@ -173,6 +183,16 @@ export type EnsureResult =
 	| { kind: "took-over"; meta: DaemonMeta; found: Found; strays: number[]; stored?: StoredAddress }
 	| { kind: "started"; meta: DaemonMeta; stored?: StoredAddress }
 	| { kind: "refused"; text: string; holders: PortHolder[] };
+
+/**
+ * What a start sees of the machine: a daemon that runs, pairs found with no
+ * record to name them, or nothing it can take over (a found process with no
+ * partner is nothing to take over: its ports show as held instead).
+ */
+export function startStateOf(state: DaemonState, candidates: Candidate[]): StartState {
+	if (state.kind === "running") return { kind: "running" };
+	return candidates.length > 0 ? { kind: "found", candidates } : { kind: "none" };
+}
 
 /** The ports whose holders a start needs to know. */
 function portsToCheck(
@@ -204,13 +224,7 @@ export async function ensureDaemon(
 	const release = await reads.lock();
 	try {
 		const state = daemonState(reads, home);
-		const candidates = state.kind === "found" ? candidatesOf(reads, home) : [];
-		const startState: StartState =
-			state.kind === "running"
-				? { kind: "running" }
-				: candidates.length > 0
-					? { kind: "found", candidates }
-					: { kind: "none" };
+		const startState = startStateOf(state, state.kind === "found" ? candidatesOf(reads, home) : []);
 		const address = real ? reads.address() : null;
 		const holders =
 			startState.kind === "running" ? {} : reads.holders(portsToCheck(real, address, given));
