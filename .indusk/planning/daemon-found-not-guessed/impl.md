@@ -631,6 +631,7 @@ This phase gives InDusk one way to tell its own daemon processes apart from ever
   `startFakeQueryPort` in `apps/indusk-mcp/src/__tests__/helpers/local-jaeger.ts` spawns a script at `<tmp>/telemetry-binaries-test-arch/bin/jaeger` run with `--config=file:<home>/telemetry-jaeger.yaml` that serves the fake answers (the pattern `orphans.test.ts` uses), and writes a record naming that child's process id. Its users: `monitor-status.test.ts`, `watcher-probe.test.ts`, `watcher-falsification.test.ts`, and in the admin `apps/indusk-admin/src/__tests__/http-promise-health.test.ts` and `http-watcher-blind.test.ts`. `liveDaemon` in `apps/indusk-mcp/src/lib/eval/otel.test.ts:203-245` takes injected reads. Update the docblock of `apps/indusk-mcp/src/lib/telemetry/port-listening.test.ts` ("daemonStatus deletes the daemon's record on that answer" is no longer true).
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
