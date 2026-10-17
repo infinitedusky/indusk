@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "a8cefb750dcfbcb8df0874e6fc816c4c7a9aa0f2ccfe7489322fe9fa724856f9"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-17T01:44:01.839Z"
+accepted: 2026-10-17T17:15:13.145Z
+accepted_by: person
 ---
 
 # The daemon is found, not guessed
