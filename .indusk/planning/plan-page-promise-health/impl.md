@@ -173,7 +173,7 @@ This phase tests whether a promise with no signal can still look healthy on its 
 
 This plan taught a plan's page to colour each promise by its health. Along the way three things were written twice across files: the dot colours copy the Promises page's chip colours by hand, the admin's health reader repeats a "skip promises the trunk already knows" filter the package's rule already applies, and six page tests each carry the same seven-line stand-in for the health read where a shared test helper already holds its siblings. Once this phase closes, each of those facts lives in one place and the page behaves exactly as it does now.
 
-- [ ] Give the Promises page's chip colours a dot colour for each health, and have the plan page's promise dots read it instead of keeping their own copy.
+- [x] Give the Promises page's chip colours a dot colour for each health, and have the plan page's promise dots read it instead of keeping their own copy.
   <details><summary>Technical</summary>
 
   Add a `dot` field (`bg-bad`, `bg-ink-soft`, `bg-ok`, `bg-idle`, `bg-warn`, `bg-idle`) to each entry of `PROMISE_HEALTH_CHIP` in `apps/indusk-admin/src/components/bars/labels.ts`; delete `HEALTH_DOT` from `apps/indusk-admin/src/components/plan/PlanParts.tsx` and draw `PROMISE_HEALTH_CHIP[p.health].dot`. Basis: one source of truth across files — `HEALTH_DOT`'s own doc comment says it is "the colours of `PROMISE_HEALTH_CHIP`", a promise kept by a comment, so a chip colour change would leave the plan page's dots behind with nothing failing but A2. `DOT` (registry state) stays in `PlanParts.tsx`: it has no counterpart elsewhere.
