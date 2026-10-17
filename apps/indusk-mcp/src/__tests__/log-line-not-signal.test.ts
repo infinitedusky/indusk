@@ -1,4 +1,5 @@
 // clause: a-new-project-is-told-the-truth/a-log-line-is-not-a-signal
+// promise: a-new-project-is-told-the-truth
 //
 // a-new-project-starts-instrumented, Test Phase 1: T18 - nothing InDusk hands an app or
 // installs for the agent presents a log line as a promise's signal; a signal is a span

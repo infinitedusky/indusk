@@ -1,4 +1,5 @@
 // clause: a-new-project-is-told-the-truth/the-skills-name-the-daemon
+// promise: a-new-project-is-told-the-truth
 //
 // a-new-project-starts-instrumented, Test Phase 1: T17 - what InDusk installs to explain
 // telemetry sends a person to the local daemon, never to a vendor or to the retired

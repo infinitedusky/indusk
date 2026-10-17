@@ -1,4 +1,5 @@
 // clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs
+// promise: a-new-project-reports-from-its-first-run
 //
 // a-new-project-starts-instrumented, Test Phase 1: T1, T2 - where `indusk init` and
 // `indusk update` write the OpenTelemetry scaffold in a workbench. The app runs in the

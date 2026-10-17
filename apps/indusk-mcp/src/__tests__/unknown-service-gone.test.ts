@@ -1,4 +1,5 @@
 // clause: a-new-project-reports-from-its-first-run/the-service-is-named
+// promise: a-new-project-reports-from-its-first-run
 //
 // a-new-project-starts-instrumented, Test Phase 1: T4 - the placeholder service name of
 // the old templates is gone from the repository. Plan documents, archived plans,

@@ -1,4 +1,5 @@
 // clause: an-app-writes-its-signal-from-a-helper-it-owns/a-signal-names-its-promise-and-clause
+// promise: an-app-writes-its-signal-from-a-helper-it-owns
 //
 // a-new-project-starts-instrumented, Build Phase 2: T14 - a system-tier file (it starts a
 // daemon in a temporary home). A signal the helper writes from an app exporting to a real

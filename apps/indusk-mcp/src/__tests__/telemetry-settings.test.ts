@@ -1,6 +1,8 @@
 // clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon
 // clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran
 // clause: an-app-writes-its-signal-from-a-helper-it-owns/a-test-run-says-so
+// promise: a-new-project-reports-from-its-first-run
+// promise: an-app-writes-its-signal-from-a-helper-it-owns
 //
 // a-new-project-starts-instrumented, Build Phase 1: T5, T8, T15 (its settings half) - the
 // settings file every scaffolded app carries (`templates/telemetry-settings.ts`), read as

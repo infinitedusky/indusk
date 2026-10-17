@@ -174,6 +174,8 @@ export const LOOK_MARK = {
  * strings, because an app imports nothing from InDusk, and
  * `signal-vocabulary-pin.test.ts` holds both equal to this — change them
  * together.
+ *
+ * promise: an-app-writes-its-signal-from-a-helper-it-owns
  */
 export const APP_SIGNAL_KEYS = {
 	promise: PROMISE_MARK.promise,

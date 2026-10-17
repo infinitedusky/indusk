@@ -1,4 +1,5 @@
 // clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon
+// promise: a-new-project-reports-from-its-first-run
 //
 // a-new-project-starts-instrumented, Test Phase 1: T6 - nothing InDusk hands an
 // application tells it to send to port 4318. The daemon holds InDusk's own block now

@@ -1,3 +1,6 @@
+// clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced
+// promise: a-new-project-reports-from-its-first-run
+//
 // a-new-project-starts-instrumented, Test Phase 1: T24 - the carried item. The seat-holds
 // example (the demo `indusk demo` copies) writes its promise signal through a copy of the
 // package's signal helper template, no longer by hand, and `indusk init` on a fresh copy

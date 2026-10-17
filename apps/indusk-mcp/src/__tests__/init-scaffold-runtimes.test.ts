@@ -1,5 +1,7 @@
 // clause: a-new-project-reports-from-its-first-run/the-service-is-named
 // clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran
+// clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon
+// promise: a-new-project-reports-from-its-first-run
 //
 // a-new-project-starts-instrumented, Test Phase 1: T3, T7 - what `indusk init` writes for
 // each of the four runtimes (Node, Next.js, a browser app, Python), read as code: comments

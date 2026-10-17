@@ -2,11 +2,15 @@
 name: a-new-project-is-told-the-truth
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: scaffold
 owner: a-new-project-starts-instrumented
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/scaffold/apply.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/init-next-steps.test.ts
+  - apps/indusk-mcp/src/__tests__/telemetry-skills-name-the-daemon.test.ts
+  - apps/indusk-mcp/src/__tests__/log-line-not-signal.test.ts
 incidents: []
 clauses:
   - name: next-steps-exist
@@ -24,3 +28,4 @@ What `indusk init` prints and the skills it installs name commands that exist, t
 
 ## History
 - 2026-10-16 — declared (a-new-project-starts-instrumented), from its planning conversation.
+- 2026-10-17 — enforced, confirmed for a-new-project-starts-instrumented: proven by row T16, row T17, row T18, row T26.

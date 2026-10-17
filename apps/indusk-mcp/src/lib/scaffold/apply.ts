@@ -84,7 +84,11 @@ function ownSetupLines(helper: string): string[] {
 	];
 }
 
-/** The install and wiring lines a runtime's first scaffold prints. `instrumentation` is where its setup file went. */
+/**
+ * The install and wiring lines a runtime's first scaffold prints. `instrumentation` is where its setup file went.
+ *
+ * promise: a-new-project-is-told-the-truth
+ */
 function guidance(runtime: Runtime, instrumentation: string): string[] {
 	switch (runtime) {
 		case "node":

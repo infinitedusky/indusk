@@ -1,4 +1,5 @@
 // clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced
+// promise: a-new-project-reports-from-its-first-run
 //
 // a-new-project-starts-instrumented, Build Phase 1: T10 - what the scaffold does with one
 // file, decided from what is on disk, what InDusk recorded writing there and the newer

@@ -1,4 +1,5 @@
 // clause: an-app-writes-its-signal-from-a-helper-it-owns/one-vocabulary
+// promise: an-app-writes-its-signal-from-a-helper-it-owns
 //
 // a-new-project-starts-instrumented, Build Phase 2: T12 - the keys the two signal helpers
 // and the settings files spell as strings are the ones the package's vocabulary defines,

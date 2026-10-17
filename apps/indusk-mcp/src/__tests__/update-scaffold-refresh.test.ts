@@ -1,4 +1,5 @@
 // clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced
+// promise: a-new-project-reports-from-its-first-run
 //
 // a-new-project-starts-instrumented, Test Phase 1: T9 - `indusk update` never overwrites a
 // scaffolded file a person has changed; the newer version is written beside it as

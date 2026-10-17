@@ -2,11 +2,16 @@
 name: an-app-writes-its-signal-from-a-helper-it-owns
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: scaffold
 owner: a-new-project-starts-instrumented
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/promises/vocabulary.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/signal-vocabulary-pin.test.ts
+  - apps/indusk-mcp/src/__tests__/signal-helper.test.ts
+  - apps/indusk-mcp/src/__tests__/signal-helper-daemon.contract.test.ts
+  - apps/indusk-mcp/src/__tests__/telemetry-settings.test.ts
 incidents: []
 clauses:
   - name: one-vocabulary
@@ -24,3 +29,4 @@ A scaffolded project carries a small signal helper it owns, with no InDusk depen
 
 ## History
 - 2026-10-16 — declared (a-new-project-starts-instrumented), from its planning conversation.
+- 2026-10-17 — enforced, confirmed for a-new-project-starts-instrumented: proven by row T12, row T13, row T14, row T15.

@@ -1,5 +1,6 @@
 // clause: an-app-writes-its-signal-from-a-helper-it-owns/a-signal-names-its-promise-and-clause
 // clause: an-app-writes-its-signal-from-a-helper-it-owns/a-test-run-says-so
+// promise: an-app-writes-its-signal-from-a-helper-it-owns
 //
 // a-new-project-starts-instrumented, Build Phase 2: T13 (and T15's helper half) - a signal
 // the helper template writes reads back through the package's own span reader as that

@@ -1,4 +1,5 @@
 // clause: a-new-project-is-told-the-truth/next-steps-exist
+// promise: a-new-project-is-told-the-truth
 //
 // a-new-project-starts-instrumented, Test Phase 1: T16 - everything `indusk init` tells a
 // person to run or use is there. Every `indusk <command>` it prints is a command of the
