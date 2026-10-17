@@ -18,6 +18,8 @@ audit_reason: "a one-function regression fix; Sandy asked to skip the rituals"
 approved_brief: "1a682d2e3b5b1b7d09dd1001bddbb60681f0b915c5516441f41c67b6362a3e95"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-17T20:08:22.245Z"
+accepted: 2026-10-17T20:14:10.921Z
+accepted_by: person
 ---
 
 # New components draw in their mockups
