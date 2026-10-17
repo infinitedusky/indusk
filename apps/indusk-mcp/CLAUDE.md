@@ -233,6 +233,7 @@ pointer; the pointer holds the story.
 
 ## Eval, agents, skills, extensions
 
+- **A recommendation the new-project flow acts on is named by a constant the agent's prompt reads** (`TELEMETRY_RECOMMENDATION` in `lib/new-project/proposal.ts`), never a word the agent might choose — guarded by T32 in `prompt.test.ts`.
 - **Eval agent** ("evaluator", never "judge"): PostToolUse on `git commit`
   only — anchored regex, never `String.includes`; skips when `exit_code` ≠ 0;
   persistent session via `claude --resume`; `--mcp-config .mcp.json` +
