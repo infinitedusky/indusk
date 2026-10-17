@@ -189,6 +189,93 @@ verification item an end state, then changes the promise's sentence to match.
 
   </details>
 
+### Build Phase 2: Fix what the audit found
+
+**Tier**: med — the work step's default
+
+The cold audit found the old wording still taught in places this plan never
+listed: the bugfix and refactor impl templates, the gate tasks inside the
+three skills' templates, the Shape step's code, the save check's refusal
+messages and three docs pages. This phase first writes one test that fails
+while any file outside the archives still teaches a task as an outcome, then
+rewords every place it names, so the change cannot be partial again.
+
+- [ ] Write a test that fails while any file outside the archives and history still teaches a task as a statement of what will be true, and see it fail.
+  <details><summary>Technical</summary>
+
+  A5 in `apps/indusk-mcp/src/__tests__/task-wording-gone.test.ts`, carrying `promise: an-impl-phase-explains-itself`: scan the package's `skills/`, `templates/`, `hooks/`, `src/lib/` (non-test) and `apps/docs/src/` (excluding `changelog.md`, `decisions/`, `lessons/`) and the project's `.claude/`; fail naming each file and line where a task (not a promise, brief or ADR line) is taught as "what will be true" or "one plain sentence" without "instruction". Grep first: `grep -rn -i 'what will be true\|one plain sentence' apps/indusk-mcp/{skills,templates,hooks,src/lib} apps/docs/src .claude`. Promise and brief wording is correct and exempt.
+
+  </details>
+- [ ] Widen the template test so the gate tasks under each phase's other headings also ask for instructions, and see it fail.
+  <details><summary>Technical</summary>
+
+  A6: extend A2's tests in `planner-impl-summary-template.test.ts` and `ritual-templates-phase-summary.test.ts` to the OTel, Context and Document task placeholders.
+
+  </details>
+- [ ] Reword the bugfix, refactor and feature impl templates' task placeholders as instructions.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/templates/workflows/{bugfix,refactor,feature}.md`.
+
+  </details>
+- [ ] Reword the gate task placeholders in the planner, falsify and cleanup templates as instructions.
+  <details><summary>Technical</summary>
+
+  OTel, Context and Document placeholders in `skills/planner.md`, `skills/falsify.md`, `skills/cleanup.md`.
+
+  </details>
+- [ ] Reword the Shape step's written item and the save check's refusal messages.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/shape/` (the item it writes), `apps/indusk-mcp/hooks/_phase-summary.js`, `apps/indusk-mcp/hooks/validate-impl-structure.js`, and `src/__tests__/helpers/phase-summary-fixture.ts` if it carries the old text; keep any test asserting a refusal message in step.
+
+  </details>
+- [ ] Reword the docs guide pages that still teach the old rule.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/test-trajectory.md`, `apps/docs/src/guide/briefs.md`, and any other page A5 names.
+
+  </details>
+- [ ] Resync the project's copies of the skills and hooks.
+  <details><summary>Technical</summary>
+
+  `.claude/skills/{planner,falsify,cleanup}/SKILL.md`, `.claude/hooks/{_phase-summary,validate-impl-structure}.js` from the package; `skill-sync-parity.test.ts` and any hook parity test pass.
+
+  </details>
+- [ ] Review the changed text and code against the extensions' rules.
+  <details><summary>Technical</summary>
+
+  Shape review; findings as unchecked items here.
+
+  </details>
+
+#### Build Phase 2 Verification
+
+- [ ] The gone test, the widened template tests and every earlier row pass, and the hooks' own tests still pass.
+  <details><summary>Technical</summary>
+
+  A1–A6: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/task-wording-gone.test.ts src/__tests__/planner-impl-summary-template.test.ts src/__tests__/ritual-templates-phase-summary.test.ts src/__tests__/phase-summary-existing-impls.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/phase-summary-rule.test.ts`, then `pnpm --filter @infinitedusky/indusk-mcp exec vitest related` on the changed files.
+
+  </details>
+
+#### Build Phase 2 Context
+
+- [ ] Make the gone test name what it guards, so the old wording cannot return unnoticed.
+  <details><summary>Technical</summary>
+
+  guard: `task-wording-gone.test.ts` carries `promise: an-impl-phase-explains-itself`, and `lesson: <name>` once the evaluator writes the lesson from this plan's highlight.
+
+  </details>
+
+#### Build Phase 2 Document
+
+- [ ] Extend the changelog line to cover the audit's fixes.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/changelog.md`: the templates, the Shape item, the save check's messages and the guides.
+
+  </details>
+
 ## Files Affected
 
 | File | Change |
