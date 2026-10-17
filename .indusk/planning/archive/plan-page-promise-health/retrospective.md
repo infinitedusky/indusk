@@ -102,3 +102,8 @@ There were eleven, left for Sandy's call and not acted on. The main ones:
 - The registry file's `tests:` stays empty until confirm.
 
 See `audit.md`.
+
+## Checks at close
+
+- `pnpm test`: 2 failures, both open on trunk before this plan (`impl-corpus` A4 for `archive/nav-row-legible`, `looks-admin-approvals-hold` A11). It first also named this plan's archived impl: a Build Phase 4 task carried row labels, written by a script that bypassed the impl validator; reworded.
+- Nested-context probe (`context-tiers` e2e): 4/4 passing. The wider e2e run's `day-monitor` A24 timed out waiting for Jaeger, which this plan does not touch.
