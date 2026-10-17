@@ -81,11 +81,11 @@ assertions in [test-plan.md](test-plan.md).
 | T22 | A click in a scaffolded browser app still carries its trace to the project's own services | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-click-and-its-server-work-share-a-trace | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T23 | Nothing `init` writes into an app names a vendor, and what it prints names each file and its SDK | Test Phase 1 | Test Phase 1 | passing | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
 | T24 | The seat-holds example writes its signal through a copy of the helper template, and `init` on a fresh copy adds no second OpenTelemetry setup | Test Phase 1 | Build Phase 2 | passing | unit | the carried item: the demo's hand-written signal becomes the helper and its dead second scaffold goes | apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
-| T25 | In a Next.js app whose pages live in `src/` (`src/app` or `src/pages`), the scaffold writes the server setup file to `src/instrumentation.ts` with its settings import resolving beside it; without them it stays at the root | Build Phase 4 | Build Phase 4 | written | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts |
-| T26 | Every package the files scaffolded for Node, Next.js and a browser app import is named in the install line init prints for that runtime | Build Phase 4 | Build Phase 4 | written | unit | clause: a-new-project-is-told-the-truth/next-steps-exist | apps/indusk-mcp/src/__tests__/init-next-steps.test.ts |
-| T27 | The run line init prints for a Python app and the Python template load the scaffolded `instrumentation` module and never name `opentelemetry-instrument`, whose own provider sends to the standard port as `unknown_service` | Build Phase 4 | Build Phase 4 | written | unit | clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon | apps/indusk-mcp/src/__tests__/init-scaffold-runtimes.test.ts |
-| T28 | An `OTEL_RESOURCE_ATTRIBUTES` value that is not valid percent-encoding (`deployment.environment=100%`) is kept as written and the settings never throw | Build Phase 4 | Build Phase 4 | written | unit | clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran | apps/indusk-mcp/src/__tests__/telemetry-settings.test.ts |
-| T29 | A scaffolded file InDusk recorded writing and a person then deleted is not written back by `update` (one line says it was left out), `--force` writes it, and a missing file with no record is still created | Build Phase 4 | Build Phase 4 | written | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts, apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts |
+| T25 | In a Next.js app whose pages live in `src/` (`src/app` or `src/pages`), the scaffold writes the server setup file to `src/instrumentation.ts` with its settings import resolving beside it; without them it stays at the root | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts |
+| T26 | Every package the files scaffolded for Node, Next.js and a browser app import is named in the install line init prints for that runtime | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-is-told-the-truth/next-steps-exist | apps/indusk-mcp/src/__tests__/init-next-steps.test.ts |
+| T27 | The run line init prints for a Python app and the Python template load the scaffolded `instrumentation` module and never name `opentelemetry-instrument`, whose own provider sends to the standard port as `unknown_service` | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon | apps/indusk-mcp/src/__tests__/init-scaffold-runtimes.test.ts |
+| T28 | An `OTEL_RESOURCE_ATTRIBUTES` value that is not valid percent-encoding (`deployment.environment=100%`) is kept as written and the settings never throw | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran | apps/indusk-mcp/src/__tests__/telemetry-settings.test.ts |
+| T29 | A scaffolded file InDusk recorded writing and a person then deleted is not written back by `update` (one line says it was left out), `--force` writes it, and a missing file with no record is still created | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts, apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts |
 
 ## Checklist
 
@@ -801,31 +801,31 @@ This phase tests the finished scaffold against apps shaped differently from the 
 
 #### Build Phase 4 Verification
 
-- [ ] A Next.js app with its pages in a source folder gets its setup file there, and a Next.js app without one keeps it at the root.
+- [x] A Next.js app with its pages in a source folder gets its setup file there, and a Next.js app without one keeps it at the root.
   <details><summary>Technical</summary>
 
   T25: red today (the setup lands at the root for a `src/app` project), green once the placement follows the pages.
 
   </details>
-- [ ] Every package a scaffolded app's files import is named in the install line init prints for that kind of app.
+- [x] Every package a scaffolded app's files import is named in the install line init prints for that kind of app.
   <details><summary>Technical</summary>
 
   T26: red today on `@opentelemetry/api` for Node and Next.js.
 
   </details>
-- [ ] What init prints and the template say for a Python app loads the scaffolded setup and never names OpenTelemetry's own wrapper.
+- [x] What init prints and the template say for a Python app loads the scaffolded setup and never names OpenTelemetry's own wrapper.
   <details><summary>Technical</summary>
 
   T27: red today on `opentelemetry-instrument` in the printed run line and the template's docstring.
 
   </details>
-- [ ] An environment value that is not valid percent-encoding is kept as written and never stops the app from starting.
+- [x] An environment value that is not valid percent-encoding is kept as written and never stops the app from starting.
   <details><summary>Technical</summary>
 
   T28: red today with a `URIError`.
 
   </details>
-- [ ] A scaffolded file a person deleted stays deleted through an update, unless they force it; a file InDusk never wrote is still created.
+- [x] A scaffolded file a person deleted stays deleted through an update, unless they force it; a file InDusk never wrote is still created.
   <details><summary>Technical</summary>
 
   T29: red today (the file is recreated and the install lines reprinted).
