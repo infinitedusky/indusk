@@ -42,8 +42,8 @@ mockup's own styles.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A component a mockup declares new and draws itself takes that mockup's own styles in the cockpit | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
-| A2 | In the same mockup, a component it places by name still takes none of the mockup's own styles, nor does anything inside it | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
+| A1 | A component a mockup declares new and draws itself takes that mockup's own styles in the cockpit | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
+| A2 | In the same mockup, a component it places by name still takes none of the mockup's own styles, nor does anything inside it | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
 
 ## Checklist
 
@@ -109,7 +109,7 @@ This phase makes the fix: the scoping that keeps a mockup's own styles off compo
 
 #### Build Phase 1 Verification
 
-- [ ] A new component drawn in its mockup takes the mockup's styles, a placed one still does not, and the mockup that showed bare text draws styled.
+- [x] A new component drawn in its mockup takes the mockup's styles, a placed one still does not, and the mockup that showed bare text draws styled.
   <details><summary>Technical</summary>
 
   A1 and A2 pass: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/`; typecheck and biome clean on the changed files; `draft-row.aged`, composed by `readAppLooks`, has its `.dr` rule unexcluded.
