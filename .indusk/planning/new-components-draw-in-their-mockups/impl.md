@@ -100,7 +100,7 @@ This phase writes the two tests the fix is measured by: one showing a new compon
 
 This phase makes the fix: the scoping that keeps a mockup's own styles off components leaves out the components that mockup declares new, so they draw as drawn, and still keeps the styles off every component it places.
 
-- [ ] Make the page-only scoping leave out the components a mockup declares new, and pass that list from each mockup to it.
+- [x] Make the page-only scoping leave out the components a mockup declares new, and pass that list from each mockup to it.
   <details><summary>Technical</summary>
 
   `pageOnly(css, drawnHere: readonly string[] = [])` in `component-styles.ts`: the guard becomes `:not(:where(P, P *))` with `P = [data-component]` followed by `:not([data-component="<name>"])` for each name drawn here. `mockupDocument` takes the list (`mockup.declaresNewComponents`) and passes it through `withPageOnlyStyles`; `viewOf` passes it; `storyDocument` passes none.

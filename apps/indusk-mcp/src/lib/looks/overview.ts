@@ -113,11 +113,12 @@ export function listApps(root: string): string[] {
 
 const TOKENS_LINK = /<link\b[^>]*\bhref=["'][^"']*tokens\.css["'][^>]*>/i;
 
-/** The mockup's own `<style>` elements with their rules cut to its page (`pageOnly`); the sheets added around them are the foundation's and the components'. */
-const withPageOnlyStyles = (html: string): string =>
+/** The mockup's own `<style>` elements with their rules cut to its page (`pageOnly`); the sheets added around them are the foundation's and the components'. `drawnHere` is the components the mockup declares new: its styles still reach them. */
+const withPageOnlyStyles = (html: string, drawnHere: readonly string[]): string =>
 	html.replace(
 		/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
-		(_all, open: string, css: string, close: string) => `${open}${pageOnly(css)}${close}`,
+		(_all, open: string, css: string, close: string) =>
+			`${open}${pageOnly(css, drawnHere)}${close}`,
 	);
 
 /**
@@ -136,8 +137,9 @@ export function mockupDocument(
 	tokensCss: string,
 	styles: readonly Pick<ComponentStyle, "component" | "css">[] = [],
 	reset = "",
+	drawnHere: readonly string[] = [],
 ): string {
-	const html = withPageOnlyStyles(ownHtml);
+	const html = withPageOnlyStyles(ownHtml, drawnHere);
 	// A variant rule comes after every component's plain rules (`splitVariants`).
 	const cut = styles.map((s) => ({ component: s.component, ...splitVariants(s.css) }));
 	const variants = cut.map((c) => c.variants).filter((v) => v.trim() !== "");
@@ -172,7 +174,13 @@ function viewOf(
 		hash: mockup.hash,
 		componentsHash: mockup.componentsHash,
 		componentsChanged: approval.state === "proposed" ? (approval.componentsChanged ?? []) : [],
-		document: mockupDocument(mockup.html, css, mockup.styles, app.reset),
+		document: mockupDocument(
+			mockup.html,
+			css,
+			mockup.styles,
+			app.reset,
+			mockup.declaresNewComponents,
+		),
 	};
 }
 
