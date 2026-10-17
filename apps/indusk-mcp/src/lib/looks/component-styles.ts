@@ -311,6 +311,64 @@ export function baseStylesheet(appCss: string, foundation: Foundation): string {
 	return sheetOf(out, contextOf(root, foundation));
 }
 
+/** Where a story's frame holds a component: the marker's own element and everything inside it. */
+const COMPONENT_SCOPE = ":where([data-component], [data-component] *)";
+
+/** A selector that names the page itself; the page is not a component, so `_base.css` and the page hold these. */
+const PAGE_SELECTOR = /(^|[\s>+~(])(html|body|:root|:host)(?![\w-])/;
+
+/** Index of the first `::` outside brackets and parentheses, or -1: the pseudo-element a scope must come before. */
+function pseudoElementAt(selector: string): number {
+	let depth = 0;
+	for (let i = 0; i < selector.length; i++) {
+		const c = selector[i];
+		if (c === "(" || c === "[") depth++;
+		else if (c === ")" || c === "]") depth--;
+		else if (depth === 0 && c === ":" && selector[i + 1] === ":") return i;
+	}
+	return -1;
+}
+
+/** `a:hover` -> `a:hover:where(<scope>)`, `::before` -> `:where(<scope>)::before`: the scope adds no specificity. */
+function scoped(selector: string): string {
+	const s = selector.trim();
+	const at = pseudoElementAt(s);
+	return at === -1
+		? `${s}${COMPONENT_SCOPE}`
+		: `${s.slice(0, at)}${COMPONENT_SCOPE}${s.slice(at)}`;
+}
+
+/**
+ * The app's element resets as a sheet that reaches only components,
+ * `components/_reset.css`. A story renders in the served Storybook under the
+ * app's element rules (`a { color: inherit }`, `textarea { font: inherit }`),
+ * and no component's slice holds them, so a component drawn in a mockup came
+ * out in the browser's defaults. These are those rules (`elementRulesOf`'s: no
+ * class, no marker), each selector written under `:where([data-component],
+ * [data-component] *)` so they add no specificity and touch nothing outside a
+ * component. Rules naming the page (`html`, `body`, `:root`, `:host`) are left
+ * out: `_base.css` holds `body`, and a mockup's page is its own.
+ *
+ * promise: mockups-render-in-the-cockpit
+ */
+export function componentReset(appCss: string, foundation: Foundation): string {
+	const root = postcss.parse(appCss);
+	const out = postcss.root();
+	out.append(
+		keepRules(
+			root.nodes,
+			(selector) =>
+				selectorClasses(selector).length === 0 &&
+				selectorMarks(selector).length === 0 &&
+				!PAGE_SELECTOR.test(selector),
+		),
+	);
+	out.walkRules((rule) => {
+		rule.selectors = rule.selectors.map(scoped);
+	});
+	return sheetOf(out, contextOf(root, foundation));
+}
+
 /**
  * The rules of the app's compiled CSS that no class and no component marker
  * names — element, universal, `html`, `:root` and `body` rules, wherever they

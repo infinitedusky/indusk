@@ -52,9 +52,9 @@ release raised.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A component built on a link draws in its own ink inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
-| A2 | A component's text field draws in the app's text font and size inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
-| A3 | The resets reach only the components inside a mockup; the page around them draws as before | Test Phase 1 | Build Phase 1 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
+| A1 | A component built on a link draws in its own ink inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
+| A2 | A component's text field draws in the app's text font and size inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
+| A3 | The resets reach only the components inside a mockup; the page around them draws as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
 | A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
 | A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
@@ -139,7 +139,7 @@ have. The generator writes those resets into one stylesheet that reaches only
 components, and the cockpit loads it under every mockup and every story. The
 project card's spacing and Message's wrapping are left for Build Phase 2.
 
-- [ ] The stylesheet generator writes the app's element resets as a sheet that reaches only components.
+- [x] The stylesheet generator writes the app's element resets as a sheet that reaches only components.
   <details><summary>Technical</summary>
 
   `componentReset(appCss, foundation)` in `apps/indusk-mcp/src/lib/looks/component-styles.ts`: the rules `elementRulesOf` keeps (no class, no marker), `html`/`:root`/`body` excluded (`_base.css` holds `body`), each selector rewritten under `:where([data-component], [data-component] *)`, resolved through `sheetOf`.
