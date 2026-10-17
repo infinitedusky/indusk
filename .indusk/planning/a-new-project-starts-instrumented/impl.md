@@ -537,16 +537,18 @@ turns the telemetry extensions off. If the later phases stall, this one can land
 
 #### Build Phase 1 Context
 
-- [ ] Add this plan's decision to the root context file's list of key decisions.
+- [x] Add this plan's decision to the root context file's list of key decisions.
   <details><summary>Technical</summary>
 
   root (Key Decisions): "Init sets up telemetry: one scaffold module per declared code repo, a settings file per app rendered with the daemon's stored address, project and environment on every span, a record so update offers newer templates beside edits — see `/decisions/init-sets-up-telemetry`" — always-on because the Key Decisions list carries one line per accepted ADR, as the claude-md skill sets it.
 
   </details>
-- [ ] Record in the package's own context file that every scaffolded file goes through the scaffold module, never a copy written inline in init or update.
+- [x] Record in the package's own context file that every scaffolded file goes through the scaffold module, never a copy written inline in init or update.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`: "A template reaches a project only through `lib/scaffold/` (render, record, apply); init and update call it; the record is `.indusk/scaffold.json`."
+
+  Landed in `apps/indusk-mcp/src/lib/scaffold/CLAUDE.md` instead: the package file is 22,012 bytes against its 16,384-byte nested budget, and the budget hook refuses any edit that grows it (lesson: a-claude-md-past-its-budget-holds-a-rule-that-belongs-lower). The folder file follows `lib/release/`, `lib/promises/`, `lib/looks/`; the root Key Decisions line points to the decision.
 
   </details>
 
