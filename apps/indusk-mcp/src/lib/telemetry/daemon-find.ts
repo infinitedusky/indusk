@@ -106,19 +106,38 @@ function labelPorts(
 	return { ...defaults, ...fromAddress, ...fromYaml };
 }
 
+/**
+ * Pairs each Jaeger with its collector: first by the stored address, the
+ * Jaeger holding the stored traces port with the collector holding the stored
+ * logs port; then, for those the address does not pair, by start time.
+ */
 function pairProcesses(
 	jaegers: LocatedProcess[],
 	collectors: LocatedProcess[],
+	address: StoredAddress | null,
 ): [LocatedProcess, LocatedProcess][] {
 	const free = [...collectors];
 	const pairs: [LocatedProcess, LocatedProcess][] = [];
-	const byStart = [...jaegers].sort((a, b) => (a.startedMs ?? 0) - (b.startedMs ?? 0));
+	const unpaired: LocatedProcess[] = [];
+	for (const jaeger of jaegers) {
+		const mate =
+			address !== null && jaeger.ports.includes(address.traces)
+				? free.find((c) => c.ports.includes(address.logs))
+				: undefined;
+		if (mate === undefined) {
+			unpaired.push(jaeger);
+			continue;
+		}
+		free.splice(free.indexOf(mate), 1);
+		pairs.push([jaeger, mate]);
+	}
+	const byStart = unpaired.sort((a, b) => (a.startedMs ?? 0) - (b.startedMs ?? 0));
 	for (const jaeger of byStart) {
 		let best: LocatedProcess | undefined;
 		let bestGap = Number.POSITIVE_INFINITY;
 		for (const c of free) {
 			if (jaeger.startedMs === null || c.startedMs === null) {
-				if (jaegers.length === 1 && collectors.length === 1) best = c;
+				if (unpaired.length === 1 && free.length === 1 && pairs.length === 0) best = c;
 				continue;
 			}
 			const gap = c.startedMs - jaeger.startedMs;
@@ -188,6 +207,7 @@ function pairsOf(reads: DaemonReads, home: string): { located: LocatedProcess[];
 	const pairs = pairProcesses(
 		located.filter((p) => p.proc.role === "jaeger"),
 		located.filter((p) => p.proc.role === "otelcol"),
+		reads.address(),
 	).map(
 		([jaeger, otelcol]): Pair => ({ jaeger, otelcol, ports: labelPorts(reads, jaeger, otelcol) }),
 	);
