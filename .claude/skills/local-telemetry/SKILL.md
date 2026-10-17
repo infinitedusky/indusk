@@ -68,7 +68,7 @@ Do NOT use these tools when:
 
 ## Jaeger UI as the fallback
 
-The MCP tools exist for agent-driven diagnosis. When you want to eyeball a trace visually — e.g., a deep microservice call tree where the attribute lists are too dense for chat — tell the user to open `http://localhost:16686` and paste the trace ID you've identified. Jaeger's built-in Gantt chart shows the structure at-a-glance.
+The MCP tools exist for agent-driven diagnosis. When you want to eyeball a trace visually — e.g., a deep microservice call tree where the attribute lists are too dense for chat — tell the user to open the daemon's interface address (`indusk telemetry address` prints it; `http://localhost:24316` when InDusk's block was free) and paste the trace ID you've identified. Jaeger's built-in Gantt chart shows the structure at-a-glance.
 
 ## When it's not running
 
@@ -78,9 +78,9 @@ If an MCP tool returns an error about the daemon being unreachable, check `indus
 
 ## Wiring services to emit here
 
-**This extension runs the daemon. It does NOT configure your services to emit to it.** Your services' OTel SDKs read `OTEL_EXPORTER_OTLP_ENDPOINT` (+ `OTEL_EXPORTER_OTLP_HEADERS`, `OTEL_EXPORTER_OTLP_PROTOCOL`) from `process.env` at boot. Point those at the daemon (`http://localhost:4318` for traces, `http://localhost:4319` for logs) and services emit locally.
+**This extension runs the daemon. It does NOT configure your services to emit to it.** Your services' OTel SDKs read `OTEL_EXPORTER_OTLP_ENDPOINT` (+ `OTEL_EXPORTER_OTLP_HEADERS`, `OTEL_EXPORTER_OTLP_PROTOCOL`) from `process.env` at boot. Point those at the daemon's stored address (`indusk telemetry address`, or `--json` for a script: `http://localhost:24318` for traces and `http://localhost:24319` for logs when InDusk's block was free) and services emit locally.
 
-The daemon's actual ports are in `~/.indusk/telemetry.json` (it auto-bumps if the default is taken). `.indusk/extensions/local-telemetry/.env.example` is a port reference card — it's not read by anything, it just documents the defaults for humans + agents.
+The daemon runs on one address per machine, chosen once and stored in `~/.indusk/telemetry-address.json`; it never moves, and a start refuses (naming the process) rather than bump a port. `indusk telemetry address` prints it. `.indusk/extensions/local-telemetry/.env.example` is a port reference card — it's not read by anything, it just documents the block for humans + agents.
 
 When the user asks you to wire a project for local emit, inspect what env-management they use and propose the right pattern. Don't prescribe one; read what they have.
 
@@ -92,10 +92,10 @@ Example shape:
 ```
 # env/components/otel-emit.env
 [local]
-OTLP_ENDPOINT=http://localhost:4318
+OTLP_ENDPOINT=http://localhost:24318
 OTLP_HEADERS=
 OTLP_PROTOCOL=http/protobuf
-OTLP_LOGS_ENDPOINT=http://localhost:4319
+OTLP_LOGS_ENDPOINT=http://localhost:24319
 
 [staging]
 OTLP_ENDPOINT=${dash0.HTTP_ENDPOINT}
@@ -113,9 +113,9 @@ Service contracts then reference `${otel-emit.OTLP_ENDPOINT}` etc. in their `var
 
 If the user has `.env` / `.env.local` at project root, propose `.env.local` (gitignored, local-only) with:
 ```
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:24318
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://localhost:4319
+OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://localhost:24319
 ```
 Commit a `.env.example` at project root with Dash0-shaped values (production defaults); `.env.local` overrides locally.
 
@@ -124,7 +124,7 @@ Commit a `.env.example` at project root with Dash0-shaped values (production def
 One-off testing or tight-loop dev:
 ```json
 "scripts": {
-  "dev": "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 next dev",
+  "dev": "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:24318 next dev",
   "dev:dash0": "dotenv -e .env.dash0 -- next dev"
 }
 ```
@@ -136,7 +136,7 @@ Kubernetes: ConfigMap + `envFrom:`. Docker compose: `env_file:` / `environment:`
 ### What NOT to do
 
 - Don't put `OTEL_EXPORTER_OTLP_*` in `.indusk/extensions/dash0/.env`. Those are service-runtime vars; dash0's extension `.env` is for indusk-mcp's MCP query wiring only.
-- Don't hardcode port 4318 in service code. Read from env; let the deployment unit decide.
+- Don't hardcode the daemon's port in service code (the standard 4318 is not the daemon's). Read from env; let the deployment unit decide.
 - Don't rely on `.indusk/extensions/local-telemetry/.env` being read — it isn't. It's a docs file.
 
 ## Short reference

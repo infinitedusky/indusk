@@ -164,6 +164,21 @@ pointer; the pointer holds the story.
 
 ## Promises and telemetry
 
+- A daemon process is InDusk's by `daemonProcessOf` (`daemon-process.ts`: binary +
+  `--config` under the home, compared by real path), never by a port, start time or the
+  binary existing; `scripts/check-test-daemons.js` keeps a parity copy. Only `stop` removes
+  the record (a finder, one naming only dead processes, under the lock): that record is
+  lost, not stale. Readers use `resolveLocalDaemon`; a finder writes it by exclusive
+  create under `<home>/telemetry.lock`, ports read from sockets, never guessed; code
+  deciding about the daemon takes `DaemonReads`. — guarded by the
+  `telemetry-daemon-found`, `-readers-follow`, `-daemon-state` and `-test-homes` tests.
+- **The real home's daemon runs on the address in `<home>/telemetry-address.json`**,
+  chosen once (`PORT_BLOCK` 24316-24319, a port picked once if held), never moved,
+  written whole (temporary + rename); only `daemon-address.ts` names a port; a held
+  port or an unreadable file refuses a start by name, never reads as none; port options
+  only in a temporary home; every start goes through `ensureDaemon`; `indusk telemetry
+  address` tells anything else. — guarded by `port-guard.test.ts`,
+  `telemetry-start-plan.test.ts` and `telemetry-address.test.ts`.
 - **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
   every Fly call goes through `FlyCli`, a failed read is refused, never read
   as empty. — see `/reference/cli/server`
@@ -178,23 +193,23 @@ pointer; the pointer holds the story.
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
 - Find a promise with `findPromise` (`lib/promises/registry.ts`; name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `lib/promises/clause-rules.ts`.
-- **`.mcp.json` is per machine and untracked** (`.gitignore` carries it): `indusk update`
-  writes one naming the `indusk` server when a checkout has none and never touches one
-  that exists (`lib/mcp-config.ts`); the daemon's sync edits only the local copy's
-  `jaeger` port. Pulling the commit that untracked it deletes the file from a clone's
-  working tree once — run `indusk update`. A test of `update` pins
-  `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`: without it `update` on a project lacking
-  `local-telemetry` starts a real daemon. A new plan worktree gets a copy of the
-  trunk's file (`createPlanWorktree` → `provisionMcpJson`), since git no longer brings
-  it; anything that creates the file creates it through `ensureMcpJson`, so a file
-  the daemon's sync made still names `indusk`.
-- The local daemon is native Jaeger + otelcol (`indusk telemetry *`; jaeger_mcp
-  in each project's `.mcp.json`) — see `.indusk/planning/archive/local-telemetry/adr.md`.
-  Jaeger v2 is an OTel Collector distribution; self-metrics off via
-  `service.telemetry.metrics.level: none`; binaries are platform-split
-  optionalDependencies (bump via `packages/telemetry-binaries-shared/UPSTREAM.json`);
-  the telemetry registry stores realpath-normalized paths. OTel
-  auto-instrumentation must load before other imports.
+- **`.mcp.json` is per machine and untracked**: only `ensureMcpJson` creates it (naming
+  `indusk`), and `update` only when none exists; `register` writes only its own
+  `jaeger` entry, at the stored MCP port, when it differs. A clone pulling the untracking
+  commit loses it once — run `indusk update`. A test of `update` pins
+  `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`, or it starts a real daemon. A new plan worktree
+  copies the trunk's (`provisionMcpJson`).
+- The local daemon is native Jaeger + otelcol (`archive/local-telemetry/adr.md`):
+  self-metrics and its own tracing off (`jaeger_query.enable_tracing: false`, the only
+  setting that silences it). `reap` stops this home's strays and orphans (a deleted
+  home's daemon) only — guarded by the `telemetry-reap-plan` and `telemetry-own-only`
+  tests. Binaries are platform-split; registry paths are realpaths; OTel
+  instrumentation loads first.
+- The daemon promise's reports go through `lib/telemetry/daemon-reports.ts` on the
+  SDK-free span path (`watcherSpanBody`), service `indusk-telemetry`, with
+  `indusk.clause`; never `initEvalOtel`, which is off when the record is missing and
+  follows `OTEL_EXPORTER_OTLP_ENDPOINT`. A loss is reported by whoever finds it.
+  — guarded by `telemetry-daemon-reports.test.ts`, `signal-writers.test.ts`.
 - `papers.destinations[]` and `promises.domains[]` are ensured on `update`
   through `ensureConfigBlock`; `resolveDestination` is the one resolver and a
   `repo` destination is refused outside a workbench. `indusk papers publish`
@@ -285,8 +300,9 @@ pointer; the pointer holds the story.
   `helpers/plan-worktree-fixture.ts`; trunk-guard —
   `helpers/trunk-guard-fixture.ts`; the throwing git runner —
   `helpers/test-git.ts`; MCP tools — `helpers/tool-call.ts`; the built CLI —
-  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon
-  (`helpers/local-jaeger.ts`); the evaluator runs against a fake `claude` +
+  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon in a
+  temporary home on ports the test gives it (`helpers/local-jaeger.ts`); a decision about
+  the daemon is a unit test over `helpers/daemon-reads.ts`; the evaluator runs against a fake `claude` +
   `helpers/otlp-capture.ts`; the always-on server via
   `helpers/always-on-server.ts`, a free port via `freeLoopbackPort`; Slack
   via `helpers/slack-capture.ts` — never a stub. — see `.indusk/planning/archive/workbench-trust-fixes/`

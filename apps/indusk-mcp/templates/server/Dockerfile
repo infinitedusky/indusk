@@ -31,8 +31,6 @@ ARG TARBALL
 COPY ${TARBALL} /tmp/indusk.tgz
 RUN npm install -g /tmp/indusk.tgz && rm /tmp/indusk.tgz
 
-# Jaeger tries to export its own traces to localhost:4317 and logs a
-# connection warning when nothing listens. Noise, not an error.
 ENV INDUSK_SKIP_UPDATE_CHECK=1
 
 # Foreground, as process 1: the supervisor that started this container is what

@@ -6,11 +6,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 /**
  * Regression: `indusk telemetry restart` used to call a fixed `sleep(200)`
- * after `daemonStop()`, then `findFreePort(inheritedOpts.otlpPort)`. If the
- * OS hadn't released the port within 200ms (common on macOS), findFreePort
- * fell through to `pickAnyFreePort()` and drifted the OTLP port off the
- * user's pinned value — breaking every downstream app pointed at the old
- * port. Now `daemonRestart` polls `isPortFree` with a 5s timeout.
+ * after `daemonStop()`. If the OS hadn't released the port within 200ms
+ * (common on macOS), the daemon drifted off its pinned port — breaking every
+ * downstream app pointed at the old one. `daemonRestart` polls each port with a
+ * 5s timeout, and now covers all four (traces, logs, interface, MCP).
+ *
+ * promise: the-daemon-readers-follow-is-the-one-running
  */
 
 const REPO_ROOT = resolve(__dirname, "../../../..");
@@ -49,31 +50,34 @@ function runCli(args: string[]): {
 	};
 }
 
-function readOtlpPort(): number {
+function readPorts(): number[] {
 	const meta = JSON.parse(readFileSync(join(testHome, "telemetry.json"), "utf-8")) as {
 		otlpPort: number;
+		logsOtlpPort: number;
+		uiPort: number;
+		mcpPort: number;
 	};
-	return meta.otlpPort;
+	return [meta.otlpPort, meta.logsOtlpPort, meta.uiPort, meta.mcpPort];
 }
 
-describe("telemetry restart pins the OTLP port across the OS port-release race", () => {
+describe("telemetry restart keeps all four ports across the OS port-release race", () => {
 	it.skipIf(SHOULD_SKIP)(
-		"otlpPort stays identical across two back-to-back restarts",
+		"the traces, logs, interface and MCP ports stay identical across two back-to-back restarts",
 		{ timeout: 90_000 },
 		async () => {
-			// Start with auto-pick so we don't collide with the user's daemon on 4318
+			// A temporary home takes the ports it is given: any free ones here.
 			const start = runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
 			expect(start.code, start.stderr).toBe(0);
-			const pinnedPort = readOtlpPort();
-			expect(pinnedPort).toBeGreaterThan(0);
+			const pinned = readPorts();
+			expect(pinned.every((p) => p > 0)).toBe(true);
 
 			const restart1 = runCli(["telemetry", "restart"]);
 			expect(restart1.code, restart1.stderr).toBe(0);
-			expect(readOtlpPort()).toBe(pinnedPort);
+			expect(readPorts()).toEqual(pinned);
 
 			const restart2 = runCli(["telemetry", "restart"]);
 			expect(restart2.code, restart2.stderr).toBe(0);
-			expect(readOtlpPort()).toBe(pinnedPort);
+			expect(readPorts()).toEqual(pinned);
 		},
 	);
 });
