@@ -1,7 +1,7 @@
 ---
 title: "The daemon is found, not guessed"
 date: 2026-10-16
-status: proposed
+status: accepted
 ---
 
 # The daemon is found, not guessed
