@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -552,21 +552,23 @@ A reader that had not seen the build found gaps between what the plan promises a
 
 #### Build Phase 5 Context
 
-- [ ] The package's rules say a mockup's own style rules reach only its page.
+- [x] The package's rules say a mockup's own style rules reach only its page.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the looks entries beside `_reset.css`: `pageOnly` scopes a mockup's own rules off placed components; place a component with a selector naming its marker.
 
   </details>
+  Note: added to the `_reset.css` entry in `apps/indusk-mcp/CLAUDE.md` (`pageOnly`, placing by a marker selector, `splitVariants`).
 
 #### Build Phase 5 Document
 
-- [ ] The looks reference says a mockup's own styles never reach the components it places.
+- [x] The looks reference says a mockup's own styles never reach the components it places.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`, the composition section: a mockup's own rules are scoped to its page; a rule naming `[data-component=…]` places a component.
 
   </details>
+  Note: a paragraph before `uncomposed` in `apps/docs/src/reference/cli/looks.md` (and the variant-order sentence).
 
 ## Files Affected
 

@@ -223,7 +223,10 @@ pointer; the pointer holds the story.
   One rule for what an approval is bound to: `bindingOf` writes the foundation,
   declarations and element rules and `boundToNow` reads them back, for the
   approval, the look check's `heldTo` and the status line alike — a new binding
-  goes in both. A
+  goes in both. A mockup's own `<style>` rules reach its page only: `pageOnly`
+  scopes them off placed components (`mockupDocument`); place a component with a
+  selector naming its marker; `splitVariants` loads every component's variant
+  rules after all plain ones. A
   component never relies on a reset the generator does not carry — `a { color:
   inherit }` in the app's CSS reaches a mockup only through this sheet —
   guarded by `component-styles.test.ts`, `composition.contract.test.ts` and

@@ -109,6 +109,17 @@ token rule (`indusk-new-tokens`) one level up — and a declared one is listed a
 needing a story until it has one. A reference to a component or state with no
 approved snapshot is refused.
 
+A mockup's own `<style>` rules reach its page and never a component it
+places: the cockpit scopes each selector of them to what is outside a component
+(`:not(:where([data-component], [data-component] *))`, which adds no
+specificity), so a mockup's `.grid { display: grid }` cannot change how a
+placed card draws. A rule that names the component's marker
+(`[data-component="card"] .grid`) is the mockup placing that component and is
+left as written. Each component's variant rules (under `@media`,
+`@supports` or `@container`) load after every component's plain rules, as the
+app's build orders them, so a hidden-on-a-phone class is not undone by another
+component's `flex`.
+
 `screens.json` may list `uncomposed`: mockups drawn before composition existed,
 which still write their components out. They are exempt from `component drawn
 in mockup` until rewritten, and the list only shrinks (the admin's eleven are
