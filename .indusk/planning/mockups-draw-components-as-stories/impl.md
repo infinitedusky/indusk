@@ -492,24 +492,27 @@ A reader that had not seen the build found gaps between what the plan promises a
   `composition.contract.test.ts`: draw each mockup at each of `app.devices`' widths, not only `WIDE`; replace the `ownWords` skip with a story read whose leaf elements are given the mockup's text before measuring (`readDrawn` takes the words per element index; only elements without element children are rewritten). T7. If T7 is red on the admin's real mockups, each difference is a defect to fix in this phase, named in a note — not a reason to loosen the check.
 
   </details>
-- [ ] The reset's scope is tested where it must sit, before a pseudo-element, in a selector a browser accepts.
+- [x] The reset's scope is tested where it must sit, before a pseudo-element, in a selector a browser accepts.
   <details><summary>Technical</summary>
 
   `component-styles.test.ts`: `*, ::before, ::after { box-sizing: border-box }` becomes `*:where(<scope>), :where(<scope>)::before, …`; assert each selector exactly, so a scope placed after a pseudo-element (an invalid selector that drops the whole rule) is caught. T4.
 
   </details>
-- [ ] The cockpit's own story page is tested to load the reset in its place.
+  Note: T4 is in `component-styles.test.ts` (parsed with postcss and each selector compared exactly: `*`, `::before`, `::after` and `input::placeholder` all carry the scope before the pseudo-element). It passed when written: `scoped` already placed the scope correctly, so it is a guard, not a red-first row.
+- [x] The cockpit's own story page is tested to load the reset in its place.
   <details><summary>Technical</summary>
 
   `overview.test.ts`: `storyDocument` with `reset` non-empty puts `data-component-style="_reset"` after `data-foundation` and before `_base` and the component's sheet. T5.
 
   </details>
-- [ ] The status line for a look last approved under other element rules is tested.
+  Note: T5 is in `overview.test.ts`: the reset sheet follows `data-foundation` and precedes `_base` and the component's sheet. It passed when written, the order already holding.
+- [x] The status line for a look last approved under other element rules is tested.
   <details><summary>Technical</summary>
 
   `looks-cli.test.ts`: a fixture approval carrying a `baseRulesHash` other than the catalog's; `indusk looks status` prints `… element rules — nothing held`. T8.
 
   </details>
+  Note: T8 is in `looks-cli.test.ts`: every approval is given another `baseRulesHash`, the mockup is changed, and the line reads `proposed … on another foundation, declarations or element rules — nothing held`. It passed when written (after `pnpm build`, since the test runs `dist/`); the wording already held.
 - [x] The check that refuses an arbitrary wrapping class says which standard utility to use.
   <details><summary>Technical</summary>
 
