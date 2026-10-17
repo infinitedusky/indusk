@@ -62,6 +62,10 @@ A process is InDusk's daemon of a home when it runs InDusk's shipped Jaeger or c
 
 The **record** is `~/.indusk/telemetry.json` (with `telemetry.pid`): the two process ids, the ports, the start time. It is a note about the daemon, not the daemon. A status read never removes it: only `indusk telemetry stop` does, and `start` writes over one whose processes are gone.
 
+### A lost record is found
+
+When the record is gone and the daemon still runs, the next command that looks finds it. It reads the process list for this home's Jaeger and collector, reads the ports each one really listens on from the operating system (`lsof`, or `/proc` on Linux when `lsof` is missing), pairs them, and writes the record again, with an exclusive create under `~/.indusk/telemetry.lock` so that only one command writes when several look at once. A port is never guessed: a role whose port no socket or rendered config file can name is left unknown and said so. When several daemons of the home run, it takes the one holding the traces port and leaves the others for `status` to list as strays. Every reader of the local daemon (`promises status` and `watch`, the promise health tool, the admin, the evaluator, `update`, `demo`, `telemetry reset`) asks the same resolver, so none of them can disagree about whether a daemon runs.
+
 ## Jaeger v2 is an OTel Collector distribution
 
 The load-bearing discovery from the Phase 1 spike: Jaeger v2 is **implemented as an OTel Collector distribution**. A single binary bundles:

@@ -7,6 +7,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ### Changed
 
 - **No read deletes the telemetry daemon's record; a slow port reads as slow, not gone** (daemon-found-not-guessed): a process is InDusk's daemon by its binary and config path, `indusk telemetry status` names a stale record and leaves it, lists the daemon processes the record does not name as strays, and only `stop` removes the record. See [what counts as InDusk's daemon](/reference/telemetry/overview#what-counts-as-the-daemon).
+- **A telemetry daemon whose record is lost is found from the process list, and every reader follows it** (daemon-found-not-guessed): the next command that looks reads this home's Jaeger and collector from `ps`, their ports from the sockets they listen on, and writes the record again; promise status and watch, the promise health tool, the admin, the evaluator, `update`, `demo` and `telemetry reset` all ask the one resolver. A port that cannot be read is said to be unknown, never guessed. See [a lost record is found](/reference/telemetry/overview#a-lost-record-is-found).
 
 ## [1.71.0] — 2026-10-16
 
