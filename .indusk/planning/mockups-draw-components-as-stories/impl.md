@@ -158,12 +158,13 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
 
   </details>
   Decision: `componentsHash` does not cover the reset. `_reset.css` is the app's element rules, as `_base.css` is, and neither is a component's look; a change to the app's element rules already reopens every story through `baseRulesHash`. Folding it into `componentsHash` would send every approved mockup back to proposed at once, which is the re-approval this plan puts out of scope.
-- [ ] The admin's stylesheets are regenerated with the reset.
+- [x] The admin's stylesheets are regenerated with the reset.
   <details><summary>Technical</summary>
 
   `indusk looks stories admin` in the worktree; commit `.indusk/mockups/admin/components/_reset.css` and any catalog change.
 
   </details>
+  Note: regenerated with `tsx src/bin/cli.ts looks stories admin`; only `_reset.css` is committed. The same run also rewrote `components.json`, dropping `history-panel`'s `entries`/`open`/`className` properties (prop extraction from the Storybook build came back empty for it, twice) and moving `renderedFrom`; that change is outside this plan and was left uncommitted, to be looked at on its own.
 - [ ] Shape review of the changed generator and cockpit code.
   <details><summary>Technical</summary>
 
