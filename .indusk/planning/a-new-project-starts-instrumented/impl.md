@@ -1,7 +1,7 @@
 ---
 title: "Init sets up telemetry (New Projects)"
 date: 2026-10-17
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "2307b439d7bf35bc8ce025d10fbb5f5900d9b75b46aa3682c8f33e7339b7c0ed"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-17T18:47:32.552Z"
 ---
 
 # Init sets up telemetry (New Projects)
