@@ -54,6 +54,7 @@ const BROWSER_OTEL_PACKAGES = [
 ].join(" ");
 
 const NODE_PACKAGES = [
+	"@opentelemetry/api",
 	"@opentelemetry/sdk-node",
 	"@opentelemetry/auto-instrumentations-node",
 	"@opentelemetry/exporter-trace-otlp-http",
@@ -93,7 +94,7 @@ function guidance(runtime: Runtime, instrumentation: string): string[] {
 			];
 		case "nextjs":
 			return [
-				`install: pnpm add @vercel/otel pino pino-opentelemetry-transport ${BROWSER_OTEL_PACKAGES}`,
+				`install: pnpm add @vercel/otel @opentelemetry/api pino pino-opentelemetry-transport ${BROWSER_OTEL_PACKAGES}`,
 				"wire (server): Next.js loads instrumentation.ts automatically",
 				"wire (client): import './instrumentation.web' from a client component (one that starts with \"use client\"), not the root layout",
 				...propagationLines("NEXT_PUBLIC_OTEL_PROPAGATE_TO"),
