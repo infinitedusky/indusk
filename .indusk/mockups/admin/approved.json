@@ -7915,6 +7915,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:22.370Z",
 			"plan": "nav-row-legible"
@@ -7926,6 +7927,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:22.625Z",
 			"plan": "nav-row-legible"
@@ -7937,6 +7939,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:22.852Z",
 			"plan": "nav-row-legible"
@@ -7948,6 +7951,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:23.081Z",
 			"plan": "nav-row-legible"
@@ -7959,6 +7963,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:23.349Z",
 			"plan": "nav-row-legible"
@@ -7970,6 +7975,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:23.571Z",
 			"plan": "nav-row-legible"
@@ -7981,6 +7987,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:23.774Z",
 			"plan": "nav-row-legible"
@@ -7992,6 +7999,7 @@
 			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:23.979Z",
 			"plan": "nav-row-legible"
@@ -8003,6 +8011,7 @@
 			"stylesheetHash": "5b97646af3fff653735845f114f3f9e393a0384c9910d45295852170b59e0b83",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:24.194Z",
 			"plan": "nav-row-legible"
@@ -8014,6 +8023,7 @@
 			"stylesheetHash": "5b97646af3fff653735845f114f3f9e393a0384c9910d45295852170b59e0b83",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:24.402Z",
 			"plan": "nav-row-legible"
@@ -8025,6 +8035,7 @@
 			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:16.693Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8036,6 +8047,7 @@
 			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:16.936Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8047,6 +8059,7 @@
 			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:17.165Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8058,6 +8071,7 @@
 			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:17.382Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8069,6 +8083,7 @@
 			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:17.586Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8080,6 +8095,7 @@
 			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:17.789Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8146,6 +8162,7 @@
 			},
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:18.839Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8166,6 +8183,7 @@
 			},
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:19.050Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8177,6 +8195,7 @@
 			"stylesheetHash": "6d830055ab28d18c3c9d616942ec9ad270d627d5a3ae4b2e2d6604348a042c17",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:47:15.511Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8188,6 +8207,7 @@
 			"stylesheetHash": "6d830055ab28d18c3c9d616942ec9ad270d627d5a3ae4b2e2d6604348a042c17",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:47:15.752Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8199,6 +8219,7 @@
 			"stylesheetHash": "6d830055ab28d18c3c9d616942ec9ad270d627d5a3ae4b2e2d6604348a042c17",
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:47:16.088Z",
 			"plan": "mockups-draw-components-as-stories"
@@ -8215,6 +8236,7 @@
 			},
 			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:47:16.363Z",
 			"plan": "mockups-draw-components-as-stories"

@@ -472,12 +472,13 @@ This plan taught approvals to remember the app's element rules, but it did so be
 
 A reader that had not seen the build found gaps between what the plan promises and what its tests prove, and changes the brief never declared. The brief now declares them, and this phase closes the rest: a mockup's own styles stop reaching the components it places, the composition check runs at every reference device and measures boxes that hold a mockup's own words, the approvals that history shows were drawn under today's element rules record them, and the small unproven pieces get their own tests. Once it closes, each promise this plan touches is proven as worded.
 
-- [ ] The current admin approvals made since the element rules last changed record the rules they were drawn under.
+- [x] The current admin approvals made since the element rules last changed record the rules they were drawn under.
   <details><summary>Technical</summary>
 
   The catalog's `baseRulesHash` has been `333ab599…` since `d4b1fede2` (2026-10-16T16:46:41Z, `git log -G '"baseRulesHash"' -- .indusk/mockups/admin/components.json`). Add `baseRulesHash` to the latest approval of each look in `.indusk/mockups/admin/approved.json` whose `at` is at or after that time (22 of 193); touch no other field or entry. A one-off script in the scratchpad, not committed; the commit message names the rule used. Re-check the hash history on this branch before writing, and stop if it changed since.
 
   </details>
+  Note: re-checked on this branch — `333ab599…` has held since `d4b1fede2` (2026-10-16T12:46:41-04:00, which is 16:46:41Z; the earlier hash `a63b3870…` was `d9a5564dd`, 12:39:14-04:00). The latest approval of each of 192 looks (the record's 193rd entry is a withdrawal) whose `at` is at or after that instant, 22 of them (all `plan-row.*` and later), now records `baseRulesHash` after `declarationsHash`; `git diff` shows 22 added lines and nothing else, and `indusk looks status admin` is byte-identical before and after (187 approved).
 - [ ] A mockup's own style rules reach only its page, never a component it places.
   <details><summary>Technical</summary>
 
