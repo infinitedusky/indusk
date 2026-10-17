@@ -8149,6 +8149,26 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:18.839Z",
 			"plan": "mockups-draw-components-as-stories"
+		},
+		{
+			"mockup": "plan-row.worktree",
+			"mockupHash": "ed59554742bfbaf09beb006016db37ee1d4fda2cf0aa988c94677929586ec3ea",
+			"componentsHash": "3b495a40d4870571e05346c4c4db6e317e1b1f03e4dad04780525ad8835326ab",
+			"components": {
+				"badge.working": "d48c2d2c7d6eafed8de8089196913e1d683a4344c0eb5b601c6d911aa124841a",
+				"worktree-mark.closed": "dfe28ecefe8d7bc8eb6edae57d39f58aab340b42de8034e333bcdf24c44dad1a",
+				"badge.needs": "000b8417a8f6667e8af84ea26bd27c99e60518d80de0bfb4dc50870101a6c975",
+				"worktree-mark.open": "ee0591d6f7d8b72ae16c59a9a25c85a51c0fdcc238f1e992a55560645001067f",
+				"badge.released": "070b75990ca2eea91ac042324db4768e897a93f4d6af7d36b9653e69a8630010",
+				"badge.idle": "df00a00978ceef86c44c8af03ec9f7aa0c8334c8916def79c45deee3399b8796",
+				"badge.css": "52b8bf01d6454a3a647ec27811294e986d483d6eecc67c7548962ba529c6b15f",
+				"worktree-mark.css": "5b97646af3fff653735845f114f3f9e393a0384c9910d45295852170b59e0b83"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-17T17:11:19.050Z",
+			"plan": "mockups-draw-components-as-stories"
 		}
 	]
 }
