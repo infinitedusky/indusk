@@ -164,17 +164,14 @@ pointer; the pointer holds the story.
 
 ## Promises and telemetry
 
-- An InDusk daemon process is recognised by `daemonProcessOf`
-  (`daemon-process.ts`: binary + `--config` under the home), never
-  by a port, start time or the binary existing; `scripts/check-test-daemons.js`
-  keeps a parity copy. No read removes the daemon's record: only `stop` does.
-  Every reader resolves the local daemon through `resolveLocalDaemon`
-  (`daemon-state.ts`); a finder (`daemon-find.ts`) writes the record with an exclusive
-  create under `<home>/telemetry.lock`, reading ports from listening sockets,
-  never guessing one. — guarded by `telemetry-daemon-found.test.ts` and
-  `telemetry-readers-follow.test.ts`.
-  Code that decides about the daemon takes `DaemonReads`. — guarded by
-  `telemetry-daemon-state.test.ts` and `telemetry-test-homes.test.ts`.
+- A daemon process is InDusk's by `daemonProcessOf` (`daemon-process.ts`: binary +
+  `--config` under the home, compared by real path), never by a port, start time or the
+  binary existing; `scripts/check-test-daemons.js` keeps a parity copy. Only `stop` removes
+  the record (a finder, one naming only dead processes, under the lock): that record is
+  lost, not stale. Readers use `resolveLocalDaemon`; a finder writes it by exclusive
+  create under `<home>/telemetry.lock`, ports read from sockets, never guessed; code
+  deciding about the daemon takes `DaemonReads`. — guarded by the
+  `telemetry-daemon-found`, `-readers-follow`, `-daemon-state` and `-test-homes` tests.
 - **The real home's daemon runs on the address in `<home>/telemetry-address.json`**,
   chosen once (`PORT_BLOCK` 24316-24319, a port picked once if held), never moved,
   written whole (temporary + rename); only `daemon-address.ts` names a port; a held
@@ -203,10 +200,11 @@ pointer; the pointer holds the story.
   `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`, or it starts a real daemon. A new plan worktree
   copies the trunk's (`provisionMcpJson`).
 - The local daemon is native Jaeger + otelcol (`archive/local-telemetry/adr.md`):
-  self-metrics off, its own tracing off (`jaeger_query.enable_tracing: false`, the only
-  setting that silences it). `reap` stops this home's strays only — guarded by
-  `telemetry-reap-plan.test.ts`, `telemetry-own-only.test.ts`. Binaries are
-  platform-split; registry paths are realpaths; OTel instrumentation loads first.
+  self-metrics and its own tracing off (`jaeger_query.enable_tracing: false`, the only
+  setting that silences it). `reap` stops this home's strays and orphans (a deleted
+  home's daemon) only — guarded by the `telemetry-reap-plan` and `telemetry-own-only`
+  tests. Binaries are platform-split; registry paths are realpaths; OTel
+  instrumentation loads first.
 - The daemon promise's reports go through `lib/telemetry/daemon-reports.ts` on the
   SDK-free span path (`watcherSpanBody`), service `indusk-telemetry`, with
   `indusk.clause`; never `initEvalOtel`, which is off when the record is missing and
