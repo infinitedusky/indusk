@@ -270,6 +270,13 @@ changed; and Sandy approves the changed `message.you` story.
 
   </details>
 
+- [x] A project card shorter than its row keeps its lines together at the top.
+  <details><summary>Technical</summary>
+
+  Discovered at verification: A30 reported `project-card.default … span[3] content-height: story 24px, mockup 30px` — in a grid row a card stretches to the tallest card, and its own grid spread the extra height between its rows (the home page did the same). `content-start` on the card's root; A30 passes. The three card stories need re-approval.
+
+  </details>
+
 #### Build Phase 2 Verification
 
 - [ ] Both browser checks pass, and the composition rule still holds.

@@ -1,5 +1,5 @@
 {
-	"renderedFrom": "ad147474cb9b118de28134dba30f600d671d8b434605c939a19e0885c396d812",
+	"renderedFrom": "d452d8e55b5ecf672da8310e4c60f20bc6bc6acdd115d4d728e18c5a0a9283bd",
 	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
@@ -2527,7 +2527,7 @@
 				{
 					"name": "default",
 					"id": "ui-projectcard--default",
-					"snapshotHash": "9e8ef42a6b4e63186015844ce37c97201038419c6eaacd64d354bdc36c4ce94c",
+					"snapshotHash": "caf235214c469ebec4f93c7f236b13d0384c03aa7534d28a0a06a46038231a73",
 					"content": {
 						"name": [
 							[
@@ -2567,7 +2567,7 @@
 				{
 					"name": "in-progress",
 					"id": "ui-projectcard--in-progress",
-					"snapshotHash": "3d1c3187374895f2bfe58db8125b93feec17ef435d0da4735060ac0944c82beb",
+					"snapshotHash": "896aaf5a4a2babbda57b3341ab4178efbe5827907960d576fa670f960efc2630",
 					"content": {
 						"name": [
 							[
@@ -2607,7 +2607,7 @@
 				{
 					"name": "workbench",
 					"id": "ui-projectcard--workbench",
-					"snapshotHash": "6375229d7d7add286f53b965870146662ae8b22ac6d14d2a4a04200aa75ce354",
+					"snapshotHash": "b02d5f7490b6d905cea4ccfb207c0bee41a50e8c35181c50baaa29f92332378a",
 					"content": {
 						"name": [
 							[
@@ -2646,7 +2646,7 @@
 				}
 			],
 			"stylesheet": "components/project-card.css",
-			"stylesheetHash": "bebbfd7e3b42a58c85d70df933140b0fd2c5b690119857340b9062cada1d32ee"
+			"stylesheetHash": "6d830055ab28d18c3c9d616942ec9ad270d627d5a3ae4b2e2d6604348a042c17"
 		},
 		{
 			"name": "promise-row",
