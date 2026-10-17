@@ -217,10 +217,13 @@ pointer; the pointer holds the story.
   element rules (`a`, `textarea`, `*`...) written by `indusk looks stories`
   from `componentReset`, each selector under `:where([data-component],
   [data-component] *)`, so they reach only components. `_base.css` holds `body`;
-  neither is part of `componentsHash`. A component never relies on a reset the
-  generator does not carry — `a { color: inherit }` in the app's CSS reaches a
-  mockup only through this sheet — guarded by `component-styles.test.ts` and
-  `composition.contract.test.ts`; see `/reference/cli/looks`
+  neither is part of `componentsHash`. An approval of a story or a mockup
+  records the catalog's `baseRulesHash` (the hash of those rules; `LooksApp.baseRulesHash`)
+  and reads proposed once it changes; an entry without it reads as before. A
+  component never relies on a reset the generator does not carry — `a { color:
+  inherit }` in the app's CSS reaches a mockup only through this sheet —
+  guarded by `component-styles.test.ts`, `composition.contract.test.ts` and
+  `approvals.test.ts` (T1); see `/reference/cli/looks`
 
 ## Eval, agents, skills, extensions
 
