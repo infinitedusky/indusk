@@ -54,12 +54,20 @@ function endpoint(env: Env, own: string, rendered: string, path: string): string
 	return `${base.replace(/\/+$/, "")}${path}`;
 }
 
+/** A percent-encoded value decoded; one that is not valid percent-encoding is kept as written. */
+function decoded(value: string): string {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
+}
+
 /** One key of `OTEL_RESOURCE_ATTRIBUTES` (`k=v,k2=v2`), or undefined when it is not set there. */
 function resourceAttribute(env: Env, key: string): string | undefined {
 	for (const pair of (env.OTEL_RESOURCE_ATTRIBUTES ?? "").split(",")) {
 		const eq = pair.indexOf("=");
-		if (eq > 0 && pair.slice(0, eq).trim() === key)
-			return decodeURIComponent(pair.slice(eq + 1).trim());
+		if (eq > 0 && pair.slice(0, eq).trim() === key) return decoded(pair.slice(eq + 1).trim());
 	}
 	return undefined;
 }
