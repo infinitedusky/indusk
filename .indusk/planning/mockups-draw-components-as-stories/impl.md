@@ -428,6 +428,7 @@ This plan taught approvals to remember the app's element rules, but it did so be
 
   </details>
   Note: reconfirmed — `ui/ProjectCard.tsx` is presentational and `components/ProjectCard.tsx` adapts registry data; no change in this phase.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
 
