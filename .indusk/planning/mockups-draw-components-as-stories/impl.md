@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "78484b2bc83005ef1e5131a986078b2f0812bf72db3823fed2f4aee6a1507981"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-17T02:59:49.970Z"
 ---
 
 # Mockups draw components as their stories do
