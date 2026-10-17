@@ -205,6 +205,11 @@ function writeTarget(
 				firstScaffold = true;
 				console.info(`  create: ${file.projectPath} (${file.purpose})`);
 				break;
+			case "removed":
+				console.info(
+					`  left out: ${file.projectPath} (you removed it; delete its entry in .indusk/scaffold.json to have it back)`,
+				);
+				break;
 			case "refresh":
 				if (!file.current) {
 					writeFileSync(abs, file.rendered);

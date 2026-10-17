@@ -11,13 +11,14 @@ import { createHash } from "node:crypto";
 export type Runtime = "nextjs" | "browser" | "python" | "node";
 
 /**
- * - `create`: the file is missing; write the rendering.
+ * - `create`: the file is missing and InDusk has no record of writing it (or `force`); write the rendering.
+ * - `removed`: the file is missing but InDusk recorded writing it, so a person deleted it; write nothing.
  * - `refresh`: the file is what InDusk recorded writing; write the newer rendering over it.
  * - `record`: the file already is the rendering; record it as InDusk's.
  * - `beside`: the file is not what InDusk recorded (edited, or never InDusk's); leave it and
  *   write the rendering beside it as `<file>.indusk-new`.
  */
-export type FileAction = "create" | "refresh" | "record" | "beside";
+export type FileAction = "create" | "removed" | "refresh" | "record" | "beside";
 
 export const BESIDE_SUFFIX = ".indusk-new";
 
@@ -28,8 +29,9 @@ export function sha256(text: string): string {
 /**
  * What to do with one file. Only a file whose content hashes to what InDusk recorded is
  * written over, so a person's edit and a file InDusk never wrote are never lost; a lost
- * record makes every file unrecorded, and an unrecorded file is never overwritten.
- * `force` (init's `--force`) overwrites whatever is there.
+ * record makes every file unrecorded, and an unrecorded file is never overwritten. A recorded
+ * file that is gone was deleted by a person and stays deleted.
+ * `force` (init's `--force`) overwrites whatever is there and brings back what was deleted.
  */
 export function decideFile(f: {
 	current: string | null;
@@ -37,7 +39,7 @@ export function decideFile(f: {
 	rendered: string;
 	force?: boolean;
 }): { action: FileAction } {
-	if (f.current === null) return { action: "create" };
+	if (f.current === null) return { action: f.recorded !== null && !f.force ? "removed" : "create" };
 	if (f.force) return { action: "refresh" };
 	if (f.recorded !== null && sha256(f.current) === f.recorded) return { action: "refresh" };
 	if (f.current === f.rendered) return { action: "record" };
