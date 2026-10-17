@@ -5,9 +5,11 @@ import {
 	daemonStart,
 	daemonStatus,
 	daemonStop,
-	isPortListening,
 } from "../../lib/telemetry/daemon.js";
+import { realDaemonReads } from "../../lib/telemetry/daemon-reads.js";
+import { daemonState, renderStatus } from "../../lib/telemetry/daemon-state.js";
 import { deregisterProject, readRegistry, registerProject } from "../../lib/telemetry/registry.js";
+import { induskHome, portAnswers } from "../../lib/telemetry/status.js";
 
 /**
  * Re-write the `jaeger` MCP server entry across every registered project's
@@ -212,24 +214,14 @@ export async function telemetryRestart(opts: TelemetryRestartOptions = {}): Prom
  * project count (read from the registry at `~/.indusk/telemetry/projects.json`).
  */
 export async function telemetryStatus(): Promise<void> {
-	const status = await daemonStatus();
+	const home = induskHome();
+	const state = daemonState(realDaemonReads(home), home);
+	const answers =
+		state.meta !== null && state.kind === "running" ? await portAnswers(state.meta) : {};
 	const projectCount = readRegistry().projects.length;
 	const projectLabel = projectCount === 1 ? "project" : "projects";
 
-	if (!status.running) {
-		console.info("Telemetry daemon: not running");
-		console.info(`Registered ${projectLabel} ${projectCount}`);
-		return;
-	}
-
-	const uiListening = await isPortListening(status.uiPort);
-	const otlpListening = await isPortListening(status.otlpPort);
-	const portSuffix = uiListening && otlpListening ? "" : " (port not yet accepting connections)";
-	console.info(`Telemetry daemon: running${portSuffix}`);
-	console.info(`  OTLP:      http://localhost:${status.otlpPort}`);
-	console.info(`  Jaeger UI: http://localhost:${status.uiPort}`);
-	console.info(`  PIDs:      jaeger=${status.jaegerPid} otelcol=${status.otelcolPid}`);
-	console.info(`  Started:   ${status.startedAt}`);
+	for (const line of renderStatus(state, answers)) console.info(line);
 	console.info(`Registered ${projectLabel} ${projectCount}`);
 }
 

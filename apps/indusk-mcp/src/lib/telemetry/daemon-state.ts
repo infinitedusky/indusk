@@ -132,6 +132,11 @@ export function renderStatus(state: DaemonState, answers: Record<number, PortAns
 			lines.push(`Telemetry daemon: ${label}`);
 			if (meta !== null) {
 				for (const { name, port } of recordedPorts(meta)) {
+					lines.push(`  ${`${name}:`.padEnd(11)}http://localhost:${port}`);
+				}
+				lines.push(`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`);
+				lines.push(`  Started:   ${meta.startedAt}`);
+				for (const { name, port } of recordedPorts(meta)) {
 					const a = answers[port];
 					if (a?.answer === "timeout") {
 						lines.push(`  ${name}: :${port} did not answer in ${a.waitedMs} ms (slow, not gone)`);
