@@ -578,7 +578,7 @@ test run's spans are marked as test-made. An app that already sets up OpenTeleme
 gets only the helper, and the seat-holds example writes its signal through it. The
 next phase then makes what init prints and the skills teach match all of this.
 
-- [ ] Add the keys an app's signal and resource carry to the package's vocabulary, move the environment key there, and reverse the comment that says an app's spans carry no project.
+- [x] Add the keys an app's signal and resource carry to the package's vocabulary, move the environment key there, and reverse the comment that says an app's spans carry no project.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/vocabulary.ts`: `APP_SIGNAL_KEYS = { promise, clause, outcome, violatedEvent, symptom, value: "indusk.signal.value", bound: "indusk.signal.bound", plan: "indusk.signal.plan", phase: "indusk.signal.phase" }` (the first five from `PROMISE_MARK`), `APP_RESOURCE_KEYS = { project: "indusk.project", environment: "deployment.environment", run: "indusk.run" }`, `TEST_RUN_VALUE = "test"`. `lib/promises/telemetry.ts` imports `ENVIRONMENT_ATTRIBUTE` from the vocabulary. `promises-single-definition.test.ts` stays green.

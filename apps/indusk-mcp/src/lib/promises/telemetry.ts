@@ -1,7 +1,13 @@
 import { sanitizeGroupId } from "../config.js";
 import { daemonMetaPath, resolveLocalDaemonHere } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
-import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome, readOutcome } from "./vocabulary.js";
+import {
+	ENVIRONMENT_ATTRIBUTE,
+	LOOK_MARK,
+	PROMISE_MARK,
+	type PromiseOutcome,
+	readOutcome,
+} from "./vocabulary.js";
 
 /**
  * The one query for promise marks (day-monitor, ADR D4).
@@ -156,14 +162,6 @@ export interface JaegerTrace {
 	spans: JaegerSpan[];
 	processes: Record<string, { serviceName: string; tags?: JaegerTag[] }>;
 }
-
-/**
- * OpenTelemetry's own resource attribute for the deployment environment. We
- * read the conventional name rather than invent an `indusk.` one: a system
- * that is already instrumented has set this, and asking it to set a second
- * attribute for us is asking it to carry InDusk in its code (ADR D6).
- */
-export const ENVIRONMENT_ATTRIBUTE = "deployment.environment";
 
 export const DEFAULT_TIMEOUT_MS = 5_000;
 /** Jaeger's own default is 20 traces per query, which would silently truncate a busy window. */
