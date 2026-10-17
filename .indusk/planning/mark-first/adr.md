@@ -1,10 +1,10 @@
 ---
-title: "Signal first"
+title: "Tests and telemetry linked to clauses"
 date: 2026-10-16
 status: proposed
 ---
 
-# Signal first
+# Tests and telemetry linked to clauses
 
 ## Goal
 
@@ -21,23 +21,23 @@ closing a plan whose promises are stated as clauses (`plans-are-promises`, lande
 a signal that is only a copy of a test's assertion run in production, which fails exactly where the test would have and misses what it missed; a closing step that trusts a State cell; and a break that reaches the agent naming files, not the clause it was about.
 
 **We decided for:**
-closing and landing that run the tests a clause's rows name and report by clause; a closing that also asks the local daemon whether each clause's signal has reported upheld in a real run; spans and incidents keyed by `promise` and `clause`, with the plan and phase that added the signal as a pointer; readers that ignore a signal produced by a test run; a promise's standing as the worst of its clauses, a resting clause's as the standing of the promise it rests on; and a seventh audit question that hands each concern to the signal loop, answered with a signal, a fix or a reason.
+closing and landing that run the tests a clause's rows name and report by clause; a closing that also asks the local daemon whether each clause's signal has reported upheld in a real run; spans and incidents keyed by `promise` and `clause`, with the plan and phase that added the signal as a pointer; readers that ignore a signal produced by a test run; a promise's standing as the worst of its clauses, a resting clause's as the standing of the promise it rests on.
 
 **And against:**
-replacing tests with signals; deriving a signal from the test that proves the same clause; letting the agent say in the impl that a signal reported; keying an incident by phase; closing on production traffic; and a separate plan for the audit change.
+replacing tests with signals; deriving a signal from the test that proves the same clause; letting the agent say in the impl that a signal reported; keying an incident by phase; and closing on production traffic.
 
 **To achieve:**
-telemetry as a first-class proof beside tests: tests as the map the agent builds against, signals as the check in the territory, a break that points at its clause, and an audit whose concerns become things the system watches.
+telemetry as a first-class proof beside tests: tests as the map the agent builds against, signals as the check in the territory, and a break that points at its clause.
 
 **Accepting:**
-that a signal is detective, so a first break reaches a person; that closing waits on the daemon and on a test run; that a rarely run path leaves its clause on "no signal" for a long time; that a checkout on an older InDusk refuses the registry state `known-broken`; and that the second promise (the audit) shares little code with the first.
+that a signal is detective, so a first break reaches a person; that closing waits on the daemon and on a test run; that a rarely run path leaves its clause on "no signal" for a long time; and that a checkout on an older InDusk refuses the registry state `known-broken`.
 
 **Because:**
 a signal derived from the clause's own sentence runs on inputs nobody chose and fails where no test could; every proof that an agent can state without anyone reading it can be gamed, so the proof must be read from the system; and the clause is the one key that outlives the phase that wrote the signal.
 
 ## Context
 
-[research.md](research.md) has the origin (the 2026-10-14 conversation, the two bugs found by use, the 100 m dash of splits and limits), what changed since the brief was accepted (a plan holds promises; `plans-are-promises` and `one-promise-language` landed), and what was carried. [brief.md](brief.md) makes two promises, `a-clause-is-proved-twice` (four clauses) and `an-audit-concern-gets-a-solution` (two), and [test-plan.md](test-plan.md) is the clause plan with 32 assertions. This ADR answers "what makes all of them true".
+[research.md](research.md) has the origin (the 2026-10-14 conversation, the two bugs found by use, the 100 m dash of splits and limits), what changed since the brief was accepted (a plan holds promises; `plans-are-promises` and `one-promise-language` landed), and what was carried. [brief.md](brief.md) makes one promise, `a-clause-is-proved-twice` (four clauses), and [test-plan.md](test-plan.md) is the clause plan (the audit's rows moved with it to its own plan on 2026-10-17). This ADR answers "what makes all of them true".
 
 ## Decision
 
@@ -49,7 +49,7 @@ a signal derived from the clause's own sentence runs on inputs nobody chose and 
 
 **D4. Standing is read from the clauses.** A promise's standing is the worst of its clauses (broken, then no signal, then holding); a clause that rests on another promise has that promise's standing; a promise made only of resting clauses closes when those promises are in force, with no row of its own (the gap `plans-are-promises`' audit left). A clause with no report reads no signal everywhere it is shown, a watcher past its heartbeat reads no signal even if the clause last reported upheld, and a split is broken by missing its budget at its point while a limit is broken by one report over its bound. A8, A12–A15.
 
-**D5. The audit hands its concerns to the signal loop.** `/audit` gets a seventh question — for each concern above, what signal would show us if it breaks, and if telemetry is not the answer, say so — with three answers: a signal (the invariant checked, where it is emitted, which clause it would uphold, how often it would fire, what happens if its first break reaches a user), a fix (a wrong sentence or a missing guard), or nothing with the reason. It offers the kinds of signal as a menu: an outcome where it is felt, an invariant checked on each read, a postcondition after an operation, an expected event that did not happen, a policy that must never be crossed. A test is written when a signal breaks, not up front for every imagined failure; the tests that prove a clause before release stay. The audit remains advisory: no gate reads what it says, and an audit written with six answers still lets the retrospective start. The source is `apps/indusk-mcp/skills/audit.md`; the copy under `.claude/skills/` is synced from it. A19–A24, A28. Confidence: high.
+**D5. The audit's question is its own plan.** Split out on 2026-10-17 (Sandy): the audit promise shares little code with this one (the audit skill against the closing and signal readers), and who answers a concern is still open. This plan's signals do not wait on it.
 
 **D6. Signals are derived from the clause, not from a test.** A clause plan's `Signal:` line says where the signal is read and what upheld and broken report, from the clause's sentence; a line that points at a test file is not a signal. This is what makes telemetry fail where no test could. Moderate confidence it pays off outside `behaviour` promises: for pure rules a test proves completely, a signal mostly duplicates the test, and the plan does not force one there.
 
@@ -76,8 +76,8 @@ Rejected, against A17. A phase ends with its plan and its notes can be archived;
 ### Close on production traffic
 Rejected for now. dusk and most projects have no production traffic when a plan closes; "a run of the real system" through the local daemon is the closing condition, and the production source is read afterwards, by the watcher. `promise-sources` already reads both.
 
-### A separate plan for the audit change
-Considered. The audit promise shares little code with the clause promise (the skill and its parity test against the closing and signal readers), so under the planner's own rule it could be a plan under a master. It stays here because it is small, because its question is how signals get written (it is the front door of this plan), and because Sandy asked for it in this plan. A promise of its own keeps its clause plan separate and the first promise's sentence honest.
+### Keep the audit change in this plan
+Rejected on 2026-10-17 (Sandy), reversing the earlier choice to keep it here: it shares little code with the clause promise, and its open question (whether the auditor or the plan's agent answers a concern) would hold this plan up.
 
 ### Keep writing `known-violated` for older InDusks
 Rejected (D8).
@@ -88,7 +88,6 @@ Rejected (D8).
 - A plan cannot close on a document alone: its tests run and its signals report.
 - A break leads from its clause to its tests, its signal's emit place, and the phase that added it.
 - Silence never reads as health: no report and a blind watcher both read no signal.
-- Audit concerns become things the system watches; tests grow from what really broke.
 - One word for one thing.
 
 ### Negative
@@ -98,7 +97,7 @@ Rejected (D8).
 - A checkout on an older InDusk refuses `known-broken` (D8).
 
 ### Risks
-- Signals multiply and the useful ones are lost: the audit's three answers and its fire-rate question are the guard, and a signal answer must name its clause.
+- Signals multiply and the useful ones are lost: a signal must name its clause (D1); the audit plan's fire-rate question is the second guard once it lands.
 - Closing on the daemon makes a stopped daemon block every close: the refusal says the daemon is not running and how to start it, never "no signal" as a pass.
 - The `indusk.run=test` marker is missed by a writer: A6 fails at the writer's own test.
 - Two tests (A29, the content check on a clause's test file) may produce false refusals; it is marked droppable and ships only if it does not.
@@ -109,14 +108,14 @@ Rejected (D8).
 - New: `decisions/mark-first.md`, published from this ADR (`/decisions/mark-first`).
 - New: `guide/signals.md` — what a signal is, derived from the clause and not from a test, the kinds, fire rate, and how a break names its clause.
 - Update: `guide/briefs.md` ("Promises as clauses": the clause's signal and the two proofs) and `guide/test-trajectory.md` (closing runs the clause's tests).
-- Update: `reference/skills/audit.md` (the seventh question and its three answers) and `reference/skills/plan.md` (tasks are imperative).
+- Update: `reference/skills/plan.md` (tasks are imperative).
 - Update: `reference/cli/promises.md` (what closing reads) and `guide/context-tiers.md` only if the root's Key Decisions grows.
 
 ### Diagrams
 - A Mermaid flow in `guide/signals.md`: a clause with its tests (before release) and its signal (in use), joined at the clause key; a broken report arriving at the incident with the clause, the pointer and the tests reached from it.
 
 ### Changelog
-- Added: a clause is proved by its tests and its signal; a break names its clause; the audit asks for a signal, a fix or a reason for each concern; one word, signal.
+- Added: a clause is proved by its tests and its signal; a break names its clause; one word, signal.
 
 ### ADR in Docs
 - Yes: `decisions/mark-first.md`.

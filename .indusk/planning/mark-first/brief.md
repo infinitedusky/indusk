@@ -1,13 +1,13 @@
 ---
-title: "Signal first"
+title: "Tests and telemetry linked to clauses"
 date: 2026-10-14
 status: accepted
 workflow: feature
 clauses: required
-description: "Each clause of a promise is verified by its tests before release and upheld by its signal — telemetry from the running system — in use; a plan written as clauses closes when both say so; a break names its clause; an audit concern is answered with a fix or a signal."
+description: "Each clause of a promise is linked to its tests and to its telemetry: its tests check it before release, its signal reports it from the running system, and a plan written as clauses finishes only when both say it holds; a break names its clause."
 ---
 
-# Signal first — Brief
+# Tests and telemetry linked to clauses — Brief
 
 A clause is proved twice: verified by its tests before release, upheld by its
 signal in use. The last of three plans that split the first cut of the merged
@@ -47,17 +47,11 @@ background, the merge with `promise-first-build`, and the later cut are in
    - **`no-signal-is-not-holding`** (limit). A clause whose signal has never reported, or whose watcher is blind, reads no signal and never reads as holding.
    - **`a-break-names-its-clause`** (split). When a clause's signal reports broken, the signal's event and the incident it opens name the promise and the clause, and point to the plan and phase that added the signal; its tests are reachable from the clause.
 
-2. **`an-audit-concern-gets-a-solution`** (state). Each concern an audit raises is answered with a fix, a signal that would show it breaking, or the reason nothing is needed.
-   - **`every-concern-is-answered`** (split). The audit asks, for each concern it raised, what signal would show it breaking, and the answer is a fix, a signal (the invariant checked, where it is emitted, how often it would fire and what happens if its first break reaches a user) or nothing with the reason.
-   - **`a-signal-answer-names-its-clause`** (split). A signal an audit proposes names the clause it would uphold, and a concern no clause covers says so.
-
 ### Existing promises
 
 **Must not break**
 
 - **`a-production-break-is-recorded-unasked`**. A broken clause becomes an incident the same way a broken promise does today.
-- **`an-audit-blocks-nothing`**. The new question changes no gate: the retrospective still reads that audit.md exists, never what it says.
-- **`a-plan-is-audited-by-a-fresh-reader-before-it-closes`**. The audit is still read cold by a reader that has not seen the building session; it gains one question.
 - **`a-plan-holds-the-promises-it-lands`**. A plan still holds one or more promises, each stated as clauses with a clause plan before the ADR, and still closes per clause: this plan adds the signal to what proves a clause and takes none of that away.
 - **`a-break-reaches-the-working-agent`**. A broken clause reaches the agent the same way.
 - **`everyday-suite-stays-fast`**. Signals add no waiting to the everyday suite.
@@ -73,6 +67,7 @@ None.
 
 ### Not promised
 
+- **The audit's answer to each concern** (a fix, a signal, or the reason nothing is needed): its own plan, split out on 2026-10-17 (Sandy). It shares little code with this one, and who answers a concern — the auditor or the plan's agent — is open there.
 - **The later cut**, after `run-the-master`: a break leading to its cause, a diagnosis with every break, every broken trace kept, signals from the browser, every break becoming a test, approvals giving way to questions, and the promise page's clause views (research.md, "First cut").
 - **Removing tests.** Tests verify before release and guard against regression (Sandy: "the regression is fucked if you remove the tests").
 - **Signals on every line**, and **gradual rollout** — later, if incidents ask for them.
@@ -90,7 +85,7 @@ Work this plan takes on that is not a promise of its own. Each is built here and
 - **One word, signal.** The telemetry a clause carries is called a signal everywhere: skills, docs, tool descriptions and code comments say signal where they said mark. Exempt: the Day 4b entry in the root `CLAUDE.md` and the archived plans and decisions (history), and this plan's own name until it closes. (`one-promise-language` settled the word; this plan does the cleanup.)
 - **The writers switch from `violated` to `broken`.** InDusk's own writers — `markPromise` and `scripts/suite-speed.js` — write `broken` (the demo app's writer is the scaffold plan's, through its helper); every reader still reads both. The editor's health line (`indusk promises health --json`, `runs[].outcome`) keeps `violated` until the editor extension shipped with the language release has been out a release, and is switched then, not here.
 - **The registry state `known-broken` and older InDusks.** A checkout on an InDusk older than the language release refuses it. Whether that matters is decided in the ADR.
-- **InDusk's own commands get one tracer.** Closing, the audit step and the incident writer emit the spans this plan's own clauses are read by, through one tracer provider for the package's commands that exports to the local daemon and is silent when none runs; `new_project.create` reaches the daemon through it too.
+- **InDusk's own commands get one tracer.** Closing and the incident writer emit the spans this plan's own clauses are read by, through one tracer provider for the package's commands that exports to the local daemon and is silent when none runs; `new_project.create` reaches the daemon through it too.
 - **Tasks are written in the imperative.** The planner's phase-summary rule says a task reads as work to do ("Make the browser template's test project read the pre-bundle list from the root configuration"); verification items stay as end states that must hold. For new impls only.
 
 Waiting for a plan to take them, in `known-issues.md`: three promises `new-project-flow`'s audit found held only because the prompt says so, `change` and `replace` not carrying clauses (with the MCP `clauses` argument having no row), and `indusk plans start` failing under `indusk init --local`.
