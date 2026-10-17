@@ -3181,10 +3181,10 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 ---
 
-## Session 5feb490a — starting catchup
+## Session 5feb490a — Maintenance: demo-app-template incidents (stale demo test words), then slow look tests vs dev-server refusal
 
 **Session ID**: 5feb490a-2253-4dc8-a75e-50679a24f52e
-**Last updated**: 2026-10-17T01:51:42.257Z
+**Last updated**: 2026-10-17T02:09:27.217Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
