@@ -100,7 +100,7 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 
 A plan's page draws the three parts of its brief above the plan's stage, each with its name and state first and the detail one click on ([Briefs](/guide/briefs)):
 
-- **Promises** — the registry rows the plan owns (and any the brief makes that the registry lacks, marked `unregistered`), each a pill with its state: declared, enforced or known-broken. The pill's dot is the promise's health in the Promises page's colours (broken, broke and fixed, holding, no signal, known broken), read from the same rule as the nav's red dot; a state or structure promise, which telemetry says nothing about, keeps the colour of its registry state.
+- **Promises** — the registry rows the plan owns (and any the brief makes that the registry lacks, marked `unregistered`), each a pill with its state: declared, enforced or known-broken. The pill's dot is the promise's health in the Promises page's colours (broken, broke and fixed, holding, no signal, known broken), read from the same rule as the nav's red dot, so a behaviour promise new on the plan's branch shows no signal until telemetry reports on it; a state or structure promise, which telemetry says nothing about, keeps the colour of its registry state.
 - **Expectations** — the brief's expectations, each with when to look at it; one whose time has come is drawn warm.
 - **Looks** — each look the brief makes, changes, replaces or must not break, its row showing approved or proposed (a look not yet drawn reads *uncovered*). Open shows the look in the Looks page's frame at the app's reference devices; a look is approved only on the Looks page, in the checkout the plan is worked in, never here.
 
