@@ -260,10 +260,18 @@ export interface ResolveOpts {
 	by?: string;
 }
 
-/** The record's ports when a reader can reach the daemon through them: both processes are InDusk's and the traces and interface ports are known. */
+/** The record's ports when a reader can reach the daemon through them: the traces and interface ports are known. */
 function reachable(meta: DaemonMeta | null): DaemonMeta | null {
 	return meta !== null && meta.otlpPort > 0 && meta.uiPort > 0 ? meta : null;
 }
+
+/**
+ * Whether a reader follows the record: both recorded processes run, or the
+ * Jaeger does (traces and the interface are Jaeger's; only logs need the
+ * collector, and `status` reports that daemon broken).
+ */
+const followsRecord = (state: DaemonState): boolean =>
+	state.kind === "running" || (state.kind === "partial" && state.recorded.jaeger);
 
 /**
  * The local daemon a reader should reach, or `null` when none runs.
@@ -288,7 +296,7 @@ export interface ReachedDaemon {
 /** `resolveLocalDaemon`, saying how the daemon was reached, for the reader whose report depends on it. */
 export async function resolveLocalDaemonVia(opts: ResolveOpts): Promise<ReachedDaemon | null> {
 	const state = daemonState(opts.reads, opts.home);
-	if (state.kind === "running") {
+	if (followsRecord(state)) {
 		const meta = reachable(state.meta);
 		return meta === null ? null : { meta, via: "record" };
 	}
@@ -302,7 +310,7 @@ export async function resolveLocalDaemonVia(opts: ResolveOpts): Promise<ReachedD
 /** `resolveLocalDaemon` for a synchronous caller: the evaluator decides its exporter at init. */
 export function resolveLocalDaemonSync(opts: ResolveOpts): DaemonMeta | null {
 	const state = daemonState(opts.reads, opts.home);
-	if (state.kind === "running") return reachable(state.meta);
+	if (followsRecord(state)) return reachable(state.meta);
 	if (state.kind !== "found") return null;
 	return reachable(findDaemonSync(opts.reads, opts.home, opts.by ?? "reader")?.meta ?? null);
 }
