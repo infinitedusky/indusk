@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import {
 	ADDRESS_ROLES,
 	chooseAddress,
@@ -13,7 +14,7 @@ import {
 	type StoredAddress,
 } from "./daemon-address.js";
 import { type Candidate, candidatesOf, type Found, takeOverLocked } from "./daemon-find.js";
-import { daemonProcessOf, homeKind, realTempRoots } from "./daemon-process.js";
+import { daemonProcessOf, homeKind, isOwn, realTempRoots } from "./daemon-process.js";
 import type { DaemonReads } from "./daemon-reads.js";
 import { type DaemonState, daemonState } from "./daemon-state.js";
 import type { DaemonMeta } from "./status.js";
@@ -119,7 +120,12 @@ function heldOf(ports: Ports, holders: Record<number, Holder | null>): PortHolde
 }
 
 /** What a person reads for a start that could not go ahead, and what to do about it. */
-export function refusalText(plan: StartPlan, home: string, address: StoredAddress | null): string {
+export function refusalText(
+	plan: StartPlan,
+	home: string,
+	address: StoredAddress | null,
+	exists: (path: string) => boolean = existsSync,
+): string {
 	if (plan.kind === "refuse-several") {
 		return [
 			"Refusing to take over: several InDusk daemons run and none holds the stored traces port.",
@@ -136,9 +142,22 @@ export function refusalText(plan: StartPlan, home: string, address: StoredAddres
 	if (plan.kind !== "refuse") return "";
 	const lines = ["Refusing to start: a port of the daemon is held by something else."];
 	for (const holder of plan.holders) lines.push(`  ${describeHolder(holder)}`);
-	if (plan.holders.some((h) => daemonProcessOf(h.command) !== null)) {
+	const daemons = plan.holders.flatMap((h) => {
+		const proc = daemonProcessOf(h.command);
+		return proc === null ? [] : [proc];
+	});
+	// `reap` stops this home's strays and orphans (a daemon whose config file is gone); another live home's daemon is stopped from there.
+	if (daemons.some((d) => isOwn(d, home) || !exists(d.configPath))) {
 		lines.push(
-			"  An InDusk daemon that is not this home's: `indusk telemetry reap` stops an orphan.",
+			"  An InDusk daemon that is this home's stray or an orphan: `indusk telemetry reap` stops it.",
+		);
+	}
+	const homes = new Set(
+		daemons.filter((d) => !isOwn(d, home) && exists(d.configPath)).map((d) => d.home),
+	);
+	for (const other of homes) {
+		lines.push(
+			`  An InDusk daemon of another home, ${other}: stop it there with \`INDUSK_HOME=${other} indusk telemetry stop\`.`,
 		);
 	}
 	if (homeKind(home, realTempRoots()) === "real" && address !== null) {
@@ -242,6 +261,7 @@ export async function ensureDaemon(
 		const holders =
 			startState.kind === "running" ? {} : reads.holders(portsToCheck(real, address, given));
 		const unreadable = real ? reads.addressProblem() : null;
+		const exists = (path: string): boolean => reads.stat(path) !== null;
 		const plan = startPlan(startState, holders, home, {
 			address,
 			unreadable,
@@ -253,10 +273,14 @@ export async function ensureDaemon(
 			case "running":
 				return { kind: "running", meta: state.meta as DaemonMeta };
 			case "refuse":
-				return { kind: "refused", text: refusalText(plan, home, address), holders: plan.holders };
+				return {
+					kind: "refused",
+					text: refusalText(plan, home, address, exists),
+					holders: plan.holders,
+				};
 			case "refuse-several":
 			case "refuse-address":
-				return { kind: "refused", text: refusalText(plan, home, address), holders: [] };
+				return { kind: "refused", text: refusalText(plan, home, address, exists), holders: [] };
 			case "takeover": {
 				if (plan.store) reads.writeAddress(plan.store, { exclusive: true });
 				const found = takeOverLocked(reads, home, { tracesPort: plan.tracesPort });
