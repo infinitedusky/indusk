@@ -256,7 +256,8 @@ changed; and Sandy approves the changed `message.you` story.
   `home.default.html`'s `.btn.primary` drew in `--color-dusk` (orange); the page's `NewProjectLink` is `buttonClasses("primary")` — `bg-ink`, `border-ink`, `text-surface`.
 
   </details>
-- [ ] Pause for a person: Sandy approves the changed message story.
+- [x] Pause for a person: Sandy approves the changed message story.
+  Note: approved in the cockpit 2026-10-17 17:11Z — the six message stories, the three project-card stories and `home.default` (`indusk looks status admin`).
   <details><summary>Technical</summary>
 
   `message.you` in the cockpit's Looks page, now wrapping; approval is Sandy's.
