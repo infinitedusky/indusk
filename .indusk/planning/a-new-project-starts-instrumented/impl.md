@@ -396,7 +396,7 @@ makes the placement, naming, address and environment tests pass.
 
 #### Test Phase 1 Document
 
-- [ ] Check the test plan still matches the tests as written, and correct it where a test had to say more.
+- [x] Check the test plan still matches the tests as written, and correct it where a test had to say more.
   <details><summary>Technical</summary>
 
   `test-plan.md`, the rows of this phase; no docs page yet.
