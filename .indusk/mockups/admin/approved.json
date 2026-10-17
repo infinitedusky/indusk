@@ -8191,6 +8191,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:47:15.752Z",
 			"plan": "mockups-draw-components-as-stories"
+		},
+		{
+			"kind": "story",
+			"story": "project-card.workbench",
+			"snapshotHash": "b02d5f7490b6d905cea4ccfb207c0bee41a50e8c35181c50baaa29f92332378a",
+			"stylesheetHash": "6d830055ab28d18c3c9d616942ec9ad270d627d5a3ae4b2e2d6604348a042c17",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-17T17:47:16.088Z",
+			"plan": "mockups-draw-components-as-stories"
 		}
 	]
 }
