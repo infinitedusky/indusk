@@ -1157,7 +1157,7 @@ A reader who did not build this plan found two places where the code does not do
   `daemonState` in `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts:88-91`: when `kind` would be `stale` and `unnamed` is non-empty, read it as `found` (`found` = the unnamed processes, `strays` empty), per the ADR's decision on a stale record. The finder in `lib/telemetry/daemon-find.ts` writes the record with an exclusive create, which fails while the stale file exists: under the home's lock, remove a record whose processes are all dead (re-read by `daemonProcessOf`) before the create, and only then. `reapPlan` (`lib/telemetry/reap-plan.ts:27`) already stops nothing in the `found` state. Answers row A36 and the audit's first finding.
 
   </details>
-- [ ] Reap stops daemons whose home has been deleted, and still never a live daemon.
+- [x] Reap stops daemons whose home has been deleted, and still never a live daemon.
   <details><summary>Technical</summary>
 
   `reapPlan` returns `state.strays` only; return this home's strays plus `state.orphans` (a process whose `--config` file is gone, re-read before signalling as today). Not in the `found` state's protection: an orphan's home is gone, so it is no one's daemon. Keep the refusal text at `lib/telemetry/start-plan.ts:138` true. Answers row A37 and the audit's orphan finding.
