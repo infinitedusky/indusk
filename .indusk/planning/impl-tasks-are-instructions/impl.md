@@ -230,7 +230,7 @@ rewords every place it names, so the change cannot be partial again.
   `apps/indusk-mcp/src/lib/shape/` (the item it writes), `apps/indusk-mcp/hooks/_phase-summary.js`, `apps/indusk-mcp/hooks/validate-impl-structure.js`, and `src/__tests__/helpers/phase-summary-fixture.ts` if it carries the old text; keep any test asserting a refusal message in step.
 
   </details>
-- [ ] Reword the docs guide pages that still teach the old rule.
+- [x] Reword the docs guide pages that still teach the old rule.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/test-trajectory.md`, `apps/docs/src/guide/briefs.md`, and any other page A5 names.
