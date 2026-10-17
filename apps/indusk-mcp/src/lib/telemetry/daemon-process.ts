@@ -1,6 +1,7 @@
 import { realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import type { ProcessRow } from "./daemon-reads.js";
 
 /**
  * What an InDusk daemon process is: one definition for status, the finding,
@@ -95,4 +96,17 @@ export function isTemporary(
 /** Whether `p`'s config file is gone: its home was deleted underneath it. */
 export function isOrphan(p: DaemonProcess, exists: (path: string) => boolean): boolean {
 	return !exists(p.configPath);
+}
+
+/** A daemon process of this home, as the process list and its sockets show it. */
+export interface OwnProcess {
+	pid: number;
+	role: DaemonProcess["role"];
+	binary: string;
+	startedAt: string | null;
+	ports: number[];
+}
+
+export function ownProcess(row: ProcessRow, proc: DaemonProcess, ports: number[]): OwnProcess {
+	return { pid: row.pid, role: proc.role, binary: proc.binary, startedAt: row.startedAt, ports };
 }

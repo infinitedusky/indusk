@@ -3,8 +3,10 @@ import { join } from "node:path";
 import { markPromise } from "../promises/mark.js";
 import { type SpanEvent, sendWatcherSpan, watcherSpanBody } from "../promises/probe.js";
 import { portDifferences, ROLE_LABEL } from "./daemon-address.js";
+import type { Found } from "./daemon-find.js";
+import type { OwnProcess } from "./daemon-process.js";
 import type { DaemonReads } from "./daemon-reads.js";
-import type { DaemonState, Found, OwnProcess, SelfTracing } from "./daemon-state.js";
+import type { DaemonState, SelfTracing } from "./daemon-state.js";
 
 /**
  * What each InDusk command reports about the daemon, as spans the daemon

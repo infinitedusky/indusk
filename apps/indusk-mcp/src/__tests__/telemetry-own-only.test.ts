@@ -2,7 +2,8 @@
 // promise: the-daemon-readers-follow-is-the-one-running
 import { describe, expect, it } from "vitest";
 import { PORT_BLOCK, type StoredAddress } from "../lib/telemetry/daemon-address.js";
-import { candidatesOf, daemonState, takeOverLocked } from "../lib/telemetry/daemon-state.js";
+import { candidatesOf, takeOverLocked } from "../lib/telemetry/daemon-find.js";
+import { daemonState } from "../lib/telemetry/daemon-state.js";
 import { reapPlan } from "../lib/telemetry/reap-plan.js";
 import { startPlan, startStateOf } from "../lib/telemetry/start-plan.js";
 import { type StopDeps, stopDaemon } from "../lib/telemetry/stop.js";

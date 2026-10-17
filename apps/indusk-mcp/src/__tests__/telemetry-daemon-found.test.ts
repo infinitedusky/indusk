@@ -1,8 +1,8 @@
 // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
 // promise: the-daemon-readers-follow-is-the-one-running
 import { describe, expect, it } from "vitest";
+import { describeFinding, findDaemon } from "../lib/telemetry/daemon-find.js";
 import { listeningFromProc } from "../lib/telemetry/daemon-reads.js";
-import { describeFinding, findDaemon } from "../lib/telemetry/daemon-state.js";
 import { BLOCK, collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
 
 /**

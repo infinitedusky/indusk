@@ -3,12 +3,11 @@ import { join } from "node:path";
 import { readMcpJson, removeJaegerEntry, upsertJaegerEntry } from "../../lib/mcp-config.js";
 import { daemonRestart, daemonStop, startDaemon } from "../../lib/telemetry/daemon.js";
 import { addressReport, resetAddress } from "../../lib/telemetry/daemon-address.js";
+import { describeFinding, findDaemon } from "../../lib/telemetry/daemon-find.js";
 import { realDaemonReads } from "../../lib/telemetry/daemon-reads.js";
 import { daemonReports } from "../../lib/telemetry/daemon-reports.js";
 import {
 	daemonState,
-	describeFinding,
-	findDaemon,
 	renderSelfTracing,
 	renderStatus,
 	selfTracingSince,

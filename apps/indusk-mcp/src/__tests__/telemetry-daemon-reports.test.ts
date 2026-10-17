@@ -6,13 +6,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { PickedPort } from "../lib/telemetry/daemon-address.js";
 import { PORT_BLOCK, type Ports } from "../lib/telemetry/daemon-address.js";
+import { findDaemon } from "../lib/telemetry/daemon-find.js";
 import {
 	daemonReports,
 	type ReportState,
 	readerReports,
 	reportReaderRead,
 } from "../lib/telemetry/daemon-reports.js";
-import { daemonState, findDaemon } from "../lib/telemetry/daemon-state.js";
+import { daemonState } from "../lib/telemetry/daemon-state.js";
 import { collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
 
 /**

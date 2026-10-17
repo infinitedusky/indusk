@@ -1,8 +1,9 @@
 import { isOwnProcess } from "../process-identity.js";
+import type { OwnProcess } from "./daemon-process.js";
 import { daemonConfigPath } from "./daemon-process.js";
 import type { DaemonReads } from "./daemon-reads.js";
 import { daemonReports, type Report } from "./daemon-reports.js";
-import { type DaemonState, daemonState, type OwnProcess } from "./daemon-state.js";
+import { type DaemonState, daemonState } from "./daemon-state.js";
 import { type StopDeps, terminate } from "./stop.js";
 
 /**

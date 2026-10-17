@@ -11,16 +11,10 @@ import {
 	ROLE_LABEL,
 	type StoredAddress,
 } from "./daemon-address.js";
+import { type Candidate, candidatesOf, type Found, takeOverLocked } from "./daemon-find.js";
 import { daemonProcessOf, homeKind, realTempRoots } from "./daemon-process.js";
 import type { DaemonReads } from "./daemon-reads.js";
-import {
-	type Candidate,
-	candidatesOf,
-	type DaemonState,
-	daemonState,
-	type Found,
-	takeOverLocked,
-} from "./daemon-state.js";
+import { type DaemonState, daemonState } from "./daemon-state.js";
 import type { DaemonMeta } from "./status.js";
 
 /**
