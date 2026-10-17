@@ -201,7 +201,7 @@ Returns OTLP log records within the window. The tool is gated on `isTelemetryAct
 
 ## What a project is handed {#what-a-project-is-handed}
 
-`indusk init` and every `indusk update` scaffold OpenTelemetry into the project's app through one module (`lib/scaffold/`). The app then reports to the local daemon on its first run, with no file edited by hand and nothing set in its environment.
+`indusk init` and every `indusk update` scaffold OpenTelemetry into the project's app through one module (`lib/scaffold/`). The app then reports to the local daemon on its first run with nothing set in its environment: a Next.js app's server with no file edited by hand, any other app once it adds the one line `init` prints for it (the `wire:` or `import` line).
 
 ```mermaid
 flowchart LR
