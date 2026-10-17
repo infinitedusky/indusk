@@ -1,6 +1,3 @@
-// clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran
-// promise: a-new-project-reports-from-its-first-run
-//
 // a-new-project-starts-instrumented, Build Phase 6: T33 - the demo's spans say where they
 // ran the way a scaffolded app's do: `development` unless something sets the environment.
 // The demo's own `SEAT_HOLDS_ENV` (set to `production` by its Dockerfile and fly.toml)
