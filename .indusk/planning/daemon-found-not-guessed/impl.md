@@ -1012,7 +1012,7 @@ This phase makes the promise heard in the running system. Each part of the promi
 
 This phase tests the finished plan against three ways it could fail and nobody would hear. A daemon whose collector has died is the case the promise most needs to report, and status says nothing about it; a damaged address file is read as no address, so the next start chooses the ports again, which the plan says never happens; and the change that made the promise status command say broken judges a laptop's breaks by the production rule when a project has both. Once it closes, a half-running daemon is reported broken, a damaged address stops a start by name, and the command line says what the admin says for each source.
 
-- [ ] Status reports a daemon whose collector or Jaeger has stopped as broken, naming the process that is gone and the ports it no longer holds.
+- [x] Status reports a daemon whose collector or Jaeger has stopped as broken, naming the process that is gone and the ports it no longer holds.
   <details><summary>Technical</summary>
 
   `telemetryStatus` in `apps/indusk-mcp/src/bin/commands/telemetry.ts` sends only when `state.kind === "running"`; send for `partial` too when the recorded Jaeger is alive (it holds the traces port, so it can receive). `onItsOwnPorts` in `lib/telemetry/daemon-reports.ts` compares the record's ports with the address, not what is held: add the recorded process that is not running, and the stored ports it held, to the broken symptom (`state.recorded.jaeger` / `.otelcol`). Answers row A32.
