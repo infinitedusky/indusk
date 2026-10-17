@@ -955,6 +955,12 @@ This phase makes the promise heard in the running system. Each part of the promi
   Discovered: the live check, row A15, was red only because `promises status` never printed "broken". `formatStatus` in `apps/indusk-mcp/src/lib/promises/status.ts` takes the registry's incidents and prefixes the count line with `broken — ` or `broke — fixed — ` from `healthOf` (`lib/promises/health.ts`); `bin/commands/promises.ts` passes `read.registry.incidents`. Guarded by two cases in `src/__tests__/promises-cli-words.test.ts`. Asked: "Row A15 … is red only on wording … How should it go?" — user: "Make status say broken".
 
   </details>
+- [x] Shape: the report of a finding names only the command that found the daemon, never a made-up one when none was given.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/telemetry/daemon-reports.ts`: dropped `lostFindingOf`, whose fallback named the finder "a command"; the `found` moment reports nothing without `state.finding`. Every caller (`reportFinding`, the A14 test) passes one. Rule: no path a caller cannot reach, and a guessed finder in a symptom is what this plan removes. The rest of the phase's files reviewed, nothing else found.
+
+  </details>
 
 #### Build Phase 5 Verification
 
