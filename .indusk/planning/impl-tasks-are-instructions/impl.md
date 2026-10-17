@@ -46,9 +46,9 @@ hold, so a person reading a phase can tell the work from the checks.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | The planner's impl instructions say a task is an instruction and a verification item what must hold, with a before-and-after pair | Test Phase 1 | Build Phase 1 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
-| A2 | Every task placeholder in the impl, falsify and cleanup templates asks for an instruction; every verification placeholder for what must hold | Test Phase 1 | Build Phase 1 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
-| A3 | The planning rules a project is shipped say the same, and its copy matches the package's | Test Phase 1 | Build Phase 1 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
+| A1 | The planner's impl instructions say a task is an instruction and a verification item what must hold, with a before-and-after pair | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
+| A2 | Every task placeholder in the impl, falsify and cleanup templates asks for an instruction; every verification placeholder for what must hold | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
+| A3 | The planning rules a project is shipped say the same, and its copy matches the package's | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
 | A4 | The templates still pass the save check as written, and an impl written before still validates | Test Phase 1 | Test Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts, apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
 
 ## Checklist
@@ -149,7 +149,7 @@ verification item an end state, then changes the promise's sentence to match.
   `indusk promises change an-impl-phase-explains-itself --plan impl-tasks-are-instructions --statement "Every phase of a new impl opens with a plain summary saying what it does for the whole plan; every task is one plain instruction saying what to do, and every verification item one plain statement of what must hold, each with its technical detail beneath it, written for someone who has worked on the project but knows none of its shorthand: no row labels, no abbreviations, nothing named by a nickname or an unclear pronoun; an impl that leaves out the paragraph or the sentence, or puts a row label in either, is refused." --reason "a checklist of outcomes hid the work from the checks (Sandy)"`
 
   </details>
-- [ ] Review the changed instructions against the extensions' writing rules.
+- [x] Review the changed instructions against the extensions' writing rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
@@ -158,7 +158,7 @@ verification item an end state, then changes the promise's sentence to match.
 
 #### Build Phase 1 Verification
 
-- [ ] The wording tests, the save-check tests and the skill copy check all pass.
+- [x] The wording tests, the save-check tests and the skill copy check all pass.
   <details><summary>Technical</summary>
 
   A1–A4: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/planner-impl-summary-template.test.ts src/__tests__/ritual-templates-phase-summary.test.ts src/__tests__/phase-summary-existing-impls.test.ts src/__tests__/skill-sync-parity.test.ts`
