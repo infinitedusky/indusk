@@ -218,7 +218,9 @@ makes the placement, naming, address and environment tests pass.
   describe("what the scaffold does with one file", () => {
     it.each([
       [{ current: null, recorded: null }, "create"],
+      [{ current: null, recorded: h("rendered v1") }, "create"],
       [{ current: "rendered v1", recorded: h("rendered v1") }, "refresh"],
+      [{ current: NEW, recorded: h(NEW) }, "refresh"],
       [{ current: NEW, recorded: h("rendered v1") }, "record"],
       [{ current: "edited", recorded: h("rendered v1") }, "beside"],
       [{ current: NEW, recorded: null }, "record"],
@@ -264,8 +266,13 @@ makes the placement, naming, address and environment tests pass.
   import { APP_RESOURCE_KEYS, APP_SIGNAL_KEYS } from "../lib/promises/vocabulary.js";
 
   const T = join(__dirname, "../../templates");
+  /** Keys in code only: line comments, block comments and Python comments are dropped first. */
+  const code = (file: string) =>
+    readFileSync(join(T, file), "utf-8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*(\/\/|#).*$/gm, "");
   const keysIn = (file: string) =>
-    new Set([...readFileSync(join(T, file), "utf-8").matchAll(/["'](indusk\.[a-z_.]+|deployment\.environment)["']/g)].map((m) => m[1]));
+    new Set([...code(file).matchAll(/["'](indusk\.[a-z_.]+|deployment\.environment)["']/g)].map((m) => m[1]));
   const signal = new Set(Object.values(APP_SIGNAL_KEYS));
   const resource = new Set(Object.values(APP_RESOURCE_KEYS));
 
@@ -346,11 +353,15 @@ makes the placement, naming, address and environment tests pass.
     const from = new Date();
     signal.upheld({ promise: "a-hold-is-released", clause: "on-time" });
     await provider.forceFlush();
-    // poll marksBetween on jaeger.queryUrl for service "app" until one mark is back
-    const { marks } = await marksBetween(jaegerEndpoint(jaeger.queryUrl), {
-      service: "app", name: "a-hold-is-released", promise: "a-hold-is-released",
-      from, to: new Date(Date.now() + 60_000), project: "app", timeoutMs: 5_000,
-    });
+    // Jaeger stores in batches: a span flushed now may not be queryable yet, so poll.
+    let marks: Awaited<ReturnType<typeof marksBetween>>["marks"] = [];
+    for (const deadline = Date.now() + 15_000; marks.length === 0 && Date.now() < deadline; ) {
+      ({ marks } = await marksBetween(jaegerEndpoint(jaeger.queryUrl), {
+        service: "app", name: "a-hold-is-released", promise: "a-hold-is-released",
+        from, to: new Date(Date.now() + 60_000), project: "app", timeoutMs: 5_000,
+      }));
+      if (marks.length === 0) await new Promise((r) => setTimeout(r, 250));
+    }
     expect(marks[0]).toMatchObject({ clause: "on-time", outcome: "upheld", environment: "development" });
   });
   ```
@@ -378,10 +389,12 @@ makes the placement, naming, address and environment tests pass.
   T22 and T23 green, by the commands in the last task above.
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [x] Every deferred test body above has been read and judged.
   <details><summary>Technical</summary>
 
   T5, T8, T10, T15 (Build Phase 1), T12, T13, T14 (Build Phase 2), T11 (Build Phase 3): each body compiles at the phase it names and asserts what its row claims.
+
+  Reviewed 2026-10-17 with Sandy. T13/T14 asserted a `clause` the span reader did not return: Sandy chose to add the read in Build Phase 2 (new item there) rather than drop it from the rows. T14 now polls Jaeger instead of reading once after flush. T10 gained a missing file with a record (create) and an unedited file already at the newest rendering (refresh); "leave alone" in its row is the ADR's beside. T12 strips comments before matching keys. T5, T8, T15 and T11 unchanged.
 
   </details>
 
@@ -543,6 +556,12 @@ next phase then makes what init prints and the skills teach match all of this.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/vocabulary.ts`: `APP_SIGNAL_KEYS = { promise, clause, outcome, violatedEvent, symptom, value: "indusk.signal.value", bound: "indusk.signal.bound", plan: "indusk.signal.plan", phase: "indusk.signal.phase" }` (the first five from `PROMISE_MARK`), `APP_RESOURCE_KEYS = { project: "indusk.project", environment: "deployment.environment", run: "indusk.run" }`, `TEST_RUN_VALUE = "test"`. `lib/promises/telemetry.ts` imports `ENVIRONMENT_ATTRIBUTE` from the vocabulary. `promises-single-definition.test.ts` stays green.
+
+  </details>
+- [ ] Make the package's span reader read a signal's clause back, so a clause the helper writes is read by something.
+  <details><summary>Technical</summary>
+
+  Added at the Test Phase 1 register review (Sandy, 2026-10-17): T13 and T14 assert `clause` on `parseMarkedSpan`'s result and `MarkedSpan` had none. `lib/promises/telemetry.ts`: `MarkedSpan` gains `clause?: string`, set from `PROMISE_MARK.clause` when the span carries it and absent otherwise (as `look` is), so every existing reader and fixture is unchanged. The reader is mark-first's; this adds a field and changes no rule.
 
   </details>
 - [ ] Write the Node signal helper and its Python twin: one call for upheld and one for broken, each writing one short span with the promise, clause, verdict, symptom, value, bound, plan and phase, and the project and test marker copied onto it.
