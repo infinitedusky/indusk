@@ -164,6 +164,12 @@ pointer; the pointer holds the story.
 
 ## Promises and telemetry
 
+- An InDusk daemon process is recognised by `daemonProcessOf`
+  (`lib/telemetry/daemon-process.ts`: binary + `--config` under the home), never
+  by a port, start time or the binary existing; `scripts/check-test-daemons.js`
+  keeps a parity copy. No read removes the daemon's record: only `stop` does.
+  Code that decides about the daemon takes `DaemonReads`. — guarded by
+  `telemetry-daemon-state.test.ts` and `telemetry-test-homes.test.ts`.
 - **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
   every Fly call goes through `FlyCli`, a failed read is refused, never read
   as empty. — see `/reference/cli/server`

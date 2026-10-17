@@ -650,7 +650,7 @@ This phase gives InDusk one way to tell its own daemon processes apart from ever
   root (Key Decisions): `- The daemon is found, not guessed: one daemon on one address chosen once and stored in ~/.indusk (InDusk's block 24316-24319, or ports picked once when held at first setup; a recording server keeps 4318), read by every reader and handed out by \`indusk telemetry address\`, recognised by binary + config path, its record never deleted by a read and rebuilt from the process list; nothing starts a second — see /decisions/daemon-found-not-guessed` — always-on because every session that runs `init`, `update`, a telemetry command or a promise reader depends on which daemon it reaches, across every area of the repository, and a session that guesses a port or reads a record as truth reintroduces the defect.
 
   </details>
-- [ ] The package's context file says how a daemon process is recognised and that no read removes its record.
+- [x] The package's context file says how a daemon process is recognised and that no read removes its record.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": "An InDusk daemon process is recognised by `daemonProcessOf` (binary + `--config` under the home), never by a port, start time or the binary existing; `check-test-daemons.js` keeps a parity copy. No read removes the daemon's record: only `stop` does. Code that decides about the daemon takes `DaemonReads`. — guarded by `telemetry-daemon-state.test.ts` and `telemetry-test-homes.test.ts`."
