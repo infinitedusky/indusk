@@ -448,7 +448,10 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   when it was last seen upheld.
 - The break-count line opens with **`broken — `** while a break is live and
   **`broke — fixed — `** when every break's incident is fixed, by the same
-  rule (`healthOf`) the admin and the editor use.
+  rule (`healthOf`) the admin and the editor use. Each source is judged by
+  its own rule, as the admin judges it (`ruleFor`): the local section by its
+  newest signal when the project also has a production source, and by its
+  incidents otherwise; the production section by its incidents.
 - **Not seen** means no run marked it in the window. It is never reported as
   upheld or as zero breaks.
 - **State** and **structure** promises are listed as watched by the suite:

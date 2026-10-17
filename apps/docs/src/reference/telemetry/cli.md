@@ -52,7 +52,7 @@ flowchart TD
 
 - **Taking over.** If the record is lost but the daemon runs, `start` reads it from the process list and its listening sockets, writes the record again and starts nothing: `took over the running daemon: jaeger 43599, otelcol 43600 on 24318, 24319, 24316, 24317`. Any other InDusk Jaeger or collector of this home is listed as a stray for `indusk telemetry reap`.
 - **Refusing.** Once the address is stored, a start that finds one of its ports held by a process that is not InDusk's starts nothing, picks nothing, leaves the address as it was and exits `1`, naming the port, the holder's process id and its command.
-- **An unreadable address file.** A file that exists but is cut short, or names a port that is not a number, is never taken for a missing one: a start refuses, naming the file, chooses nothing and leaves it as it was. `indusk telemetry address --reset` chooses the address again. The address is always written whole (a temporary file, then a rename), so a crash never leaves it half-written.
+- **An unreadable address file.** A file that exists but is cut short, or names a port that is not a number, is never taken for a missing one: a start refuses, naming the file, chooses nothing and leaves it as it was. `indusk telemetry address --reset` chooses the address again. The address is always written whole (a temporary file, then linked into place at first setup, or renamed over the old file by `--reset`), so a crash never leaves it half-written.
 
 **Port options** (`--otlp-port`, `--ui-port`, `--logs-port`, `--mcp-port`) are accepted only in a temporary home (a test's, under the system temp directory). A temporary home takes the ports it is given (`0` means any free port) and never reads or writes the stored address. In your own home they are refused by name.
 
@@ -79,7 +79,7 @@ Telemetry daemon started:
 | interface (Jaeger UI) | `24316` |
 | MCP (`jaeger` MCP server) | `24317` |
 
-The first time the daemon is set up on a machine, the address is chosen: InDusk's block, except that a block port held at that moment by a process that is not InDusk's is replaced by a free port picked once. `start` prints which port was held, by what, and the port it picked in its place. The result is stored and **never changes** afterwards: every start, restart and automatic start (by `init`, `update` or enabling the extension) uses it, and the same four ports come back after a stop, a restart, or a record lost and found again.
+The first time the daemon is set up on a machine, the address is chosen: InDusk's block, except that a block port held at that moment by a process that is not InDusk's is replaced by a free port picked once. `start` prints which port was held, by what, and the port it picked in its place. The result is stored and **never changes on its own** afterwards (only `telemetry address --reset` chooses it again, below): every start, restart and automatic start (by `init`, `update` or enabling the extension) uses it, and the same four ports come back after a stop, a restart, or a record lost and found again.
 
 The standard `4318` is left to your other tools on purpose: InDusk's daemon does not take it, so another collector of yours can keep it.
 

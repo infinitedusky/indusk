@@ -58,7 +58,7 @@ sequenceDiagram
 
 ## The daemon's ports {#the-daemons-ports}
 
-The daemon has **one address per machine**, chosen once at first setup and stored in `~/.indusk/telemetry-address.json`. It never moves: every start, restart and automatic start uses it.
+The daemon has **one address per machine**, chosen once at first setup and stored in `~/.indusk/telemetry-address.json`. InDusk never moves it on its own: every start, restart and automatic start uses it, and only `indusk telemetry address --reset`, run by a person, chooses it again.
 
 | Role | Port | What reaches it |
 |------|------|-----------------|
