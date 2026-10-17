@@ -442,12 +442,13 @@ This plan taught approvals to remember the app's element rules, but it did so be
 
 #### Build Phase 4 Context
 
-- [ ] The package's rules say there is one rule for what an approval is bound to.
+- [x] The package's rules say there is one rule for what an approval is bound to.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the `_reset.css` / `baseRulesHash` entry: `bindingOf` writes and `boundToNow` reads the foundation, declarations and element rules; a new binding goes in both.
 
   </details>
+  Note: added to the `_reset.css` entry in `apps/indusk-mcp/CLAUDE.md`.
 
 #### Build Phase 4 Document
 

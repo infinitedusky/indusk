@@ -219,11 +219,15 @@ pointer; the pointer holds the story.
   [data-component] *)`, so they reach only components. `_base.css` holds `body`;
   neither is part of `componentsHash`. An approval of a story or a mockup
   records the catalog's `baseRulesHash` (the hash of those rules; `LooksApp.baseRulesHash`)
-  and reads proposed once it changes; an entry without it reads as before. A
+  and reads proposed once it changes; an entry without it reads as before.
+  One rule for what an approval is bound to: `bindingOf` writes the foundation,
+  declarations and element rules and `boundToNow` reads them back, for the
+  approval, the look check's `heldTo` and the status line alike — a new binding
+  goes in both. A
   component never relies on a reset the generator does not carry — `a { color:
   inherit }` in the app's CSS reaches a mockup only through this sheet —
   guarded by `component-styles.test.ts`, `composition.contract.test.ts` and
-  `approvals.test.ts` (T1); see `/reference/cli/looks`
+  `approvals.test.ts` (T1, T3); see `/reference/cli/looks`
 
 ## Eval, agents, skills, extensions
 
