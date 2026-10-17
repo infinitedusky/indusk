@@ -1,7 +1,7 @@
 ---
 title: "Audit concerns are answered by the plan's agent"
 date: 2026-10-17
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "222823c0ebcc766df0e76e22d499892f3f034719817bf22430ce904deaea59b1"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-17T17:47:05.889Z"
 ---
 
 # Audit concerns are answered by the plan's agent
