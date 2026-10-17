@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "2307b439d7bf35bc8ce025d10fbb5f5900d9b75b46aa3682c8f33e7339b7c0ed"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-17T18:47:32.552Z"
+cleanup: skipped
+cleanup_reason: "reviewed every changed file; flagged ones are old large files touched lightly, no copy reaches three"
 ---
 
 # Init sets up telemetry (New Projects)
@@ -889,3 +891,4 @@ Looked at and held: the scaffold's decisions for a present file (refresh only on
 - **The helper writes `broken`**, while InDusk's own writers keep the older word until mark-first (the root context's one-promise-language line says writers keep it; that line is about InDusk's own writers, and the ADR says why an owned file should not).
 - **Homework Gate's existing root files** (`instrumentation.ts`, `filtering-exporter.ts`, `logger.ts` at its workbench root) are not touched by this plan; the next `update` scaffolds the code repo once it has an app, and a person deletes the root files.
 - **The demo copy's service name.** The example keeps its own provider and service name; a copy made under another folder name still reports as `seat-holds`, as today.
+- **Cleanup reviewed, nothing extracted (2026-10-17).** The files over the size cap (`init.ts`, `update.ts`, `extensions.ts`, `new-project/create.ts`, `promises/telemetry.ts`, the otel docs page) were large before this plan and gained a few lines each, each line a step in an existing sequence. The scaffold modules (`lib/scaffold/{plan,apply,render,record}.ts`) are under the cap, one job each, and Shape already reviewed them. Two pairs repeat, and neither is a third copy. First, init and update each call `applyScaffold` and loop over `ensureCodeRepoMcpJson`, but the logic is already one module; only the call sites repeat. Second, the seat-holds `signal.ts` and `telemetry-settings.ts` are the scaffold's own output, recorded in its `scaffold.json`. The templates' copy of the signal vocabulary and the install lines' package lists are deliberate, because the files go into apps that don't depend on the package. They are held in step by tests, not shared code: `signal-vocabulary-pin.test.ts` and `init-next-steps.test.ts`.
