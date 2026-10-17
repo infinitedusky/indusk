@@ -545,6 +545,10 @@ A reader that had not seen the build found gaps between what the plan promises a
 
   </details>
   Note: red first: T6 (`.grid` unchanged), T9 (general message), the variant-order test (`.max-md-hidden` before the later `.flex`), T7 (611 lines on the phone before the fixes); T4, T5 and T8 passed when written, the behaviour already holding. After: `vitest run src/lib/looks/ src/__tests__/looks-cli|looks-lint-rules|looks-component-content-lint|looks-components-cli src/lib/plans` 27 files / 246 tests green; T7 via the daemon guard green in 203 s at three devices (the guard reports no leaked daemon); the script reports 22 entries carrying `baseRulesHash` and `indusk looks status admin` reports 187 approved before and after; typecheck and biome clean on both packages' changed files; the admin's `src/app/p` tests 132/132.
+- [x] Shape — `apps/indusk-mcp/src/lib/looks/overview.ts`: the rewrite of the mockup's own style elements inside `mockupDocument` is a named function, `withPageOnlyStyles`, so the document builder keeps one job (assembling sheets).
+- [x] Shape — reviewed `composition.contract.test.ts` and left it as is: its one `it` is the check's long-standing single walk over every mockup and its device loop only widened it; splitting it would split the story and size caches the walk shares (cross-file shape is `/cleanup`'s).
+- [x] Shape — reviewed the other files this phase changed (`component-styles.ts`, `lint-classes.ts`, the four test files, the two docs files) against the enabled extensions' craft rules; nothing to change.
+
 
 #### Build Phase 5 Context
 

@@ -113,6 +113,13 @@ export function listApps(root: string): string[] {
 
 const TOKENS_LINK = /<link\b[^>]*\bhref=["'][^"']*tokens\.css["'][^>]*>/i;
 
+/** The mockup's own `<style>` elements with their rules cut to its page (`pageOnly`); the sheets added around them are the foundation's and the components'. */
+const withPageOnlyStyles = (html: string): string =>
+	html.replace(
+		/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
+		(_all, open: string, css: string, close: string) => `${open}${pageOnly(css)}${close}`,
+	);
+
 /**
  * A mockup as a page the cockpit can draw on its own: it loads the app's
  * generated `tokens.css` by a relative link, which a frame has no folder to
@@ -130,12 +137,7 @@ export function mockupDocument(
 	styles: readonly Pick<ComponentStyle, "component" | "css">[] = [],
 	reset = "",
 ): string {
-	// The mockup's own rules reach its page and no component it places (`pageOnly`);
-	// the sheets added below are the foundation's and the components' own.
-	const html = ownHtml.replace(
-		/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
-		(_all, open: string, css: string, close: string) => `${open}${pageOnly(css)}${close}`,
-	);
+	const html = withPageOnlyStyles(ownHtml);
 	// A variant rule comes after every component's plain rules (`splitVariants`).
 	const cut = styles.map((s) => ({ component: s.component, ...splitVariants(s.css) }));
 	const variants = cut.map((c) => c.variants).filter((v) => v.trim() !== "");
