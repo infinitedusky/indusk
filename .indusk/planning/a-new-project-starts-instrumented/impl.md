@@ -554,7 +554,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
 
 #### Build Phase 1 Document
 
-- [ ] Rewrite the telemetry overview's section on what a project is handed: where the scaffold goes, how an app finds the daemon, and the newer-version file, with a diagram.
+- [x] Rewrite the telemetry overview's section on what a project is handed: where the scaffold goes, how an app finds the daemon, and the newer-version file, with a diagram.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/overview.md`: replace the claim that enabling the extension writes an `.env` component (around lines 97 and 162–165); add the Mermaid flow from the ADR's Documentation Plan; `apps/docs/src/changelog.md` entry for placement, naming, address and environment.
