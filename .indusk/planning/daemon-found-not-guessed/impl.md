@@ -996,7 +996,7 @@ This phase makes the promise heard in the running system. Each part of the promi
 
 #### Build Phase 5 Document
 
-- [ ] The decision is published in the docs, and the telemetry reference says which command sends which report.
+- [x] The decision is published in the docs, and the telemetry reference says which command sends which report.
   <details><summary>Technical</summary>
 
   New `apps/docs/src/decisions/daemon-found-not-guessed.md` from the ADR. `apps/docs/src/reference/telemetry/overview.md`: a section on the promise's signal (the D9 table in plain words: which command reports which part, when, under `indusk-telemetry`). Changelog (Unreleased, Changed): "The local daemon reports whether it is the one every reader follows, as the promise `the-daemon-readers-follow-is-the-one-running`."
