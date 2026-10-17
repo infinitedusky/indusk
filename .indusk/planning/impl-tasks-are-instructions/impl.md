@@ -212,7 +212,7 @@ rewords every place it names, so the change cannot be partial again.
   A6: extend A2's tests in `planner-impl-summary-template.test.ts` and `ritual-templates-phase-summary.test.ts` to the OTel, Context and Document task placeholders.
 
   </details>
-- [ ] Reword the bugfix, refactor and feature impl templates' task placeholders as instructions.
+- [x] Reword the bugfix, refactor and feature impl templates' task placeholders as instructions.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/templates/workflows/{bugfix,refactor,feature}.md`.
