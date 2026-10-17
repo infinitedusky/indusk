@@ -987,7 +987,7 @@ This phase makes the promise heard in the running system. Each part of the promi
 
 #### Build Phase 5 Context
 
-- [ ] The package's context file says where this promise's reports come from and why they do not use the evaluator's tracing setup.
+- [x] The package's context file says where this promise's reports come from and why they do not use the evaluator's tracing setup.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": "The daemon promise's reports are sent by `daemon-reports.ts` through the SDK-free span path (`watcherSpanBody`), under `indusk-telemetry`, with `indusk.clause`; never through `initEvalOtel`, which is off when the record is missing and follows `OTEL_EXPORTER_OTLP_ENDPOINT`. A loss is reported by whoever finds it. — guarded by `telemetry-daemon-reports.test.ts`, `signal-writers.test.ts`." And `current.md` (Project, shared): this machine's daemon is on its stored address (`indusk telemetry address`); applications that sent to 4318 need that address; projects whose `.mcp.json` named another old port move on their own `indusk update`.
