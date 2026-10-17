@@ -2,7 +2,7 @@
 name: a-plan-can-start-from-the-admin
 kind: state
 lifetime: holds
-state: known-broken
+state: enforced
 domain: admin
 owner: workbench-plan-authoring
 sites:
