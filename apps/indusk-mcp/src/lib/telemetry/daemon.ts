@@ -184,7 +184,7 @@ async function waitForPortFree(port: number, timeoutMs: number): Promise<boolean
  * `packages/telemetry-binaries-shared/jaeger-config.yaml` including the
  * self-metrics-off setting (`service.telemetry.metrics.level: none`).
  */
-function renderJaegerConfig(ports: {
+export function renderJaegerConfig(ports: {
 	otlpHttp: number;
 	otlpGrpc: number;
 	ui: number;
@@ -216,6 +216,10 @@ extensions:
         memory:
           max_traces: 100000
   jaeger_query:
+    # Jaeger traces its own query handlers and exports to :4317, where nothing
+    # listens: two thirds of the daemon's log. This is the only setting that
+    # silences it (service.telemetry.traces and OTEL_* do not).
+    enable_tracing: false
     storage:
       traces: some_storage
     http:
