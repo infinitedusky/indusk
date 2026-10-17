@@ -194,7 +194,7 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
 
 #### Build Phase 1 Document
 
-- [ ] The looks reference describes the reset sheet.
+- [x] The looks reference describes the reset sheet.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`: `_reset.css` beside `_base.css` — what it holds, why, and that it reaches only components.

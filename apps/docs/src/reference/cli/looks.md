@@ -298,7 +298,11 @@ admin: 8 snapshots for 1 components, catalog in .indusk/mockups/admin/components
 ```
 .indusk/mockups/admin/
 ├── components.json              # the catalog: every component, its properties, its states
-└── components/chip.passing.html # one snapshot per component state
+└── components/
+    ├── chip.passing.html        # one snapshot per component state
+    ├── chip.css                 # the app's compiled rules for that component's classes
+    ├── _base.css                # the app's `body` rules (its type, ink and ground)
+    └── _reset.css               # the app's element resets, scoped to components
 ```
 
 A **snapshot** is the markup Chromium drew for one story, in the app's own
@@ -308,6 +312,19 @@ root element carries and the state is the story's id after `--`, so a story
 `ui-badge--needs-you` of `badge` is `badge.needs-you`. A changed component
 changes its snapshot with no edit to the story, which is what makes the
 snapshot the component's approved artefact.
+
+**`_reset.css`** is the app's element rules (rules that name no class and no
+component marker: `a { color: inherit }`, `textarea { font: inherit }`, the
+box-sizing and margin resets) cut from the compiled CSS. A story renders in the
+served Storybook under those rules, and no component's own sheet holds them, so
+without this sheet a component drawn in a mockup came out in the browser's
+defaults: a blue link, a monospace text field. Every selector is written under
+`:where([data-component], [data-component] *)`, which adds no specificity and
+reaches only a component and what is inside it, so the page around a component
+draws as before. Rules for `html`, `body`, `:root` and `:host` are left out
+(`_base.css` holds `body`; a mockup's page is its own). The cockpit loads it
+after the foundation's tokens, under every mockup and every story. It is not
+part of an approval's `componentsHash`, as `_base.css` is not.
 
 `components.json` is `{ components: [{ name, file, properties[], states[] }] }`:
 `file` is the component's one source file, `properties` are Storybook's
