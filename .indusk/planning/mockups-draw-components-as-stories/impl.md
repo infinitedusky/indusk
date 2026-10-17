@@ -232,6 +232,12 @@ changed; and Sandy approves the changed `message.you` story.
 
   </details>
   Note: ran as written; output: `mockups-render-in-the-cockpit changed by mockups-draw-components-as-stories; its History keeps the sentence it replaced.` Only `.indusk/promises/mockups-render-in-the-cockpit.md` changed.
+- [x] A story aligned to its frame's end is fitted to its own size.
+  <details><summary>Technical</summary>
+
+  Discovered at this phase: A18 still failed on `message.you` after the wrap — `frame 2380x126, component 4259`. Its root is `justify-self-end`, so it sits at the frame's right edge, and `useFittedFrame`'s `r.right + r.left` grew the frame by the frame's width. `measure` now takes the width as the component's width plus, on both sides, the space a start-aligned component would have before it (the container's content edge and the component's left margin) — the same as before for every start-aligned story. Height is unchanged (`bottom + top`): changing it too made `view-link.default` 4px tall, a collapsed margin counted twice.
+
+  </details>
 - [ ] Pause for a person: Sandy approves the changed message story.
   <details><summary>Technical</summary>
 
