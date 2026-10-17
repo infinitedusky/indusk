@@ -11,8 +11,8 @@ description: "A plan's page and its brief page colour each promise by its health
 
 ## Expectations
 
-1. **A promise that reads broken on the Promises page or the nav never looks healthy on its plan's page.**
-   - Measure: the next time a behaviour promise breaks, its dot on the owning plan's page and brief page is the broken colour, as it is on the Promises page.
+1. **A promise that reads broken in the nav, or in the Promises page's alarm source (production when there is one), never looks healthy on its plan's page.** A break only on the laptop, beside a production that holds the promise, is work in progress and leaves the plan page as the nav leaves it.
+   - Measure: the next time a behaviour promise breaks in the alarm source, its dot on the owning plan's page and brief page is the broken colour, as it is in that source's column on the Promises page.
    - Look: at the next break of any behaviour promise.
 
 ## Promises

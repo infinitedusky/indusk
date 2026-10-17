@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { listApps, readAppLooks } from "../looks/overview.js";
 import { type BriefContract, parseBriefContract } from "../promises/brief-contract.js";
+import type { PromiseHealth } from "../promises/health.js";
 import { parseFrontmatter, readPromises } from "../promises/registry.js";
 import { type Amendment, amendmentsOf } from "./amendments.js";
 
@@ -22,6 +23,8 @@ export interface PartPromise {
 	sentence: string;
 	/** The registry's state; `unregistered` for one the brief makes that the registry lacks. */
 	state: string;
+	/** The promise's health from the alarm source; absent when telemetry says nothing about it. */
+	health?: PromiseHealth;
 }
 
 export interface PartExpectation {
@@ -129,7 +132,7 @@ export function listedLooks(brief: BriefContract): Array<{ name: string; relatio
 export async function readPlanParts(
 	root: string,
 	plan: string,
-	options: { archived?: boolean } = {},
+	options: { archived?: boolean; health?: Record<string, PromiseHealth> } = {},
 ): Promise<PlanParts> {
 	const dir = join(root, ".indusk", "planning", ...(options.archived ? ["archive"] : []), plan);
 	const briefFile = join(dir, "brief.md");
@@ -146,13 +149,15 @@ export async function readPlanParts(
 		...brief.makes.map((m) => m.name),
 		...(registry?.promises ?? []).filter((p) => p.owner === plan).map((p) => p.name),
 	]);
-	const promises = [...names].map((name) => {
+	const promises: PartPromise[] = [...names].map((name) => {
 		const entry = byName.get(name);
 		const made = brief.makes.find((m) => m.name === name);
+		const health = options.health?.[name];
 		return {
 			name,
 			sentence: entry?.statement ?? made?.sentence ?? "",
 			state: entry?.state ?? "unregistered",
+			...(health ? { health } : {}),
 		};
 	});
 
