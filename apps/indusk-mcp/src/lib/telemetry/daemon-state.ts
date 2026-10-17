@@ -132,12 +132,15 @@ export function renderStatus(state: DaemonState, answers: Record<number, PortAns
 			lines.push(`Telemetry daemon: ${label}`);
 			if (meta !== null) {
 				for (const { name, port } of recordedPorts(meta)) {
-					lines.push(`  ${`${name}:`.padEnd(11)}http://localhost:${port}`);
+					// 0 is a port a finder could not read from a socket: said, never guessed.
+					lines.push(
+						`  ${`${name}:`.padEnd(11)}${port > 0 ? `http://localhost:${port}` : "unknown (not read from a socket)"}`,
+					);
 				}
 				lines.push(`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`);
 				lines.push(`  Started:   ${meta.startedAt}`);
 				for (const { name, port } of recordedPorts(meta)) {
-					const a = answers[port];
+					const a = port > 0 ? answers[port] : undefined;
 					if (a?.answer === "timeout") {
 						lines.push(`  ${name}: :${port} did not answer in ${a.waitedMs} ms (slow, not gone)`);
 					} else if (a?.answer === "refused") {
@@ -417,4 +420,43 @@ export function findDaemonSync(
 	} finally {
 		release();
 	}
+}
+
+// ---- the one resolver every reader of the local daemon calls ----------------
+
+export interface ResolveOpts {
+	reads: DaemonReads;
+	home: string;
+	/** The command asking, named in the finding's report from Build Phase 5. */
+	by?: string;
+}
+
+/** The record's ports when a reader can reach the daemon through them: both processes are InDusk's and the traces and interface ports are known. */
+function reachable(meta: DaemonMeta | null): DaemonMeta | null {
+	return meta !== null && meta.otlpPort > 0 && meta.uiPort > 0 ? meta : null;
+}
+
+/**
+ * The local daemon a reader should reach, or `null` when none runs.
+ *
+ * Follows the record while it names this home's running daemon; when the
+ * record is gone and the daemon runs, finds it (`findDaemon`), which writes
+ * the record again. Every reader of the local daemon (promise status and
+ * watch, the promise health tool, the admin, the evaluator, `update`, `demo`,
+ * `telemetry reset`) asks this, so none of them can disagree. Never starts a
+ * daemon and never removes the record.
+ */
+export async function resolveLocalDaemon(opts: ResolveOpts): Promise<DaemonMeta | null> {
+	const state = daemonState(opts.reads, opts.home);
+	if (state.kind === "running") return reachable(state.meta);
+	if (state.kind !== "found") return null;
+	return reachable((await findDaemon(opts.reads, opts.home, opts.by ?? "reader"))?.meta ?? null);
+}
+
+/** `resolveLocalDaemon` for a synchronous caller: the evaluator decides its exporter at init. */
+export function resolveLocalDaemonSync(opts: ResolveOpts): DaemonMeta | null {
+	const state = daemonState(opts.reads, opts.home);
+	if (state.kind === "running") return reachable(state.meta);
+	if (state.kind !== "found") return null;
+	return reachable(findDaemonSync(opts.reads, opts.home, opts.by ?? "reader")?.meta ?? null);
 }

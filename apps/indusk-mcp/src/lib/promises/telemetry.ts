@@ -1,5 +1,5 @@
 import { sanitizeGroupId } from "../config.js";
-import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
+import { daemonMetaPath, resolveLocalDaemonHere } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
 import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome, readOutcome } from "./vocabulary.js";
 
@@ -337,11 +337,11 @@ export async function markedSpans(opts: {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	let endpoint = opts.endpoint;
 	if (!endpoint) {
-		const status = await daemonStatus();
-		if (!status.running) {
+		const daemon = await resolveLocalDaemonHere("promises");
+		if (daemon === null) {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
-		endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+		endpoint = jaegerEndpoint(`http://localhost:${daemon.uiPort}`);
 	}
 	const queryUrl = endpoint.queryUrl;
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);

@@ -1,11 +1,16 @@
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { createConnection } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { isAlive } from "../process-identity.js";
 import type { DaemonReads } from "./daemon-reads.js";
 import { realDaemonReads } from "./daemon-reads.js";
-import { daemonState, type PortAnswer } from "./daemon-state.js";
+import {
+	daemonState,
+	type PortAnswer,
+	resolveLocalDaemon,
+	resolveLocalDaemonSync,
+} from "./daemon-state.js";
 
 /**
  * The read side of the local telemetry daemon: where it records itself, and
@@ -105,22 +110,42 @@ export function cleanupFiles(): void {
 	}
 }
 
+/** Where a reader looks when it is handed no machine of its own: this home, as the operating system shows it. */
+export interface ResolveDeps {
+	reads?: DaemonReads;
+	home?: string;
+}
+
+function resolveOpts(
+	by: string,
+	deps: ResolveDeps,
+): { reads: DaemonReads; home: string; by: string } {
+	const home = deps.home ?? induskHome();
+	return { reads: deps.reads ?? realDaemonReads(home), home, by };
+}
+
+/**
+ * The local daemon a reader should reach, or null: the one resolver behind
+ * every reader (`resolveLocalDaemon`), asked for this home unless handed reads.
+ */
+export function resolveLocalDaemonHere(
+	by: string,
+	deps: ResolveDeps = {},
+): Promise<DaemonMeta | null> {
+	return resolveLocalDaemon(resolveOpts(by, deps));
+}
+
 /**
  * The running daemon's OTLP/HTTP endpoint, or null when none is running.
  *
  * Synchronous on purpose — the evaluator decides its exporter at init, which
- * is sync — so it reads the meta file and checks the Jaeger PID is alive, and
- * opens no socket. A reused PID yields an endpoint nothing answers; the
- * exporter's failure is silent and the evaluation is unaffected.
+ * is sync — so it reads the process list and the daemon's listening sockets
+ * (`ps`, `lsof`) and opens no connection. It follows the record, and finds the
+ * daemon when the record is gone, through the same resolver as every reader.
  */
-export function liveOtlpEndpointSync(): string | null {
-	try {
-		const meta = JSON.parse(readFileSync(metaFilePath(), "utf-8")) as DaemonMeta;
-		if (!isAlive(meta.jaegerPid)) return null;
-		return `http://localhost:${meta.otlpPort}`;
-	} catch {
-		return null;
-	}
+export function liveOtlpEndpointSync(deps: ResolveDeps = {}): string | null {
+	const meta = resolveLocalDaemonSync(resolveOpts("evaluator", deps));
+	return meta === null ? null : `http://localhost:${meta.otlpPort}`;
 }
 
 /**
@@ -148,7 +173,7 @@ export async function daemonStatus(
 
 /** How each port a record names answers, and how long each wait was. */
 export async function portAnswers(meta: DaemonMeta): Promise<Record<number, PortAnswer>> {
-	const ports = [meta.otlpPort, meta.uiPort, meta.logsOtlpPort, meta.mcpPort];
+	const ports = [meta.otlpPort, meta.uiPort, meta.logsOtlpPort, meta.mcpPort].filter((p) => p > 0);
 	const answered = await Promise.all(
 		ports.map(async (port) => {
 			const started = Date.now();

@@ -28,7 +28,7 @@ import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { evalDir } from "../bookkeeping/roots.js";
 import { markPromise } from "../promises/mark.js";
-import { liveOtlpEndpointSync } from "../telemetry/status.js";
+import { liveOtlpEndpointSync, type ResolveDeps } from "../telemetry/status.js";
 import type { EvalErrorEntry, EvalScorecard, EvalWaitingEntry } from "./types.js";
 
 const TRACER_NAME = "@infinitedusky/indusk-mcp/eval";
@@ -73,12 +73,12 @@ const DEFAULT_DATASET = "agent";
  *   `OTEL_EXPORTER_OTLP_HEADERS` if present there (env headers beat constructor
  *   headers per OTel spec — so we fix the env header at the source).
  */
-export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
+export function isEvalOtelEnabled(projectRoot: string, deps: ResolveDeps = {}): EvalOtelConfig {
 	const envFlag = process.env.INDUSK_EVAL_OTEL;
 	// The local telemetry daemon, when it runs, is where the evaluator's
 	// promise mark goes by default (day-monitor, ADR D10): the monitor reads
 	// that Jaeger, and a mark nobody configured an exporter for is never seen.
-	const localEndpoint = liveOtlpEndpointSync();
+	const localEndpoint = liveOtlpEndpointSync(deps);
 	const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? localEndpoint;
 	const explicitDataset = process.env.INDUSK_EVAL_OTEL_DATASET;
 	const composableDataset = process.env.EVAL_AGENT_DATASET;
@@ -284,8 +284,8 @@ export function markEvaluation(
  * Log records emitted via `getEvalLogger().emit(...)` automatically
  * correlate with the active span via trace_id / span_id.
  */
-export function initEvalOtelLogs(projectRoot: string): Logger {
-	const { enabled, endpoint, dataset } = isEvalOtelEnabled(projectRoot);
+export function initEvalOtelLogs(projectRoot: string, deps: ResolveDeps = {}): Logger {
+	const { enabled, endpoint, dataset } = isEvalOtelEnabled(projectRoot, deps);
 
 	if (!enabled) return logs.getLogger(LOGGER_NAME);
 

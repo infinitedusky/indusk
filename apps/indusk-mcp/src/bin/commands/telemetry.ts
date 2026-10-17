@@ -7,9 +7,9 @@ import {
 	daemonStop,
 } from "../../lib/telemetry/daemon.js";
 import { realDaemonReads } from "../../lib/telemetry/daemon-reads.js";
-import { daemonState, renderStatus } from "../../lib/telemetry/daemon-state.js";
+import { daemonState, findDaemon, renderStatus } from "../../lib/telemetry/daemon-state.js";
 import { deregisterProject, readRegistry, registerProject } from "../../lib/telemetry/registry.js";
-import { induskHome, portAnswers } from "../../lib/telemetry/status.js";
+import { induskHome, portAnswers, resolveLocalDaemonHere } from "../../lib/telemetry/status.js";
 
 /**
  * Re-write the `jaeger` MCP server entry across every registered project's
@@ -215,13 +215,27 @@ export async function telemetryRestart(opts: TelemetryRestartOptions = {}): Prom
  */
 export async function telemetryStatus(): Promise<void> {
 	const home = induskHome();
-	const state = daemonState(realDaemonReads(home), home);
+	const reads = realDaemonReads(home);
+	let state = daemonState(reads, home);
+	let finding: string | null = null;
+	if (state.kind === "found") {
+		const found = await findDaemon(reads, home, "status");
+		if (found !== null) {
+			state = daemonState(reads, home);
+			const unread =
+				found.unknownRoles.length > 0 ? `; ports not read: ${found.unknownRoles.join(", ")}` : "";
+			finding = found.finder
+				? `  record was missing: found from the process list and its sockets, written again${unread}`
+				: null;
+		}
+	}
 	const answers =
 		state.meta !== null && state.kind === "running" ? await portAnswers(state.meta) : {};
 	const projectCount = readRegistry().projects.length;
 	const projectLabel = projectCount === 1 ? "project" : "projects";
 
 	for (const line of renderStatus(state, answers)) console.info(line);
+	if (finding !== null) console.info(finding);
 	console.info(`Registered ${projectLabel} ${projectCount}`);
 }
 
@@ -393,12 +407,12 @@ export async function telemetryTail(opts: TelemetryTailOptions): Promise<void> {
  * Print the full span tree for a trace ID, via Jaeger's REST query API.
  */
 export async function telemetryTrace(traceId: string): Promise<void> {
-	const status = await daemonStatus();
-	if (!status.running) {
+	const daemon = await resolveLocalDaemonHere("telemetry trace");
+	if (daemon === null) {
 		console.error("Telemetry daemon is not running. Run `indusk telemetry start`.");
 		process.exit(1);
 	}
-	const url = `http://localhost:${status.uiPort}/api/traces/${traceId}`;
+	const url = `http://localhost:${daemon.uiPort}/api/traces/${traceId}`;
 	try {
 		const res = await fetch(url);
 		if (!res.ok) {
@@ -417,12 +431,12 @@ export async function telemetryTrace(traceId: string): Promise<void> {
  * Print the list of services the daemon has seen, one per line.
  */
 export async function telemetryServices(): Promise<void> {
-	const status = await daemonStatus();
-	if (!status.running) {
+	const daemon = await resolveLocalDaemonHere("telemetry services");
+	if (daemon === null) {
 		console.error("Telemetry daemon is not running. Run `indusk telemetry start`.");
 		process.exit(1);
 	}
-	const url = `http://localhost:${status.uiPort}/api/services`;
+	const url = `http://localhost:${daemon.uiPort}/api/services`;
 	try {
 		const res = await fetch(url);
 		if (!res.ok) {
@@ -450,6 +464,8 @@ export async function telemetryReset(opts: TelemetryStartOptions): Promise<void>
 	const { homedir } = await import("node:os");
 	const { join } = await import("node:path");
 	console.info("Stopping daemon + clearing buffers...");
+	// A daemon whose record is gone is found first (and its record written), so stop can see it.
+	await resolveLocalDaemonHere("telemetry reset");
 	await daemonStop();
 	const logsPath = join(
 		process.env.INDUSK_HOME ?? join(homedir(), ".indusk"),

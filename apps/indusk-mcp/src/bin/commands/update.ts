@@ -508,10 +508,11 @@ export async function update(projectRoot: string): Promise<void> {
 			const jaegerEntry = mcpConfig.mcpServers?.jaeger;
 			if (jaegerEntry?.type === "http" && typeof jaegerEntry.url === "string") {
 				try {
-					const { daemonStatus } = await import("../../lib/telemetry/daemon.js");
-					const status = await daemonStatus();
-					if (status.running) {
-						const expectedUrl = `http://localhost:${status.mcpPort}/mcp`;
+					const { resolveLocalDaemonHere } = await import("../../lib/telemetry/status.js");
+					const daemon = await resolveLocalDaemonHere("update");
+					// A port the finder could not read from a socket is 0: never written into an entry.
+					if (daemon !== null && daemon.mcpPort > 0) {
+						const expectedUrl = `http://localhost:${daemon.mcpPort}/mcp`;
 						if (jaegerEntry.url !== expectedUrl) {
 							const { writeFileSync } = await import("node:fs");
 							mcpConfig.mcpServers.jaeger = { type: "http", url: expectedUrl };
