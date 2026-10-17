@@ -160,7 +160,7 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
   `overview.ts`: `mockupDocument` and `storyDocument` put `{ component: "_reset", css: app.reset }` after the tokens and before component sheets. Check whether a mockup's `componentsHash` must cover it; if approval reuse would miss a reset change, add it to the hash.
 
   </details>
-  Decision: `componentsHash` does not cover the reset. `_reset.css` is the app's element rules, as `_base.css` is, and neither is a component's look; a change to the app's element rules already reopens every story through `baseRulesHash`. Folding it into `componentsHash` would send every approved mockup back to proposed at once, which is the re-approval this plan puts out of scope.
+  Decision: `componentsHash` does not cover the reset. `_reset.css` is the app's element rules, as `_base.css` is, and neither is a component's look; a change to the app's element rules was thought to reopen every story through `baseRulesHash`. Corrected in Build Phase 3: `baseRulesHash` governed only a story's look-check reuse (`reuse.ts`), not its approval; approvals now record it themselves, on the story's and the mockup's entry, so a change to the element rules reopens both without `componentsHash` covering `_reset.css`. Folding it into `componentsHash` would send every approved mockup back to proposed at once, which is the re-approval this plan puts out of scope.
 - [x] The admin's stylesheets are regenerated with the reset.
   <details><summary>Technical</summary>
 
@@ -322,12 +322,13 @@ This phase tests two things the finished plan claims but nothing checks. First, 
 
   </details>
   Note: `LooksApp.baseRulesHash` is read from `components.json` in `readApp`; `approve` (story and mockup) records it as `baseRulesHash` on the entry; `approvalOf` and `storyApprovalOf` compare it when the entry has one (`drawnUnderNow`); an entry without it reads as before. The cockpit's Approve route sends no rules hash of its own and needs no change: it calls `approve`, which reads the checkout's catalog itself under the record's lock, as it does the foundation and declarations. T1 passes (18/18 in `approvals.test.ts`).
-- [ ] Build Phase 1's note on the reset and approvals says what is true.
+- [x] Build Phase 1's note on the reset and approvals says what is true.
   <details><summary>Technical</summary>
 
   Correct the note under Build Phase 1's cockpit item: the reset is bound into approvals through `baseRulesHash` on the entry, not through look-check reuse.
 
   </details>
+  Note: the Decision under Build Phase 1's cockpit item now says `baseRulesHash` governed look-check reuse only, and that approvals record it from Build Phase 3.
 - [ ] A component centred by automatic margins counts no margin as space before it when its frame is fitted.
   <details><summary>Technical</summary>
 
