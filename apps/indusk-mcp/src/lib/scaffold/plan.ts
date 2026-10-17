@@ -117,16 +117,15 @@ const HELPER = "OpenTelemetry signal helper — upheld and broken, in InDusk's v
 /**
  * The files a runtime gets. `hasSrc` puts a Node or browser app's files in its `src/`. An app
  * that sets up OpenTelemetry itself (`ownSetup`) gets only the helper and the settings the
- * helper reads — and nothing at all when it has no server to write a signal from. `srcApp`
- * (a Next.js app whose `app/` or `pages/` is in `src/`) moves the Next.js setup file there.
+ * helper reads — and nothing at all when it has no server to write a signal from. The layout's
+ * `srcApp` (a Next.js app whose `app/` or `pages/` is in `src/`) moves the Next.js setup file there.
  */
 export function filesFor(
 	runtime: Runtime,
-	hasSrc: boolean,
+	layout: { hasSrc: boolean; srcApp: boolean },
 	ownSetup = false,
-	srcApp = false,
 ): ScaffoldFile[] {
-	const all = runtimeFiles(runtime, hasSrc, srcApp);
+	const all = runtimeFiles(runtime, layout.hasSrc, layout.srcApp);
 	if (!ownSetup) return all;
 	return all.filter((f) => f.role === "helper" || (f.role === "settings" && hasHelper(all)));
 }
@@ -281,11 +280,11 @@ export function scaffoldPlan(targets: TargetRead[], reads: ScaffoldReads): Plann
 		const runtime = detectRuntime(t.present);
 		if (runtime === null) return { name: t.name, rel: t.rel, runtime, ownSetup: false, files: [] };
 		// A setup InDusk wrote stays InDusk's to refresh, even once its packages are installed.
-		const wroteSetup = filesFor(runtime, t.hasSrc, false, t.srcApp).some(
+		const wroteSetup = filesFor(runtime, t, false).some(
 			(f) => f.role === "setup" && joinRel(t.rel, f.path) in reads.record,
 		);
 		const ownSetup = !wroteSetup && setsUpOpenTelemetry(runtime, t.current);
-		const files = filesFor(runtime, t.hasSrc, ownSetup, t.srcApp).map((file) => {
+		const files = filesFor(runtime, t, ownSetup).map((file) => {
 			const projectPath = joinRel(t.rel, file.path);
 			const rendered = reads.render(file.template, t.name, { srcApp: t.srcApp });
 			const onDisk = t.current(file.path);
