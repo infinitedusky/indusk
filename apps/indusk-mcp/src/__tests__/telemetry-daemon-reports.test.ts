@@ -100,6 +100,45 @@ describe("A6 — status reports whether one daemon holds its own ports", () => {
 	});
 });
 
+/** A daemon whose record names both processes while only `alive` still run. */
+function halfRunning(alive: "jaeger" | "otelcol"): ReportState {
+	const processes = alive === "jaeger" ? [jaegerCmd(1, HOME)] : [collectorCmd(2, HOME)];
+	const files = Object.fromEntries(
+		processes.map((p) => [
+			/--config=(?:file:)?(\S+)/.exec(p.command)?.[1] ?? "",
+			{ mtimeMs: 1, size: 1 },
+		]),
+	);
+	return daemonState(
+		fakeReads({
+			record: rec(1, 2),
+			processes,
+			files,
+			address: { ...PORT_BLOCK, picked: [] },
+		}),
+		HOME,
+	);
+}
+
+describe("A32 — status reports a half-running daemon", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	it("a Jaeger that runs beside a collector that has died is reported broken, naming the collector and the logs port it no longer holds", () => {
+		const state = halfRunning("jaeger");
+		expect(state.kind).toBe("partial");
+		const r = daemonReports("status", state).find(
+			(x) => x.clause === "one-daemon-on-its-own-ports",
+		);
+		expect(r?.outcome).toBe("broken");
+		expect(r?.symptom).toMatch(/otelcol.*not running/);
+		expect(r?.symptom).toMatch(/logs.*24319/);
+	});
+
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	it("a Jaeger that has died cannot receive a report, so nothing is decided to send", () => {
+		expect(daemonReports("status", halfRunning("otelcol"))).toEqual([]);
+	});
+});
+
 describe("A9 — a reader's read through the record reports once a quarter hour", () => {
 	// clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon
 	it("a read through the record sends one upheld report per project per 15 minutes", () => {

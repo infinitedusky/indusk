@@ -1,5 +1,6 @@
 import { rmSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { promisesStatus } from "../bin/commands/promises.js";
 import { watcherTransition } from "../lib/always-on/heartbeat.js";
 import { slackText } from "../lib/always-on/pass.js";
 import { startPass } from "../lib/always-on/schedule.js";
@@ -8,6 +9,7 @@ import type { IncidentEntry, PromiseEntry } from "../lib/promises/registry.js";
 import { formatStatus } from "../lib/promises/status.js";
 import type { MarkedSpan, MarkedSpansResult } from "../lib/promises/telemetry.js";
 import { type WatchResult, watchReport } from "../lib/promises/watch.js";
+import { readSources } from "../lib/promises/sources.js";
 import {
 	behaviourPromise,
 	codeFilesFor,
@@ -17,6 +19,11 @@ import {
 } from "./helpers/promises-fixture.js";
 
 // promise: a-promise-is-upheld-or-broken
+
+vi.mock("../lib/promises/sources.js", async (original) => ({
+	...(await original<typeof import("../lib/promises/sources.js")>()),
+	readSources: vi.fn(),
+}));
 
 /**
  * A7 (the CLI's half) and A8 of one-promise-language: what the command line
@@ -237,5 +244,42 @@ describe("A8 — the always-on server's messages", () => {
 		info.mockRestore();
 		expect(said).toContain("announcements are off");
 		expect(said).not.toMatch(OLD);
+	});
+});
+
+describe("A34 — each source is judged by the rule the admin uses for it", () => {
+	// A regression guard over a-promise-is-upheld-or-broken: the command line and the admin say the same word for the same source.
+	const cleanups: string[] = [];
+	afterEach(() => {
+		for (const c of cleanups.splice(0)) rmSync(c, { recursive: true, force: true });
+		vi.restoreAllMocks();
+	});
+
+	const read = (name: "local" | "production", m: MarkedSpansResult) =>
+		({ name, label: `${name} jaeger`, ok: true, marks: m }) as never;
+
+	it("a local break followed by a newer upheld report reads held beside a production source; production still reads broken", async () => {
+		const fx = promiseProject({
+			activePlans: ["seat-holds"],
+			promises: [behaviourPromise("seats-held", { owner: "seat-holds", domain: "seating" })],
+			domains: ["seating"],
+			files: codeFilesFor("seats-held"),
+		});
+		cleanups.push(fx.root);
+		const brokeThenHeld = marks(
+			[span("broken", "2026-10-09T10:00:00Z", "seat 4 held twice")],
+			span("upheld", "2026-10-09T11:00:00Z"),
+		);
+		vi.mocked(readSources).mockResolvedValue([
+			read("local", brokeThenHeld),
+			read("production", brokeThenHeld),
+		]);
+		const out: string[] = [];
+		vi.spyOn(console, "info").mockImplementation((...a) => void out.push(a.join(" ")));
+		await promisesStatus(fx.planRoot);
+		const [local, production] = out.join("\n").split(/\n(?=production — )/);
+		expect(local).toMatch(/^local — /m);
+		expect(local).not.toMatch(/broken —/);
+		expect(production).toMatch(/broken — 1 break/);
 	});
 });

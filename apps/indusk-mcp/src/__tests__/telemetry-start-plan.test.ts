@@ -1,8 +1,18 @@
 // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
 // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
 // promise: the-daemon-readers-follow-is-the-one-running
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { PORT_BLOCK, type StoredAddress } from "../lib/telemetry/daemon-address.js";
+import {
+	addressFilePath,
+	addressReport,
+	PORT_BLOCK,
+	resetAddress,
+	type StoredAddress,
+} from "../lib/telemetry/daemon-address.js";
+import { realDaemonReads } from "../lib/telemetry/daemon-reads.js";
 import { daemonState, renderStatus } from "../lib/telemetry/daemon-state.js";
 import {
 	type Candidate,
@@ -170,5 +180,63 @@ describe("the seams a start is read through", () => {
 	it("optionsOf is the inverse of startOptions in a temporary home", () => {
 		const ports = { traces: 5000, logs: 5001, ui: 5002, mcp: 5003 };
 		expect(startOptions(optionsOf(ports), "/tmp/h-1")).toEqual(ports);
+	});
+});
+
+describe("A33 — a damaged address file is never taken for a missing one", () => {
+	const damaged = "telemetry-address.json: the file is cut short";
+
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	it("a start in the real home refuses naming the file and --reset, chooses nothing and spawns nothing", async () => {
+		const reads = fakeReads({ record: null, address: null, addressProblem: damaged } as never);
+		const spawn = spawnSpy();
+		const result = await ensureDaemon("start", reads, HOME, spawn);
+		expect(result.kind).toBe("refused");
+		if (result.kind !== "refused") return;
+		expect(result.text).toContain("telemetry-address.json");
+		expect(result.text).toContain("indusk telemetry address --reset");
+		expect(spawn).not.toHaveBeenCalled();
+		expect(reads.addressWrites).toEqual([]);
+	});
+
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	it("`telemetry address` says it is unreadable instead of saying none is stored", () => {
+		const reads = fakeReads({ address: null, addressProblem: damaged } as never);
+		const out = addressReport(reads, {});
+		expect(out.code).toBe(1);
+		expect(out.text).toMatch(/unreadable/);
+		expect(out.text).not.toMatch(/no address stored/);
+	});
+
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	it("--reset still chooses and writes over an unreadable file", () => {
+		const reads = fakeReads({ address: null, addressProblem: damaged } as never);
+		const result = resetAddress(reads, HOME);
+		expect(result.ok).toBe(true);
+		expect(reads.addressWrites).toHaveLength(1);
+	});
+
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	it("the real reads tell a cut-short file and a port that is not a number from a missing one, and write whole", () => {
+		const home = mkdtempSync(join(tmpdir(), "address-file-"));
+		try {
+			const reads = realDaemonReads(home);
+			expect(reads.addressProblem?.() ?? null).toBeNull();
+			for (const body of ['{"traces": 243', JSON.stringify({ ...PORT_BLOCK, logs: "x", picked: [] })]) {
+				writeFileSync(addressFilePath(home), body);
+				expect(reads.address()).toBeNull();
+				expect(reads.addressProblem?.()).toEqual(expect.stringContaining("telemetry-address.json"));
+			}
+			// the exclusive write leaves a file that is there exactly as it was
+			expect(reads.writeAddress({ ...PORT_BLOCK, picked: [] }, { exclusive: true })).toBe(false);
+			expect(readFileSync(addressFilePath(home), "utf-8")).toContain('"logs":"x"');
+			// the plain write replaces it whole, leaving no temporary file beside it
+			expect(reads.writeAddress({ ...PORT_BLOCK, picked: [] }, { exclusive: false })).toBe(true);
+			expect(reads.addressProblem?.() ?? null).toBeNull();
+			expect(reads.address()).toEqual({ ...PORT_BLOCK, picked: [] });
+			expect(readdirSync(home)).toEqual(["telemetry-address.json"]);
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
 	});
 });
