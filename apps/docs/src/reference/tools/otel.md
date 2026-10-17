@@ -4,7 +4,7 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 
 ## What `init` Creates
 
-`indusk-mcp init` detects your runtime and scaffolds the right instrumentation:
+`indusk init` detects your runtime and scaffolds the right instrumentation into the app's own folder (the declared code repo in a workbench). Every server app also gets `telemetry-settings.ts` (the service named in code, the daemon's stored address as the default endpoint, the project and environment on every span) and the signal helper `signal` that writes a promise's signal as a span. Whatever `init` prints, it prints once and every command it names exists.
 
 ### Node.js (Express, Fastify, plain HTTP)
 
@@ -13,6 +13,8 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 | `src/instrumentation.ts` | OTel SDK with auto-instrumentation + FilteringExporter |
 | `src/filtering-exporter.ts` | Category-based span filtering |
 | `src/logger.ts` | Pino structured logger (stdout + OTLP) |
+| `src/telemetry-settings.ts` | Service name, the daemon's address, project and environment |
+| `src/signal.ts` | The signal helper: `signal.upheld(...)` and `signal.broken(...)` |
 
 **Wire it**: `node --import ./src/instrumentation.ts src/index.ts`
 
@@ -25,8 +27,10 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 | `instrumentation.ts` (root) | Server-side: `@vercel/otel` — API routes, server components, middleware |
 | `src/instrumentation.web.ts` | Client-side: OTel Web SDK — page loads, fetch, user interactions |
 | `src/logger.ts` | Pino structured logger (stdout + OTLP) |
+| `src/telemetry-settings.ts` | Service name, the daemon's address, project and environment |
+| `src/signal.ts` | The signal helper (server side) |
 
-**Wire it**: Server loads automatically. Client: `import './instrumentation.web'` in your root client component.
+**Wire it**: Server loads automatically. Client: `import './instrumentation.web'` from a client component (one that starts with `"use client"`), not the root layout.
 
 **Install**: `pnpm add @vercel/otel pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
 
@@ -35,6 +39,7 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 | File | Purpose |
 |------|---------|
 | `src/instrumentation.ts` | OTel Web SDK — page loads, fetch, user interactions |
+| `src/telemetry-settings.ts` | Service name, the daemon's address, project and environment |
 
 **Wire it**: `import './instrumentation'` at the top of `main.tsx`
 
@@ -45,10 +50,15 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 | File | Purpose |
 |------|---------|
 | `instrumentation.py` | OTel SDK with auto-instrumentation |
+| `indusk_signal.py` | The signal helper (named so it does not hide Python's `signal` module) |
 
 **Wire it**: `opentelemetry-instrument python your_app.py`
 
 **Install**: `pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp`
+
+## A Promise's Signal
+
+A behaviour promise's signal is a span written with the helper, never a log line; see [the signal helper](/reference/telemetry/signal-helper). A log line is for diagnosis.
 
 ## How to Add Manual Traces
 

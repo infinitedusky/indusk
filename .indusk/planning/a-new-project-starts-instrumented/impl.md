@@ -750,7 +750,7 @@ record that its first run reports.
 
 #### Build Phase 3 Document
 
-- [ ] Update the otel tools page, the new-project and getting-started guides, and the demo's reference page where they describe what a project is handed.
+- [x] Update the otel tools page, the new-project and getting-started guides, and the demo's reference page where they describe what a project is handed.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/tools/otel.md`, `apps/docs/src/guide/new-project.md`, `apps/docs/src/guide/getting-started.md` (Docker only for `server deploy --build-from`), `apps/docs/src/reference/cli/demo.md` if it names the example's telemetry file; changelog entry.
