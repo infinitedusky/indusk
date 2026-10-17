@@ -17,16 +17,13 @@ export async function readPlanHealth(
 ) {
   const registry = registryOf(readProjectPromises(projectPath));
   if (!registry) return {};
-  // A promise only the plan's own checkout registers has no entry in the
-  // project's registry; it reads through the same rule rather than falling
-  // back to its registry state's colour.
+  // The plan's own checkout may register promises the project's registry does
+  // not; `planPromiseHealth` skips the ones the trunk answers for.
   const own =
     checkout === projectPath ? null : registryOf(readProjectPromises(checkout));
-  const known = new Set(registry.promises.map((p) => p.name));
-  const extra = own?.promises.filter((p) => !known.has(p.name)) ?? [];
   return planPromiseHealth(
     registry,
     await readHealth(projectPath, registry),
-    extra,
+    own?.promises ?? [],
   );
 }

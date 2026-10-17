@@ -179,7 +179,7 @@ This plan taught a plan's page to colour each promise by its health. Along the w
   Add a `dot` field (`bg-bad`, `bg-ink-soft`, `bg-ok`, `bg-idle`, `bg-warn`, `bg-idle`) to each entry of `PROMISE_HEALTH_CHIP` in `apps/indusk-admin/src/components/bars/labels.ts`; delete `HEALTH_DOT` from `apps/indusk-admin/src/components/plan/PlanParts.tsx` and draw `PROMISE_HEALTH_CHIP[p.health].dot`. Basis: one source of truth across files — `HEALTH_DOT`'s own doc comment says it is "the colours of `PROMISE_HEALTH_CHIP`", a promise kept by a comment, so a chip colour change would leave the plan page's dots behind with nothing failing but A2. `DOT` (registry state) stays in `PlanParts.tsx`: it has no counterpart elsewhere.
 
   </details>
-- [ ] Drop the admin health reader's own filter for promises the trunk already registers, and hand the package every promise the plan's checkout registers.
+- [x] Drop the admin health reader's own filter for promises the trunk already registers, and hand the package every promise the plan's checkout registers.
   <details><summary>Technical</summary>
 
   In `apps/indusk-admin/src/lib/plan-health.ts`, `readPlanHealth` builds `known` and filters `own.promises` by it; `planPromiseHealth` in `apps/indusk-mcp/src/lib/promises/health.ts` does the same skip (`if (known.has(p.name)) continue`). Pass `own?.promises ?? []` and delete the reader's `known`/`extra`, so the rule of which promise the trunk answers for lives only in the package, where the doc comment on `planPromiseHealth` states it. Behaviour unchanged; A4 holds it.
