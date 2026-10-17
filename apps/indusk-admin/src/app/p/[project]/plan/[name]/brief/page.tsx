@@ -42,7 +42,7 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
   const checkout = plan.worktree?.path ?? projectPath;
   const parts = await readPlanParts(checkout, name, {
     archived: plan.archived || Boolean(plan.archivedInWorktree),
-    health: await readPlanHealth(projectPath),
+    health: await readPlanHealth(projectPath, checkout),
   });
   const documents = planDocuments(plan);
   const brief = documents.find((d) => d.slug === "brief");

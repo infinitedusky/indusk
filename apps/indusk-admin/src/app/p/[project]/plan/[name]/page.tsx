@@ -77,7 +77,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
   const checkout = plan.worktree?.path ?? projectPath;
   const parts = await readPlanParts(checkout, name, {
     archived: plan.archived || Boolean(plan.archivedInWorktree),
-    health: await readPlanHealth(projectPath),
+    health: await readPlanHealth(projectPath, checkout),
   });
 
   // A master (a plan that declares subplans) tells its story where a plan's

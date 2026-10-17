@@ -132,7 +132,7 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 
 This phase tests whether a promise with no signal can still look healthy on its plan's page. The page reads each promise from the plan's own branch, but its health from the trunk's list of promises, so a behaviour promise that exists only on the branch gets no health and falls back to the green of an enforced promise. The fix answers health for those promises too, through the same rule, so once this phase closes a promise nothing has reported on is never green on its plan's page.
 
-- [ ] A behaviour promise that only the plan's branch registers gets its health from the package's rule, so it reads no signal until telemetry reports on it.
+- [x] A behaviour promise that only the plan's branch registers gets its health from the package's rule, so it reads no signal until telemetry reports on it.
   <details><summary>Technical</summary>
 
   Answers A4. `planPromiseHealth(registry, reads, extra: PromiseEntry[] = [])` in `apps/indusk-mcp/src/lib/promises/health.ts` also runs `healthOf(p, alarmRead(reads) ?? null, registry.incidents)` for each `extra` promise the trunk's registry lacks, so its incidents and source stay the nav's; a behaviour promise outside the read window has no marks and reads `unverified`. `readPlanHealth(projectPath, checkout)` in `apps/indusk-admin/src/lib/plan-health.ts` passes the checkout registry's promises absent from the trunk's (none when `checkout` is the project); `plan/[name]/page.tsx` and `brief/page.tsx` pass `checkout`. `redPlans` keeps calling it with no `extra`.
