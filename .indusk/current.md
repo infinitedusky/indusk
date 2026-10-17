@@ -3245,3 +3245,22 @@ Next: Build Phase 1 (rewrite planner step 7, templates, shipped planning rules, 
 Next: Build Phase 1 of the impl — `componentReset` in `apps/indusk-mcp/src/lib/looks/component-styles.ts`, `_reset.css` written by `indusk looks stories`, mockup and story documents loading it. The browser checks need `pnpm --filter @infinitedusky/indusk-mcp build` before they load.
 
 ---
+
+## Session f7a02150 — a-new-project-starts-instrumented — Test Phase 1
+
+**Session ID**: f7a02150-cfec-48ec-ad99-33924492d061
+**Last updated**: 2026-10-17T19:09:53.661Z
+
+### In Flight
+
+Plan a-new-project-starts-instrumented (worktree dusk-worktrees/a-new-project-starts-instrumented, branch plan/a-new-project-starts-instrumented) is at Test Phase 1 with its tests red: 14 rows written and red on their own assertions, the browser-trace and vendor-free guards green, 8 rows deferred in the register. Register reviewed with Sandy 2026-10-17: the span reader gains a clause field in Build Phase 2 (new item there).
+
+### Open Questions
+
+Two guesses to confirm in Build Phase 1: the placement test adds a src/ folder before update scaffolds; the declined-telemetry test assumes the recommendation is named `telemetry`.
+
+### Cursor
+
+Next: Build Phase 1 (tier strong), the scaffold per code repo.
+
+---
