@@ -100,4 +100,24 @@ describe("the cockpit's pages draw components as their stories do", () => {
 		expect(doc).toContain(".card-own {}");
 		expect(doc).not.toContain(`.card-own${SCOPE}`);
 	});
+	it("a component's variant rules come after every component's plain rules, as the app's build orders them", () => {
+		const doc = mockupDocument(
+			"<html><head></head><body></body></html>",
+			":root{}",
+			[
+				{
+					component: "a",
+					css: ".flex { display: flex; }\n.max-md-hidden { @media (width < 759px) { display: none; } }\n@media (max-width: 759px) { .cols { gap: 1px; } }",
+				},
+				{ component: "b", css: ".flex { display: flex; }\n.p-1 { padding: 1px; }" },
+			],
+			"",
+		);
+		const at = (needle: string, from = 0) => doc.indexOf(needle, from);
+		const lastPlain = doc.lastIndexOf(".flex { display: flex; }");
+		expect(at(".max-md-hidden")).toBeGreaterThan(lastPlain);
+		expect(at("@media (max-width: 759px)")).toBeGreaterThan(lastPlain);
+		expect(at(".p-1 { padding: 1px; }")).toBeGreaterThan(-1);
+		expect(doc.match(/\.flex \{ display: flex; \}/g)).toHaveLength(2);
+	});
 });

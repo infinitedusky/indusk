@@ -486,6 +486,13 @@ A reader that had not seen the build found gaps between what the plan promises a
 
   </details>
   Note: consumers of the `document` field checked first — `readAppLooks` feeds only the admin's `srcDoc` frames (`Cascade`, `Stories`, `PlanLook`), the plan parts (`lib/plans/parts.ts`, which passes it through) and tests that read it for a substring (`looks-components-cli.test.ts` A25, which asserts a component's rule, not the mockup's); the look check and the screenshots load the served app, and every hash is of the source bytes in `mockups.ts`; none hashes the document or compares it to a stored baseline, so no blocker. `pageOnly` in `component-styles.ts` appends `:not(:where([data-component], [data-component] *))` to each selector of the mockup's own `<style>` elements (before a pseudo-element, through the `guarded` helper `scoped` now shares), leaves a selector naming a marker as written, skips `@keyframes`, and returns CSS that does not parse unchanged; `mockupDocument` applies it to the mockup's own `<style>` elements only, before it adds the foundation's, the reset's and the components' sheets. T6 red (`.grid` unchanged), then green.
+- [x] A component's variant rules load after every component's plain rules in a mockup, as the app's build orders them.
+  <details><summary>Technical</summary>
+
+  Discovered by the composition check at the phone width: `promise-row`'s sheet holds `.max-\[759px\]\:hidden { @media … { display: none } }`, and a later component's sheet holds `.flex { display: flex }` at the same specificity, so in a mockup the later `.flex` won and a span the story hides on a phone was shown. `splitVariants` in `component-styles.ts` cuts a sheet into plain rules and variant rules (under `@media`, `@supports`, `@container`, or nesting one); `mockupDocument` writes each component's plain rules in its own `<style>` and every variant after them in one `<style data-component-style="_variants">`. Only where a rule sits changes in the cockpit's document; no sheet, hash or approval does. Test in `overview.test.ts`.
+
+  </details>
+  Note: red first (`.max-md-hidden` came before the later sheet's `.flex`), then green; the sheets and every approval hash are unchanged.
 - [ ] The composition check compares each placed component at every reference device, and compares the size of a box that holds a mockup's own words against the story given those words.
   <details><summary>Technical</summary>
 

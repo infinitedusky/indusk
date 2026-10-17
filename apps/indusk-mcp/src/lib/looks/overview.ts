@@ -10,7 +10,7 @@ import {
 	type StoryApprovalEntry,
 	storyApprovalOf,
 } from "./approvals.js";
-import { pageOnly } from "./component-styles.js";
+import { pageOnly, splitVariants } from "./component-styles.js";
 import { storybookIds } from "./components.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
@@ -136,10 +136,16 @@ export function mockupDocument(
 		/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
 		(_all, open: string, css: string, close: string) => `${open}${pageOnly(css)}${close}`,
 	);
+	// A variant rule comes after every component's plain rules (`splitVariants`).
+	const cut = styles.map((s) => ({ component: s.component, ...splitVariants(s.css) }));
+	const variants = cut.map((c) => c.variants).filter((v) => v.trim() !== "");
 	const style = [
 		`<style data-foundation>\n${tokensCss}</style>`,
 		...(reset ? [`<style data-component-style="_reset">\n${reset}</style>`] : []),
-		...styles.map((s) => `<style data-component-style="${s.component}">\n${s.css}</style>`),
+		...cut.map((c) => `<style data-component-style="${c.component}">\n${c.plain}</style>`),
+		...(variants.length > 0
+			? [`<style data-component-style="_variants">\n${variants.join("\n")}</style>`]
+			: []),
 	].join("\n");
 	if (TOKENS_LINK.test(html)) return html.replace(TOKENS_LINK, () => style);
 	if (/<head\b[^>]*>/i.test(html)) return html.replace(/<head\b[^>]*>/i, (head) => head + style);

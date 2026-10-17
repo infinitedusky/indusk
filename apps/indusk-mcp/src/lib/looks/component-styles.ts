@@ -373,6 +373,38 @@ export function pageOnly(css: string): string {
 	return root.toString();
 }
 
+const VARIANT_AT_RULES = /^(media|supports|container)$/i;
+
+/**
+ * A component's stylesheet cut into its plain rules and its variant rules, a
+ * rule under `@media`, `@supports` or `@container`, or one that nests such a
+ * block (`.max-\[759px\]:hidden { @media … }`). The app's build writes every
+ * variant after every plain utility, so a variant beats a plain rule of the
+ * same specificity; a mockup loads one sheet per component, and `.flex` in a
+ * later sheet would beat an earlier sheet's `max-[759px]:hidden`. The cockpit
+ * therefore puts all the variants after all the plain rules, each in the order
+ * its sheet wrote it. Only where a rule sits changes; no hash reads this.
+ *
+ * promise: mockups-render-in-the-cockpit
+ */
+export function splitVariants(css: string): { plain: string; variants: string } {
+	let root: postcss.Root;
+	try {
+		root = postcss.parse(css);
+	} catch {
+		return { plain: css, variants: "" };
+	}
+	const variants = postcss.root();
+	for (const node of [...(root.nodes ?? [])]) {
+		const isVariant =
+			(node.type === "atrule" && VARIANT_AT_RULES.test(node.name)) ||
+			(node.type === "rule" &&
+				node.some((n) => n.type === "atrule" && VARIANT_AT_RULES.test(n.name)));
+		if (isVariant) variants.append(node);
+	}
+	return { plain: root.toString(), variants: variants.toString() };
+}
+
 /**
  * The app's element resets as a sheet that reaches only components,
  * `components/_reset.css`. A story renders in the served Storybook under the
