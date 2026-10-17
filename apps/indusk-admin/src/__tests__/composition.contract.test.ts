@@ -26,6 +26,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * widths, and the story is read at that same width, so a responsive class is
  * compared where it applies.
  *
+ * A component the mockup itself hides at a width (a rule naming its marker) has
+ * no boxes there and is not compared at that width.
+ *
  * Own words (T7). A mockup may give a component its own words
  * (component-content). The story is read with the mockup's words placed into
  * its leaf elements (those with no element child) before it is measured, so a
@@ -173,7 +176,8 @@ function readDrawn(args: {
     const props: Record<string, string> = {};
     for (const p of args.props) props[p] = cs.getPropertyValue(p);
     const rect = el.getBoundingClientRect();
-    const drawn = cs.display !== "none" && cs.display !== "contents";
+    // Not drawn: itself `display: none` or inside something that is (no boxes).
+    const drawn = cs.display !== "contents" && el.getClientRects().length > 0;
     const px = (v: string) => Number.parseFloat(v) || 0;
     out.push({
       path,
@@ -291,8 +295,11 @@ afterAll(async () => {
 
 /** How far a second viewport is from the device's, to drop a value the container drives. */
 const WIDER_BY = 120;
-/** The height of every read viewport; nothing here depends on it. */
-const TALL = 900;
+/** A reference device's viewport. A story is read at the height too: a `vh` class sizes by it. */
+interface Viewport {
+  width: number;
+  height: number;
+}
 
 async function drawn(
   page: Page,
@@ -349,16 +356,16 @@ async function storyProps(
   browser: Browser,
   id: string,
   name: string,
-  device: number,
+  device: Viewport,
 ): Promise<Drawn[] | { problem: string }> {
   const reads: Array<Drawn[] | { problem: string }> = [];
   for (const [width, siblings] of [
-    [device, false],
-    [device + WIDER_BY, false],
-    [device, true],
+    [device.width, false],
+    [device.width + WIDER_BY, false],
+    [device.width, true],
   ] as const) {
     const page = await browser.newPage({
-      viewport: { width, height: TALL },
+      viewport: { width, height: device.height },
     });
     try {
       reads.push(await story(page, id, name, siblings));
@@ -399,11 +406,14 @@ async function storySizes(
   id: string,
   name: string,
   width: number,
-  device: number,
+  device: Viewport,
   words: readonly string[],
 ): Promise<Drawn[] | { problem: string }> {
   const page = await browser.newPage({
-    viewport: { width: Math.max(device, Math.ceil(width) + 64), height: TALL },
+    viewport: {
+      width: Math.max(device.width, Math.ceil(width) + 64),
+      height: device.height,
+    },
   });
   try {
     return await story(page, id, name, false, width, words);
@@ -454,7 +464,7 @@ describe("T7 — a composed mockup draws each component as its story does, at ea
             if (!stories.has(storyKey)) {
               stories.set(
                 storyKey,
-                await storyProps(browser, id, use.name, device.width),
+                await storyProps(browser, id, use.name, device),
               );
             }
             const expected = stories.get(storyKey);
@@ -480,7 +490,7 @@ describe("T7 — a composed mockup draws each component as its story does, at ea
                   id,
                   use.name,
                   rootWidth,
-                  device.width,
+                  device,
                   words,
                 ),
               );
@@ -500,6 +510,10 @@ describe("T7 — a composed mockup draws each component as its story does, at ea
               );
               continue;
             }
+            // A mockup may hide a component it places at one width (its own rule
+            // naming the component's marker, in a media query: a nav folded into
+            // a menu button on a phone). Nothing is drawn to compare.
+            if (!(actual[0] as Drawn).size) continue;
             for (const [i, want] of expected.entries()) {
               const got = actual[i] as Drawn;
               compared++;

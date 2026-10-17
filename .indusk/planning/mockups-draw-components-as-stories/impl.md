@@ -63,10 +63,10 @@ release raised.
 | T3 | A proposed story or mockup whose last approval was drawn under other element rules is held to nothing, in the look check and in the status line, as one drawn on another foundation is | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 | T4 | An element reset written for a pseudo-element keeps the component scope before the pseudo-element, and the selector it writes is one a browser accepts | Build Phase 5 | Build Phase 5 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
 | T5 | The cockpit's own story page loads the element resets after the foundation's tokens and before the app's base and the component's sheet | Build Phase 5 | Build Phase 5 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
-| T6 | A mockup's own style rule never reaches a component it places, on its root or inside it, even when it names a class the component also uses; a rule that names the component's marker still places it | Build Phase 5 | Build Phase 5 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
-| T7 | Every component every admin mockup places draws as its story does at each reference device, and a box the mockup gives its own words is as large as the story's box given those words | Build Phase 5 | Build Phase 5 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
+| T6 | A mockup's own style rule never reaches a component it places, on its root or inside it, even when it names a class the component also uses; a rule that names the component's marker still places it | Build Phase 5 | Build Phase 5 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
+| T7 | Every component every admin mockup places draws as its story does at each reference device, and a box the mockup gives its own words is as large as the story's box given those words | Build Phase 5 | Build Phase 5 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
 | T8 | The looks status line of a look last approved under other element rules says nothing is held, and names the element rules | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
-| T9 | An arbitrary wrapping class is refused with a message naming the standard wrapping utility to use instead | Build Phase 5 | Build Phase 5 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/__tests__/looks-lint-rules.test.ts |
+| T9 | An arbitrary wrapping class is refused with a message naming the standard wrapping utility to use instead | Build Phase 5 | Build Phase 5 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/__tests__/looks-lint-rules.test.ts |
 
 ## Checklist
 
@@ -493,12 +493,13 @@ A reader that had not seen the build found gaps between what the plan promises a
 
   </details>
   Note: red first (`.max-md-hidden` came before the later sheet's `.flex`), then green; the sheets and every approval hash are unchanged.
-- [ ] The composition check compares each placed component at every reference device, and compares the size of a box that holds a mockup's own words against the story given those words.
+- [x] The composition check compares each placed component at every reference device, and compares the size of a box that holds a mockup's own words against the story given those words.
   <details><summary>Technical</summary>
 
   `composition.contract.test.ts`: draw each mockup at each of `app.devices`' widths, not only `WIDE`; replace the `ownWords` skip with a story read whose leaf elements are given the mockup's text before measuring (`readDrawn` takes the words per element index; only elements without element children are rewritten). T7. If T7 is red on the admin's real mockups, each difference is a defect to fix in this phase, named in a note — not a reason to loosen the check.
 
   </details>
+  Note: T7 draws every mockup at each of `app.devices` (phone 390, narrow-laptop 1024, desktop 1440) and reads each story at that device's width and height; the `ownWords` skip is gone, the story being given the mockup's words in its leaves. First run red on the phone only (611 lines): (1) a real defect, fixed — variant rules losing to a later sheet's plain rule (see the item above); (2) two defects of the check itself, fixed in it — a box inside something `display: none` was measured as a negative size, and the story was read at a 900 px viewport height while the mockup was drawn at the device's (a `vh` class differed by 31.6 px); a placed component the mockup itself hides at a width (a rule naming its marker in a media query, the nav folded into a menu button) has no boxes and is not compared there. No difference was left over and nothing came from own words; green in 203 s.
 - [x] The reset's scope is tested where it must sit, before a pseudo-element, in a selector a browser accepts.
   <details><summary>Technical</summary>
 
