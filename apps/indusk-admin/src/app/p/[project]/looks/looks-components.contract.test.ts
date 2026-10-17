@@ -1,5 +1,6 @@
 // promise: a-mockup-composes-approved-components — A7.
 // promise: mockups-render-in-the-cockpit — A18.
+// promise: mockups-render-in-the-cockpit — T2.
 
 import { spawnSync } from "node:child_process";
 import {
@@ -211,4 +212,52 @@ describe("A18 — each story opens on the Looks page at its component's size, an
     // took 1 192 s on 2026-10-17. The limit is that with room for the catalog
     // to grow.
   }, 1_800_000);
+});
+
+describe("T2 — a story centred by automatic margins is fitted to its component", () => {
+  it("T2 the frame of a component centred with auto margins is its width plus twice its container's inset, not the frame's own width", async () => {
+    const page = await browser.newPage({
+      viewport: { width: 1600, height: 1000 },
+    });
+    try {
+      await goto(page, FIXTURE_PROJECT, "app=demo&story=banner.default");
+      const frame = page.locator('[data-testid="story-frame"]');
+      await frame.waitFor({ timeout: 30_000 });
+      const component = page
+        .frameLocator('[data-testid="story-frame"]')
+        .locator('#storybook-root > [data-component="banner"]');
+      await component.waitFor({ timeout: 30_000 });
+      // The space the container leaves before a start-aligned child: its
+      // content edge. Not the component's own `left`, which for a centred
+      // component is half the frame's spare width.
+      const inset = await component.evaluate((el) => {
+        const parent = el.parentElement as HTMLElement;
+        const s = getComputedStyle(parent);
+        return (
+          parent.getBoundingClientRect().left +
+          Number.parseFloat(s.borderLeftWidth) +
+          Number.parseFloat(s.paddingLeft)
+        );
+      });
+      await expect
+        .poll(
+          async () => {
+            const f = await frame.boundingBox();
+            const c = await component.boundingBox();
+            if (!f || !c) return "no box";
+            const expected = c.width + 2 * inset;
+            return Math.abs(f.width - expected) <= 2
+              ? "fitted"
+              : `frame ${f.width}, component ${c.width} + 2 x ${inset} = ${expected}`;
+          },
+          {
+            message: "the frame is its centred component's width and inset",
+            timeout: 10_000,
+          },
+        )
+        .toBe("fitted");
+    } finally {
+      await page.close();
+    }
+  }, 180_000);
 });
