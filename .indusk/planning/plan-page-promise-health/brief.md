@@ -1,7 +1,7 @@
 ---
 title: "A promise reads the same on its plan's page"
 date: 2026-10-17
-status: draft
+status: accepted
 workflow: bugfix
 clauses: required
 description: "A plan's page and its brief page colour each promise by its health, from the same rule the Promises page and the nav use, so a promise that broke never shows as healthy on the page of the plan that owns it."
