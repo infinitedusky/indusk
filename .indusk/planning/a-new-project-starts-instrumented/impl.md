@@ -442,7 +442,7 @@ InDusk wrote lets update refresh untouched files and put newer versions beside e
 ones. A code repo also gets its MCP config, and a declined telemetry recommendation
 turns the telemetry extensions off. If the later phases stall, this one can land alone.
 
-- [ ] Write the settings file each scaffolded app will carry, with one function that takes the environment and the rendered values and returns where to send, the service name and the resource attributes.
+- [x] Write the settings file each scaffolded app will carry, with one function that takes the environment and the rendered values and returns where to send, the service name and the resource attributes.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/templates/telemetry-settings.ts`, no imports:

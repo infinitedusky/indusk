@@ -35,6 +35,38 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME
 
+# Telemetry settings: the same decisions as telemetry-settings.ts in a Node app.
+# Replaced whole by the scaffold; one line, so a render is one substitution.
+RENDERED = {"service": "", "project": "", "traces": "", "logs": ""}
+
+
+def _endpoint(own, rendered, path):
+    """The signal's own endpoint as given, else the general one or the rendered address with the path."""
+    given = os.environ.get(own)
+    if given:
+        return given
+    base = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or rendered
+    return base.rstrip("/") + path
+
+
+def _resource_attribute(key):
+    """One key of OTEL_RESOURCE_ATTRIBUTES (k=v,k2=v2), or None when it is not set there."""
+    for pair in os.environ.get("OTEL_RESOURCE_ATTRIBUTES", "").split(","):
+        name, eq, value = pair.partition("=")
+        if eq and name.strip() == key:
+            return value.strip()
+    return None
+
+
+SERVICE = os.environ.get("OTEL_SERVICE_NAME") or RENDERED["service"]
+TRACES_URL = _endpoint("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", RENDERED["traces"], "/v1/traces")
+LOGS_URL = _endpoint("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", RENDERED["logs"], "/v1/logs")
+RESOURCE_ATTRIBUTES = {
+    SERVICE_NAME: SERVICE,
+    "indusk.project": RENDERED["project"],
+    "deployment.environment": _resource_attribute("deployment.environment") or "development",
+}
+
 # Configure resource with service name
 resource = Resource.create(
     {SERVICE_NAME: os.environ.get("OTEL_SERVICE_NAME", "unknown-service")}
