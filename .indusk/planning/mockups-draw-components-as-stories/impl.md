@@ -394,7 +394,7 @@ This plan taught approvals to remember the app's element rules, but it did so be
   Fold `drawnUnderNow` into `boundToNow` in `approvals.ts` (an entry without `baseRulesHash` still binds, as now). `approvalOf` and `storyApprovalOf` then call `boundToNow` alone. Its other callers, `check.ts` (the `heldTo` of mockups and stories) and `bin/commands/looks.ts` (`statusLine`), pick it up unchanged; the status line's "on another foundation or declarations" wording gains "or element rules". This changes what those two report, which is why it carries its own trajectory row rather than relying on parity.
 
   </details>
-- [ ] The cockpit's story page takes the app's base sheet, reset sheet and component sheets together rather than as trailing strings in a fixed order.
+- [x] The cockpit's story page takes the app's base sheet, reset sheet and component sheets together rather than as trailing strings in a fixed order.
   <details><summary>Technical</summary>
 
   `storyDocument(story, tokensCss, sheets: Pick<LooksApp, "styles" | "base" | "reset">)` in `overview.ts`, replacing the positional `styles, base = "", reset = ""` that Build Phase 1's Shape review left for this ritual; `storiesOf` passes `app`, and `overview.test.ts`'s two calls pass an object. `mockupDocument` keeps its trailing `reset`: one optional after the styles, one caller.

@@ -16,6 +16,7 @@ import { generateCss } from "./foundation.js";
 import {
 	type ComponentStyle,
 	type Device,
+	type LooksApp,
 	MOCKUPS_DIR,
 	type Mockup,
 	readApp,
@@ -172,19 +173,17 @@ function viewOf(
 export function storyDocument(
 	story: Pick<Story, "component" | "html">,
 	tokensCss: string,
-	styles: readonly Pick<ComponentStyle, "component" | "css">[],
-	base = "",
-	reset = "",
+	sheets: Pick<LooksApp, "styles" | "base" | "reset">,
 ): string {
 	const page = `<!doctype html>\n<html>\n<head><meta charset="utf-8"></head>\n<body><div id="storybook-root">${story.html}</div></body>\n</html>\n`;
 	return mockupDocument(
 		page,
 		tokensCss,
 		[
-			...(base ? [{ component: "_base", css: base }] : []),
-			...styles.filter((s) => s.component === story.component),
+			...(sheets.base ? [{ component: "_base", css: sheets.base }] : []),
+			...sheets.styles.filter((s) => s.component === story.component),
 		],
-		reset,
+		sheets.reset,
 	);
 }
 
@@ -207,7 +206,7 @@ function storiesOf(
 			plan: entry?.plan ?? null,
 			hash: story.hash,
 			stylesheetHash: story.stylesheetHash,
-			document: storyDocument(story, css, app.styles, app.base, app.reset),
+			document: storyDocument(story, css, app),
 		};
 	});
 }

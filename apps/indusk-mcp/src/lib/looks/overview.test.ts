@@ -31,12 +31,11 @@ describe("a story's frame", () => {
 	];
 
 	it("draws under the app's base, after the tokens and before the component's own sheet", () => {
-		const doc = storyDocument(
-			story,
-			":root{--font-sans:x}",
+		const doc = storyDocument(story, ":root{--font-sans:x}", {
 			styles,
-			"body { font-family: var(--font-sans); }",
-		);
+			base: "body { font-family: var(--font-sans); }",
+			reset: "",
+		});
 		const tokens = doc.indexOf("data-foundation");
 		const base = doc.indexOf('data-component-style="_base"');
 		const own = doc.indexOf('data-component-style="badge"');
@@ -48,6 +47,8 @@ describe("a story's frame", () => {
 	});
 
 	it("carries no base when the app has none", () => {
-		expect(storyDocument(story, "", styles)).not.toContain('data-component-style="_base"');
+		expect(storyDocument(story, "", { styles, base: "", reset: "" })).not.toContain(
+			'data-component-style="_base"',
+		);
 	});
 });
