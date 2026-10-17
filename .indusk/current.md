@@ -3222,3 +3222,22 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 (empty)
 
 ---
+
+## Session 3e5fed2c — mockups-draw-components-as-stories — Test Phase 1
+
+**Session ID**: 3e5fed2c-7d82-4f90-bbab-eff486c8cb83
+**Last updated**: 2026-10-17T03:18:20.848Z
+
+### In Flight
+
+`mockups-draw-components-as-stories` (bugfix closing the storybook-components incidents on `mockups-render-in-the-cockpit` and `a-mockup-composes-approved-components`) is at the end of Test Phase 1, in worktree `dusk-worktrees/mockups-draw-components-as-stories`. All five new checks are red on the defects: the generator's reset tests (A1–A3, `component-styles.test.ts`) fail because `componentReset` is not exported; the composition check reports only the project card and prompt box findings; the story-frame check fails only on `message.you`. Nothing about how the project works changes in this phase.
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+Next: Build Phase 1 of the impl — `componentReset` in `apps/indusk-mcp/src/lib/looks/component-styles.ts`, `_reset.css` written by `indusk looks stories`, mockup and story documents loading it. The browser checks need `pnpm --filter @infinitedusky/indusk-mcp build` before they load.
+
+---
