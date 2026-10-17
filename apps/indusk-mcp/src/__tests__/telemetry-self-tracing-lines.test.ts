@@ -5,7 +5,11 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderJaegerConfig } from "../lib/telemetry/daemon.js";
 import { linesSince, timestampOf } from "../lib/telemetry/daemon-reads.js";
-import { selfTracingLines, selfTracingSince } from "../lib/telemetry/daemon-state.js";
+import {
+	renderSelfTracing,
+	selfTracingLines,
+	selfTracingSince,
+} from "../lib/telemetry/daemon-state.js";
 import { renderServerConfig } from "../lib/telemetry/server.js";
 import { fakeReads, rec } from "./helpers/daemon-reads.js";
 
@@ -134,5 +138,18 @@ describe("selfTracingSince counts from the byte offset the record holds", () => 
 		};
 		selfTracingSince(spy, rec(1, 2, { startedAt: "2026-10-16T12:00:00.000Z" }));
 		expect(asked).toEqual([{ time: Date.parse("2026-10-16T12:00:00.000Z") }]);
+	});
+});
+
+describe("renderSelfTracing words the count status prints", () => {
+	it("says nothing when there are none", () => {
+		expect(renderSelfTracing({ count: 0 })).toEqual([]);
+	});
+
+	it("gives the count, the first line and the way out", () => {
+		const out = renderSelfTracing({ count: 3, first: GRPC_LINE }).join("\n");
+		expect(out).toMatch(/3 line\(s\) of Jaeger failing to trace itself/);
+		expect(out).toContain(GRPC_LINE);
+		expect(out).toMatch(/indusk telemetry restart/);
 	});
 });

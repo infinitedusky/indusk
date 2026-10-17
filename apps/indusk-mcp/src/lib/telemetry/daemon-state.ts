@@ -253,6 +253,15 @@ export function selfTracingSince(reads: DaemonReads, meta: DaemonMeta): SelfTrac
 	return selfTracingLines(reads.logSince(from));
 }
 
+/** The lines status prints for a self-tracing count: none when Jaeger has not been failing to trace itself. */
+export function renderSelfTracing(tracing: SelfTracing): string[] {
+	if (tracing.count === 0) return [];
+	return [
+		`Log: ${tracing.count} line(s) of Jaeger failing to trace itself since the daemon started; first: ${tracing.first}`,
+		"  `indusk telemetry restart` starts it with its own tracing off.",
+	];
+}
+
 // ---- finding a daemon whose record is gone ---------------------------------
 
 /** A rendered config written this long after a process started is still that process's own. */

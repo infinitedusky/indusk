@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { readMcpJson, removeJaegerEntry, upsertJaegerEntry } from "../../lib/mcp-config.js";
 import {
 	daemonRestart,
-	daemonStatus,
 	daemonStop,
 	startDaemon,
 } from "../../lib/telemetry/daemon.js";
@@ -13,6 +12,7 @@ import {
 	daemonState,
 	describeFinding,
 	findDaemon,
+	renderSelfTracing,
 	renderStatus,
 	selfTracingSince,
 } from "../../lib/telemetry/daemon-state.js";
@@ -181,13 +181,7 @@ export async function telemetryStatus(): Promise<void> {
 	for (const line of renderStatus(state, answers)) console.info(line);
 	if (finding !== null) console.info(finding);
 	if (state.meta !== null && (state.kind === "running" || state.kind === "partial")) {
-		const tracing = selfTracingSince(reads, state.meta);
-		if (tracing.count > 0) {
-			console.info(
-				`Log: ${tracing.count} line(s) of Jaeger failing to trace itself since the daemon started; first: ${tracing.first}`,
-			);
-			console.info("  `indusk telemetry restart` starts it with its own tracing off.");
-		}
+		for (const line of renderSelfTracing(selfTracingSince(reads, state.meta))) console.info(line);
 	}
 	console.info(`Registered ${projectLabel} ${projectCount}`);
 }
