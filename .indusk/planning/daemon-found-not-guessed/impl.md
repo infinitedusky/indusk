@@ -1,7 +1,7 @@
 ---
 title: "The daemon is found, not guessed"
 date: 2026-10-16
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "a8cefb750dcfbcb8df0874e6fc816c4c7a9aa0f2ccfe7489322fe9fa724856f9"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-17T01:44:01.839Z"
 ---
 
 # The daemon is found, not guessed
