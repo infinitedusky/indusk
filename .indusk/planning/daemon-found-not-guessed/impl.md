@@ -260,6 +260,7 @@ Before any code changes, this phase writes every test that today's code can alre
   ```typescript
   // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
   import { findDaemon } from "../lib/telemetry/daemon-state.js";
+  import { listeningFromProc } from "../lib/telemetry/daemon-reads.js";
   it("finds a running daemon from ps and its sockets and writes the record again", async () => {
     // this machine's daemon on 2026-10-16, started before this change: 4318 and 16686 are labelled as Jaeger's own defaults
     const reads = fakeReads({
@@ -371,7 +372,7 @@ Before any code changes, this phase writes every test that today's code can alre
   // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
   it("several daemons: take the one on the stored traces port, list the rest as strays", () => {
     const plan = startPlan(found([onBlock(1, 2), onOther(3, 4)]), noHolders(), REAL, { address: { ...PORT_BLOCK, picked: [] } });
-    expect(plan).toMatchObject({ kind: "takeover", jaegerPid: 1, strays: [3, 4] });
+    expect(plan).toMatchObject({ kind: "takeover", meta: { jaegerPid: 1 }, strays: [3, 4] });
   });
   it("none on the stored traces port: take none, start nothing, list them all", () => {
     expect(startPlan(found([onOther(1, 2), onOther(3, 4)]), noHolders(), REAL, { address: { ...PORT_BLOCK, picked: [] } })).toMatchObject({ kind: "refuse-several", listed: [1, 2, 3, 4] });
@@ -425,7 +426,7 @@ Before any code changes, this phase writes every test that today's code can alre
     expect(readFileSync(file, "utf8")).not.toMatch(/\b(4318|4319|16686|16687|24316|24317|24318|24319)\b/);
   });
   it("register and update write the jaeger entry at the stored MCP port", () => {
-    expect(jaegerEntryChange(null, { ...PORT_BLOCK, mcp: 52000 })?.url).toBe("http://localhost:52000/mcp");
+    expect(jaegerEntryChange(null, 52000)?.url).toBe("http://localhost:52000/mcp");
   });
   ```
 
@@ -493,13 +494,13 @@ Before any code changes, this phase writes every test that today's code can alre
   // a regression guard over indusk-stops-only-its-own-daemons
   it("a stranger on a stored port and a temporary-home daemon are never taken over or reaped from the real home", () => {
     const state = daemonState(fakeReads({ record: null, address: { ...PORT_BLOCK, picked: [] }, processes: [jaegerCmd(5, TEMP_HOME), STRANGER_CMD(6)], holders: { 24318: STRANGER(6) } }), REAL);
-    expect(startPlan(state, holdersOf(state), REAL).kind).toBe("refuse");
+    expect(startPlan(state, holdersOf(state), REAL, { address: { ...PORT_BLOCK, picked: [] } }).kind).toBe("refuse");
     expect(reapPlan(state)).toEqual([]);
   });
   it("after a takeover, stop stops that daemon and says non-zero if one would not stop", async () => {
     const meta = takeoverMeta(OWN);
     const r = await stopDaemon(meta, REAL, stopDeps({ stubborn: [2] }));
-    expect(r).toMatchObject({ stopped: [1], survived: [2] });
+    expect(r).toMatchObject({ stopped: false, signaled: [1, 2], stillRunning: [2] });
   });
   ```
 
@@ -592,7 +593,7 @@ Before any code changes, this phase writes every test that today's code can alre
   `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-cli-lifecycle.test.ts src/__tests__/telemetry-slow-not-gone.test.ts src/__tests__/telemetry-reap-strays.test.ts src/__tests__/telemetry-self-tracing.test.ts` — A2 red on the unknown `--logs-port`, A8 red on the record being gone, A22 red on the stray still running, A23 red on a non-zero count of self-tracing lines; `pnpm exec vitest run src/__tests__/telemetry-mcp-entries.test.ts src/__tests__/telemetry-daemon-state.test.ts src/lib/telemetry/port-guard.test.ts` — A27 red on the changed mtime and the missing `jaeger` entry, A7 red on the record being removed, A3 red on the refusal not naming its holder; `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 red at "took over the running daemon", then `ls ~/.indusk/telemetry.json ~/.indusk/telemetry.pid` shows the record back and `pgrep -f telemetry-binaries` shows the same one Jaeger and one collector. Each row's State goes to `written` in the same edit.
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [x] Every deferred test body above has been read and judged.
   <details><summary>Technical</summary>
 
   Each body in the register is checked against two questions: will it load at the build phase it names (the symbols it imports are produced by that phase in the Boundary Map), and does it assert what its row in the Test Trajectory claims.
