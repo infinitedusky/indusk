@@ -179,6 +179,7 @@ async function approveMockup(
 				...(mockup.uses.length > 0 ? { componentsHash: mockup.componentsHash, components } : {}),
 				foundationHash: app.foundation.hash,
 				declarationsHash: app.declarationsHash,
+				...rulesOf(app),
 				by,
 				at: new Date().toISOString(),
 				...(plan === null ? {} : { plan }),
@@ -186,6 +187,15 @@ async function approveMockup(
 		};
 	});
 }
+
+/**
+ * The element rules the look is drawn under, as the checkout's catalog holds
+ * them now: the entry binds them so a change to them reopens the approval. The
+ * cockpit sends no hash of its own — it draws what the checkout holds — so the
+ * writer reads the catalog itself, under the lock, with the other hashes.
+ */
+const rulesOf = (app: LooksApp) =>
+	app.baseRulesHash === undefined ? {} : { baseRulesHash: app.baseRulesHash };
 
 async function approveStory(
 	checkout: string,
@@ -223,6 +233,7 @@ async function approveStory(
 				...(story.stylesheetHash === null ? {} : { stylesheetHash: story.stylesheetHash }),
 				foundationHash: app.foundation.hash,
 				declarationsHash: app.declarationsHash,
+				...rulesOf(app),
 				by,
 				at: new Date().toISOString(),
 				...(plan === null ? {} : { plan }),

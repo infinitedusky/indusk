@@ -70,6 +70,12 @@ export interface ApprovalEntry {
 	 * 6, which then binds nothing it can be held to and reads proposed.
 	 */
 	declarationsHash?: string;
+	/**
+	 * The app's element rules it was drawn under (`LooksApp.baseRulesHash`).
+	 * Absent on an entry from before it was kept, which binds nothing of them
+	 * and is read as before — absence is a rule, not a migration.
+	 */
+	baseRulesHash?: string;
 	/** Who approved it. */
 	by: string;
 	/** When, as an ISO date-time. */
@@ -123,6 +129,8 @@ export interface StoryApprovalEntry {
 	stylesheetHash?: string;
 	foundationHash: string;
 	declarationsHash?: string;
+	/** The app's element rules it was drawn under; see `ApprovalEntry.baseRulesHash`. */
+	baseRulesHash?: string;
 	by: string;
 	at: string;
 	/** The plan whose checkout the approval was made in; see `ApprovalEntry.plan`. */
@@ -165,7 +173,7 @@ function isStoryEntry(v: unknown): v is StoryApprovalEntry {
 		["story", "snapshotHash", "foundationHash", "by", "at"].every(
 			(k) => typeof o[k] === "string",
 		) &&
-		["declarationsHash", "stylesheetHash", "plan"].every(
+		["declarationsHash", "stylesheetHash", "baseRulesHash", "plan"].every(
 			(k) => o[k] === undefined || typeof o[k] === "string",
 		)
 	);
@@ -177,7 +185,7 @@ function isEntry(v: unknown): v is ApprovalEntry {
 	return (
 		o.kind === undefined &&
 		FIELDS.every((k) => typeof o[k] === "string") &&
-		["declarationsHash", "componentsHash", "plan"].every(
+		["declarationsHash", "componentsHash", "baseRulesHash", "plan"].every(
 			(k) => o[k] === undefined || typeof o[k] === "string",
 		) &&
 		(o.components === undefined ||
@@ -196,6 +204,13 @@ export const boundToNow = (
 	e: Pick<ApprovalEntry, "foundationHash" | "declarationsHash">,
 ): boolean =>
 	e.foundationHash === app.foundation.hash && e.declarationsHash === app.declarationsHash;
+
+/**
+ * Whether an entry was drawn under the element rules the app has now. An
+ * entry that recorded none binds none and holds, as before the field existed.
+ */
+const drawnUnderNow = (app: LooksApp, e: { baseRulesHash?: string }): boolean =>
+	e.baseRulesHash === undefined || e.baseRulesHash === app.baseRulesHash;
 
 /** Where an app's record is, relative to the project root. */
 export const approvalsPath = (app: string) => join(MOCKUPS_DIR, app, APPROVALS_FILE);
@@ -291,7 +306,8 @@ export function approvalOf(
 		(e) =>
 			e.mockupHash === mockup.hash &&
 			(e.componentsHash ?? NO_COMPONENTS) === mockup.componentsHash &&
-			boundToNow(app, e),
+			boundToNow(app, e) &&
+			drawnUnderNow(app, e),
 	);
 	const unapproved = [...new Set(unapprovedUses(app, mockup, stories).map((u) => u.name))];
 	if (current.length > 0 && unapproved.length === 0) {
@@ -358,7 +374,8 @@ export function storyApprovalOf(
 		(e) =>
 			e.snapshotHash === story.hash &&
 			(e.stylesheetHash ?? null) === story.stylesheetHash &&
-			boundToNow(app, e),
+			boundToNow(app, e) &&
+			drawnUnderNow(app, e),
 	);
 	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
 	const reference = mine[mine.length - 1] ?? null;

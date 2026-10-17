@@ -171,6 +171,13 @@ export interface LooksApp {
 	base: string;
 	/** `components/_reset.css`, the app's element rules scoped to components, which a mockup and a story frame both draw under; "" when absent. */
 	reset: string;
+	/**
+	 * The catalog's `baseRulesHash`: the hash of the app's element rules the
+	 * stories were rendered under, which `_reset.css` carries into the cockpit.
+	 * An approval binds it. Absent when the app has no catalog or the catalog
+	 * records none.
+	 */
+	baseRulesHash?: string;
 	mockups: Mockup[];
 }
 
@@ -283,6 +290,14 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		await readContentMaps(join(dir, "components.json")),
 	);
 	const snapshots = new Map<string, SnapshotBytes>(stories.map((s) => [s.name, s]));
+	const catalogRules = await readJson<{ baseRulesHash?: unknown } | null>(
+		join(dir, "components.json"),
+		null,
+	);
+	const baseRulesHash =
+		typeof catalogRules?.baseRulesHash === "string" && catalogRules.baseRulesHash !== ""
+			? catalogRules.baseRulesHash
+			: undefined;
 
 	const screensDir = join(dir, "screens");
 	const names = existsSync(screensDir)
@@ -333,6 +348,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		styles,
 		base,
 		reset,
+		...(baseRulesHash === undefined ? {} : { baseRulesHash }),
 		mockups,
 	};
 }
