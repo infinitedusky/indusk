@@ -137,6 +137,7 @@ function readTarget(projectRoot: string, name: string, dir: string): TargetRead 
 		exists: isDir(dir),
 		present: (file) => existsSync(join(dir, file)),
 		hasSrc: isDir(join(dir, "src")),
+		srcApp: isDir(join(dir, "src", "app")) || isDir(join(dir, "src", "pages")),
 		current: (path) => {
 			const file = join(dir, path);
 			return existsSync(file) ? readFileSync(file, "utf-8") : null;
@@ -245,11 +246,12 @@ export function applyScaffold(projectRoot: string, opts: ApplyOptions = {}): App
 	const plan = scaffoldPlan(targets, {
 		record: record.files,
 		force: opts.force ?? false,
-		render: (template, service) =>
+		render: (template, service, where) =>
 			renderTemplate(
 				template,
 				readFileSync(join(templates, template), "utf-8"),
 				settingsValues({ service, project, address }),
+				where,
 			),
 	});
 

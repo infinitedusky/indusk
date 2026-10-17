@@ -115,17 +115,23 @@ const HELPER = "OpenTelemetry signal helper — upheld and broken, in InDusk's v
 /**
  * The files a runtime gets. `hasSrc` puts a Node or browser app's files in its `src/`. An app
  * that sets up OpenTelemetry itself (`ownSetup`) gets only the helper and the settings the
- * helper reads — and nothing at all when it has no server to write a signal from.
+ * helper reads — and nothing at all when it has no server to write a signal from. `srcApp`
+ * (a Next.js app whose `app/` or `pages/` is in `src/`) moves the Next.js setup file there.
  */
-export function filesFor(runtime: Runtime, hasSrc: boolean, ownSetup = false): ScaffoldFile[] {
-	const all = runtimeFiles(runtime, hasSrc);
+export function filesFor(
+	runtime: Runtime,
+	hasSrc: boolean,
+	ownSetup = false,
+	srcApp = false,
+): ScaffoldFile[] {
+	const all = runtimeFiles(runtime, hasSrc, srcApp);
 	if (!ownSetup) return all;
 	return all.filter((f) => f.role === "helper" || (f.role === "settings" && hasHelper(all)));
 }
 
 const hasHelper = (files: ScaffoldFile[]) => files.some((f) => f.role === "helper");
 
-function runtimeFiles(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
+function runtimeFiles(runtime: Runtime, hasSrc: boolean, srcApp: boolean): ScaffoldFile[] {
 	const at = hasSrc ? "src/" : "";
 	switch (runtime) {
 		case "node":
@@ -157,12 +163,12 @@ function runtimeFiles(runtime: Runtime, hasSrc: boolean): ScaffoldFile[] {
 				{ template: "signal.ts", path: `${at}signal.ts`, purpose: HELPER, role: "helper" },
 			];
 		case "nextjs":
-			// Next.js loads `instrumentation.ts` from the app root; the rest sit in `src/`,
-			// where the root file reads the settings from.
+			// Next.js loads `instrumentation.ts` from the folder that holds `app/` or `pages/`:
+			// the app root, or `src/` when the pages live there. The rest sit in `src/`.
 			return [
 				{
 					template: "instrumentation.next.ts",
-					path: "instrumentation.ts",
+					path: srcApp ? "src/instrumentation.ts" : "instrumentation.ts",
 					purpose: "Next.js — @vercel/otel, OpenTelemetry",
 					role: "setup",
 				},
@@ -230,6 +236,8 @@ export interface TargetRead {
 	exists: boolean;
 	present: (file: string) => boolean;
 	hasSrc: boolean;
+	/** Whether `src/app` or `src/pages` exists: a Next.js app whose pages live in `src/`. */
+	srcApp: boolean;
 	/** The content of a file relative to the target, or null when it is missing. */
 	current: (path: string) => string | null;
 }
@@ -238,7 +246,7 @@ export interface ScaffoldReads {
 	/** `.indusk/scaffold.json`: project-relative path → hash of what InDusk wrote there. */
 	record: Record<string, string>;
 	/** A template rendered for one service. */
-	render: (template: string, service: string) => string;
+	render: (template: string, service: string, where: { srcApp: boolean }) => string;
 	force: boolean;
 }
 
@@ -271,13 +279,13 @@ export function scaffoldPlan(targets: TargetRead[], reads: ScaffoldReads): Plann
 		const runtime = detectRuntime(t.present);
 		if (runtime === null) return { name: t.name, rel: t.rel, runtime, ownSetup: false, files: [] };
 		// A setup InDusk wrote stays InDusk's to refresh, even once its packages are installed.
-		const wroteSetup = filesFor(runtime, t.hasSrc).some(
+		const wroteSetup = filesFor(runtime, t.hasSrc, false, t.srcApp).some(
 			(f) => f.role === "setup" && joinRel(t.rel, f.path) in reads.record,
 		);
 		const ownSetup = !wroteSetup && setsUpOpenTelemetry(runtime, t.current);
-		const files = filesFor(runtime, t.hasSrc, ownSetup).map((file) => {
+		const files = filesFor(runtime, t.hasSrc, ownSetup, t.srcApp).map((file) => {
 			const projectPath = joinRel(t.rel, file.path);
-			const rendered = reads.render(file.template, t.name);
+			const rendered = reads.render(file.template, t.name, { srcApp: t.srcApp });
 			const onDisk = t.current(file.path);
 			const { action } = decideFile({
 				current: onDisk,

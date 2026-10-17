@@ -43,8 +43,23 @@ const RENDERED_LINES: Record<string, { find: RegExp; line: (v: Rendered) => stri
 	},
 };
 
-/** A template's text rendered with the values; a template without a RENDERED line is returned as it is. */
-export function renderTemplate(template: string, text: string, values: Rendered): string {
+/** The settings import in the Next.js setup template, written for a setup file at the app root. */
+const NEXT_SETTINGS_IMPORT = '"./src/telemetry-settings"';
+
+/**
+ * A template's text rendered with the values; a template without a RENDERED line is returned
+ * as it is. The Next.js setup file, when it sits in `src/` beside its settings, imports them
+ * from `./telemetry-settings`.
+ */
+export function renderTemplate(
+	template: string,
+	text: string,
+	values: Rendered,
+	where: { srcApp: boolean } = { srcApp: false },
+): string {
+	if (template === "instrumentation.next.ts" && where.srcApp) {
+		return text.replace(NEXT_SETTINGS_IMPORT, '"./telemetry-settings"');
+	}
 	const spec = RENDERED_LINES[template];
 	if (!spec) return text;
 	if (!spec.find.test(text)) {

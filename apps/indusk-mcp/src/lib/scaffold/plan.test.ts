@@ -48,6 +48,7 @@ describe("the scaffold for a target, from what was read", () => {
 		exists: true,
 		present: (f: string) => f in files,
 		hasSrc: false,
+		srcApp: false,
 		current: (p: string) => files[p] ?? null,
 	});
 	const reads = (record: Record<string, string>) => ({
@@ -88,6 +89,7 @@ describe("the signal helper and an app's own OpenTelemetry setup", () => {
 		exists: true,
 		present: (f: string) => f in files,
 		hasSrc,
+		srcApp: false,
 		current: (p: string) => files[p] ?? null,
 	});
 	const reads = (record: Record<string, string> = {}) => ({
