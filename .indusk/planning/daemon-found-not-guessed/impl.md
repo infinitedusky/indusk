@@ -1077,25 +1077,25 @@ This plan grew the daemon's code across several new files, and two things are no
   Add `portDifferences(meta, address): { role, held, expected }[]` beside `portsOfRecord` (a port read as 0 is no difference; a null address gives none). `portDifferencesOf` in `daemon-state.ts` and `portsNotHeld` in `daemon-reports.ts` become wordings over it: status keeps `traces on 4318 (expected 24318)`, reports keep `MCP on 62843, expected 24317` (the A6 symptom regex depends on that). Rows A35 (new) plus the existing A6 and status tests hold the wording.
 
   </details>
-- [ ] Finding a daemon whose record is gone moves from the state module into its own module.
+- [x] Finding a daemon whose record is gone moves from the state module into its own module.
   <details><summary>Technical</summary>
 
   Move the "finding a daemon whose record is gone" section of `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts` (`FoundRole`, `Found`, `trustedPorts` … `findDaemonSync`, `candidatesOf`, `takeOverLocked`, `describeFinding`, ≈ lines 266-581) into a new `lib/telemetry/daemon-find.ts`; `daemon-state.ts` keeps the state, its rendering, the self-tracing count and the resolver, importing `findDaemon`/`findDaemonSync` from the new module. Re-export nothing: update the importers (`grep -rn "daemon-state.js"` under `apps/indusk-mcp/src`, the tests and `__tests__/helpers`). One reason to change each: what the daemon's state is, versus how a lost one is found and its record written. Check the import cycle `daemon-state → daemon-reports → daemon-state` (types only today) does not grow a value cycle.
 
   </details>
-- [ ] The two ways a stray process is described, one per status line and one inside a report, stay as two.
+- [x] The two ways a stray process is described, one per status line and one inside a report, stay as two.
   <details><summary>Technical</summary>
 
   Reviewed `describeStray` (`daemon-state.ts:152`) and `describe` (`daemon-reports.ts:90`) — left as-is: two copies with different formats (a padded status line with the binary, an inline phrase in a symptom); folding them into one would need a format switch, a worse abstraction than two four-line functions.
 
   </details>
-- [ ] The reports module stays one module: deciding, sending and the reader's throttle are all what the daemon is told.
+- [x] The reports module stays one module: deciding, sending and the reader's throttle are all what the daemon is told.
   <details><summary>Technical</summary>
 
   Reviewed `apps/indusk-mcp/src/lib/telemetry/daemon-reports.ts` (429 lines, flagged) — left as-is: its parts (`daemonReports`, `sendDaemonReports`, `reportFinding`, the reader's stamp throttle) change together with the clause set; the throttle is about 50 lines and has one caller.
 
   </details>
-- [ ] The older large files this plan touched lightly are left in their shape.
+- [x] The older large files this plan touched lightly are left in their shape.
   <details><summary>Technical</summary>
 
   Reviewed `bin/cli.ts`, `bin/commands/update.ts`, `bin/commands/promises.ts`, `bin/commands/telemetry.ts`, `lib/eval/otel.ts`, `lib/promises/health.ts`, `lib/promises/sources.ts`, `lib/promises/telemetry.ts`, `lib/telemetry/daemon.ts` (and the docs `changelog.md`, `reference/cli/promises.md`) — left as-is: each was over the cap before this plan, which changed a few lines in each; their decomposition belongs to the plan that owns them, not to a cleanup of these touches. `telemetry.ts` shrank under this plan.
