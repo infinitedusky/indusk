@@ -1188,7 +1188,7 @@ A reader who did not build this plan found two places where the code does not do
   `resolveLocalDaemonVia` and `resolveLocalDaemonSync` in `lib/telemetry/daemon-state.ts:287-299` return a daemon only for `running` or `found`; for `partial` with `state.recorded.jaeger` alive, return the record's meta `via: "record"` (traces and the interface are Jaeger's; only logs need the collector). Readers and `status` then agree: the daemon is there and broken. Answers row A41.
 
   </details>
-- [ ] A refused start suggests reap only for a daemon reap can stop, and names another home's daemon instead.
+- [x] A refused start suggests reap only for a daemon reap can stop, and names another home's daemon instead.
   <details><summary>Technical</summary>
 
   `refusalText` in `lib/telemetry/start-plan.ts:136-139` suggests `reap` whenever the holder is any InDusk daemon. Reap stops only this home's strays and orphans, so: an orphan or this home's stray, suggest `indusk telemetry reap`; a live daemon of another home, name its home and say `INDUSK_HOME=<home> indusk telemetry stop`. Answers row A42.
