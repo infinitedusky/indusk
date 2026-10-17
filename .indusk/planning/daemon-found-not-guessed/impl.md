@@ -9,9 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
-approved_brief: "a8cefb750dcfbcb8df0874e6fc816c4c7a9aa0f2ccfe7489322fe9fa724856f9"
+approved_brief: "f37cd62df6d9582214566ee7f01d28069cf7f0ff3a33cb21614615a3cc1dc1fa"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-17T01:44:01.839Z"
+approved_at: "2026-10-17T17:15:53.229Z"
 accepted: 2026-10-17T17:15:13.145Z
 accepted_by: person
 ---
