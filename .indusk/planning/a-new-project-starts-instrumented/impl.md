@@ -623,13 +623,13 @@ next phase then makes what init prints and the skills teach match all of this.
 
 #### Build Phase 2 Verification
 
-- [ ] The vocabulary pin, the helper's read-back and the test-run marker tests pass, and the demo test passes.
+- [x] The vocabulary pin, the helper's read-back and the test-run marker tests pass, and the demo test passes.
   <details><summary>Technical</summary>
 
   (goes green) T12, T13, T15, T24: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/signal-vocabulary-pin.test.ts src/__tests__/signal-helper.test.ts src/__tests__/telemetry-settings.test.ts src/__tests__/demo-signal-helper.test.ts src/__tests__/promises-single-definition.test.ts src/__tests__/demo-example.test.ts`
 
   </details>
-- [ ] A helper signal sent to a real daemon in a temporary home reads back as written.
+- [x] A helper signal sent to a real daemon in a temporary home reads back as written.
   <details><summary>Technical</summary>
 
   (goes green) T14, added to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/signal-helper-daemon.contract.test.ts`
