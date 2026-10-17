@@ -181,6 +181,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/reference/telemetry/overview" },
 						{ text: "CLI Reference", link: "/reference/telemetry/cli" },
+						{ text: "The signal helper", link: "/reference/telemetry/signal-helper" },
 					],
 				},
 				{
@@ -217,6 +218,7 @@ const config = defineConfig({
 					text: "Decisions",
 					items: [
 						{ text: "Overview", link: "/decisions/" },
+						{ text: "Init Sets Up Telemetry — the scaffold where the app runs, named, sent to the daemon", link: "/decisions/init-sets-up-telemetry" },
 						{ text: "The Daemon Is Found, Not Guessed — one address, one daemon, a record that is rebuilt", link: "/decisions/daemon-found-not-guessed" },
 						{ text: "Display Names — promises in words, plans by title, with their dates", link: "/decisions/display-names" },
 						{ text: "Plan Cockpit — the admin as the promise dashboard, the promise page and the plan page", link: "/decisions/plan-cockpit" },

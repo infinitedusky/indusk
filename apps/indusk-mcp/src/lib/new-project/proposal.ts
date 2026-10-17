@@ -21,6 +21,15 @@ import type { ProjectDraft } from "./store.js";
  * promise: the-core-is-always-kept
  */
 
+/**
+ * The name a telemetry recommendation carries. The agent's prompt gives it this name and
+ * creation reads it to turn the telemetry extensions off when it is declined, so the two
+ * cannot drift.
+ *
+ * promise: a-recommendation-can-be-declined
+ */
+export const TELEMETRY_RECOMMENDATION = "telemetry";
+
 export interface ProposalRecommendation {
 	name: string;
 	kept: boolean;

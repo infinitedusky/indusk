@@ -13,7 +13,7 @@ import {
 	HOOK_REGISTRATIONS,
 } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
-import { ensureMcpJson } from "../../lib/mcp-config.js";
+import { ensureCodeRepoMcpJson, ensureMcpJson } from "../../lib/mcp-config.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
 import { missingIgnoreRules } from "../../lib/worktree/shareable.js";
@@ -415,6 +415,20 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	}
 
+	// 5c'''. The OpenTelemetry scaffold, every run: a repo that gained an app is
+	// scaffolded, a file InDusk wrote and nobody changed is refreshed, and an edited
+	// one keeps its edit with the newer version beside it. Through the one scaffold
+	// module init calls; skipped in local mode.
+	{
+		const { applyScaffold } = await import("../../lib/scaffold/apply.js");
+		const { readConfig } = await import("../../lib/config.js");
+		try {
+			applyScaffold(projectRoot, { local: readConfig(projectRoot)?.mode === "local" });
+		} catch (err) {
+			console.info(`  could not scaffold: ${(err as Error).message}`);
+		}
+	}
+
 	// 5d. Retire skills renamed in the package. Same shape as 5c: the skills
 	// sync above added the new name; this removes the old directory, which
 	// would otherwise stay listed and keep answering to its old slash command.
@@ -435,6 +449,9 @@ export async function update(projectRoot: string): Promise<void> {
 	// 5a. A checkout with no `.mcp.json` (a fresh clone — the file is per machine and
 	// untracked) gets one naming the indusk server. An existing file is never touched.
 	ensureProjectMcpJson(projectRoot);
+	for (const file of ensureCodeRepoMcpJson(projectRoot)) {
+		console.info(`  created: ${file} (indusk server, for the code repo)`);
+	}
 
 	// 5b. Migrate stale MCP configs
 	const mcpJsonPath = join(projectRoot, ".mcp.json");

@@ -81,7 +81,8 @@ each child is one plan with one landing.
    the first to write one from an application. (The demo's stale test words
    it was to take were fixed in demo-app-template's Maintenance, landed
    2026-10-17.) The largest child; if it stalls, placement, naming, the daemon
-   and environment land first.
+   and environment land first. Closed 2026-10-17; its audit's open findings are carried in its
+   [retrospective](../archive/a-new-project-starts-instrumented/retrospective.md).
 
 3. **`mark-first`** ("Tests and telemetry linked to clauses", retitled from
    "Signal first" on 2026-10-17) — blocked by the scaffold plan for the

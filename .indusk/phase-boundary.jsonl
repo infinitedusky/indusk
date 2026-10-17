@@ -410,5 +410,11 @@
 {"plan":"impl-tasks-are-instructions","phase":1,"kind":"test","sha":"fc00d26864b8bc3a6663c4fc6fbfac1186e73b96","timestamp":"2026-10-17T17:52:12.770Z"}
 {"plan":"impl-tasks-are-instructions","phase":1,"kind":"build","sha":"5155fdbf37166d768451229dd8ddc1b45a5b59a8","timestamp":"2026-10-17T17:54:46.553Z"}
 {"plan":"impl-tasks-are-instructions","phase":2,"kind":"build","sha":"4d1c35ca468b0d08833ed1515860d7b8c5fd68b3","timestamp":"2026-10-17T18:06:20.285Z"}
+{"plan":"a-new-project-starts-instrumented","phase":1,"kind":"test","sha":"141d82d36004f5b0eb6e06769c1f62dd1fcc40e0","timestamp":"2026-10-17T18:49:26.603Z"}
+{"plan":"a-new-project-starts-instrumented","phase":1,"kind":"build","sha":"809cbc85c93947e06cf7e6b3ae8087796893a164","timestamp":"2026-10-17T19:13:53.018Z"}
+{"plan":"a-new-project-starts-instrumented","phase":2,"kind":"build","sha":"a7dc8ef85648e0e2e848067af6b3e6f22453dcf9","timestamp":"2026-10-17T19:52:45.654Z"}
+{"plan":"a-new-project-starts-instrumented","phase":3,"kind":"build","sha":"ece74b06446a3b512485caf4ad598a8693ca2614","timestamp":"2026-10-17T20:08:20.754Z"}
+{"plan":"a-new-project-starts-instrumented","phase":4,"kind":"build","sha":"f49bf050c65b43c94fd67731b79ba751ed6d67fa","timestamp":"2026-10-17T20:21:10.974Z"}
+{"plan":"a-new-project-starts-instrumented","phase":5,"kind":"build","sha":"927d9aac10616db5e864394f102055ecd2be3643","timestamp":"2026-10-17T21:18:31.282Z"}
 {"plan":"new-components-draw-in-their-mockups","phase":1,"kind":"test","sha":"7ba88624ddafe84c67b28b5d40a8a5542a1184ed","timestamp":"2026-10-17T20:09:15.779Z"}
 {"plan":"new-components-draw-in-their-mockups","phase":1,"kind":"build","sha":"f7d79337b0c7c24ac155f5a081dfef61677b02a9","timestamp":"2026-10-17T20:09:57.639Z"}

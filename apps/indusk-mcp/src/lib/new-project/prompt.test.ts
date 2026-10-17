@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { newProjectPrompt } from "./prompt.js";
+import { TELEMETRY_RECOMMENDATION } from "./proposal.js";
 
 // promise: a-project-conversation-is-a-back-and-forth
 
@@ -36,5 +37,21 @@ describe("A36 — the agent is told where new projects go", () => {
 
 	it("A36 asks for a proposed location inside it", () => {
 		expect(prompt).toMatch(/"location"[\s\S]{0,80}inside \/home\/me\/code/);
+	});
+});
+
+// promise: a-recommendation-can-be-declined
+
+describe("T32 — the agent names a telemetry recommendation the way the decline rule reads it", () => {
+	const prompt = newProjectPrompt({
+		message: "A parental control system",
+		documents: [],
+		brief: null,
+		hasProposal: false,
+	});
+
+	it("T32 the prompt gives the telemetry recommendation the name the decline rule matches", () => {
+		expect(TELEMETRY_RECOMMENDATION).toBe("telemetry");
+		expect(prompt).toContain(`"name": "${TELEMETRY_RECOMMENDATION}"`);
 	});
 });
