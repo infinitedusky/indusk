@@ -507,7 +507,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   `apps/indusk-mcp/src/lib/scaffold/apply.ts`. Rule: code that decides takes its reads (lesson: code-that-decides-takes-its-clock-and-its-reads); Shape: is there a seam a test can reach
 
   </details>
-- [ ] Shape: Give the inline block that enables the otel extension after the scaffold created files a name, so init reads as steps
+- [x] Shape: Give the inline block that enables the otel extension after the scaffold created files a name, so init reads as steps
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/bin/commands/init.ts`. Rule: Shape: should this inline block have been a named function

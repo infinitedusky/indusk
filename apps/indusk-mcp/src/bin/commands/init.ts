@@ -453,6 +453,20 @@ export function writeGitInfoExclude(projectRoot: string): void {
 	console.info("  updated: .git/info/exclude (InDusk local mode entries)");
 }
 
+/**
+ * Enable the otel extension for a project the scaffold just instrumented. The extension
+ * is enabled by detecting an instrumentation file, and that detection runs before the
+ * scaffold now does; an opt-out in `disabled_extensions` still holds.
+ */
+async function enableOtelForScaffold(projectRoot: string): Promise<void> {
+	const { extensionsEnable } = await import("./extensions.js");
+	const { isEnabled } = await import("../../lib/extension-loader.js");
+	const { isExtensionExplicitlyDisabled } = await import("../../lib/config.js");
+	if (isEnabled(projectRoot, "otel") || isExtensionExplicitlyDisabled(projectRoot, "otel")) return;
+	await extensionsEnable(projectRoot, ["otel"]);
+	console.info("    (detected: instrumentation scaffolded)");
+}
+
 export async function init(projectRoot: string, options: InitOptions = {}): Promise<void> {
 	const { force = false, local = false, workbench = false } = options;
 	const projectName = basename(projectRoot);
@@ -1156,17 +1170,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	{
 		const { applyScaffold } = await import("../../lib/scaffold/apply.js");
 		const scaffold = applyScaffold(projectRoot, { force, local });
-		// The otel extension is enabled by detecting an instrumentation file; the scaffold
-		// now runs after that detection, so a project it just scaffolded is enabled here.
-		if (scaffold.created.length > 0) {
-			const { extensionsEnable } = await import("./extensions.js");
-			const { isEnabled } = await import("../../lib/extension-loader.js");
-			const { isExtensionExplicitlyDisabled } = await import("../../lib/config.js");
-			if (!isEnabled(projectRoot, "otel") && !isExtensionExplicitlyDisabled(projectRoot, "otel")) {
-				await extensionsEnable(projectRoot, ["otel"]);
-				console.info("    (detected: instrumentation scaffolded)");
-			}
-		}
+		if (scaffold.created.length > 0) await enableOtelForScaffold(projectRoot);
 	}
 
 	// git-only-substrate Phase 6 (falsification fix H1): warn the user when
