@@ -520,12 +520,13 @@ A reader that had not seen the build found gaps between what the plan promises a
 
   </details>
   Note: `arbitrary-class` in `lint-classes.ts` now names `wrap-anywhere`, `wrap-break-word` or `break-all` for an arbitrary `overflow-wrap`/`word-break` value (`[overflow-wrap:…]`, `[word-break:…]`, `wrap-[…]`); any other arbitrary value keeps the general message. T9 red (message was the general one), then green.
-- [ ] The frame's height fitting was reviewed and stays as it is: a story's component cannot be pushed down inside its frame.
+- [x] The frame's height fitting was reviewed and stays as it is: a story's component cannot be pushed down inside its frame.
   <details><summary>Technical</summary>
 
   Reviewed `useFittedFrame.ts` `measure`'s `r.bottom + r.top` against the audit's claim that a bottom-aligned or vertically centred story grows the frame. `#storybook-root` is a block container and no admin story sets Storybook's `centered` layout, so a vertical `auto` margin computes to 0, and the measurement is taken at a one-pixel frame height, where alignment cannot add space above the component. Width needed the fix because `auto` horizontal margins do take space.
 
   </details>
+  Note: reconfirmed by reading `useFittedFrame.ts` `measure` (the read is at a one-pixel frame height, so no extra height can sit above the component) and the admin's Storybook `preview.ts` (no `layout: "centered"`, no story sets one), so `#storybook-root` is a plain block container and a vertical `auto` margin computes to 0; left as is.
 
 #### Build Phase 5 Verification
 
