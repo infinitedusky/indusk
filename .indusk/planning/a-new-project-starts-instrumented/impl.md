@@ -774,7 +774,7 @@ This phase tests the finished scaffold against apps shaped differently from the 
   Hypothesis: Next.js loads `instrumentation.ts` from the folder that holds `app/` or `pages/`; a project made with `create-next-app --src-dir` keeps them in `src/`, so the root-level file `filesFor("nextjs", …)` in `lib/scaffold/plan.ts` writes is never loaded and the app reports nothing. The live check (a project without a source folder) could not see it. Fix: when `src/app` or `src/pages` exists, place the setup at `src/instrumentation.ts` and render its settings import as `./telemetry-settings` (today the template hard-codes `./src/telemetry-settings`); otherwise keep today's root placement. The read for `src/app`/`src/pages` goes on `TargetRead` beside `hasSrc`, so `plan.ts` still decides from what was read.
 
   </details>
-- [ ] Name the OpenTelemetry API package in the install lines init prints for Node and Next.js apps.
+- [x] Name the OpenTelemetry API package in the install lines init prints for Node and Next.js apps.
   <details><summary>Technical</summary>
 
   Hypothesis: `templates/signal.ts` imports `@opentelemetry/api`, but neither `NODE_PACKAGES` nor the Next.js install line in `lib/scaffold/apply.ts` names it. Under pnpm's strict layout a package only pulled in as a peer is not resolvable from the app's own source, so the first `signal.upheld(...)` fails to import in a fresh app. The demo hides this because its `package.json` lists the API package directly. Fix: add `@opentelemetry/api` to both lines; the test reads every bare import of each runtime's scaffolded files and requires each package to be named in that runtime's printed install line, so the next template import cannot drift.
