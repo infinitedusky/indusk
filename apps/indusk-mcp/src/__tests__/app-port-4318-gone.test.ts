@@ -8,7 +8,6 @@
 // set the variable to a fake collector), archived plans, plan documents, incidents, the
 // changelog and the code graph. The recording server's files name no such address today.
 import { describe, expect, it } from "vitest";
-import { SHOULD_SKIP } from "./helpers/cli.js";
 import { describeHits, trackedLinesMatching } from "./helpers/tracked-lines.js";
 
 const STANDARD_PORT = "localhost:4318";
@@ -21,7 +20,7 @@ const NOT_HANDED_TO_AN_APP = (rel: string) =>
 	rel === "apps/docs/src/changelog.md" ||
 	/\.test\.ts$/.test(rel);
 
-describe.skipIf(SHOULD_SKIP)("app-port-4318-gone", () => {
+describe("app-port-4318-gone", () => {
 	it("T6: nothing InDusk hands an application tells it to send to the standard port", () => {
 		const hits = trackedLinesMatching(STANDARD_PORT, NOT_HANDED_TO_AN_APP);
 		expect(describeHits(hits)).toEqual([]);

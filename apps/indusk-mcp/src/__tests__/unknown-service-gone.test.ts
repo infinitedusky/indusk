@@ -5,7 +5,6 @@
 // incidents and the changelog keep the record of what was, and this file's own name carries the word; every other tracked file
 // (init, the templates, the skills, the docs) is read.
 import { describe, expect, it } from "vitest";
-import { SHOULD_SKIP } from "./helpers/cli.js";
 import { describeHits, trackedLinesMatching } from "./helpers/tracked-lines.js";
 
 // Joined, so this file does not contain the word it looks for.
@@ -18,7 +17,7 @@ const KEEPS_THE_RECORD = (rel: string) =>
 	rel === "apps/docs/src/changelog.md" ||
 	rel === "apps/indusk-mcp/src/__tests__/unknown-service-gone.test.ts";
 
-describe.skipIf(SHOULD_SKIP)("unknown-service-gone", () => {
+describe("unknown-service-gone", () => {
 	it("T4: no tracked file outside archived plans, plan documents, incidents and the changelog names the placeholder service", () => {
 		const hits = trackedLinesMatching(PLACEHOLDER, KEEPS_THE_RECORD);
 		expect(describeHits(hits)).toEqual([]);

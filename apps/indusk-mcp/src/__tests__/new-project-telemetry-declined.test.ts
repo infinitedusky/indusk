@@ -2,7 +2,7 @@
 //
 // a-new-project-starts-instrumented, Test Phase 1: T20 - a project created through the
 // new-project flow with telemetry declined records the decline with its reason, and now
-// also turns the two telemetry extensions off: neither is enabled, no daemon is registered
+// also turns the two telemetry extensions off: neither is enabled
 // and no instrumentation is scaffolded. Driven the way new-project-cli.test.ts drives
 // creation, through the built CLI on temporary directories: a temporary InDusk home, a
 // temporary parent, and `gh` never reached.
