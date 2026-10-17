@@ -67,7 +67,7 @@ the wording until they pass.
   Created by `indusk plans start bugfix impl-tasks-are-instructions`; check with `indusk worktree list`.
 
   </details>
-- [ ] Write the tests that read the planner's impl instructions, its templates and the shipped planning rules for the instruction wording, and see them fail.
+- [x] Write the tests that read the planner's impl instructions, its templates and the shipped planning rules for the instruction wording, and see them fail.
   <details><summary>Technical</summary>
 
   A1 and A3 in `planner-impl-summary-template.test.ts`: step 7's phase-summary paragraph says "one plain instruction saying what to do" and "what must hold", carries a before-and-after pair, and no longer says "what will be true when it is done"; `templates/planning/CLAUDE.md` says the same. A2: every `- [ ] {…}` placeholder under a task position in the impl template (in `planner-impl-summary-template.test.ts`) and in the falsify and cleanup templates (in `ritual-templates-phase-summary.test.ts`) asks for an instruction; verification placeholders ask for what must hold.
