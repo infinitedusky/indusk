@@ -37,7 +37,7 @@ export function ProjectCard({
       data-component="project-card"
       data-state="default"
       data-project-name={name}
-      className="grid gap-1 rounded-lg border border-line bg-surface p-5 transition-shadow hover:elevated focus:outline-2 focus:outline-dusk"
+      className="grid content-start gap-1 rounded-lg border border-line bg-surface p-5 transition-shadow hover:elevated focus:outline-2 focus:outline-dusk"
     >
       <h2 className="text-base leading-5 font-semibold">{name}</h2>
       <p className="font-mono text-xs leading-2 wrap-anywhere text-ink-faint">
