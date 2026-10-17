@@ -21,3 +21,6 @@ Loaded by Claude Code when a file under `src/lib/scaffold/` is read
 - **The Next.js setup file goes where the pages are**: `src/instrumentation.ts` when
   `src/app` or `src/pages` exists, else the root; Next.js loads it from nowhere else
   (T25 in `init-scaffold-placement.test.ts`).
+- **The record holds `fingerprint(text)`, not a hash of the exact text**: it ignores
+  whitespace, `;`, trailing commas and quote style, so a formatter's re-layout never makes
+  a file look edited; older exact-hash records still match (T30 in `plan.test.ts`).
