@@ -1213,7 +1213,7 @@ A reader who did not build this plan found two places where the code does not do
 
 #### Build Phase 8 Context
 
-- [ ] The package's context file says a stale record is treated as lost and that reap stops orphans.
+- [x] The package's context file says a stale record is treated as lost and that reap stops orphans.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": in the daemon-process rule, "a record naming only dead processes is lost, not stale"; in the local-daemon rule, "`reap` stops this home's strays and orphans (a deleted home's daemon) only". The file is over its budget: make the edit shrink it.
