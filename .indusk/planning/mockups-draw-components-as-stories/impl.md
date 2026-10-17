@@ -329,18 +329,20 @@ This phase tests two things the finished plan claims but nothing checks. First, 
 
   </details>
   Note: the Decision under Build Phase 1's cockpit item now says `baseRulesHash` governed look-check reuse only, and that approvals record it from Build Phase 3.
-- [ ] A component centred by automatic margins counts no margin as space before it when its frame is fitted.
+- [x] A component centred by automatic margins counts no margin as space before it when its frame is fitted.
   <details><summary>Technical</summary>
 
   Hypothesis: a story whose root is `mx-auto max-w-md` — `getComputedStyle(el).marginLeft` returns the *used* value, half the frame's spare width, so `leadingSpace` returns it and the fitted width is the frame's own; the frame stays at the widest device. A18 cannot see it: it computes `left + width + left`, which also equals the frame. Fix in `useFittedFrame.ts`'s `leadingSpace`: a margin whose computed value is `auto` (`el.computedStyleMap().get("margin-left")` is the keyword `auto`) counts as 0.
 
   </details>
-- [ ] The components fixture has a story centred by automatic margins, and the story-frame test reads it.
+  Note: `leadingSpace` in `useFittedFrame.ts` takes the left margin through `leftMargin`, which reads `computedStyleMap().get("margin-left")` and counts the keyword `auto` as 0, falling back to the computed pixels where `computedStyleMap` is absent. T2 green (red before: `frame 390, component 344 + 2 x 8 = 360`).
+- [x] The components fixture has a story centred by automatic margins, and the story-frame test reads it.
   <details><summary>Technical</summary>
 
   Add a component to `apps/indusk-mcp/src/__tests__/fixtures/components-app` whose root is centred with `mx-auto` and a max width, with a story and a rendered snapshot; T2 opens it on the Looks page and asserts the frame's width is the component's width plus twice the container's content inset — not `left + width + left`.
 
   </details>
+  Note: done test-first at the phase start: `banner.default.html` (root `max-width: 20rem; margin: 0 auto`) in the components fixture, a snapshot only like `card.default` (no source file or catalog entry — it has no stylesheet or content); T2 opens it in the Looks page.
 
 #### Build Phase 3 Verification
 
