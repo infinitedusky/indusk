@@ -1,7 +1,7 @@
 ---
 title: "A promise reads the same on its plan's page"
 date: 2026-10-17
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "aba611bbb56f660c8976c8a6c17dadff5082af263a031426f2d61c92f103100b"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-17T17:59:19.867Z"
 ---
 
 # A promise reads the same on its plan's page
