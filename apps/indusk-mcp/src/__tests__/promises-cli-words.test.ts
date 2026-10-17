@@ -6,10 +6,10 @@ import { slackText } from "../lib/always-on/pass.js";
 import { startPass } from "../lib/always-on/schedule.js";
 import { checkPromises, formatSummary } from "../lib/promises/check.js";
 import type { IncidentEntry, PromiseEntry } from "../lib/promises/registry.js";
+import { readSources } from "../lib/promises/sources.js";
 import { formatStatus } from "../lib/promises/status.js";
 import type { MarkedSpan, MarkedSpansResult } from "../lib/promises/telemetry.js";
 import { type WatchResult, watchReport } from "../lib/promises/watch.js";
-import { readSources } from "../lib/promises/sources.js";
 import {
 	behaviourPromise,
 	codeFilesFor,

@@ -222,7 +222,10 @@ describe("A33 — a damaged address file is never taken for a missing one", () =
 		try {
 			const reads = realDaemonReads(home);
 			expect(reads.addressProblem?.() ?? null).toBeNull();
-			for (const body of ['{"traces": 243', JSON.stringify({ ...PORT_BLOCK, logs: "x", picked: [] })]) {
+			for (const body of [
+				'{"traces": 243',
+				JSON.stringify({ ...PORT_BLOCK, logs: "x", picked: [] }),
+			]) {
 				writeFileSync(addressFilePath(home), body);
 				expect(reads.address()).toBeNull();
 				expect(reads.addressProblem?.()).toEqual(expect.stringContaining("telemetry-address.json"));

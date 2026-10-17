@@ -48,7 +48,9 @@ export type StartPlan =
 	| { kind: "takeover"; tracesPort?: number; strays: number[]; store?: StoredAddress }
 	| { kind: "start"; ports: Ports; store?: StoredAddress }
 	| { kind: "refuse"; holders: PortHolder[] }
-	| { kind: "refuse-several"; listed: number[] };
+	| { kind: "refuse-several"; listed: number[] }
+	/** The stored address cannot be read: nothing is chosen, nothing moved. */
+	| { kind: "refuse-address"; problem: string };
 
 const pidsOf = (c: Candidate): number[] => [c.jaegerPid, c.otelcolPid];
 
@@ -56,10 +58,17 @@ export function startPlan(
 	state: StartState,
 	holders: Record<number, Holder | null>,
 	home: string,
-	opts: { address: StoredAddress | null; given?: Partial<Ports>; spare?: number[] },
+	opts: {
+		address: StoredAddress | null;
+		/** Why the address file cannot be read, when it is there and damaged. */
+		unreadable?: string | null;
+		given?: Partial<Ports>;
+		spare?: number[];
+	},
 ): StartPlan {
 	if (state.kind === "running") return { kind: "running" };
 	const real = homeKind(home, realTempRoots()) === "real";
+	if (real && opts.unreadable) return { kind: "refuse-address", problem: opts.unreadable };
 	const stored = real ? opts.address : null;
 
 	if (state.kind === "found") {
@@ -118,6 +127,12 @@ export function refusalText(plan: StartPlan, home: string, address: StoredAddres
 			"Refusing to take over: several InDusk daemons run and none holds the stored traces port.",
 			`  processes: ${plan.listed.join(", ")}`,
 			"  Stop the ones you do not want (`kill <pid>`), then run `indusk telemetry start` again.",
+		].join("\n");
+	}
+	if (plan.kind === "refuse-address") {
+		return [
+			`Refusing to start: ${plan.problem}.`,
+			"  Nothing was chosen and the file was left as it was. `indusk telemetry address --reset` chooses the address again (every application given the old address then needs the new one).",
 		].join("\n");
 	}
 	if (plan.kind !== "refuse") return "";
@@ -228,13 +243,20 @@ export async function ensureDaemon(
 		const address = real ? reads.address() : null;
 		const holders =
 			startState.kind === "running" ? {} : reads.holders(portsToCheck(real, address, given));
-		const plan = startPlan(startState, holders, home, { address, given, spare: opts.spare });
+		const unreadable = real ? reads.addressProblem() : null;
+		const plan = startPlan(startState, holders, home, {
+			address,
+			unreadable,
+			given,
+			spare: opts.spare,
+		});
 		switch (plan.kind) {
 			case "running":
 				return { kind: "running", meta: state.meta as DaemonMeta };
 			case "refuse":
 				return { kind: "refused", text: refusalText(plan, home, address), holders: plan.holders };
 			case "refuse-several":
+			case "refuse-address":
 				return { kind: "refused", text: refusalText(plan, home, address), holders: [] };
 			case "takeover": {
 				if (plan.store) reads.writeAddress(plan.store, { exclusive: true });

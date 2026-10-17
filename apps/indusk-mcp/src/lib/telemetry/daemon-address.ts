@@ -66,18 +66,38 @@ export function portsOf(address: Ports): Ports {
 	return { traces: address.traces, logs: address.logs, ui: address.ui, mcp: address.mcp };
 }
 
-/** The stored address of a home, or `null` when none is stored or the file is not one. */
-export function readAddressFile(home: string): StoredAddress | null {
+export type AddressRead =
+	| { kind: "none" }
+	| { kind: "stored"; address: StoredAddress }
+	/** The file is there and cannot be read: a missing file and a damaged one are not the same. */
+	| { kind: "unreadable"; problem: string };
+
+/** What a home's address file holds: nothing, an address, or a file that is not one. */
+export function readAddress(home: string): AddressRead {
 	const path = addressFilePath(home);
-	if (!existsSync(path)) return null;
+	if (!existsSync(path)) return { kind: "none" };
+	const unreadable = (why: string): AddressRead => ({
+		kind: "unreadable",
+		problem: `${path} exists but cannot be read (${why})`,
+	});
 	try {
 		const raw = JSON.parse(readFileSync(path, "utf-8")) as Partial<StoredAddress>;
-		const ports = ADDRESS_ROLES.map((role) => raw[role]);
-		if (!ports.every((p) => Number.isInteger(p) && (p as number) > 0)) return null;
-		return { ...portsOf(raw as Ports), picked: Array.isArray(raw.picked) ? raw.picked : [] };
-	} catch {
-		return null;
+		const isPort = (n: unknown): boolean => Number.isInteger(n) && (n as number) > 0;
+		const bad = ADDRESS_ROLES.filter((role) => !isPort(raw[role]));
+		if (bad.length > 0) return unreadable(`no port for ${bad.join(", ")}`);
+		return {
+			kind: "stored",
+			address: { ...portsOf(raw as Ports), picked: Array.isArray(raw.picked) ? raw.picked : [] },
+		};
+	} catch (err) {
+		return unreadable(err instanceof Error ? err.message : "not JSON");
 	}
+}
+
+/** The stored address of a home, or `null` when none is stored or the file is not one (`readAddress` tells which). */
+export function readAddressFile(home: string): StoredAddress | null {
+	const read = readAddress(home);
+	return read.kind === "stored" ? read.address : null;
 }
 
 export type ChooseResult =
@@ -227,6 +247,13 @@ export function addressReport(
 	opts: { json?: boolean },
 ): { code: number; text: string } {
 	const urls = daemonAddress(reads);
+	const problem = reads.addressProblem();
+	if (urls === null && problem !== null) {
+		return {
+			code: 1,
+			text: `address unreadable: ${problem}; nothing was chosen. \`indusk telemetry address --reset\` chooses it again (every application given the old address then needs the new one)`,
+		};
+	}
 	if (urls === null) {
 		return {
 			code: 1,

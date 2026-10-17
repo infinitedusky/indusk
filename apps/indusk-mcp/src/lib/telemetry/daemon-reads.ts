@@ -1,19 +1,22 @@
 import { spawnSync } from "node:child_process";
 import {
 	closeSync,
+	linkSync,
 	mkdirSync,
 	openSync,
 	readdirSync,
 	readFileSync,
 	readlinkSync,
 	readSync,
+	renameSync,
+	rmSync,
 	statSync,
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
 import { acquireLock, acquireLockAsync } from "../agents/lock.js";
 import { type PsRow, psAll } from "../process-identity.js";
-import { addressFilePath, readAddressFile, type StoredAddress } from "./daemon-address.js";
+import { addressFilePath, readAddress, type StoredAddress } from "./daemon-address.js";
 import { daemonConfigPath, homeKind, realTempRoots } from "./daemon-process.js";
 import { type Report, sendDaemonReports } from "./daemon-reports.js";
 import type { DaemonMeta } from "./status.js";
@@ -65,7 +68,9 @@ export interface DaemonReads {
 	renderedPorts(): RenderedPorts | null;
 	/** The stored address (`<home>/telemetry-address.json`), or `null` when none is stored. */
 	address(): StoredAddress | null;
-	/** Writes the stored address; with `exclusive`, only when none exists. Whether it wrote. */
+	/** Why the address file cannot be read when it exists and is damaged; `null` when it is missing or fine. */
+	addressProblem(): string | null;
+	/** Writes the stored address whole (a temporary file, then a rename); with `exclusive`, only when none exists. Whether it wrote. */
 	writeAddress(address: StoredAddress, opts: { exclusive: boolean }): boolean;
 	/** Takes the home's `telemetry.lock`, waiting by yielding. The release function. */
 	lock(): Promise<() => void>;
@@ -250,16 +255,28 @@ export function realDaemonReads(home: string): DaemonReads {
 				return false;
 			}
 		},
-		address: () => readAddressFile(home),
+		address() {
+			const read = readAddress(home);
+			return read.kind === "stored" ? read.address : null;
+		},
+		addressProblem() {
+			const read = readAddress(home);
+			return read.kind === "unreadable" ? read.problem : null;
+		},
 		writeAddress(address, opts) {
+			const target = addressFilePath(home);
+			const temporary = `${target}.${process.pid}.tmp`;
 			try {
 				mkdirSync(home, { recursive: true });
-				writeFileSync(addressFilePath(home), `${JSON.stringify(address, null, 2)}\n`, {
-					flag: opts.exclusive ? "wx" : "w",
-				});
+				writeFileSync(temporary, `${JSON.stringify(address, null, 2)}\n`);
+				// Whole or not at all: the file appears by a rename, or by a link that fails when one is there.
+				if (opts.exclusive) linkSync(temporary, target);
+				else renameSync(temporary, target);
 				return true;
 			} catch {
 				return false;
+			} finally {
+				rmSync(temporary, { force: true });
 			}
 		},
 		processes: psAll,
