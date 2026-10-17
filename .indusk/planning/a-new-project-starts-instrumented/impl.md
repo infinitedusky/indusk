@@ -412,7 +412,7 @@ makes the placement, naming, address and environment tests pass.
 
 #### Test Phase 1 Context
 
-- [ ] Record in this session's section of the operational state that the plan is at Test Phase 1 with its tests red.
+- [x] Record in this session's section of the operational state that the plan is at Test Phase 1 with its tests red.
   <details><summary>Technical</summary>
 
   current.md: via `mcp__indusk__update_current_section` at handoff.
