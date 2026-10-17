@@ -608,7 +608,7 @@ next phase then makes what init prints and the skills teach match all of this.
   `lib/scaffold/plan.ts`: `signal.ts` for Node and Next.js, `signal.py` for Python, none for a browser-only app. Existing-setup rule: `package.json` dependencies naming `@opentelemetry/sdk-node`, `@opentelemetry/sdk-trace-node`, `@opentelemetry/sdk-trace-web` or `@vercel/otel`, or `opentelemetry-sdk` in Python requirements → helper and settings only, with a printed line saying the app sets up OpenTelemetry itself.
 
   </details>
-- [ ] Make the seat-holds example write its signal through the helper and stop setting the promise's attributes by hand.
+- [x] Make the seat-holds example write its signal through the helper and stop setting the promise's attributes by hand.
   <details><summary>Technical</summary>
 
   `examples/seat-holds/src/signal.ts` (a copy of the template) and `src/telemetry-settings.ts` rendered for seat-holds; `markRelease` in `src/telemetry.ts` calls `signal.upheld` / `signal.broken({ symptom })`; the example's provider stays. Update the example's promise `sites` if they name the old lines (`examples/seat-holds/.indusk/promises/`), through `indusk promises` in that folder, never by hand.

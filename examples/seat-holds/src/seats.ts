@@ -20,6 +20,15 @@ export interface Release {
 	symptom?: string;
 }
 
+/**
+ * What a release says to the signal helper: the promise, how late it was, and a symptom
+ * only when it was late. `server.ts` turns this into `signal.upheld` or `signal.broken`.
+ */
+export function releaseVerdict(r: Release): { promise: string; value: number; symptom?: string } {
+	const verdict = { promise: "a-held-seat-is-released-in-time", value: r.lateMs };
+	return r.outcome === "violated" ? { ...verdict, symptom: r.symptom ?? "released late" } : verdict;
+}
+
 export type SeatView =
 	| { seat: number; state: "free" }
 	| { seat: number; state: "held"; who: string; remainingMs: number }
