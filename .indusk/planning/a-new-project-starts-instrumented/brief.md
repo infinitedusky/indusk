@@ -83,7 +83,7 @@ None — this plan changes the files `init` writes, its printed text and the ski
 
 ## Carried
 
-- **The demo writes through the helper.** The seat-holds demo's hand-written telemetry becomes the helper, its dead second scaffold is removed, and its two tests that expect the old words are fixed, with the root cause written into the two open demo incidents.
+- **The demo writes through the helper.** The seat-holds demo's hand-written telemetry becomes the helper, and its dead second scaffold is removed. (Its two tests that expected the old words, and the root cause in the two demo incidents, were fixed and closed in demo-app-template's Maintenance, landed 2026-10-17.)
 - **`init` prints `indusk editor install` once.**
 
 ## Depends On
