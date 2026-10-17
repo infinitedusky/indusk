@@ -213,24 +213,6 @@ pointer; the pointer holds the story.
   shapes so neither imports `lint` back. A rule added to `lint.ts` is the
   500-line file this split undid — guarded by the file-size attention-focus and
   `looks-lint-rules.test.ts`; see `/reference/cli/looks`
-- **A mockup and a story frame draw under `components/_reset.css`**: the app's
-  element rules (`a`, `textarea`, `*`...) written by `indusk looks stories`
-  from `componentReset`, each selector under `:where([data-component],
-  [data-component] *)`, so they reach only components. `_base.css` holds `body`;
-  neither is part of `componentsHash`. An approval of a story or a mockup
-  records the catalog's `baseRulesHash` (the hash of those rules; `LooksApp.baseRulesHash`)
-  and reads proposed once it changes; an entry without it reads as before.
-  One rule for what an approval is bound to: `bindingOf` writes the foundation,
-  declarations and element rules and `boundToNow` reads them back, for the
-  approval, the look check's `heldTo` and the status line alike — a new binding
-  goes in both. A mockup's own `<style>` rules reach its page only: `pageOnly`
-  scopes them off placed components (`mockupDocument`); place a component with a
-  selector naming its marker; `splitVariants` loads every component's variant
-  rules after all plain ones. A
-  component never relies on a reset the generator does not carry — `a { color:
-  inherit }` in the app's CSS reaches a mockup only through this sheet —
-  guarded by `component-styles.test.ts`, `composition.contract.test.ts` and
-  `approvals.test.ts` (T1, T3); see `/reference/cli/looks`
 
 ## Eval, agents, skills, extensions
 
