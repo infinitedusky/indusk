@@ -60,7 +60,7 @@ release raised.
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 | T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
-| T3 | A proposed story or mockup whose last approval was drawn under other element rules is held to nothing, in the look check and in the status line, as one drawn on another foundation is | Build Phase 4 | Build Phase 4 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| T3 | A proposed story or mockup whose last approval was drawn under other element rules is held to nothing, in the look check and in the status line, as one drawn on another foundation is | Build Phase 4 | Build Phase 4 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 
 ## Checklist
 
@@ -431,12 +431,13 @@ This plan taught approvals to remember the app's element rules, but it did so be
 
 #### Build Phase 4 Verification
 
-- [ ] A look whose last approval was drawn under other element rules is held to nothing, and the cockpit's story pages come out as before.
+- [x] A look whose last approval was drawn under other element rules is held to nothing, and the cockpit's story pages come out as before.
   <details><summary>Technical</summary>
 
   T3 red then green: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/approvals.test.ts`. Parity: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/` (T1 and `overview.test.ts` green unchanged), `looks-cli.test.ts` green with the widened status wording, typecheck and `pnpm check` clean.
 
   </details>
+  Note: T3 red first: `expected true to be false` on `boundToNow` for an entry with another `baseRulesHash`; green 19/19 in `approvals.test.ts`. `vitest run src/lib/looks/ src/bin` 16 files / 153 tests green (`overview.test.ts` and `looks-cli.test.ts` unchanged in outcome); typecheck and biome clean on the changed files.
 
 #### Build Phase 4 Context
 
