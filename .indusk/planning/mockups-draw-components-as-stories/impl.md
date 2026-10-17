@@ -185,7 +185,7 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
 
 #### Build Phase 1 Context
 
-- [ ] The package's rules say where the resets a story draws under come from.
+- [x] The package's rules say where the resets a story draws under come from.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md` (Promises and telemetry, the looks entries): a mockup and a story frame load `_reset.css`, the app's element rules scoped to components; a component never relies on a reset the generator does not carry.
