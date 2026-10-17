@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "bbdc231b9ed45ee80e91b01ba8b6e4da6fd5fee4d95f67230d4994a23eff1cbf"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-17T18:26:52.714Z"
+accepted: 2026-10-17T19:09:34.099Z
+accepted_by: person
 ---
 
 # Mockups draw components as their stories do
