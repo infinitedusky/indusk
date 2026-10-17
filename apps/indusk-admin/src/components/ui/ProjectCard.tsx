@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Badge } from "./Badge";
 
 export interface ProjectCardProps {
   name: string;
@@ -8,21 +8,27 @@ export interface ProjectCardProps {
   activePlanCount: number;
   /** Where it opens. */
   href: string;
-  /** What the page adds beneath the count: a shape, an in-progress badge, when it was last seen. */
-  extra?: ReactNode;
+  /** A workbench or a normal-mode project, when known. */
+  shape?: "workbench" | "normal-mode";
+  /** Whether any of its plans is being worked. */
+  inProgress?: boolean;
+  /** When it was last seen, in words (`6d ago`). */
+  lastSeen: string;
 }
 
 /**
- * One project on the home grid: its name, its path and how many plans are
- * active (the approved `project-card`). It is a link to the project; what a
- * page adds beneath the count goes in `extra` and is not part of the look.
+ * One project on the home grid: its name, its path, how many plans are
+ * active, its shape, whether work is in progress and when it was last seen
+ * (the approved `project-card`). It is a link to the project.
  */
 export function ProjectCard({
   name,
   path,
   activePlanCount,
   href,
-  extra,
+  shape,
+  inProgress = false,
+  lastSeen,
 }: ProjectCardProps) {
   const label = activePlanCount === 1 ? "active plan" : "active plans";
   return (
@@ -40,7 +46,19 @@ export function ProjectCard({
       <p className="mt-2 text-sm leading-3 text-ink-soft">
         {activePlanCount} {label}
       </p>
-      {extra}
+      <span className="mt-2 flex flex-wrap items-center gap-1 text-xs text-ink-faint">
+        {shape ? (
+          <Badge variant="neutral" data-testid="project-shape">
+            {shape}
+          </Badge>
+        ) : null}
+        {inProgress ? (
+          <Badge variant="written" data-testid="in-progress-badge">
+            in progress
+          </Badge>
+        ) : null}
+        <span>last seen {lastSeen}</span>
+      </span>
     </Link>
   );
 }
