@@ -151,12 +151,13 @@ project card's spacing and Message's wrapping are left for Build Phase 2.
   `stories.ts` writes `components/_reset.css` (constant beside `BASE_STYLESHEET` in `mockups.ts`); `readApp` reads it as `reset` ("" when absent).
 
   </details>
-- [ ] The cockpit draws every mockup and every story with the reset sheet loaded.
+- [x] The cockpit draws every mockup and every story with the reset sheet loaded.
   <details><summary>Technical</summary>
 
   `overview.ts`: `mockupDocument` and `storyDocument` put `{ component: "_reset", css: app.reset }` after the tokens and before component sheets. Check whether a mockup's `componentsHash` must cover it; if approval reuse would miss a reset change, add it to the hash.
 
   </details>
+  Decision: `componentsHash` does not cover the reset. `_reset.css` is the app's element rules, as `_base.css` is, and neither is a component's look; a change to the app's element rules already reopens every story through `baseRulesHash`. Folding it into `componentsHash` would send every approved mockup back to proposed at once, which is the re-approval this plan puts out of scope.
 - [ ] The admin's stylesheets are regenerated with the reset.
   <details><summary>Technical</summary>
 

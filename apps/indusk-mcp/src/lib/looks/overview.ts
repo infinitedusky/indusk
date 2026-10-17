@@ -118,15 +118,19 @@ const TOKENS_LINK = /<link\b[^>]*\bhref=["'][^"']*tokens\.css["'][^>]*>/i;
  * the foundation as it is now, so a changed value shows on the next read.
  * A mockup without the link gets the CSS first in its head. The stylesheet of
  * each component the mockup names follows the tokens (ADR decision 10): a
- * snapshot is markup, and its look is the app's compiled classes.
+ * snapshot is markup, and its look is the app's compiled classes. `reset`, the
+ * app's element rules scoped to components (`_reset.css`), goes between the
+ * tokens and the component sheets, so a component draws as its story does.
  */
 export function mockupDocument(
 	html: string,
 	tokensCss: string,
 	styles: readonly Pick<ComponentStyle, "component" | "css">[] = [],
+	reset = "",
 ): string {
 	const style = [
 		`<style data-foundation>\n${tokensCss}</style>`,
+		...(reset ? [`<style data-component-style="_reset">\n${reset}</style>`] : []),
 		...styles.map((s) => `<style data-component-style="${s.component}">\n${s.css}</style>`),
 	].join("\n");
 	if (TOKENS_LINK.test(html)) return html.replace(TOKENS_LINK, () => style);
@@ -152,13 +156,14 @@ function viewOf(
 		hash: mockup.hash,
 		componentsHash: mockup.componentsHash,
 		componentsChanged: approval.state === "proposed" ? (approval.componentsChanged ?? []) : [],
-		document: mockupDocument(mockup.html, css, mockup.styles),
+		document: mockupDocument(mockup.html, css, mockup.styles, app.reset),
 	};
 }
 
 /**
  * A story's snapshot as a page the cockpit can draw on its own, built as
  * `mockupDocument` builds a composed mockup: the foundation's tokens, the app's
+ * element resets (`_reset.css`), the app's
  * base (`_base.css`, so the story is drawn in the app's type), then its
  * component's stylesheet, then the snapshot's markup inside a
  * `#storybook-root`, where the frame measures the component it holds. What is
@@ -169,12 +174,13 @@ export function storyDocument(
 	tokensCss: string,
 	styles: readonly Pick<ComponentStyle, "component" | "css">[],
 	base = "",
+	reset = "",
 ): string {
 	const page = `<!doctype html>\n<html>\n<head><meta charset="utf-8"></head>\n<body><div id="storybook-root">${story.html}</div></body>\n</html>\n`;
 	return mockupDocument(page, tokensCss, [
 		...(base ? [{ component: "_base", css: base }] : []),
 		...styles.filter((s) => s.component === story.component),
-	]);
+	], reset);
 }
 
 function storiesOf(
@@ -196,7 +202,7 @@ function storiesOf(
 			plan: entry?.plan ?? null,
 			hash: story.hash,
 			stylesheetHash: story.stylesheetHash,
-			document: storyDocument(story, css, app.styles, app.base),
+			document: storyDocument(story, css, app.styles, app.base, app.reset),
 		};
 	});
 }
