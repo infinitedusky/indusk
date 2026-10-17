@@ -8,12 +8,12 @@ subplans:
   - impl-tasks-are-instructions
   - a-new-project-starts-instrumented
   - mark-first
+  - a-break-runs-its-tests
   - a-plan-page-shows-its-clauses
   - audit-concerns-are-answered
   - production-is-heard
   - production-keeps-only-what-it-should
   - a-look-comes-due
-  - a-break-runs-its-tests
 ---
 
 # Telemetry from day one
@@ -158,7 +158,17 @@ each child is one plan with one landing.
    listed; a measurement is recorded in the brief. Trends, shared history and
    retention past ninety days stay [expectations-loop](../expectations-loop/master.md)'s.
 
-7. **`a-break-runs-its-tests`** — optional, Sandy's call;
+7. **`a-break-runs-its-tests`** — no longer optional (Sandy, 2026-10-17):
+   next after `mark-first`, the second half of `tests-never-make-us-wait`
+   (promise-core). Telemetry detects, tests diagnose: a clause's break runs
+   that clause's tests at once — they fail, we broke it (look at when they last
+   passed); they pass, the test does not test what production does; there is
+   none, write the one the break describes. A promise shows when it was last
+   seen holding, and the spot checker's findings become clause signals. The
+   half that separates a failing slow test at release from a production break
+   moved to `tests-never-make-us-wait`. What follows is the plan as first
+   written:
+   Was optional, Sandy's call;
    blocked by `mark-first`'s decision that a signal is keyed by promise and
    clause. For a project naming no production source — Homework Gate's first
    weeks — a break the agent causes while building is a red chip and nothing
