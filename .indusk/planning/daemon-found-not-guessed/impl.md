@@ -1170,7 +1170,7 @@ A reader who did not build this plan found two places where the code does not do
   `startPlan` in `apps/indusk-mcp/src/lib/telemetry/start-plan.ts:82` (takeover with no stored address) and `:104` (start with none) call `chooseAddress(holders, {}, …)`, so a role on a picked port gets a new free port and the daemon reads as off its address until a restart. Pass the ports the taken candidate holds (its labelled ports from `daemon-find.ts`) as `ownPorts` at `:82`, and at `:104` the record's ports when its processes are alive (`runningDaemonPorts` in `daemon-address.ts:213` already does this for `--reset`; reuse it, do not copy it). Answers row A38.
 
   </details>
-- [ ] A daemon's home is matched by where it really is, so a home reached through a link is still this home.
+- [x] A daemon's home is matched by where it really is, so a home reached through a link is still this home.
   <details><summary>Technical</summary>
 
   `isOwn` in `lib/telemetry/daemon-process.ts:84` compares `p.home === home`; compare the resolved real paths of both (the module already resolves with `realpathSync` for `homeKind`), falling back to the exact string when a path cannot be resolved. Answers row A39.
