@@ -147,3 +147,5 @@ Phase 3: 0, Build Phase 4: 1, Build Phase 5: 0), 0 judged wrong by a human.
 - Defects found after the build: 5 by falsification, 4 acted on from the audit (Build Phases 5 and 6), one promise sentence amended
 - `pnpm test` at close: 3 failures. Two were this plan's (its root context line over the held root budget; its own impl refused by the plan-task rule), both fixed. The third, `looks-admin-approvals-hold` A11, is the trunk failure current.md already records. The impl-corpus check's other refusal, `archive/nav-row-legible`, is also on trunk.
 - Nested-context probe (`pnpm e2e`): context-tiers passed. `day-monitor` A24 failed, and it fails on trunk too: it waits for `promises status` to print "1 violation", which has printed "1 break" since one-promise-language.
+
+Landed on main at 40571937, 2026-10-17. Installed with `pnpm install:local` (indusk 1.71.0); nothing published, since this project publishes when the operator decides.
