@@ -8,8 +8,9 @@
 import { describe, expect, it } from "vitest";
 import { describeHits, trackedLinesMatching } from "./helpers/tracked-lines.js";
 
-// Joined, so this file does not contain the word it looks for.
-const PLACEHOLDER = ["unknown", "service"].join("-");
+// Joined, so this file does not contain the word it looks for. Not when it is part of
+// this test's own file name, which the promise registry cites as the test that proves it.
+const PLACEHOLDER = new RegExp(`${["unknown", "service"].join("-")}(?!-gone)`);
 
 const KEEPS_THE_RECORD = (rel: string) =>
 	rel.includes("/archive/") ||
