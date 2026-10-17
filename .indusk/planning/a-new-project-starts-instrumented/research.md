@@ -1,11 +1,11 @@
 ---
-title: "A new project is fully wired for telemetry"
+title: "Init sets up telemetry (New Projects)"
 date: 2026-10-16
 status: complete
 workflow: feature
 ---
 
-# A new project is fully wired for telemetry — Research
+# Init sets up telemetry (New Projects) — Research
 
 Child 3 of seven in [telemetry-from-day-one](../telemetry-from-day-one/master.md), the parent
 made on 2026-10-16 after the cold audit of `mark-first` against the goal. Blocked by
