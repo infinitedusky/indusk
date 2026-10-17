@@ -1,5 +1,6 @@
 // promise: a-plan-page-shows-the-parts-of-its-brief
 // promise: a-look-has-the-plan-that-owns-it
+// promise: a-promise-reads-the-same-on-its-plan-page
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -12,6 +13,7 @@ import {
   tearDownProject,
 } from "@/__tests__/helpers/looks-page";
 import PlanPage from "@/app/p/[project]/plan/[name]/page";
+import { PlanParts } from "@/components/plan/PlanParts";
 
 // LiveRefresh, drawn on the plan page, reads the app router, which a markup render has not mounted.
 vi.mock("next/navigation", () => ({
@@ -145,5 +147,83 @@ describe("A5 — a plan's looks are listed beside its promises", () => {
     expect(attrOf(lookRow(html, "plan.working"), "data-approval")).toBe(
       "proposed",
     );
+  });
+});
+
+/**
+ * A plan's promise chips take the colour the Promises page gives each health
+ * (`PROMISE_HEALTH_CHIP`): red bg-bad, fixed bg-ink-soft, green bg-ok,
+ * unverified and grey bg-idle, amber bg-warn. A promise telemetry says
+ * nothing about keeps the colour of its registry state. `PartPromise.health`
+ * arrives with the build phase, so the parts are built through a cast.
+ */
+type Health = "red" | "fixed" | "green" | "unverified" | "amber" | "grey";
+interface DrawnPromise {
+  name: string;
+  state: string;
+  health?: Health;
+}
+
+function chipsOf(promises: DrawnPromise[]): string {
+  const parts = {
+    plan: "p",
+    hasBrief: true,
+    hasBriefFile: true,
+    promises: promises.map((p) => ({ ...p, sentence: `${p.name} holds.` })),
+    expectations: [],
+    looks: [],
+    noLooks: null,
+    amendments: [],
+    amendmentsUnreadable: null,
+    description: null,
+    briefStatus: "accepted",
+  };
+  return renderToStaticMarkup(
+    <PlanParts
+      parts={parts as unknown as Parameters<typeof PlanParts>[0]["parts"]}
+      looksHref="/p/x/looks?"
+    />,
+  );
+}
+
+/** The foundation colour class on the dot inside the promise's chip. */
+function dotOf(html: string, promise: string): string {
+  const start = html.indexOf(`data-promise="${promise}"`);
+  expect(start, `no chip for ${promise}`).toBeGreaterThan(-1);
+  const dot = html.slice(start).match(/size-dot rounded-pill (bg-[a-z-]+)/);
+  return dot?.[1] ?? "no dot";
+}
+
+describe("A1 — a broken promise is the broken colour on its plan's page", () => {
+  // clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken
+  it("A1 an enforced behaviour promise with health red draws bg-bad, not bg-ok", () => {
+    const html = chipsOf([
+      { name: "seats-held", state: "enforced", health: "red" },
+    ]);
+    expect(dotOf(html, "seats-held")).toBe("bg-bad");
+  });
+});
+
+describe("A2 — each health reads on the plan's page as on the Promises page", () => {
+  // clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike
+  it("A2 fixed, green, unverified, amber and grey each take the Promises page's colour; a state promise its registry colour", () => {
+    const html = chipsOf([
+      { name: "broke-and-fixed", state: "enforced", health: "fixed" },
+      { name: "seen-holding", state: "enforced", health: "green" },
+      { name: "no-signal", state: "enforced", health: "unverified" },
+      { name: "known-broken-one", state: "known-broken", health: "amber" },
+      { name: "retired-one", state: "retired", health: "grey" },
+      { name: "a-state-promise", state: "enforced" },
+    ]);
+    expect(dotOf(html, "broke-and-fixed"), "broke and fixed").toBe(
+      "bg-ink-soft",
+    );
+    expect(dotOf(html, "seen-holding"), "seen holding").toBe("bg-ok");
+    expect(dotOf(html, "no-signal"), "no signal is never green").toBe(
+      "bg-idle",
+    );
+    expect(dotOf(html, "known-broken-one"), "known broken").toBe("bg-warn");
+    expect(dotOf(html, "retired-one"), "retired").toBe("bg-idle");
+    expect(dotOf(html, "a-state-promise"), "a state promise").toBe("bg-ok");
   });
 });

@@ -1,7 +1,7 @@
 ---
 title: "A promise reads the same on its plan's page"
 date: 2026-10-17
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -41,9 +41,9 @@ Make true the [brief](brief.md)'s promise `a-promise-reads-the-same-on-its-plan-
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A plan whose enforced behaviour promise has a break no incident records shows that promise's dot in the broken colour on its plan's page, not the healthy green it shows today | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts, apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
-| A2 | On a plan's page, a promise that broke and was fixed, one seen holding, one with no signal, one known broken and a state promise each show the colour the Promises page gives them, and the enforced behaviour promise nothing has reported on is grey, not green | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
-| A3 | For a project with a production source holding and a local break, the plan's parts read each promise's health exactly as the nav's red dot does, from the alarm source, so a laptop break alone does not turn the plan page red | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-promise-reads-the-same-on-its-plan-page/no-rule-of-its-own | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
+| A1 | A plan whose enforced behaviour promise has a break no incident records shows that promise's dot in the broken colour on its plan's page, not the healthy green it shows today | Test Phase 1 | Build Phase 1 | written | unit | clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts, apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
+| A2 | On a plan's page, a promise that broke and was fixed, one seen holding, one with no signal, one known broken and a state promise each show the colour the Promises page gives them, and the enforced behaviour promise nothing has reported on is grey, not green | Test Phase 1 | Build Phase 1 | written | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
+| A3 | For a project with a production source holding and a local break, the plan's parts read each promise's health exactly as the nav's red dot does, from the alarm source, so a laptop break alone does not turn the plan page red | Test Phase 1 | Build Phase 1 | written | unit | clause: a-promise-reads-the-same-on-its-plan-page/no-rule-of-its-own | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
 
 ## Checklist
 
@@ -53,7 +53,7 @@ Make true the [brief](brief.md)'s promise `a-promise-reads-the-same-on-its-plan-
 
 This phase writes the three tests that say what the plan page must show: a broken promise in the broken colour, every other health in the colour the Promises page gives it, and the same answer the nav's red dot gives. Each runs against the package and the component as they are today and fails on what it asserts, since neither carries a promise's health yet. The build phase then makes them pass.
 
-- [ ] The three tests are written and each fails on what it asserts.
+- [x] The three tests are written and each fails on what it asserts.
   <details><summary>Technical</summary>
 
   A1 and A3 in new `apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts`: a fixture project through `helpers/promises-fixture.ts` with a plan owning an enforced behaviour promise; `readPlanParts(root, plan, { health })` with `health` from fake source reads (local break, no incident; for A3 also a `production` read holding) — today the option is ignored, so `promises[0].health` is undefined and the assertion fails. A1's and A2's drawing halves in `apps/indusk-admin/src/__tests__/plan-parts.test.tsx`: render `PlanParts` with parts whose promises carry `health` (`red`, `fixed`, `green`, `unverified`, `amber`, a state promise with none) and assert each dot's colour class is the Promises page's for that health (`bg-bad`, `bg-ink-soft`, `bg-ok`, `bg-idle`, `bg-warn`; the state promise its registry colour) — today every enforced promise is `bg-ok`. Each file carries `promise: a-promise-reads-the-same-on-its-plan-page` and each test its clause comment.
