@@ -102,7 +102,7 @@ export async function promisesStatus(
 	if (reads.length === 1) {
 		// One source: today's output, with no section header (A7).
 		const [only] = reads;
-		if (only.ok) console.info(formatStatus(promises, only.marks, window));
+		if (only.ok) console.info(formatStatus(promises, only.marks, window, read.registry.incidents));
 		else {
 			console.error(failureText(only));
 			process.exitCode = 2;
@@ -114,7 +114,7 @@ export async function promisesStatus(
 	// production server that answered is not a failed status run.
 	const sections = reads.map((r) =>
 		r.ok
-			? `${r.name} — ${r.label}\n${formatStatus(promises, r.marks, window)}`
+			? `${r.name} — ${r.label}\n${formatStatus(promises, r.marks, window, read.registry.incidents)}`
 			: `${r.name} — ${r.label}\n${failureText(r)}`,
 	);
 	console.info(sections.join("\n\n"));

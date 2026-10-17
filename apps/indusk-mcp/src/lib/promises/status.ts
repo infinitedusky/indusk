@@ -1,4 +1,5 @@
-import type { PromiseEntry } from "./registry.js";
+import { healthOf } from "./health.js";
+import type { IncidentEntry, PromiseEntry } from "./registry.js";
 import { type MarkedSpansResult, silencePastExpectation } from "./telemetry.js";
 
 /**
@@ -9,7 +10,9 @@ import { type MarkedSpansResult, silencePastExpectation } from "./telemetry.js";
  * the window: its breaks with their traces, and when it was last seen
  * holding — or "no signal", which is never the same as holding or as zero
  * breaks. State and structure promises are listed as watched by the
- * suite and given no count: telemetry has nothing to say about them.
+ * suite and given no count: telemetry has nothing to say about them. A
+ * behaviour promise with breaks reads broken, or broke — fixed, by
+ * `healthOf`: the rule the admin and the editor read, so the three agree.
  */
 
 function iso(d: Date): string {
@@ -26,6 +29,7 @@ export function formatStatus(
 	promises: PromiseEntry[],
 	marks: MarkedSpansResult,
 	window: number | string,
+	incidents: IncidentEntry[] = [],
 ): string {
 	const phrase = windowPhrase(window);
 	const blocks: string[] = [`Promises observed in ${phrase}, from Jaeger at ${marks.queryUrl}`];
@@ -51,10 +55,12 @@ export function formatStatus(
 		const lines = [head];
 		if (attentionLine) lines.push(attentionLine);
 		const n = m.violations.length;
+		const health = healthOf(p, { ok: true, at: "", marks }, incidents)?.health;
+		const word = health === "red" ? "broken — " : health === "fixed" ? "broke — fixed — " : "";
 		lines.push(
 			n === 0
 				? `  no breaks in ${phrase}`
-				: `  ${m.truncated ? "at least " : ""}${n} break${n === 1 ? "" : "s"} in ${phrase}`,
+				: `  ${word}${m.truncated ? "at least " : ""}${n} break${n === 1 ? "" : "s"} in ${phrase}`,
 		);
 		for (const v of m.violations) {
 			lines.push(

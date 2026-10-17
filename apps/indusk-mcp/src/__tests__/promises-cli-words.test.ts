@@ -4,7 +4,7 @@ import { watcherTransition } from "../lib/always-on/heartbeat.js";
 import { slackText } from "../lib/always-on/pass.js";
 import { startPass } from "../lib/always-on/schedule.js";
 import { checkPromises, formatSummary } from "../lib/promises/check.js";
-import type { PromiseEntry } from "../lib/promises/registry.js";
+import type { IncidentEntry, PromiseEntry } from "../lib/promises/registry.js";
 import { formatStatus } from "../lib/promises/status.js";
 import type { MarkedSpan, MarkedSpansResult } from "../lib/promises/telemetry.js";
 import { type WatchResult, watchReport } from "../lib/promises/watch.js";
@@ -80,6 +80,34 @@ describe("A8 — the status text says broken and held", () => {
 	it("a promise that held with no breaks says so in no word of violation", () => {
 		const text = formatStatus([entry()], marks([], span("upheld", "2026-10-09T11:00:00Z")), 7);
 		expect(text).not.toMatch(OLD);
+	});
+});
+
+describe("the status text says broken by the rule the admin and the editor use", () => {
+	const breaks = marks(
+		[span("broken", "2026-10-09T10:00:00Z", "seat 4 held twice")],
+		span("upheld", "2026-10-09T11:00:00Z"),
+	);
+	const incident = (status: "open" | "fixed") =>
+		({
+			id: "i-1",
+			promise: "seats-held",
+			status,
+			opened: "2026-10-09T10:05:00Z",
+			fixed: status === "fixed" ? "2026-10-10T00:00:00Z" : null,
+			traces: ["t-2026-10-09T10:00:00Z"],
+			file: "incidents/i-1.md",
+		}) as unknown as IncidentEntry;
+
+	it("a live break, unrecorded or under an open incident, reads broken", () => {
+		expect(formatStatus([entry()], breaks, 7)).toMatch(/broken — 1 break in the last 7 days/);
+		expect(formatStatus([entry()], breaks, 7, [incident("open")])).toMatch(/broken — 1 break/);
+	});
+
+	it("breaks whose incidents are all fixed read broke — fixed, not broken", () => {
+		const text = formatStatus([entry()], breaks, 7, [incident("fixed")]);
+		expect(text).toMatch(/broke — fixed — 1 break in the last 7 days/);
+		expect(text).not.toMatch(/broken —/);
 	});
 });
 
