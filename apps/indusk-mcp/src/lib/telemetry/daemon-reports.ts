@@ -1,7 +1,8 @@
 import { markPromise } from "../promises/mark.js";
 import { type SpanEvent, sendWatcherSpan, watcherSpanBody } from "../promises/probe.js";
 import { ADDRESS_ROLES, ROLE_LABEL } from "./daemon-address.js";
-import type { DaemonState, OwnProcess, SelfTracing } from "./daemon-state.js";
+import type { DaemonReads } from "./daemon-reads.js";
+import type { DaemonState, Found, OwnProcess, SelfTracing } from "./daemon-state.js";
 
 /**
  * What each InDusk command reports about the daemon, as spans the daemon
@@ -343,4 +344,20 @@ export async function sendDaemonReports(
 			}
 		}),
 	);
+}
+
+/**
+ * What the command whose create wrote the record tells the daemon it found:
+ * the finding, and that the record had been lost. A command that only read
+ * another's record says nothing. The post is the caller's to await or not.
+ */
+export function reportFinding(reads: DaemonReads, found: Found, by: string): Promise<void> {
+	if (!found.finder || reads.report === undefined) return Promise.resolve();
+	const reports = daemonReports("found", {
+		meta: found.meta,
+		address: reads.address(),
+		strays: found.strays,
+		finding: { by, jaegerPid: found.meta.jaegerPid, startedAt: found.meta.startedAt },
+	});
+	return reads.report(found.meta.otlpPort, reports);
 }

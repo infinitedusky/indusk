@@ -1,6 +1,7 @@
 import { upsertJaegerEntry } from "../mcp-config.js";
 import { mcpPortOf } from "./daemon-address.js";
 import { realDaemonReads } from "./daemon-reads.js";
+import { daemonReports } from "./daemon-reports.js";
 import { daemonState } from "./daemon-state.js";
 import { registerProject } from "./registry.js";
 import { type EnsureResult, ensureDaemon, type SpawnDaemon, startReport } from "./start-plan.js";
@@ -81,6 +82,26 @@ export async function registerWithDaemon(
 			upsertJaegerEntry(projectPath, port)
 				? `  .mcp.json: wired jaeger MCP server at http://localhost:${port}/mcp`
 				: "  .mcp.json: jaeger MCP server current",
+		);
+	}
+	// At its end: it found, took over or started the one daemon, and changed only this project's entry.
+	const after = daemonState(reads, home);
+	if (after.meta !== null && after.kind === "running") {
+		await reads.report?.(
+			after.meta.otlpPort,
+			daemonReports("register", {
+				...after,
+				registered: {
+					project: projectPath,
+					daemon:
+						result.kind === "started"
+							? "started"
+							: result.kind === "took-over"
+								? "took over"
+								: "found",
+					otherEntriesChanged: [],
+				},
+			}),
 		);
 	}
 	return { daemon: result.kind === "started" ? "started" : "found", lines, code: 0 };

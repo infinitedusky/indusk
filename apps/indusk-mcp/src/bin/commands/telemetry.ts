@@ -1,13 +1,10 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readMcpJson, removeJaegerEntry, upsertJaegerEntry } from "../../lib/mcp-config.js";
-import {
-	daemonRestart,
-	daemonStop,
-	startDaemon,
-} from "../../lib/telemetry/daemon.js";
+import { daemonRestart, daemonStop, startDaemon } from "../../lib/telemetry/daemon.js";
 import { addressReport, resetAddress } from "../../lib/telemetry/daemon-address.js";
 import { realDaemonReads } from "../../lib/telemetry/daemon-reads.js";
+import { daemonReports } from "../../lib/telemetry/daemon-reports.js";
 import {
 	daemonState,
 	describeFinding,
@@ -181,7 +178,15 @@ export async function telemetryStatus(): Promise<void> {
 	for (const line of renderStatus(state, answers)) console.info(line);
 	if (finding !== null) console.info(finding);
 	if (state.meta !== null && (state.kind === "running" || state.kind === "partial")) {
-		for (const line of renderSelfTracing(selfTracingSince(reads, state.meta))) console.info(line);
+		const tracing = selfTracingSince(reads, state.meta);
+		for (const line of renderSelfTracing(tracing)) console.info(line);
+		// Status knows the answer now: tell the daemon whether it holds its own ports and its log is readable.
+		if (state.kind === "running") {
+			await reads.report?.(
+				state.meta.otlpPort,
+				daemonReports("status", { ...state, selfTracing: tracing }),
+			);
+		}
 	}
 	console.info(`Registered ${projectLabel} ${projectCount}`);
 }

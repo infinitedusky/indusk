@@ -14,7 +14,8 @@ import { join } from "node:path";
 import { acquireLock, acquireLockAsync } from "../agents/lock.js";
 import { type PsRow, psAll } from "../process-identity.js";
 import { addressFilePath, readAddressFile, type StoredAddress } from "./daemon-address.js";
-import { daemonConfigPath } from "./daemon-process.js";
+import { daemonConfigPath, homeKind, realTempRoots } from "./daemon-process.js";
+import { type Report, sendDaemonReports } from "./daemon-reports.js";
 import type { DaemonMeta } from "./status.js";
 
 /**
@@ -73,6 +74,13 @@ export interface DaemonReads {
 	/** The daemon's log lines from a byte offset, or written since a time. */
 	logSince(from: { offset: number } | { time: number }): string[];
 	now(): number;
+	/**
+	 * Tells the daemon listening on `otlpPort` something about itself
+	 * (`daemonReports`). Never throws. Absent on a machine a test describes, and
+	 * a no-op outside the real home: a temporary home's daemon is a test's, and
+	 * nothing reads its reports.
+	 */
+	report?(otlpPort: number, reports: Report[]): Promise<void>;
 }
 
 /** `lsof`'s standard output, or `null` when `lsof` is not on the PATH. */
@@ -317,5 +325,9 @@ export function realDaemonReads(home: string): DaemonReads {
 			}
 		},
 		now: () => Date.now(),
+		async report(otlpPort, reports) {
+			if (homeKind(home, realTempRoots()) !== "real") return;
+			await sendDaemonReports(otlpPort, reports);
+		},
 	};
 }

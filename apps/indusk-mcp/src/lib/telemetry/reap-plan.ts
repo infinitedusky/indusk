@@ -49,6 +49,20 @@ export async function runReap(
 	deps: StopDeps,
 	opts: { dryRun?: boolean } = {},
 ): Promise<ReapResult> {
+	const result = await reap(reads, home, deps, opts);
+	// At its end, to the recorded daemon: what remains of the strays.
+	if (result.reports.length > 0) {
+		await reads.report?.(reads.record()?.otlpPort ?? 0, result.reports);
+	}
+	return result;
+}
+
+async function reap(
+	reads: DaemonReads,
+	home: string,
+	deps: StopDeps,
+	opts: { dryRun?: boolean },
+): Promise<ReapResult> {
 	const state = daemonState(reads, home);
 	const plan = reapPlan(state);
 	if (state.kind === "found") {

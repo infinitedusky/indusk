@@ -32,7 +32,8 @@ import { join } from "node:path";
 
 import { ADDRESS_ROLES, type Ports } from "./daemon-address.js";
 import { homeKind, realTempRoots } from "./daemon-process.js";
-import { realDaemonReads } from "./daemon-reads.js";
+import { type DaemonReads, realDaemonReads } from "./daemon-reads.js";
+import { daemonReports, reportFinding } from "./daemon-reports.js";
 import { daemonState } from "./daemon-state.js";
 import {
 	type DaemonStartOptions,
@@ -471,7 +472,35 @@ export async function startDaemon(
 	const given = startOptions(opts, home);
 	const needsChoosing = homeKind(home, realTempRoots()) === "real" && reads.address() === null;
 	const spare = needsChoosing ? await pickFreePorts(ADDRESS_ROLES.length) : [];
-	return ensureDaemon(by, reads, home, spawnDaemonProcesses, { given, spare });
+	const result = await ensureDaemon(by, reads, home, spawnDaemonProcesses, { given, spare });
+	await reportStart(reads, home, by, result);
+	return result;
+}
+
+/**
+ * Once the daemon is ready, tell it what the start knows: it holds its own
+ * ports and nothing runs beside it, and, after a takeover, what was found and
+ * that its record had been lost. Nothing for a daemon that was already running
+ * or a refusal: no InDusk daemon is there to receive it.
+ */
+async function reportStart(
+	reads: DaemonReads,
+	home: string,
+	by: string,
+	result: EnsureResult,
+): Promise<void> {
+	if (result.kind !== "started" && result.kind !== "took-over") return;
+	const state = daemonState(reads, home);
+	if (state.meta === null) return;
+	if (result.kind === "took-over") {
+		await reportFinding(reads, result.found, by);
+		await reads.report?.(state.meta.otlpPort, daemonReports("takeover", state));
+		return;
+	}
+	await reads.report?.(
+		state.meta.otlpPort,
+		daemonReports(by === "restart" ? "restarted" : "started", state),
+	);
 }
 
 function metaOrThrow(result: EnsureResult): DaemonMeta {

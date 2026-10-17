@@ -7,6 +7,7 @@ import {
 	realTempRoots,
 } from "./daemon-process.js";
 import type { DaemonReads, ProcessRow, RenderedPorts } from "./daemon-reads.js";
+import { reportFinding } from "./daemon-reports.js";
 import type { DaemonMeta } from "./status.js";
 
 /**
@@ -536,39 +537,47 @@ function recordFound(
  * exclusive create under `<home>/telemetry.lock`: when two commands find the
  * daemon at once, one writes and is `finder`, the other reads that record back.
  *
- * `by` names the command that looked, for the report Build Phase 5 sends.
+ * `by` names the command that looked: the finder tells the found daemon what
+ * it found and that the record had been lost (`reportFinding`).
  */
 export async function findDaemon(
 	reads: DaemonReads,
 	home: string,
-	_by: string,
+	by: string,
 	opts: { tracesPort?: number } = {},
 ): Promise<Found | null> {
 	const located = locateDaemon(reads, home, tracesPortOf(reads, opts));
 	if (located === null) return null;
 	const release = await reads.lock();
+	let found: Found;
 	try {
-		return recordFound(reads, home, located);
+		found = recordFound(reads, home, located);
 	} finally {
 		release();
 	}
+	await reportFinding(reads, found, by);
+	return found;
 }
 
 /** `findDaemon` for a synchronous caller (the evaluator decides its exporter at init). */
 export function findDaemonSync(
 	reads: DaemonReads,
 	home: string,
-	_by: string,
+	by: string,
 	opts: { tracesPort?: number } = {},
 ): Found | null {
 	const located = locateDaemon(reads, home, tracesPortOf(reads, opts));
 	if (located === null) return null;
 	const release = reads.lockSync();
+	let found: Found;
 	try {
-		return recordFound(reads, home, located);
+		found = recordFound(reads, home, located);
 	} finally {
 		release();
 	}
+	// Fire and forget: a short-lived caller (the evaluator) may exit first, and the record is written either way.
+	void reportFinding(reads, found, by);
+	return found;
 }
 
 // ---- the one resolver every reader of the local daemon calls ----------------
@@ -596,10 +605,27 @@ function reachable(meta: DaemonMeta | null): DaemonMeta | null {
  * daemon and never removes the record.
  */
 export async function resolveLocalDaemon(opts: ResolveOpts): Promise<DaemonMeta | null> {
+	return (await resolveLocalDaemonVia(opts))?.meta ?? null;
+}
+
+/** A daemon a reader reached, and how: through an intact record, or because the record was gone and it was found. */
+export interface ReachedDaemon {
+	meta: DaemonMeta;
+	via: "record" | "found";
+}
+
+/** `resolveLocalDaemon`, saying how the daemon was reached, for the reader whose report depends on it. */
+export async function resolveLocalDaemonVia(opts: ResolveOpts): Promise<ReachedDaemon | null> {
 	const state = daemonState(opts.reads, opts.home);
-	if (state.kind === "running") return reachable(state.meta);
+	if (state.kind === "running") {
+		const meta = reachable(state.meta);
+		return meta === null ? null : { meta, via: "record" };
+	}
 	if (state.kind !== "found") return null;
-	return reachable((await findDaemon(opts.reads, opts.home, opts.by ?? "reader"))?.meta ?? null);
+	const meta = reachable(
+		(await findDaemon(opts.reads, opts.home, opts.by ?? "reader"))?.meta ?? null,
+	);
+	return meta === null ? null : { meta, via: "found" };
 }
 
 /** `resolveLocalDaemon` for a synchronous caller: the evaluator decides its exporter at init. */

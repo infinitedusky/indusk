@@ -8,8 +8,10 @@ import { realDaemonReads } from "./daemon-reads.js";
 import {
 	daemonState,
 	type PortAnswer,
+	type ReachedDaemon,
 	resolveLocalDaemon,
 	resolveLocalDaemonSync,
+	resolveLocalDaemonVia,
 } from "./daemon-state.js";
 
 /**
@@ -124,6 +126,14 @@ function resolveOpts(
 ): { reads: DaemonReads; home: string; by: string } {
 	const home = deps.home ?? induskHome();
 	return { reads: deps.reads ?? realDaemonReads(home), home, by };
+}
+
+/** `resolveLocalDaemonHere`, saying whether the record or a finding reached the daemon. */
+export function resolveLocalDaemonViaHere(
+	by: string,
+	deps: ResolveDeps = {},
+): Promise<ReachedDaemon | null> {
+	return resolveLocalDaemonVia(resolveOpts(by, deps));
 }
 
 /**

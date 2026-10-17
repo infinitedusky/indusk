@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { PickedPort } from "../lib/telemetry/daemon-address.js";
 import { PORT_BLOCK, type Ports } from "../lib/telemetry/daemon-address.js";
 import { daemonReports, type ReportState, readerReports } from "../lib/telemetry/daemon-reports.js";
-import { daemonState } from "../lib/telemetry/daemon-state.js";
+import { daemonState, findDaemon } from "../lib/telemetry/daemon-state.js";
 import { collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
 
 /**
@@ -186,5 +186,45 @@ describe("A24 — status reports whether the log is readable", () => {
 		expect(r.find((x) => x.clause === "the-log-is-readable")?.symptom).toMatch(
 			/^the-log-is-readable: 17 lines .*4317/,
 		);
+	});
+});
+
+describe("a finder tells the daemon it found, and only the finder", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
+	/** A machine whose daemon runs with no record, and what it was told. */
+	function lostDaemon(record: ReturnType<typeof rec> | null = null) {
+		const told: { port: number; clauses: string[] }[] = [];
+		const reads = {
+			...fakeReads({
+				record,
+				processes: [jaegerCmd(1, HOME), collectorCmd(2, HOME)],
+				listening: { 1: [24318, 24316, 24317], 2: [24319] },
+				yaml: {
+					ports: { otlpPort: 24318, uiPort: 24316, mcpPort: 24317, logsOtlpPort: 24319 },
+					mtimeAfterStart: false,
+				},
+			}),
+			async report(port: number, reports: { clause: string }[]) {
+				told.push({ port, clauses: reports.map((r) => r.clause) });
+			},
+		};
+		return { reads, told };
+	}
+
+	it("the command whose create wrote the record sends both findings to the found daemon", async () => {
+		const { reads, told } = lostDaemon();
+		const found = await findDaemon(reads, HOME, "status");
+		expect(found?.finder).toBe(true);
+		expect(told).toEqual([
+			{ port: 24318, clauses: ["a-lost-daemon-is-found", "a-read-never-loses-the-daemon"] },
+		]);
+	});
+
+	it("a command whose create lost to another's sends nothing", async () => {
+		const { reads, told } = lostDaemon();
+		reads.writeRecord(rec(1, 2), { exclusive: true });
+		const found = await findDaemon({ ...reads, record: () => null }, HOME, "update");
+		expect(found?.finder).toBe(false);
+		expect(told).toEqual([]);
 	});
 });
