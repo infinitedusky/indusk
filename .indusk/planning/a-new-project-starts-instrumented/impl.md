@@ -678,7 +678,7 @@ a log line is for diagnosis, and call only tools that exist. The standard port a
 Dash0 leave everything an app is handed. A fresh Next.js app is then run once to
 record that its first run reports.
 
-- [ ] Rewrite init's next steps so every command named exists, and print the editor install once.
+- [x] Rewrite init's next steps so every command named exists, and print the editor install once.
   <details><summary>Technical</summary>
 
   `init.ts` summary: drop `indusk infra start`; steps: restart Claude Code, `/catchup`, edit `CLAUDE.md`, `/planner …`, and `indusk editor install` (once, with what it installs). The Next.js browser wiring line in `lib/scaffold/apply.ts`: import `./instrumentation.web` from a client component (one starting with `"use client"`), not the root layout.

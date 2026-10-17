@@ -95,7 +95,7 @@ function guidance(runtime: Runtime, instrumentation: string): string[] {
 			return [
 				`install: pnpm add @vercel/otel pino pino-opentelemetry-transport ${BROWSER_OTEL_PACKAGES}`,
 				"wire (server): Next.js loads instrumentation.ts automatically",
-				"wire (client): import './instrumentation.web' in your root client component or layout",
+				"wire (client): import './instrumentation.web' from a client component (one that starts with \"use client\"), not the root layout",
 				...propagationLines("NEXT_PUBLIC_OTEL_PROPAGATE_TO"),
 			];
 		case "browser":

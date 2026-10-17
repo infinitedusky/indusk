@@ -1219,8 +1219,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info("\nDone!");
 	console.info("\n⚠  Restart Claude Code to load the updated MCP server and skills.");
 	console.info("\nNext steps:");
-	console.info("  1. Set up infrastructure (if not done): indusk infra start");
-	console.info("  2. Restart Claude Code — /catchup will auto-orient the agent");
-	console.info("  3. Edit CLAUDE.md with your project details");
-	console.info("  4. Start planning: /planner your-first-feature");
+	console.info("  1. Restart Claude Code — /catchup will auto-orient the agent");
+	console.info("  2. Edit CLAUDE.md with your project details");
+	console.info("  3. Start planning: /planner your-first-feature");
+	console.info(
+		"  4. In VS Code or Cursor: indusk editor install (promise markers and the Promises panel)",
+	);
 }
