@@ -3182,24 +3182,24 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 ---
 
-## Session 5feb490a — Maintenance: storybook-components incidents (A30 composition compare, A18 timeout)
+## Session 5feb490a — impl-tasks-are-instructions — Test Phase 1
 
 **Session ID**: 5feb490a-2253-4dc8-a75e-50679a24f52e
-**Last updated**: 2026-10-17T02:33:47.023Z
+**Last updated**: 2026-10-17T17:53:43.707Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-(empty)
+impl-tasks-are-instructions (worktree dusk-worktrees/impl-tasks-are-instructions, branch plan/impl-tasks-are-instructions) is at Test Phase 1 with its wording tests red: rows A1-A3 fail on their own assertions, A4 save-check guards green.
 
 ### Open Questions
 
-(empty)
+None.
 
 ### Cursor
 
-(empty)
+Next: Build Phase 1 (rewrite planner step 7, templates, shipped planning rules, resync copies, change the promise sentence).
 
 ---
 
