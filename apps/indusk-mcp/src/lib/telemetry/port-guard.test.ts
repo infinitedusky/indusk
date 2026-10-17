@@ -1,3 +1,5 @@
+// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+// promise: the-daemon-readers-follow-is-the-one-running
 import { mkdtempSync, rmSync } from "node:fs";
 import { createServer, type Server } from "node:net";
 import { tmpdir } from "node:os";
@@ -66,6 +68,17 @@ describe("daemonStart port guard", { timeout: 30000 }, () => {
 
 		await expect(daemonStart({ otlpPort: taken, uiPort: 0 })).rejects.toThrow(
 			/indusk telemetry reap/,
+		);
+	});
+
+	// A3: a refusal names its holder, by process id and command, so a person
+	// can act on it. The holder here is this test process, which listens.
+	it("names the process holding the taken port, by process id and command", async () => {
+		const { daemonStart } = await import("./daemon.js");
+		const taken = await occupy();
+
+		await expect(daemonStart({ otlpPort: taken, uiPort: 0 })).rejects.toThrow(
+			new RegExp(`${taken} is held by ${process.pid} \\(.*node`),
 		);
 	});
 
