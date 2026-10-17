@@ -928,7 +928,7 @@ This phase makes the promise heard in the running system. Each part of the promi
   Wire per the ADR's D9 table: `status` (one-daemon-on-its-own-ports, the-log-is-readable on every run that finds a daemon); `start` and `restart` once ready or after a takeover (one-daemon-on-its-own-ports; a start that spawned also a-lost-daemon-is-found after reading the process list); `register` at its end (nothing-starts-a-second, with the project and found, took over or started; nothing on a refusal); `reap` at its end to the recorded daemon (strays-are-cleared; nothing when no daemon is recorded); every finder whose exclusive create succeeded (a-lost-daemon-is-found upheld and a-read-never-loses-the-daemon broken, symptom `a-read-never-loses-the-daemon: the record was missing while jaeger <pid> (started <t>) ran; found by <command>`). The evaluator's post is fire-and-forget. A refused start sends nothing: no InDusk daemon is there to receive it.
 
   </details>
-- [ ] A promise reader that reaches the daemon through its record reports it, at most once a quarter hour per project.
+- [x] A promise reader that reaches the daemon through its record reports it, at most once a quarter hour per project.
   <details><summary>Technical</summary>
 
   In `resolveLocal`'s probe path (`apps/indusk-mcp/src/lib/promises/sources.ts:306-311`): when resolved via the record, send a separate `indusk-telemetry` span (a-read-never-loses-the-daemon upheld, the reader's `indusk.project`) beside the `indusk-watcher` probe, throttled by the mtime of a stamp file in the home (`<home>/telemetry-read-report.<project>.stamp`) against an injected clock, 15 minutes. Author A9 in `telemetry-daemon-reports.test.ts`.
