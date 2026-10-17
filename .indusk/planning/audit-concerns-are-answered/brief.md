@@ -17,9 +17,11 @@ plan's agent, with the build's context, is better at deciding what to do about
 it. The guard against the builder waving away a concern about its own work is
 that a person sees each "nothing needed".
 
-**Open — to settle before this brief is accepted:** this shape (the auditor
-finds and says what would show it breaking; the plan's agent answers; the
-person sees the dismissals) is the working proposal, not yet agreed.
+**The shape, agreed 2026-10-17 (Sandy):** the auditor finds each concern and
+says what would show it breaking, and suggests no remedy; the plan's agent
+chooses the answer; the person sees every "nothing needed". Considered and
+not chosen: the auditor also suggesting a solution for the agent to accept or
+replace.
 
 ## Expectations
 
