@@ -780,7 +780,7 @@ This phase tests the finished scaffold against apps shaped differently from the 
   Hypothesis: `templates/signal.ts` imports `@opentelemetry/api`, but neither `NODE_PACKAGES` nor the Next.js install line in `lib/scaffold/apply.ts` names it. Under pnpm's strict layout a package only pulled in as a peer is not resolvable from the app's own source, so the first `signal.upheld(...)` fails to import in a fresh app. The demo hides this because its `package.json` lists the API package directly. Fix: add `@opentelemetry/api` to both lines; the test reads every bare import of each runtime's scaffolded files and requires each package to be named in that runtime's printed install line, so the next template import cannot drift.
 
   </details>
-- [ ] Tell a Python app to load the scaffolded setup itself, not to run under OpenTelemetry's own wrapper.
+- [x] Tell a Python app to load the scaffolded setup itself, not to run under OpenTelemetry's own wrapper.
   <details><summary>Technical</summary>
 
   Hypothesis: `guidance("python")` prints `run: opentelemetry-instrument python your_app.py`, and `templates/instrumentation.py` offers it first. That wrapper builds its own tracer provider from the environment (the standard port, `unknown_service`) before the app runs; `instrumentation.py` is then either never imported or its `trace.set_tracer_provider` is refused as an override. Either way the spans miss the daemon and carry no service name or project, against the clauses about where spans go and how they are named. Fix: print a wiring line that imports `instrumentation` at the top of the entry point, reorder the template's docstring so that is the way and the wrapper is not offered, and keep the install line to what the template imports.
