@@ -118,7 +118,7 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 
 #### Build Phase 1 Document
 
-- [ ] The admin reference says the plan page's promise dots show each promise's health.
+- [x] The admin reference says the plan page's promise dots show each promise's health.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/overview.md`, the plan page's Promises part: the dot is the promise's health in the Promises page's colours, its registry state for a state or structure promise. Changelog (Unreleased, Fixed): "A plan's page no longer shows a broken promise as healthy."

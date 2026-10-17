@@ -26,6 +26,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 - **`indusk telemetry start --allow-port-bump`** (daemon-found-not-guessed): a port is never bumped.
 
+### Fixed
+
+- **A plan's page no longer shows a broken promise as healthy** (plan-page-promise-health): each promise's dot on a plan's page and its brief page takes the colour the Promises page gives its health, read from the same rule as the nav's red dot; a promise telemetry says nothing about keeps the colour of its registry state.
+
 ## [1.71.0] — 2026-10-16
 
 ### Fixed
