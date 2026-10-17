@@ -587,7 +587,7 @@ Before any code changes, this phase writes every test that today's code can alre
 
 #### Test Phase 1 Verification
 
-- [ ] The tests this phase writes exist and each fails on what it asserts.
+- [x] The tests this phase writes exist and each fails on what it asserts.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-cli-lifecycle.test.ts src/__tests__/telemetry-slow-not-gone.test.ts src/__tests__/telemetry-reap-strays.test.ts src/__tests__/telemetry-self-tracing.test.ts` — A2 red on the unknown `--logs-port`, A8 red on the record being gone, A22 red on the stray still running, A23 red on a non-zero count of self-tracing lines; `pnpm exec vitest run src/__tests__/telemetry-mcp-entries.test.ts src/__tests__/telemetry-daemon-state.test.ts src/lib/telemetry/port-guard.test.ts` — A27 red on the changed mtime and the missing `jaeger` entry, A7 red on the record being removed, A3 red on the refusal not naming its holder; `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 red at "took over the running daemon", then `ls ~/.indusk/telemetry.json ~/.indusk/telemetry.pid` shows the record back and `pgrep -f telemetry-binaries` shows the same one Jaeger and one collector. Each row's State goes to `written` in the same edit.
