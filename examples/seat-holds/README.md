@@ -27,13 +27,11 @@ That copies this example into `./seat-holds`, sets it up as an InDusk project,
 starts the local telemetry daemon and the app, and prints the page's address
 and the admin's.
 
-To run it by hand instead:
+To run it by hand instead (the app reads the local daemon's address from `indusk telemetry address`; set `OTEL_EXPORTER_OTLP_ENDPOINT` to send elsewhere):
 
 ```bash
 pnpm install
-SEAT_HOLDS_FAULT_TOGGLE=1 \
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 \
-pnpm start
+SEAT_HOLDS_FAULT_TOGGLE=1 pnpm start
 ```
 
 ## Break it
