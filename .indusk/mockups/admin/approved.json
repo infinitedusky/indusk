@@ -8116,6 +8116,22 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-17T17:11:18.412Z",
 			"plan": "mockups-draw-components-as-stories"
+		},
+		{
+			"mockup": "home.default",
+			"mockupHash": "74d3be9526eb759e110346649668f379f7e9c9a15099f6aa4fb5957ab8fc56eb",
+			"componentsHash": "f6752454bca7b53831149e9965483b08990391d82ebd7ac25198b4c60b9e9805",
+			"components": {
+				"project-card.in-progress": "3d1c3187374895f2bfe58db8125b93feec17ef435d0da4735060ac0944c82beb",
+				"project-card.default": "9e8ef42a6b4e63186015844ce37c97201038419c6eaacd64d354bdc36c4ce94c",
+				"project-card.workbench": "6375229d7d7add286f53b965870146662ae8b22ac6d14d2a4a04200aa75ce354",
+				"project-card.css": "bebbfd7e3b42a58c85d70df933140b0fd2c5b690119857340b9062cada1d32ee"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-17T17:11:18.618Z",
+			"plan": "mockups-draw-components-as-stories"
 		}
 	]
 }
