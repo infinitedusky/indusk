@@ -156,13 +156,6 @@ function nothingBesideIt(state: ReportState): Report {
 	return { clause: "a-lost-daemon-is-found", ...verdict, attributes: daemonAttributes(state) };
 }
 
-function lostFindingOf(state: ReportState): Finding | null {
-	if (state.finding) return state.finding;
-	return state.meta === null
-		? null
-		: { by: "a command", jaegerPid: state.meta.jaegerPid, startedAt: state.meta.startedAt };
-}
-
 function recordWasMissing(finding: Finding): Report {
 	return {
 		clause: "a-read-never-loses-the-daemon",
@@ -236,8 +229,9 @@ export function daemonReports(moment: ReportMoment, state: ReportState): Report[
 		case "takeover":
 			return state.meta === null ? [] : [onItsOwnPorts(state)];
 		case "found": {
-			const finding = lostFindingOf(state);
-			if (finding === null) return [];
+			// Only the finder knows who found it: no finding handed in, nothing to report.
+			const { finding } = state;
+			if (finding === undefined) return [];
 			return [
 				{
 					clause: "a-lost-daemon-is-found",
