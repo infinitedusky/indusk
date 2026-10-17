@@ -14,7 +14,7 @@ indusk telemetry services   # see the services that have emitted
 indusk telemetry tail       # live logs
 ```
 
-The Jaeger UI is at `http://localhost:16686`.
+The daemon runs on its own address (`indusk telemetry address`); the Jaeger UI is at `http://localhost:24316` when InDusk's block was free.
 
 ## What you get
 
