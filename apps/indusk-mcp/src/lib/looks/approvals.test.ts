@@ -2,7 +2,13 @@ import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
-import { approvalOf, readApprovals, readStoryApprovals, storyApprovalOf } from "./approvals.js";
+import {
+	approvalOf,
+	boundToNow,
+	readApprovals,
+	readStoryApprovals,
+	storyApprovalOf,
+} from "./approvals.js";
 import { approve, withdraw } from "./approve.js";
 import { LooksAppError, readApp } from "./mockups.js";
 
@@ -483,5 +489,19 @@ describe("approvals bound to the app's element rules", () => {
 		const card = changed.stories.find((s) => s.name === "card.default");
 		if (!card) throw new Error("fixture lacks card.default");
 		expect(storyApprovalOf(changed, card, readStoryApprovals(changed)).state).toBe("approved");
+	});
+
+	// T3
+	it("T3 a look last approved under other element rules is held to nothing, as one drawn on another foundation is; an entry without the hash still binds", async () => {
+		setRules("a".repeat(64));
+		const app = await readApp(g.main, "demo");
+		const bound = {
+			foundationHash: app.foundation.hash,
+			declarationsHash: app.declarationsHash,
+		};
+		expect(boundToNow(app, { ...bound, baseRulesHash: "a".repeat(64) })).toBe(true);
+		expect(boundToNow(app, bound)).toBe(true);
+		expect(boundToNow(app, { ...bound, baseRulesHash: "b".repeat(64) })).toBe(false);
+		expect(boundToNow(app, { ...bound, foundationHash: "c".repeat(64) })).toBe(false);
 	});
 });
