@@ -11,7 +11,7 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
-accepted: 2026-10-07T04:17:19.886Z
+accepted: 2026-10-17T02:30:32.932Z
 accepted_by: person
 ---
 
