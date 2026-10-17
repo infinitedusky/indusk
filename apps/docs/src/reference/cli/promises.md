@@ -432,7 +432,7 @@ line that starts with its name:
 Promises observed in the last 7 days, from Jaeger at http://localhost:16686
 
 every-commit-evaluated (behaviour, gates, enforced)
-  1 break in the last 7 days
+  broken — 1 break in the last 7 days
     4bf92f3577b34da6a3ce929d0e0e4736  2026-09-19T10:14:40Z  indusk-eval-agent  claude exited with code 1: There's an issue with the selected model …
   last seen upheld 2026-09-19T02:30:20Z (3147fdaa7db94980735c887ff6ce47f0)
 
@@ -446,6 +446,9 @@ phase-boundary-record-never-malformed (state, planning, enforced)
 - A **behaviour** promise lists its breaks in the window with each
   trace id, when, the service and the symptom from the break event, then
   when it was last seen upheld.
+- The break-count line opens with **`broken — `** while a break is live and
+  **`broke — fixed — `** when every break's incident is fixed, by the same
+  rule (`healthOf`) the admin and the editor use.
 - **Not seen** means no run marked it in the window. It is never reported as
   upheld or as zero breaks.
 - **State** and **structure** promises are listed as watched by the suite:

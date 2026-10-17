@@ -15,6 +15,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 - **`telemetry reap` stops this home's strays** (daemon-found-not-guessed): every Jaeger or collector of this home that the record does not name, whether its config file is still there or not, and nothing else; it prints each one stopped, names any that would not stop and exits non-zero, and with no record stops nothing and says to run `telemetry start` first. It no longer reaps orphans of every home on the machine. See [`indusk telemetry reap`](/reference/telemetry/cli#indusk-telemetry-reap).
 - **Jaeger no longer logs failing to trace itself** (daemon-found-not-guessed): `jaeger_query.enable_tracing: false` in every Jaeger configuration InDusk renders or ships, which had been two thirds of the daemon's log; `indusk telemetry status` counts any such lines written since the running daemon started.
+- **The local daemon reports whether it is the one every reader follows** (daemon-found-not-guessed): as the promise `the-daemon-readers-follow-is-the-one-running`, in six parts, each sent by the InDusk command that knows the answer, as spans under the service `indusk-telemetry`. See [the promise's signal](/reference/telemetry/overview#the-promises-signal).
+- **`promises status` says when a promise is broken or broke and was fixed** (daemon-found-not-guessed): a behaviour promise's break-count line now opens with `broken — ` while a break is live, or `broke — fixed — ` when every break's incident is fixed, by the same rule the admin and the editor use, so the three agree.
 
 ### Added
 
