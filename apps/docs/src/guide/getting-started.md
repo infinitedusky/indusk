@@ -132,4 +132,4 @@ indusk telemetry reap             # kill them
 
 If the record (`~/.indusk/telemetry.json`) went missing while the daemon kept running, nothing needs repairing by hand: the next command that looks (`status`, a promise reader, the evaluator) finds the daemon from the process list and its listening sockets and writes the record again.
 
-Since 1.36.2, `indusk telemetry start` refuses to bind a different port than you asked for rather than silently choosing a random one, which is what made this failure invisible.
+The daemon runs on its own ports, chosen once and stored (`indusk telemetry address` prints them: `24318` for traces, `24319` for logs, `24316` for the interface and `24317` for MCP when the block was free). `indusk telemetry start` takes over a daemon that is already running and never starts a second; a port that something else holds is refused with the port, the process and its command named, never silently replaced by a random one, which is what made this failure invisible.

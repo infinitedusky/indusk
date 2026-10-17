@@ -4,7 +4,7 @@ title: Local Telemetry — Overview
 
 # Local Telemetry — Overview
 
-Local telemetry is a **required-by-default** InDusk extension that turns your own machine into the dev-environment observability backend. While your code is running locally, OTel traces and logs emit to `localhost:4318` where a machine-global daemon (Jaeger v2 + OTel Collector core) absorbs them; the agent queries them through MCP tools; you query them through `indusk telemetry *` subcommands.
+Local telemetry is a **required-by-default** InDusk extension that turns your own machine into the dev-environment observability backend. While your code is running locally, OTel traces and logs emit to the daemon's own address (`localhost:24318` for traces, `24319` for logs) where a machine-global daemon (Jaeger v2 + OTel Collector core) absorbs them; the agent queries them through MCP tools; you query them through `indusk telemetry *` subcommands.
 
 Available since indusk-mcp **1.28.0**.
 
@@ -29,7 +29,7 @@ One machine. One set of processes. Every registered project emits into them.
 sequenceDiagram
     autonumber
     participant App as Your code<br/>(indusk-mcp,<br/>admin-ui,<br/>Numero…)
-    participant OTLP as Jaeger's OTLP<br/>receiver<br/>(:4318)
+    participant OTLP as Jaeger's OTLP<br/>receiver<br/>(traces port)
     participant Jaeger as Jaeger v2<br/>(traces + UI + MCP)
     participant Otelcol as otelcol core<br/>(logs pipeline)
     participant Sink as Log sink<br/>~/.indusk/telemetry/<br/>logs.jsonl
@@ -37,7 +37,7 @@ sequenceDiagram
     participant You as You<br/>(terminal)
 
     App->>OTLP: traces (POST /v1/traces)
-    App->>Otelcol: logs (POST /v1/logs on :4319)
+    App->>Otelcol: logs (POST /v1/logs on the logs port)
     OTLP->>Jaeger: indexed in-memory
     Otelcol->>Sink: JSONL, rotated at 10 MB × 5
 
@@ -56,6 +56,21 @@ sequenceDiagram
 - **Trace storage is ephemeral**: Jaeger v2's in-memory backend, capped at 100k spans. Retention is "until the daemon restarts or the ring buffer wraps." Good enough for inner-loop debugging; not a substitute for Dash0.
 - **Log storage is an append-only JSONL file**: otelcol writes OTLP-envelope logs to `~/.indusk/telemetry/logs.jsonl`, rotated at 10 MB × 5 backups = 50 MB buffer total. Reset by `indusk telemetry reset`.
 
+## The daemon's ports {#the-daemons-ports}
+
+The daemon has **one address per machine**, chosen once at first setup and stored in `~/.indusk/telemetry-address.json`. It never moves: every start, restart and automatic start uses it.
+
+| Role | Port | What reaches it |
+|------|------|-----------------|
+| traces | `24318` | applications' span exporters (OTLP HTTP) |
+| logs | `24319` | applications' log exporters (OTLP HTTP) |
+| interface | `24316` | Jaeger's UI and query API |
+| MCP | `24317` | the `jaeger` MCP server in each project's `.mcp.json` |
+
+If another program holds one of these at the moment of first setup, a free port is picked once for that role instead, and the start says which. A port picked is stored like the rest. Once the address is stored, a start that finds one of its ports held by a stranger refuses, naming the port and the process; it never moves a port on its own. `indusk telemetry address` prints the address (`--json` for `init` to hand to an application), and `--reset` is the only way to choose again.
+
+InDusk's daemon deliberately does not take the standard `4318`: that port is left to a person's other tools, and an application is handed the daemon's own traces port instead. A recording server (`telemetry serve` on Fly) is a dedicated machine and keeps the standard ports there.
+
 ## What counts as InDusk's daemon {#what-counts-as-the-daemon}
 
 A process is InDusk's daemon of a home when it runs InDusk's shipped Jaeger or collector binary (the `telemetry-binaries-<platform>` package) with its `--config` file in that home. Nothing else decides it: not a port answering (a busy reader sees a healthy port as slow), not a start time, not the binary file still existing. A daemon started in a temporary home belongs to that home and is never taken for the machine's own.
@@ -73,9 +88,9 @@ The load-bearing discovery from the Phase 1 spike: Jaeger v2 is **implemented as
 - `otlp` receiver (OTLP HTTP/gRPC)
 - `batch` / `memory_limiter` / `filter` / `tail_sampling` processors
 - `jaeger_storage_exporter` (in-memory or Badger backend)
-- `jaeger_query` extension (REST API + UI on :16686)
+- `jaeger_query` extension (REST API + UI on the interface port)
 - `jaeger_mcp` extension (agent-facing MCP tools — see below)
-- `healthcheckv2` extension (on :13133)
+- `healthcheckv2` extension (on an internal port picked at start)
 
 So the "Jaeger vs OTel Collector" framing is wrong. There's one binary that does both — it IS the Collector. That collapsed what Phase 1 thought would be a two-binary-per-trace-path setup into one child process for traces.
 
@@ -104,8 +119,8 @@ The daemon resolves binaries via `createRequire(import.meta.url).resolve("@infin
 
 **Enable-time** (`indusk extensions enable local-telemetry` or `indusk init` on a fresh project):
 
-1. Writes the extension's `.env` component, routing `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in the `development` profile only. Staging + production profiles stay on Dash0.
-2. Calls `indusk telemetry register $(pwd)` — appends to `~/.indusk/telemetry/projects.json`, auto-starts the daemon if it's not running, and upserts a `jaeger` MCP server entry in the project's `.mcp.json` pointing at the daemon's current `mcpPort` (the port `jaeger_mcp` is listening on).
+1. Writes the extension's `.env` component, routing `OTEL_EXPORTER_OTLP_ENDPOINT` to the daemon's traces address (`indusk telemetry address`) in the `development` profile only. Staging + production profiles stay on Dash0.
+2. Calls `indusk telemetry register $(pwd)` — appends to `~/.indusk/telemetry/projects.json`, takes over the running daemon or starts the one daemon on its stored address (choosing the address first if none is stored; never a second daemon), and upserts a `jaeger` MCP server entry in **this project's** `.mcp.json` pointing at the stored MCP port. The file is rewritten only when the entry differs, and no other project's entry is touched.
 3. The `.mcp.json` entry follows the same shape as the `dash0` extension's — a plain `{ type: "http", url: "http://localhost:{mcpPort}/mcp" }` block. Claude Code loads it on the next session start.
 
 **Disable-time** (`indusk extensions disable local-telemetry`):
@@ -171,13 +186,13 @@ Returns OTLP log records within the window. The tool is gated on `isTelemetryAct
 
 ## Environment routing
 
-The extension writes its `.env` component such that the `development` profile points `OTEL_EXPORTER_OTLP_ENDPOINT` at `http://localhost:4318` while staging + production stay on Dash0. ce + composable.env do the profile selection, not the extension.
+The extension writes its `.env` component such that the `development` profile points `OTEL_EXPORTER_OTLP_ENDPOINT` at the daemon's traces address (`http://localhost:24318` when the block was free; `indusk telemetry address` prints it) while staging + production stay on Dash0. ce + composable.env do the profile selection, not the extension.
 
 Expected effective environment values:
 
 | Profile | `OTEL_EXPORTER_OTLP_ENDPOINT` | Where traces + logs land |
 |---------|-------------------------------|--------------------------|
-| `development` | `http://localhost:4318` | Local daemon (Jaeger + otelcol) |
+| `development` | the daemon's traces address (`indusk telemetry address`) | Local daemon (Jaeger + otelcol) |
 | `staging` | Dash0 URL | Dash0 `staging` dataset |
 | `production` | Dash0 URL | Dash0 `production` dataset |
 
@@ -188,7 +203,7 @@ If your service doesn't pick up the new `development` endpoint, check `ce doctor
 Projects initialized before 1.28 have only the `dash0` extension and route all OTel traffic to Dash0 regardless of profile. Migration happens automatically on `indusk update`:
 
 1. `indusk update` detects that `local-telemetry` is not in the enabled extensions set and treats it as a migration step.
-2. Writes the extension's `.env` component — redirects `development` profile to `http://localhost:4318`.
+2. Writes the extension's `.env` component — redirects `development` profile to the daemon's traces address.
 3. Registers the project with the daemon (auto-starts the daemon if needed).
 4. Upserts the `jaeger` MCP server entry in `.mcp.json`.
 5. Leaves `instrumentation.ts` unchanged — the OTel SDK reads the endpoint from env at boot, so no code changes are needed.
@@ -200,7 +215,7 @@ After `indusk update`, the first `next dev` / `pnpm dev` / equivalent in the `de
 
 ## Known gotchas
 
-- **Port conflicts**: Jaeger wants `4318` (OTLP HTTP), `4317` (OTLP gRPC), `16686` (UI), `13133` (health), plus `mcpPort` (auto-assigned for `jaeger_mcp`). otelcol wants `4319` (logs OTLP HTTP). If any is taken, `start` auto-bumps to a free one and prints the chosen value. Passing `--otlp-port 0` or `--ui-port 0` forces auto-pick.
+- **Port conflicts**: the daemon's four ports (traces, logs, interface, MCP) are chosen once and stored (see [the daemon's ports](#the-daemons-ports)); a start that finds one held by another process refuses and names it rather than moving. Jaeger's gRPC receiver, health ports and the collector's health port are internal and picked free at each start.
 - **Jaeger self-metrics are disabled** via `service.telemetry.metrics.level: none` in the bundled config. This avoids a port 8888 Prometheus exporter collision on rapid spawn/stop cycles. If you want Jaeger's self-metrics, edit `~/.indusk/telemetry-jaeger.yaml` after `start` (it's regenerated every `start`, so the edit is per-start).
 - **Storage is in-memory, capped at 100k spans**: the 100k-and-oldest-wins trace ring is a hard limit for the 1.28.x line. `indusk telemetry reset` is the right escape hatch when you want a clean slate before reproducing an issue.
 - **Log sink is 50 MB max** (10 MB × 5 rotated backups). Old records are evicted oldest-first. `tail` is windowed (`--since <minutes>`) so you rarely hit the rotation boundary.

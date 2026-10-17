@@ -11,41 +11,87 @@ Available since indusk-mcp **1.28.0**.
 ## Quick reference
 
 ```
-indusk telemetry start [--otlp-port N] [--ui-port N]   # Start the daemon
-indusk telemetry stop                                  # Stop the daemon
-indusk telemetry restart [--otlp-port N] [--ui-port N] # Stop then start
-indusk telemetry status                                # Report state + ports + PIDs
+indusk telemetry start      # Start the daemon on its stored address, or take over the one running
+indusk telemetry stop       # Stop the daemon
+indusk telemetry restart    # Stop then start, on the same stored address
+indusk telemetry status     # Report state + the four ports + PIDs
+indusk telemetry address    # Print the stored address (--json for init, --reset to choose again)
 ```
 
 Query subcommands (`tail`, `trace`, `services`, `reset`) — see [Query subcommands](#query-subcommands) below.
 
 ## `indusk telemetry start`
 
-Start the telemetry daemon (Jaeger + otelcol). Spawns both binaries as detached child processes that survive terminal close. Writes daemon metadata to `~/.indusk/telemetry.{pid,json,log}`.
+Start the telemetry daemon (Jaeger + otelcol), or take over the one already running. Spawns both binaries as detached child processes that survive terminal close. Writes daemon metadata to `~/.indusk/telemetry.{pid,json,log}`.
 
 ```sh
-indusk telemetry start [--otlp-port <port>] [--ui-port <port>]
+indusk telemetry start
 ```
 
-**Flags:**
+The daemon runs on **one address per machine**, chosen once the first time it is set up and kept in `~/.indusk/telemetry-address.json`. See [the stored address](#the-stored-address) below. `start` takes no port options in your own home: the address is already decided.
 
-- `--otlp-port <port>` — Jaeger's OTLP HTTP port where services emit traces. Default `4318`. Use `0` to auto-pick a free port. If the requested port is taken, the CLI auto-bumps to a free one and prints the chosen value.
-- `--ui-port <port>` — Jaeger UI port (`http://localhost:{port}`). Default `16686`. Same auto-bump behavior.
+**What `start` does**, in order:
 
-**Exit codes**: `0` on success, `1` on spawn failure. Failure reasons include platform package not installed, Jaeger or otelcol not becoming ready on its health port within 15s, or invalid port values.
+```mermaid
+flowchart TD
+    A[start] --> B{record names a running daemon?}
+    B -- yes --> R[report it: already running]
+    B -- no --> C{process list shows this home's daemon?}
+    C -- one --> T[take it over: write the record, start nothing]
+    C -- several --> D{one holds the stored traces port?}
+    D -- yes --> T
+    D -- no --> X[refuse: list them all, start nothing]
+    C -- none --> E{an address stored?}
+    E -- no --> F[choose it once: the block, or a free port for any block port held]
+    F --> G
+    E -- yes --> G{any of its ports held by another process?}
+    G -- yes --> H[refuse, naming the port, the process id and its command]
+    G -- no --> S[start both on the stored address]
+```
 
-**Already-running case**: if the daemon is already up, `start` reports the existing state without spawning a second set of processes (idempotent).
+- **Taking over.** If the record is lost but the daemon runs, `start` reads it from the process list and its listening sockets, writes the record again and starts nothing: `took over the running daemon: jaeger 43599, otelcol 43600 on 24318, 24319, 24316, 24317`. Any other InDusk Jaeger or collector of this home is listed as a stray for `indusk telemetry reap`.
+- **Refusing.** Once the address is stored, a start that finds one of its ports held by a process that is not InDusk's starts nothing, picks nothing, leaves the address as it was and exits `1`, naming the port, the holder's process id and its command.
+
+**Port options** (`--otlp-port`, `--ui-port`, `--logs-port`, `--mcp-port`) are accepted only in a temporary home (a test's, under the system temp directory). A temporary home takes the ports it is given (`0` means any free port) and never reads or writes the stored address. In your own home they are refused by name.
+
+**Exit codes**: `0` on success (started, taken over, or already running), `1` on a refusal or a spawn failure. Failure reasons include a port held by another process, platform package not installed, or Jaeger or otelcol not becoming ready on its health port within 15s.
 
 **Sample output**:
 
 ```
-Starting telemetry daemon (Jaeger + otelcol)...
-  OTLP:      http://localhost:4318
-  Jaeger UI: http://localhost:16686
+Telemetry daemon started:
+  OTLP:      http://localhost:24318
+  Logs:      http://localhost:24319
+  Jaeger UI: http://localhost:24316
+  Jaeger MCP: http://localhost:24317
   PIDs:      jaeger=72113 otelcol=72117
-  Logs:      ~/.indusk/telemetry/logs.jsonl
-  Daemon log: ~/.indusk/telemetry.log
+  Logs file: ~/.indusk/telemetry/logs.jsonl
 ```
+
+### The stored address {#the-stored-address}
+
+| Role | InDusk's block |
+|------|----------------|
+| traces (OTLP HTTP) | `24318` |
+| logs (OTLP HTTP) | `24319` |
+| interface (Jaeger UI) | `24316` |
+| MCP (`jaeger` MCP server) | `24317` |
+
+The first time the daemon is set up on a machine, the address is chosen: InDusk's block, except that a block port held at that moment by a process that is not InDusk's is replaced by a free port picked once. `start` prints which port was held, by what, and the port it picked in its place. The result is stored and **never changes** afterwards: every start, restart and automatic start (by `init`, `update` or enabling the extension) uses it, and the same four ports come back after a stop, a restart, or a record lost and found again.
+
+The standard `4318` is left to your other tools on purpose: InDusk's daemon does not take it, so another collector of yours can keep it.
+
+### `indusk telemetry address`
+
+Print the stored address, for you or for `init` to hand to an application:
+
+```sh
+indusk telemetry address            # traces, logs, interface and MCP URLs
+indusk telemetry address --json     # the same as JSON
+indusk telemetry address --reset    # choose again, by the same rule
+```
+
+With no address stored it says so and exits `1`; it chooses nothing. `--reset` is the **only** way the stored address ever changes: it keeps any port this home's running daemon holds, prints the old and the new address, and reminds you that every application given the old address needs the new one. The running daemon moves onto the new address at the next `restart`.
 
 ## `indusk telemetry stop`
 
@@ -67,13 +113,15 @@ Warning: Telemetry daemon (jaeger=72113 otelcol=72117) did not exit within 3s; f
 
 ## `indusk telemetry restart`
 
-Equivalent to `stop` + a 200ms pause for OS port release + `start`. Picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` triggers a platform-package refresh — the daemon's next spawn uses the newly-installed binaries.
+Equivalent to `stop` + waiting for the OS to release the ports + `start`, **on the same stored address** (a temporary home comes back on the ports it held). A daemon started before the address was stored, on other ports, is moved onto it by a restart; `status` says which ports differ. Picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` triggers a platform-package refresh — the daemon's next spawn uses the newly-installed binaries.
 
 This is the load-bearing post-upgrade flow: `start` is intentionally idempotent (no-op on running daemon), so `restart` is how you cycle in fresh binaries.
 
 ```sh
-indusk telemetry restart [--otlp-port <port>] [--ui-port <port>]
+indusk telemetry restart
 ```
+
+Re-pointing project files: a restart on the stored address keeps the MCP port, so no project's `.mcp.json` is touched. Only an entry that names exactly the old MCP port is re-pointed, when the port changed.
 
 ## `indusk telemetry status`
 
@@ -93,8 +141,10 @@ Each port is also asked once. A port that does not answer in time prints `:<port
 
 ```
 Telemetry daemon: running
-  OTLP:      http://localhost:4318
-  Jaeger UI: http://localhost:16686
+  OTLP:      http://localhost:24318
+  Logs:      http://localhost:24319
+  Jaeger UI: http://localhost:24316
+  MCP:       http://localhost:24317
   PIDs:      jaeger=72113 otelcol=72117
   Started:   2026-04-20T22:45:00.000Z
 Registered projects 0 (registry lands in Phase 4)
@@ -183,20 +233,22 @@ numero-api
 Wipe the daemon's in-memory trace storage and truncate the log sink file. Equivalent to `stop + truncate ~/.indusk/telemetry/logs.jsonl + start`. Useful when you want a clean slate before reproducing an issue — e.g., you want the next `tail` to show only records from this run.
 
 ```sh
-indusk telemetry reset [--otlp-port <port>] [--ui-port <port>]
+indusk telemetry reset
 ```
 
 **Not exposed as an MCP tool** — it's a human-triggered clean-the-slate action. An agent that thinks it needs this almost certainly needs a narrower `tail --since 1` or a specific `trace <id>` instead.
 
-**Flags**: same `--otlp-port` / `--ui-port` behavior as `start`.
+**Ports**: the daemon comes back on the same address (port options exist only in a temporary home, as for `start`).
 
 **Sample output**:
 
 ```
 Stopping daemon + clearing buffers...
 Daemon restarted with fresh buffers.
-  OTLP:      http://localhost:4318
-  Jaeger UI: http://localhost:16686
+  OTLP:      http://localhost:24318
+  Logs:      http://localhost:24319
+  Jaeger UI: http://localhost:24316
+  Jaeger MCP: http://localhost:24317
 ```
 
 ## Daemon files
