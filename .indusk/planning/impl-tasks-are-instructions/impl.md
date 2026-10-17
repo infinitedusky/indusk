@@ -236,7 +236,7 @@ rewords every place it names, so the change cannot be partial again.
   `apps/docs/src/guide/test-trajectory.md`, `apps/docs/src/guide/briefs.md`, and any other page A5 names.
 
   </details>
-- [ ] Resync the project's copies of the skills and hooks.
+- [x] Resync the project's copies of the skills and hooks.
   <details><summary>Technical</summary>
 
   `.claude/skills/{planner,falsify,cleanup}/SKILL.md`, `.claude/hooks/{_phase-summary,validate-impl-structure}.js` from the package; `skill-sync-parity.test.ts` and any hook parity test pass.
