@@ -1120,7 +1120,7 @@ This plan grew the daemon's code across several new files, and two things are no
 
 #### Build Phase 7 Context
 
-- [ ] The package's context file names the finding module where it names the state module.
+- [x] The package's context file names the finding module where it names the state module.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry", the daemon-process rule: "a finder (`lib/telemetry/daemon-find.ts`) writes the record…" in place of the `daemon-state.ts` mention for the finder. The file is over its budget: make the edit shrink it.
@@ -1129,8 +1129,10 @@ This plan grew the daemon's code across several new files, and two things are no
 
 #### Build Phase 7 Document
 
-- [ ] No docs page changes, because only internal modules move.
+- [x] No docs page changes, because only internal modules move.
   <details><summary>Technical</summary>
+
+  Checked: no page under `apps/docs/src` names `daemon-state` or the finder's file, so nothing changed.
 
   Check `apps/docs/src` for `daemon-state.ts` (`grep -rn "daemon-state" apps/docs/src --include=*.md`); if a page names the finder's file, point it at `daemon-find.ts`, otherwise record that nothing named it.
 

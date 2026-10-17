@@ -165,11 +165,11 @@ pointer; the pointer holds the story.
 ## Promises and telemetry
 
 - An InDusk daemon process is recognised by `daemonProcessOf`
-  (`lib/telemetry/daemon-process.ts`: binary + `--config` under the home), never
+  (`daemon-process.ts`: binary + `--config` under the home), never
   by a port, start time or the binary existing; `scripts/check-test-daemons.js`
   keeps a parity copy. No read removes the daemon's record: only `stop` does.
   Every reader resolves the local daemon through `resolveLocalDaemon`
-  (`lib/telemetry/daemon-state.ts`); a finder writes the record with an exclusive
+  (`daemon-state.ts`); a finder (`daemon-find.ts`) writes the record with an exclusive
   create under `<home>/telemetry.lock`, reading ports from listening sockets,
   never guessing one. — guarded by `telemetry-daemon-found.test.ts` and
   `telemetry-readers-follow.test.ts`.
