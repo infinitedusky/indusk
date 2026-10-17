@@ -218,12 +218,13 @@ changed; and Sandy approves the changed `message.you` story.
 
   </details>
   Confirmed cause: the card's root carries the utility class `grid` (`grid gap-1 ...`), and the home mockup's own page rule `.grid { display: grid; grid-template-columns: ...; gap: var(--space-4) }`, meant for the container of the cards, matches the card root too and, unlayered and later in the document, beats the component's `.gap-1` (probe in Chromium: matching `gap` rules were `.gap-1 => space-1` and `.grid => space-4`, computed 16px). The same rule gave the card its own `grid-template-columns`, which is the ~3 px narrower text boxes (h2 and p 300 px against 296.656 px). Fixed where it lives: the mockup's container class renamed `.grid` to `.cards` in `.indusk/mockups/admin/screens/home.default.html`; the card now computes gap 4 px and h2 width 296.656 px, as its story. Note: this changes `home.default`'s mockup hash, so its approval reopens for a person.
-- [ ] A message with long unbroken text wraps inside its bubble.
+- [x] A message with long unbroken text wraps inside its bubble.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/components/ui/Message.tsx`: a standard Tailwind wrapping utility (`wrap-anywhere`) on the bubble, not the arbitrary class e5915cbc4 removed; `pnpm --filter @infinitedusky/indusk-mcp exec indusk looks lint admin` accepts it. Re-render: `indusk looks stories admin`.
 
   </details>
+  Note: `wrap-anywhere` added to the bubble's class list; `looks lint admin` reports no Message finding (only three unrelated `plan-looks` needs-a-story lines, which pre-date this plan). Re-rendered: only Message's six snapshots, `message.css` (gains `.wrap-anywhere`) and their hashes in `components.json` changed; this run did not drop `history-panel`'s props, so `components.json` is committed whole.
 - [ ] The promise's sentence says each component is drawn as its story draws it, and each story fits its frame.
   <details><summary>Technical</summary>
 
