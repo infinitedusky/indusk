@@ -1,7 +1,7 @@
 ---
 title: "The daemon is found, not guessed"
 date: 2026-10-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -92,6 +92,8 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A33 | An address file that exists but cannot be read (cut short, or a port that is not a number) is never taken for a missing one: a start in the real home refuses naming the file and leaves it as it was, chooses nothing and moves no port, and `telemetry address` says it is unreadable; the address is written whole or not at all | Build Phase 6 | Build Phase 6 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
 | A34 | In a project with a production source, `promises status` judges the local section by the rule the admin uses for it (the newest signal), so a local break followed by a newer upheld report does not read broken there, while the production section still reads broken by its incidents | Build Phase 6 | Build Phase 6 | passing | unit | a regression guard over a-promise-is-upheld-or-broken: the command line and the admin say the same word for the same source | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
 | A35 | One definition reads a record's four ports by role, and one compares them with the stored address: a record on the stored address has no differences, one on another port names that role, the port held and the port expected, and a port the finder could not read (0) is no difference; status's lines and the daemon's reports both say what that one comparison found | Build Phase 7 | Build Phase 7 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
+| A36 | With the record naming processes that have died while this home's daemon runs unrecorded, the state is read as a lost record: a reader finds the running daemon and its record is written again naming it, and `reap` stops nothing; today the running pair is called strays and `reap` would stop it | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
+| A37 | `reap` stops a daemon whose home has been deleted (its config file is gone), and still never stops this home's recorded daemon, another live home's daemon or a stranger | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
 
 ### Deferred Verification
 
@@ -1138,6 +1140,52 @@ This plan grew the daemon's code across several new files, and two things are no
 
   </details>
 
+### Build Phase 8: The audit's two findings — a stale record never makes the running daemon a stray, and reap clears orphans again
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+A reader who did not build this plan found two places where the code does not do what the decision said, and both hold even now that the daemon has its stable address. When the record names processes that have died while the real daemon runs unrecorded, the running daemon is counted as a stray, so readers see no daemon and reap would stop the one that is running; the decision was to treat that record as lost, find the daemon and write its record again. And reap no longer stops daemons whose home was deleted underneath them, the cleanup behind the leak of test daemons, though the decision kept it. Once this phase closes, a stale record leads to the running daemon being found, and reap clears those orphans while leaving every live daemon alone.
+
+- [ ] A record that names only dead processes, while this home's daemon runs, is treated as lost: the daemon is found, its record written again, and nothing is stopped.
+  <details><summary>Technical</summary>
+
+  `daemonState` in `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts:88-91`: when `kind` would be `stale` and `unnamed` is non-empty, read it as `found` (`found` = the unnamed processes, `strays` empty), per the ADR's decision on a stale record. The finder in `lib/telemetry/daemon-find.ts` writes the record with an exclusive create, which fails while the stale file exists: under the home's lock, remove a record whose processes are all dead (re-read by `daemonProcessOf`) before the create, and only then. `reapPlan` (`lib/telemetry/reap-plan.ts:27`) already stops nothing in the `found` state. Answers row A36 and the audit's first finding.
+
+  </details>
+- [ ] Reap stops daemons whose home has been deleted, and still never a live daemon.
+  <details><summary>Technical</summary>
+
+  `reapPlan` returns `state.strays` only; return this home's strays plus `state.orphans` (a process whose `--config` file is gone, re-read before signalling as today). Not in the `found` state's protection: an orphan's home is gone, so it is no one's daemon. Keep the refusal text at `lib/telemetry/start-plan.ts:138` true. Answers row A37 and the audit's orphan finding.
+
+  </details>
+
+#### Build Phase 8 Verification
+
+- [ ] Both findings fail today and pass after the fixes, and the files that depend on the changed modules still pass.
+  <details><summary>Technical</summary>
+
+  A36 and A37 in `src/__tests__/telemetry-reap-plan.test.ts` (A36 also asserts through the resolver that a reader gets the running daemon's meta), authored red first. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-reap-plan.test.ts src/__tests__/telemetry-daemon-state.test.ts src/__tests__/telemetry-daemon-found.test.ts src/__tests__/telemetry-own-only.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-state.ts src/lib/telemetry/daemon-find.ts src/lib/telemetry/reap-plan.ts && pnpm exec tsc --noEmit`. Rows' State updated in the same edit.
+
+  </details>
+
+#### Build Phase 8 Context
+
+- [ ] The package's context file says a stale record is treated as lost and that reap stops orphans.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": in the daemon-process rule, "a record naming only dead processes is lost, not stale"; in the local-daemon rule, "`reap` stops this home's strays and orphans (a deleted home's daemon) only". The file is over its budget: make the edit shrink it.
+
+  </details>
+
+#### Build Phase 8 Document
+
+- [ ] The telemetry reference says reap stops orphans as well as strays, and what happens when the record names dead processes.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/telemetry/cli.md`, `reap` and `status`; `apps/docs/src/guide/getting-started.md` recovery path if it describes reap.
+
+  </details>
+
 ## Files Affected
 
 | File | Change |
@@ -1177,4 +1225,5 @@ This plan grew the daemon's code across several new files, and two things are no
 - **Signal, not tests.** Each clause's signal is a span the running daemon receives, sent by the InDusk command that knows the answer. Unit rows assert only what `daemonReports` decides from the reads it is handed; the live check is the one place a report is shown reaching a reader. A lost daemon cannot receive a span at the moment it is lost, so that break is reported by whoever finds it.
 - **Decided by Sandy, 2026-10-16** ("agreed", on the nine recommendations put after the port change): the live check may send one real broken report, run only with `INDUSK_LIVE_CHECK` set; a later collision on a stored port refuses, names the holder and exits non-zero from `start` and `register`, while `init`, `update` and enabling finish with the refusal printed; the evaluator's log port is fixed here (the task above, row A31); clauses that report only when a telemetry command runs are accepted; the 15-minute throttle and the `indusk-telemetry` service split stay; `indusk telemetry address --reset` is added (row A30) as the one way the address changes; a lost address file with no daemon running may come back on different picked ports, accepted and named by `--reset`'s message; the MCP server stays on 24317; another home's daemon on a block port refuses rather than taking free ports. Still open, not blocking: making `lsof` a stated requirement instead of the `/proc` fallback. An SDK exporting to its default (4318 over HTTP, 4317 over gRPC) reaches nothing on the laptop until the application is given the stored address, which is `a-new-project-starts-instrumented`'s.
 - **Projects still naming an old MCP port.** The restart in Build Phase 5 re-points only entries naming exactly the daemon's old MCP port (62843 on 2026-10-16). Any project naming another old port, such as 54677, moves at its own next `indusk update`.
+- **Audit (2026-10-17), judged against the stored address.** Kept: the stale-record and orphan findings (Build Phase 8). Not taken, because the machine now runs on its stored address: a half-running daemon cannot get a second beside it (every stored port it holds refuses the start by name), the port check always has an address to compare after first setup, and a taken-over daemon off its stored address is the one-time migration `telemetry restart` already did. `--reset` is Sandy's decision above, not a breach of "never moved". Left for a later plan: the extension manifest's health checks (`extensions/local-telemetry/manifest.json`) still check by pid and port and read `~/.indusk` directly.
 - **Live check result:** recorded here at Build Phase 5.
