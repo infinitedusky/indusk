@@ -36,7 +36,7 @@ Each call writes one short span through OpenTelemetry's API, a child of the acti
 | `indusk.project` | the settings name one | the InDusk project id, copied onto the span because the readers compare it there |
 | `indusk.run` | in a test run | `test`, so a test's signal is told from a user's |
 
-The helper writes `broken`. InDusk's own writers keep the older word `violated` until Signal first; every reader takes both.
+The helper's two verdicts are `upheld` and `broken`. InDusk's own writers keep an older word until Signal first; every reader takes both.
 
 ## The vocabulary
 
