@@ -1,7 +1,7 @@
 ---
 title: "The daemon is found, not guessed"
 date: 2026-10-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -88,6 +88,9 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A26 | A test's daemon runs in a temporary home on the ports it is given, never the block or the real home's stored address, which it never reads or writes, only in the system tier; the guard script and the package recognise a daemon process the same way | Build Phase 1 | Build Phase 3 | passing | unit | a regression guard over everyday-tests-never-wait: the everyday suite starts no server, and the stored address belongs to the real home only | apps/indusk-mcp/src/__tests__/telemetry-test-homes.test.ts |
 | A27 | Starting, restarting or taking over leaves a `.mcp.json` that already names the stored MCP port unchanged; `update` in a checkout with none writes one naming `indusk` and `jaeger` at the stored MCP port | Test Phase 1 | Build Phase 3 | passing | unit | a regression guard over the-mcp-config-is-not-tracked and a-clone-without-an-mcp-config-gets-the-keep-list: the file stays untracked and a checkout without one gets the keep-list | apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts |
 | A28 | The evaluator exports to the daemon the record names, or to the one found when the record is missing, and writes no "endpoint unset; falling back to no-op logger" line while a daemon runs | Build Phase 2 | Build Phase 2 | passing | unit | a regression guard over every-commit-evaluated: each evaluation's report reaches the local Jaeger | apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts |
+| A32 | With the record naming a running Jaeger and a collector that has died, `status` sends the Jaeger a broken report for one-daemon-on-its-own-ports naming the collector as not running and the stored logs port as not held; today it sends nothing | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
+| A33 | An address file that exists but cannot be read (cut short, or a port that is not a number) is never taken for a missing one: a start in the real home refuses naming the file and leaves it as it was, chooses nothing and moves no port, and `telemetry address` says it is unreadable; the address is written whole or not at all | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
+| A34 | In a project with a production source, `promises status` judges the local section by the rule the admin uses for it (the newest signal), so a local break followed by a newer upheld report does not read broken there, while the production section still reads broken by its incidents | Build Phase 6 | Build Phase 6 | planned | unit | a regression guard over a-promise-is-upheld-or-broken: the command line and the admin say the same word for the same source | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
 
 ### Deferred Verification
 
@@ -1000,6 +1003,58 @@ This phase makes the promise heard in the running system. Each part of the promi
   <details><summary>Technical</summary>
 
   New `apps/docs/src/decisions/daemon-found-not-guessed.md` from the ADR. `apps/docs/src/reference/telemetry/overview.md`: a section on the promise's signal (the D9 table in plain words: which command reports which part, when, under `indusk-telemetry`). Changelog (Unreleased, Changed): "The local daemon reports whether it is the one every reader follows, as the promise `the-daemon-readers-follow-is-the-one-running`."
+
+  </details>
+
+### Build Phase 6: Falsification — a half-running daemon, a damaged address file, and the local section judged by the wrong rule
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+This phase tests the finished plan against three ways it could fail and nobody would hear. A daemon whose collector has died is the case the promise most needs to report, and status says nothing about it; a damaged address file is read as no address, so the next start chooses the ports again, which the plan says never happens; and the change that made the promise status command say broken judges a laptop's breaks by the production rule when a project has both. Once it closes, a half-running daemon is reported broken, a damaged address stops a start by name, and the command line says what the admin says for each source.
+
+- [ ] Status reports a daemon whose collector or Jaeger has stopped as broken, naming the process that is gone and the ports it no longer holds.
+  <details><summary>Technical</summary>
+
+  `telemetryStatus` in `apps/indusk-mcp/src/bin/commands/telemetry.ts` sends only when `state.kind === "running"`; send for `partial` too when the recorded Jaeger is alive (it holds the traces port, so it can receive). `onItsOwnPorts` in `lib/telemetry/daemon-reports.ts` compares the record's ports with the address, not what is held: add the recorded process that is not running, and the stored ports it held, to the broken symptom (`state.recorded.jaeger` / `.otelcol`). Answers row A32.
+
+  </details>
+- [ ] A damaged address file stops a start by name instead of being treated as no address, and the address is always written whole.
+  <details><summary>Technical</summary>
+
+  `readAddressFile` in `lib/telemetry/daemon-address.ts` returns `null` for both a missing and an unreadable file, so `startPlan` (`lib/telemetry/start-plan.ts:63-102`) chooses again and `writeAddress`'s exclusive create then fails silently; with a stranger on a block port each start may pick a different spare. Return a distinct unreadable result; `startPlan` refuses naming the file and `--reset` as the way out; `telemetry address` prints it unreadable. `writeAddress` in `lib/telemetry/daemon-reads.ts` writes a temporary file and renames it (exclusive: link, or `wx` on the temporary then rename only if the target is absent). Answers row A33.
+
+  </details>
+- [ ] The promise status command judges each source by the rule the admin uses for it.
+  <details><summary>Technical</summary>
+
+  `formatStatus` (`lib/promises/status.ts`) calls `healthOf` with the default `incidents` rule for every section; the admin uses `ruleFor(read, reads)` (`lib/promises/health.ts:544`), `newest` for local beside production. Pass the rule per section from `bin/commands/promises.ts`. Answers row A34.
+
+  </details>
+
+#### Build Phase 6 Verification
+
+- [ ] The three hypotheses fail today and pass after the fixes, and the files that depend on the changed modules still pass.
+  <details><summary>Technical</summary>
+
+  A32 in `telemetry-daemon-reports.test.ts`, A33 in `telemetry-start-plan.test.ts`, A34 in `promises-cli-words.test.ts`, each authored red first. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-daemon-reports.test.ts src/__tests__/telemetry-start-plan.test.ts src/__tests__/promises-cli-words.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-reports.ts src/lib/telemetry/daemon-address.ts src/lib/telemetry/daemon-reads.ts src/lib/telemetry/start-plan.ts src/lib/promises/status.ts src/bin/commands/telemetry.ts src/bin/commands/promises.ts && pnpm exec tsc --noEmit`. Rows' State updated in the same edit.
+
+  </details>
+
+#### Build Phase 6 Context
+
+- [ ] The package's context file says an unreadable address refuses a start rather than counting as none.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the stored-address rule in "Promises and telemetry": add "an unreadable address file refuses by name, never reads as none; it is written whole (temporary + rename)". The file is over its budget: make the edit shrink it.
+
+  </details>
+
+#### Build Phase 6 Document
+
+- [ ] The telemetry reference says what status reports for a half-running daemon and what a damaged address file does.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/telemetry/overview.md`, "The promise's signal": status reports a partly running daemon broken. `apps/docs/src/reference/telemetry/cli.md`, `address` and `start`: an unreadable address file refuses, `--reset` chooses again. `apps/docs/src/reference/cli/promises.md`: each source judged by its own rule.
 
   </details>
 
