@@ -541,7 +541,7 @@ export function redPlans(registry: Registry, reads: SourceHealthRead[]): Set<str
  * The rule a source's chip is judged by: `newest` for local when the project
  * also has production, `incidents` otherwise (ADR D3).
  */
-export function ruleFor(read: SourceHealthRead, reads: SourceHealthRead[]): HealthRule {
+export function ruleFor(read: { name: SourceName }, reads: { name: SourceName }[]): HealthRule {
 	return read.name === "local" && reads.some((r) => r.name === "production")
 		? "newest"
 		: "incidents";

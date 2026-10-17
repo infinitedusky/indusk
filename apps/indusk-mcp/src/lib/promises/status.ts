@@ -1,4 +1,4 @@
-import { healthOf } from "./health.js";
+import { type HealthRule, healthOf } from "./health.js";
 import type { IncidentEntry, PromiseEntry } from "./registry.js";
 import { type MarkedSpansResult, silencePastExpectation } from "./telemetry.js";
 
@@ -30,6 +30,7 @@ export function formatStatus(
 	marks: MarkedSpansResult,
 	window: number | string,
 	incidents: IncidentEntry[] = [],
+	rule: HealthRule = "incidents",
 ): string {
 	const phrase = windowPhrase(window);
 	const blocks: string[] = [`Promises observed in ${phrase}, from Jaeger at ${marks.queryUrl}`];
@@ -55,7 +56,7 @@ export function formatStatus(
 		const lines = [head];
 		if (attentionLine) lines.push(attentionLine);
 		const n = m.violations.length;
-		const health = healthOf(p, { ok: true, at: "", marks }, incidents)?.health;
+		const health = healthOf(p, { ok: true, at: "", marks }, incidents, rule)?.health;
 		const word = health === "red" ? "broken — " : health === "fixed" ? "broke — fixed — " : "";
 		lines.push(
 			n === 0
