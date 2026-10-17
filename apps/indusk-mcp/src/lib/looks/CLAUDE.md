@@ -90,7 +90,8 @@ pointer; the pointer holds the story.
   `:where([data-component], [data-component] *)`, so they reach only components;
   `_base.css` holds `body`; neither is in `componentsHash`. The inverse holds for
   a mockup's own `<style>`: `pageOnly` scopes it off placed components (a
-  selector naming the marker places one), and `splitVariants` loads every
+  selector naming the marker places one) but not off the components the mockup
+  declares new (`indusk-new-components`), whose only look is its styles, and `splitVariants` loads every
   component's variant rules after all plain ones. An approval is bound by one
   rule: `bindingOf` writes the foundation, declarations and element rules
   (`baseRulesHash`), `boundToNow` reads them for the approval, the look check's

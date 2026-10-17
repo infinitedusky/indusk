@@ -106,6 +106,7 @@ This phase makes the fix: the scoping that keeps a mockup's own styles off compo
   `pageOnly(css, drawnHere: readonly string[] = [])` in `component-styles.ts`: the guard becomes `:not(:where(P, P *))` with `P = [data-component]` followed by `:not([data-component="<name>"])` for each name drawn here. `mockupDocument` takes the list (`mockup.declaresNewComponents`) and passes it through `withPageOnlyStyles`; `viewOf` passes it; `storyDocument` passes none.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
@@ -118,7 +119,7 @@ This phase makes the fix: the scoping that keeps a mockup's own styles off compo
 
 #### Build Phase 1 Context
 
-- [ ] Record in the looks rules that a component a mockup declares new is styled by that mockup.
+- [x] Record in the looks rules that a component a mockup declares new is styled by that mockup.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/CLAUDE.md`, the `_reset.css` / `pageOnly` entry: `pageOnly` leaves out the components the mockup declares new (`indusk-new-components`).
