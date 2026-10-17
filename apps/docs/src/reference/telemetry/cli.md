@@ -77,7 +77,17 @@ indusk telemetry restart [--otlp-port <port>] [--ui-port <port>]
 
 ## `indusk telemetry status`
 
-Report current daemon state. Gates on `verifyIdentity(pid, port)` for BOTH Jaeger and otelcol — PID liveness AND port listening — so a PID-reused-after-crash situation doesn't false-positive as "running."
+Report current daemon state. The recorded Jaeger and otelcol are judged by their command lines (see [what counts as InDusk's daemon](./overview#what-counts-as-the-daemon)), never by a port, so a recycled process id is not "running" and a slow port is not "gone". Reading never removes the record. Five states:
+
+| State | Meaning |
+|-------|---------|
+| running | the record names both processes and both are InDusk's daemon |
+| partly running | only one of the two is still the daemon; `stop` then `start` |
+| record missing | no record, but this home's daemon processes run |
+| not running, record kept | the record names processes that are gone or are something else now; it is named and left for `start` to overwrite and `stop` to remove |
+| not running | no record and nothing runs |
+
+Each port is also asked once. A port that does not answer in time prints `:<port> did not answer in <ms> ms (slow, not gone)`; one that refuses prints `:<port> refused (starting, or that receiver failed)`. Any InDusk Jaeger or collector of this home that the record does not name is listed as a stray, with its process id, start time, ports and install, and `indusk telemetry reap` stops them.
 
 **Running output**:
 

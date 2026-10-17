@@ -56,6 +56,12 @@ sequenceDiagram
 - **Trace storage is ephemeral**: Jaeger v2's in-memory backend, capped at 100k spans. Retention is "until the daemon restarts or the ring buffer wraps." Good enough for inner-loop debugging; not a substitute for Dash0.
 - **Log storage is an append-only JSONL file**: otelcol writes OTLP-envelope logs to `~/.indusk/telemetry/logs.jsonl`, rotated at 10 MB × 5 backups = 50 MB buffer total. Reset by `indusk telemetry reset`.
 
+## What counts as InDusk's daemon {#what-counts-as-the-daemon}
+
+A process is InDusk's daemon of a home when it runs InDusk's shipped Jaeger or collector binary (the `telemetry-binaries-<platform>` package) with its `--config` file in that home. Nothing else decides it: not a port answering (a busy reader sees a healthy port as slow), not a start time, not the binary file still existing. A daemon started in a temporary home belongs to that home and is never taken for the machine's own.
+
+The **record** is `~/.indusk/telemetry.json` (with `telemetry.pid`): the two process ids, the ports, the start time. It is a note about the daemon, not the daemon. A status read never removes it: only `indusk telemetry stop` does, and `start` writes over one whose processes are gone.
+
 ## Jaeger v2 is an OTel Collector distribution
 
 The load-bearing discovery from the Phase 1 spike: Jaeger v2 is **implemented as an OTel Collector distribution**. A single binary bundles:

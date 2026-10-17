@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Changed
+
+- **No read deletes the telemetry daemon's record; a slow port reads as slow, not gone** (daemon-found-not-guessed): a process is InDusk's daemon by its binary and config path, `indusk telemetry status` names a stale record and leaves it, lists the daemon processes the record does not name as strays, and only `stop` removes the record. See [what counts as InDusk's daemon](/reference/telemetry/overview#what-counts-as-the-daemon).
+
 ## [1.71.0] — 2026-10-16
 
 ### Fixed

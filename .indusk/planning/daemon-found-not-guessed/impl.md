@@ -659,7 +659,7 @@ This phase gives InDusk one way to tell its own daemon processes apart from ever
 
 #### Build Phase 1 Document
 
-- [ ] The telemetry reference explains what an InDusk daemon process is, what the record is, and the states status now reports.
+- [x] The telemetry reference explains what an InDusk daemon process is, what the record is, and the states status now reports.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/overview.md`: a new section "What counts as InDusk's daemon" (binary plus config path, the home as owner, a temporary home) and what the record (`telemetry.json`, `telemetry.pid`) is. `apps/docs/src/reference/telemetry/cli.md`: `status`'s five states and the three-way port answers. `apps/docs/src/changelog.md` (Unreleased, Changed): "No read deletes the telemetry daemon's record; a slow port reads as slow, not gone."
