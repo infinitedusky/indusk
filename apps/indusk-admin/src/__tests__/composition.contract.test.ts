@@ -105,7 +105,12 @@ interface Drawn {
   parentDisplay: string;
 }
 
-/** Runs in the page: the component root at `index` among the page's top-level `[data-component]`s, and its descendants. */
+/**
+ * Runs in the page: the `index`th element marked as component `name`, in
+ * document order, and its descendants. By name, not by position among the
+ * page's top-level components: a component mockup places components inside
+ * its own (component-content), so a placed component need not be top-level.
+ */
 function readDrawn(args: {
   index: number;
   name: string;
@@ -114,17 +119,14 @@ function readDrawn(args: {
   width?: number;
 }): Drawn[] | { problem: string } {
   const marked = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-component]"),
-  ).filter((el) => !el.parentElement?.closest("[data-component]"));
+    document.querySelectorAll<HTMLElement>(
+      `[data-component=${JSON.stringify(args.name)}]`,
+    ),
+  );
   const root = marked[args.index];
   if (!root) {
     return {
-      problem: `the page has ${marked.length} component roots, wanted index ${args.index}`,
-    };
-  }
-  if (root.dataset.component !== args.name) {
-    return {
-      problem: `root ${args.index} is ${root.dataset.component}, wanted ${args.name}`,
+      problem: `the page marks ${marked.length} ${args.name}, wanted number ${args.index + 1}`,
     };
   }
   if (args.width !== undefined) {
@@ -389,7 +391,10 @@ describe("A30 — a composed mockup draws each component as its story does", () 
       try {
         await page.setContent(mockup.document, { waitUntil: "load" });
         await page.evaluate(() => document.fonts.ready);
-        for (const [index, use] of uses.entries()) {
+        const seen = new Map<string, number>();
+        for (const use of uses) {
+          const index = seen.get(use.name) ?? 0;
+          seen.set(use.name, index + 1);
           const key = `${use.name}.${use.state}`;
           const where = `${mockup.name} / ${key}`;
           const id = ids.get(key);
