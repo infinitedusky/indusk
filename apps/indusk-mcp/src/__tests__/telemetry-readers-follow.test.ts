@@ -6,7 +6,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { evalDir } from "../lib/bookkeeping/roots.js";
-import { __resetEvalOtelForTests, initEvalOtelLogs, shutdownEvalOtel } from "../lib/eval/otel.js";
+import {
+	__resetEvalOtelForTests,
+	evalLogsEndpoint,
+	initEvalOtelLogs,
+	shutdownEvalOtel,
+} from "../lib/eval/otel.js";
 import { resolveLocal } from "../lib/promises/sources.js";
 import { liveOtlpEndpointSync } from "../lib/telemetry/status.js";
 import {
@@ -94,5 +99,29 @@ describe("A28 — the evaluator exports to the found daemon", () => {
 		const log = existsSync(logPath) ? readFileSync(logPath, "utf-8") : "";
 		expect(log).not.toContain("falling back to no-op logger");
 		expect(log).toContain("eval.otel.logs initialized — endpoint: http://localhost:24318");
+	});
+});
+
+describe("A31 — the evaluator's logs go to the daemon's log channel, never the traces port", () => {
+	it("the evaluator's logs go to the logs port, never the traces port", () => {
+		expect(
+			evalLogsEndpoint({ traces: "http://localhost:24318", logs: "http://localhost:24319" }),
+		).toBe("http://localhost:24319/v1/logs");
+	});
+
+	it("initialised against a running daemon, the log exporter is told the logs port", () => {
+		const projectRoot = join(tmpdir(), `readers-follow-logs-${Date.now()}`);
+		mkdirSync(join(projectRoot, ".indusk"), { recursive: true });
+		__resetEvalOtelForTests();
+		const saved = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
+		Reflect.deleteProperty(process.env, "OTEL_EXPORTER_OTLP_ENDPOINT");
+		try {
+			initEvalOtelLogs(projectRoot, { reads: lostDaemon(), home: HOME });
+		} finally {
+			if (saved !== undefined) process.env.OTEL_EXPORTER_OTLP_ENDPOINT = saved;
+		}
+		const log = readFileSync(join(evalDir(projectRoot), "system.log"), "utf-8");
+		expect(log).toContain("logs: http://localhost:24319/v1/logs");
+		rmSync(projectRoot, { recursive: true, force: true });
 	});
 });

@@ -1,3 +1,8 @@
+/** The URL the evaluator's log records go to: the daemon's logs port, never its traces port. */
+export function evalLogsEndpoint(_address: { traces: string; logs: string }): string {
+	return "";
+}
+
 /**
  * OpenTelemetry tracing for the eval agent (evaluator).
  *

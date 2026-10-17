@@ -2,10 +2,13 @@
 // promise: the-daemon-readers-follow-is-the-one-running
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 // the guard script's own copy, loaded without a build
 import { daemonProcessOf as scriptParse } from "../../scripts/check-test-daemons.js";
+import { PORT_BLOCK, type StoredAddress } from "../lib/telemetry/daemon-address.js";
 import { daemonProcessOf, homeKind } from "../lib/telemetry/daemon-process.js";
+import { ensureDaemon, startPlan } from "../lib/telemetry/start-plan.js";
+import { fakeReads, rec } from "./helpers/daemon-reads.js";
 
 /**
  * A26 — the package and the test-daemon guard script recognise a daemon
@@ -56,5 +59,22 @@ describe("A26 — one way to recognise an InDusk daemon process", () => {
 		expect(homeKind("/tmp/h-1", TEMP_ROOTS)).toBe("temporary");
 		expect(homeKind(join(homedir(), ".indusk"), TEMP_ROOTS)).toBe("real");
 		expect(homeKind("/tmp", TEMP_ROOTS), "the root itself is not under it").toBe("real");
+	});
+});
+
+describe("A26 — a test's daemon never touches the real home's address", () => {
+	const STORED: StoredAddress = { ...PORT_BLOCK, picked: [] };
+
+	it("startPlan for a temporary home never returns a block port and stores nothing", () => {
+		const plan = startPlan({ kind: "none" }, {}, "/tmp/h-1", { address: STORED });
+		expect(plan).toEqual({ kind: "start", ports: { traces: 0, logs: 0, ui: 0, mcp: 0 } });
+	});
+
+	it("ensureDaemon in a temporary home reads no address and writes none", async () => {
+		const reads = fakeReads({ record: null, address: null });
+		const read = vi.spyOn(reads, "address");
+		await ensureDaemon("start", reads, "/tmp/h-1", async () => rec(901, 902));
+		expect(read).not.toHaveBeenCalled();
+		expect(reads.addressWrites).toEqual([]);
 	});
 });

@@ -13,6 +13,11 @@ import {
 import { join } from "node:path";
 import { acquireLock, acquireLockAsync } from "../agents/lock.js";
 import { type PsRow, psAll } from "../process-identity.js";
+import {
+	addressFilePath,
+	readAddressFile,
+	type StoredAddress,
+} from "./daemon-address.js";
 import { daemonConfigPath } from "./daemon-process.js";
 import type { DaemonMeta } from "./status.js";
 
@@ -61,6 +66,10 @@ export interface DaemonReads {
 	stat(path: string): { mtimeMs: number; size: number } | null;
 	/** The ports the home's rendered Jaeger and collector config files name, when they can be read. */
 	renderedPorts(): RenderedPorts | null;
+	/** The stored address (`<home>/telemetry-address.json`), or `null` when none is stored. */
+	address(): StoredAddress | null;
+	/** Writes the stored address; with `exclusive`, only when none exists. Whether it wrote. */
+	writeAddress(address: StoredAddress, opts: { exclusive: boolean }): boolean;
 	/** Takes the home's `telemetry.lock`, waiting by yielding. The release function. */
 	lock(): Promise<() => void>;
 	/** `lock` for a synchronous caller. */
@@ -182,6 +191,9 @@ function readText(path: string): string | null {
 	}
 }
 
+/** A start holds the lock while two processes come up, up to 15 s each. */
+const DAEMON_LOCK = { timeoutMs: 90_000, staleAfterMs: 90_000 };
+
 export function realDaemonReads(home: string): DaemonReads {
 	const metaPath = join(home, "telemetry.json");
 	const pidPath = join(home, "telemetry.pid");
@@ -200,6 +212,18 @@ export function realDaemonReads(home: string): DaemonReads {
 					flag: opts.exclusive ? "wx" : "w",
 				});
 				writeFileSync(pidPath, String(meta.jaegerPid));
+				return true;
+			} catch {
+				return false;
+			}
+		},
+		address: () => readAddressFile(home),
+		writeAddress(address, opts) {
+			try {
+				mkdirSync(home, { recursive: true });
+				writeFileSync(addressFilePath(home), `${JSON.stringify(address, null, 2)}\n`, {
+					flag: opts.exclusive ? "wx" : "w",
+				});
 				return true;
 			} catch {
 				return false;
@@ -235,11 +259,11 @@ export function realDaemonReads(home: string): DaemonReads {
 		},
 		lock() {
 			mkdirSync(home, { recursive: true });
-			return acquireLockAsync(join(home, "telemetry.lock"));
+			return acquireLockAsync(join(home, "telemetry.lock"), DAEMON_LOCK);
 		},
 		lockSync() {
 			mkdirSync(home, { recursive: true });
-			return acquireLock(join(home, "telemetry.lock"));
+			return acquireLock(join(home, "telemetry.lock"), DAEMON_LOCK);
 		},
 		stat(path) {
 			try {

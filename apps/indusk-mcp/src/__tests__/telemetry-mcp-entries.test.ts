@@ -16,7 +16,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ensureMcpJson, upsertJaegerEntry } from "../lib/mcp-config.js";
+import { ensureMcpJson, jaegerEntryChange, upsertJaegerEntry } from "../lib/mcp-config.js";
 
 /**
  * A27 (the cases of A17 join this file in Build Phase 3) — the project's
@@ -105,6 +105,50 @@ describe("a project's .mcp.json is written only on a change", () => {
 			expect(ignored.status, "git check-ignore answers 0 for an ignored path").toBe(0);
 		} finally {
 			rmSync(repo, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("A17 — registering writes only its own project's entry, at the stored MCP port", () => {
+	it("jaegerEntryChange is null when the entry already names the port, the entry otherwise", () => {
+		const current = { type: "http", url: `http://localhost:${MCP_PORT}/mcp` };
+		expect(jaegerEntryChange(current, MCP_PORT)).toBeNull();
+		expect(jaegerEntryChange(null, 52000)?.url).toBe("http://localhost:52000/mcp");
+		expect(jaegerEntryChange(current, 52000)).toEqual({
+			type: "http",
+			url: "http://localhost:52000/mcp",
+		});
+	});
+
+	it("register writes its own entry at the stored MCP port and leaves every other project's as it was", async () => {
+		const other = mkdtempSync(join(tmpdir(), "mcp-entries-other-"));
+		try {
+			const stale = `${JSON.stringify({ mcpServers: { jaeger: { type: "http", url: "http://localhost:62843/mcp" } } }, null, 2)}\n`;
+			writeFileSync(join(other, ".mcp.json"), stale);
+			const { registerProject } = await import("../lib/telemetry/registry.js");
+			registerProject(other);
+			const { registerWithDaemon } = await import("../lib/telemetry/register.js");
+			const { fakeReads, HOME, jaegerCmd, collectorCmd, ON_BLOCK, rec } = await import(
+				"./helpers/daemon-reads.js"
+			);
+			const r = await registerWithDaemon(project, {
+				reads: fakeReads({
+					record: rec(1, 2),
+					address: { traces: 24318, logs: 24319, ui: 24316, mcp: MCP_PORT, picked: [] },
+					processes: [jaegerCmd(1, HOME), collectorCmd(2, HOME)],
+					listening: ON_BLOCK,
+				}),
+				home: HOME,
+				spawn: async () => rec(901, 902),
+			});
+			expect(r.code).toBe(0);
+			const mine = JSON.parse(readFileSync(join(project, ".mcp.json"), "utf-8")) as {
+				mcpServers: Record<string, { url?: string }>;
+			};
+			expect(mine.mcpServers.jaeger.url).toBe(`http://localhost:${MCP_PORT}/mcp`);
+			expect(readFileSync(join(other, ".mcp.json"), "utf-8")).toBe(stale);
+		} finally {
+			rmSync(other, { recursive: true, force: true });
 		}
 	});
 });

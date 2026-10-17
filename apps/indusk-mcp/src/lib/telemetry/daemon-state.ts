@@ -1,3 +1,4 @@
+import type { StoredAddress } from "./daemon-address.js";
 import { type DaemonProcess, daemonProcessOf, isOwn } from "./daemon-process.js";
 import type { DaemonReads, ProcessRow, RenderedPorts } from "./daemon-reads.js";
 import type { DaemonMeta } from "./status.js";
@@ -48,6 +49,8 @@ export interface DaemonState {
 	found: OwnProcess[];
 	/** Daemon processes of any home whose config file is gone. */
 	orphans: OwnProcess[];
+	/** The stored address, or `null` when none is stored. */
+	address: StoredAddress | null;
 	/** Ports the daemon holds that differ from the stored address. */
 	portDifferences: string[];
 }
@@ -94,6 +97,7 @@ export function daemonState(reads: DaemonReads, home: string): DaemonState {
 		strays: kind === "found" ? [] : unnamed.map(own),
 		found: kind === "found" ? unnamed.map(own) : [],
 		orphans: orphanRows.map(own),
+		address: reads.address(),
 		portDifferences: [],
 	};
 }

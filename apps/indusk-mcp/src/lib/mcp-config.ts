@@ -82,6 +82,14 @@ export function provisionMcpJson(fromProject: string, toProject: string): void {
 	else ensureMcpJson(toProject);
 }
 
+/** The `jaeger` entry a project should have for the daemon's MCP port, or `null` when its entry already is that. */
+export function jaegerEntryChange(
+	_current: McpServerEntry | null | undefined,
+	_mcpPort: number,
+): McpServerEntry | null {
+	return null;
+}
+
 /** Point the `jaeger` entry at the daemon's live MCP port, creating the file (and entry) if missing. */
 export function upsertJaegerEntry(projectPath: string, mcpPort: number): void {
 	ensureMcpJson(projectPath);

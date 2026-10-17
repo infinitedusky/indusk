@@ -1,4 +1,5 @@
 import type { DaemonReads, ProcessRow, RenderedPorts } from "../../lib/telemetry/daemon-reads.js";
+import type { StoredAddress } from "../../lib/telemetry/daemon-address.js";
 import type { DaemonMeta } from "../../lib/telemetry/status.js";
 
 /**
@@ -79,6 +80,8 @@ export interface FakeReads extends DaemonReads {
 	removed: string[];
 	/** Every record it wrote. */
 	written: { meta: DaemonMeta; exclusive: boolean }[];
+	/** Every stored address it wrote. */
+	addressWrites: { address: StoredAddress; exclusive: boolean }[];
 }
 
 export function fakeReads(
@@ -90,6 +93,8 @@ export function fakeReads(
 		files?: Record<string, { mtimeMs: number; size: number }>;
 		log?: string[];
 		now?: number;
+		/** The stored address; none when left out or `null`. */
+		address?: StoredAddress | null;
 		/**
 		 * The rendered config files: the ports they name (the block unless given),
 		 * and whether they were written after the daemon's processes started.
@@ -98,10 +103,20 @@ export function fakeReads(
 	} = {},
 ): FakeReads {
 	let record = machine.record ?? null;
+	let address = machine.address ?? null;
 	const written: FakeReads["written"] = [];
+	const addressWrites: FakeReads["addressWrites"] = [];
 	return {
 		removed: [],
 		written,
+		addressWrites,
+		address: () => address,
+		writeAddress(next, opts) {
+			if (opts.exclusive && address !== null) return false;
+			address = next;
+			addressWrites.push({ address: next, exclusive: opts.exclusive });
+			return true;
+		},
 		record: () => record,
 		writeRecord(meta, opts) {
 			if (opts.exclusive && record !== null) return false;
