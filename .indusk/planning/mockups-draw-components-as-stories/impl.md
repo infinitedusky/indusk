@@ -382,7 +382,7 @@ This phase tests two things the finished plan claims but nothing checks. First, 
 
 This plan taught approvals to remember the app's element rules, but it did so beside the older rule rather than inside it. What an approval is bound to is now written in two places when it is recorded and checked by two separate rules when it is read, and the look check and the status line still use only the older one. Once this phase closes, one rule says what an approval is bound to and every reader and writer uses it, and the cockpit's story page is built from the app's sheets passed together rather than as two loose strings that can be swapped.
 
-- [ ] What an approval records about what it was drawn under is built in one place, beside the rule that reads it back, and both kinds of approval use it.
+- [x] What an approval records about what it was drawn under is built in one place, beside the rule that reads it back, and both kinds of approval use it.
   <details><summary>Technical</summary>
 
   Export `bindingOf(app: LooksApp)` from `apps/indusk-mcp/src/lib/looks/approvals.ts` returning `{ foundationHash, declarationsHash, ...(baseRulesHash) }`; `approveMockup` and `approveStory` in `approve.ts` spread it in place of the three fields each writes, and `rulesOf` goes. The writer of the binding set and its reader then live in one module, so the next field bound is one edit on each side, not four.

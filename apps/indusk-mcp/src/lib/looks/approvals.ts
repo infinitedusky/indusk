@@ -198,6 +198,22 @@ function isEntry(v: unknown): v is ApprovalEntry {
 /** The components hash of a mockup that composes none: what an entry without one binds. */
 const NO_COMPONENTS = componentsHashOf([]);
 
+/**
+ * What an approval is bound to, as the app has it now: the foundation, the
+ * declarations the check trusts and, once the catalog keeps them, the element
+ * rules the look is drawn under. The writer (`approve.ts`) spreads this into an
+ * entry and `boundToNow` reads it back, so a new binding is one edit on each
+ * side. The cockpit sends none of it — it draws what the checkout holds — so
+ * the writer reads it from the app under the record's lock.
+ */
+export const bindingOf = (
+	app: LooksApp,
+): Pick<ApprovalEntry, "foundationHash" | "declarationsHash" | "baseRulesHash"> => ({
+	foundationHash: app.foundation.hash,
+	declarationsHash: app.declarationsHash,
+	...(app.baseRulesHash === undefined ? {} : { baseRulesHash: app.baseRulesHash }),
+});
+
 /** Whether an entry, a mockup's or a story's, was made on the foundation and the declarations as they are now. */
 export const boundToNow = (
 	app: LooksApp,
