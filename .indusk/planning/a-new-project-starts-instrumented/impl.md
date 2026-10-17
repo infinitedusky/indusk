@@ -940,7 +940,7 @@ Three of the cold audit's findings were defects nothing had answered. A person w
   `lib/new-project/proposal.ts`: export `TELEMETRY_RECOMMENDATION = "telemetry"`; `create.ts` `disableDeclinedTelemetry` matches it; `prompt.ts` step 6 says the telemetry recommendation is named exactly that. T32 imports the constant and asserts the prompt names it as the recommendation's name.
 
   </details>
-- [ ] Make the demo's spans carry the settings' environment unless `SEAT_HOLDS_ENV` sets one.
+- [ ] Make the demo's spans carry the settings' environment unless the demo's own environment variable sets one.
   <details><summary>Technical</summary>
 
   `examples/seat-holds/src/telemetry.ts`: a named `demoResourceAttributes(env)` the provider uses, overriding `deployment.environment` only when `SEAT_HOLDS_ENV` is set (the Dockerfile and `fly.toml` set `production`). `README.md`'s variable table: default `development`.
