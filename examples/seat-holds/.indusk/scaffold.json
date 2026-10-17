@@ -1,6 +1,6 @@
 {
-  "files": {
-    "src/signal.ts": "b905b811bd2234f21346dc8ef1aa9ef2b87c3152c57d5c30bf03d533e9f47621",
-    "src/telemetry-settings.ts": "242a79877aa12b8665302ee421ac445d093d10603880d02439cc5b1a470a6a93"
-  }
+	"files": {
+		"src/signal.ts": "b905b811bd2234f21346dc8ef1aa9ef2b87c3152c57d5c30bf03d533e9f47621",
+		"src/telemetry-settings.ts": "242a79877aa12b8665302ee421ac445d093d10603880d02439cc5b1a470a6a93"
+	}
 }
