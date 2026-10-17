@@ -18,7 +18,7 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 
 **Wire it**: `node --import ./src/instrumentation.ts src/index.ts`
 
-**Install**: `pnpm add @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-trace-base @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/core pino pino-opentelemetry-transport`
+**Install**: `pnpm add @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-trace-base @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/core pino pino-opentelemetry-transport`
 
 ### Next.js
 
@@ -32,7 +32,7 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 
 **Wire it**: Server loads automatically. Client: `import './instrumentation.web'` from a client component (one that starts with `"use client"`), not the root layout.
 
-**Install**: `pnpm add @vercel/otel pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
+**Install**: `pnpm add @vercel/otel @opentelemetry/api pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
 
 ### React SPA (Vite)
 
@@ -49,12 +49,12 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 
 | File | Purpose |
 |------|---------|
-| `instrumentation.py` | OTel SDK with auto-instrumentation |
+| `instrumentation.py` | OTel SDK setup, sending to the local daemon |
 | `indusk_signal.py` | The signal helper (named so it does not hide Python's `signal` module) |
 
-**Wire it**: `opentelemetry-instrument python your_app.py`
+**Wire it**: `import instrumentation` as the first import of your entry point. Do not start the app through OpenTelemetry's `opentelemetry-instrument` wrapper: it builds its own tracer provider (the standard port, `unknown_service`) before the scaffold loads, so the spans would miss the daemon.
 
-**Install**: `pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp`
+**Install**: `pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http`
 
 ## A Promise's Signal
 

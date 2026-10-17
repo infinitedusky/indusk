@@ -218,9 +218,9 @@ flowchart LR
 | Runtime | Files |
 |---------|-------|
 | Node | `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts`, `telemetry-settings.ts`, `signal.ts` (in `src/` when the app has one) |
-| Next.js | `instrumentation.ts` at the app root; `src/logger.ts`, `src/instrumentation.web.ts`, `src/telemetry-settings.ts`, `src/signal.ts` |
+| Next.js | `instrumentation.ts` in the folder that holds `app/` or `pages/` (the app root, or `src/` when the pages live there, which is where Next.js looks for it); `src/logger.ts`, `src/instrumentation.web.ts`, `src/telemetry-settings.ts`, `src/signal.ts` |
 | Browser app | `instrumentation.ts`, `telemetry-settings.ts` (in `src/` when the app has one); no signal helper, it has no server |
-| Python | `instrumentation.py`, with the settings inline at its top; `indusk_signal.py` |
+| Python | `instrumentation.py`, with the settings inline at its top, imported first in the entry point (not run under `opentelemetry-instrument`, whose own provider ignores it); `indusk_signal.py` |
 
 The signal file is how the app tells InDusk a promise held or broke: see [the signal helper](./signal-helper). An app that already sets up OpenTelemetry itself gets only that file and the settings it reads.
 
@@ -236,7 +236,7 @@ The signal file is how the app tells InDusk a promise held or broke: see [the si
 
 **Where a span ran.** Every span's resource carries `indusk.project` (the InDusk project id, what the promise readers compare) and `deployment.environment` (`development` unless set). A browser app reads the same names under its bundler's prefix (`VITE_OTEL_…`, `NEXT_PUBLIC_OTEL_…`).
 
-**The newer-version file.** InDusk records a hash of each file it writes in `.indusk/scaffold.json` (the workbench root in a workbench). On each run a missing file is created, a file still as InDusk wrote it is refreshed to the newer template, and a file you changed, or one InDusk never wrote, is left byte for byte with the newer version written beside it as `<file>.indusk-new`, and the run says so. A lost record makes every file unrecorded, and an unrecorded file is never overwritten. `init --force` overwrites them all.
+**The newer-version file.** InDusk records a hash of each file it writes in `.indusk/scaffold.json` (the workbench root in a workbench). On each run a missing file is created (unless InDusk recorded writing it and you deleted it: it is left out, with one line saying so, and `init --force` writes it back), a file still as InDusk wrote it is refreshed to the newer template, and a file you changed, or one InDusk never wrote, is left byte for byte with the newer version written beside it as `<file>.indusk-new`, and the run says so. A lost record makes every file unrecorded, and an unrecorded file is never overwritten. `init --force` overwrites them all.
 
 A workbench's code repo also gets its own `.mcp.json` naming the `indusk` server, so the evaluator that runs there can score its first commit; one that exists is never rewritten.
 

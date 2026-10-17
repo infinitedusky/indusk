@@ -135,7 +135,7 @@ homework-gate-workbench/        the workbench: InDusk's home and a git repositor
     master.md                   the milestones, in order, as the plan order
 ```
 
-Creation also hands the repository its telemetry: `init` writes the instrumentation, the settings file and the signal helper into it, so the app sends its spans, named after the project and carrying its project and environment, to the local daemon from its first run (see [what a project is handed](/reference/telemetry/overview#what-a-project-is-handed)). Decline the telemetry recommendation and none of it is written.
+Creation also hands the repository its telemetry: `init` writes the instrumentation, the settings file and the signal helper into it, so the app sends its spans, named after the project and carrying its project and environment, to the local daemon from its first run (see [what a project is handed](/reference/telemetry/overview#what-a-project-is-handed)). A Next.js app with its pages in `src/` gets its setup file there, where Next.js looks for it; a Python app imports the generated `instrumentation` module first in its entry point. Decline the telemetry recommendation and none of it is written.
 
 The project is registered, so it appears on the home page, and `indusk
 worktree list` reports its repository and worktrees folder with nothing
