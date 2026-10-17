@@ -799,6 +799,9 @@ This phase tests the finished scaffold against apps shaped differently from the 
 
   </details>
 
+- [x] Shape finding — `apps/indusk-mcp/src/lib/scaffold/plan.ts` `filesFor`: take the target's layout (`hasSrc`, `srcApp`) as one object instead of two adjacent booleans, so a call reads `filesFor(runtime, t, false)` not `(runtime, hasSrc, false, srcApp)`. Rule: the name says what it is for (Shape's naming question).
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; the one finding above, fixed; the rest left as is.
+
 #### Build Phase 4 Verification
 
 - [x] A Next.js app with its pages in a source folder gets its setup file there, and a Next.js app without one keeps it at the root.
