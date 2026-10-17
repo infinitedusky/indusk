@@ -590,7 +590,7 @@ next phase then makes what init prints and the skills teach match all of this.
   Added at the Test Phase 1 register review (Sandy, 2026-10-17): T13 and T14 assert `clause` on `parseMarkedSpan`'s result and `MarkedSpan` had none. `lib/promises/telemetry.ts`: `MarkedSpan` gains `clause?: string`, set from `PROMISE_MARK.clause` when the span carries it and absent otherwise (as `look` is), so every existing reader and fixture is unchanged. The reader is mark-first's; this adds a field and changes no rule.
 
   </details>
-- [ ] Write the Node signal helper and its Python twin: one call for upheld and one for broken, each writing one short span with the promise, clause, verdict, symptom, value, bound, plan and phase, and the project and test marker copied onto it.
+- [x] Write the Node signal helper and its Python twin: one call for upheld and one for broken, each writing one short span with the promise, clause, verdict, symptom, value, bound, plan and phase, and the project and test marker copied onto it.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/templates/signal.ts` (imports `@opentelemetry/api` only) and `templates/signal.py` (`opentelemetry.trace` only), per ADR decision 6. The outcome written is `upheld` or `broken`. Project and marker are read from the settings file (`./telemetry-settings`); in Python from the instrumentation module's rendered values.
