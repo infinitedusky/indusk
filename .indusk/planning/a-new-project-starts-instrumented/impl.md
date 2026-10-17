@@ -81,6 +81,11 @@ assertions in [test-plan.md](test-plan.md).
 | T22 | A click in a scaffolded browser app still carries its trace to the project's own services | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-click-and-its-server-work-share-a-trace | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T23 | Nothing `init` writes into an app names a vendor, and what it prints names each file and its SDK | Test Phase 1 | Test Phase 1 | passing | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
 | T24 | The seat-holds example writes its signal through a copy of the helper template, and `init` on a fresh copy adds no second OpenTelemetry setup | Test Phase 1 | Build Phase 2 | passing | unit | the carried item: the demo's hand-written signal becomes the helper and its dead second scaffold goes | apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
+| T25 | In a Next.js app whose pages live in `src/` (`src/app` or `src/pages`), the scaffold writes the server setup file to `src/instrumentation.ts` with its settings import resolving beside it; without them it stays at the root | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/init-scaffold-placement.test.ts |
+| T26 | Every package the files scaffolded for Node, Next.js and a browser app import is named in the install line init prints for that runtime | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-new-project-is-told-the-truth/next-steps-exist | apps/indusk-mcp/src/__tests__/init-next-steps.test.ts |
+| T27 | The run line init prints for a Python app and the Python template load the scaffolded `instrumentation` module and never name `opentelemetry-instrument`, whose own provider sends to the standard port as `unknown_service` | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-new-project-reports-from-its-first-run/the-spans-reach-the-daemon | apps/indusk-mcp/src/__tests__/init-scaffold-runtimes.test.ts |
+| T28 | An `OTEL_RESOURCE_ATTRIBUTES` value that is not valid percent-encoding (`deployment.environment=100%`) is kept as written and the settings never throw | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran | apps/indusk-mcp/src/__tests__/telemetry-settings.test.ts |
+| T29 | A scaffolded file InDusk recorded writing and a person then deleted is not written back by `update` (one line says it was left out), `--force` writes it, and a missing file with no record is still created | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts, apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts |
 
 ## Checklist
 
@@ -756,6 +761,98 @@ record that its first run reports.
   `apps/docs/src/reference/tools/otel.md`, `apps/docs/src/guide/new-project.md`, `apps/docs/src/guide/getting-started.md` (Docker only for `server deploy --build-from`), `apps/docs/src/reference/cli/demo.md` if it names the example's telemetry file; changelog entry.
 
   </details>
+
+### Build Phase 4: Falsification — what a fresh app of each kind actually loads, imports and keeps
+
+**Tier**: med — the work step's default
+
+This phase tests the finished scaffold against apps shaped differently from the one the live check used: a Next.js app whose pages live in a source folder, a fresh app calling the signal helper, a Python app started the way init tells it to start, an environment value the settings cannot decode, and a scaffolded file a person deleted. Each hypothesis is that the app silently reports nothing, reports to the wrong place, crashes, or gets back a file its owner removed. Once it closes, each of those apps reports to the local daemon or is left as its owner chose.
+
+- [ ] Put the Next.js server setup file in the source folder when the app's pages live there, reading the settings beside it.
+  <details><summary>Technical</summary>
+
+  Hypothesis: Next.js loads `instrumentation.ts` from the folder that holds `app/` or `pages/`; a project made with `create-next-app --src-dir` keeps them in `src/`, so the root-level file `filesFor("nextjs", …)` in `lib/scaffold/plan.ts` writes is never loaded and the app reports nothing. The live check (a project without a source folder) could not see it. Fix: when `src/app` or `src/pages` exists, place the setup at `src/instrumentation.ts` and render its settings import as `./telemetry-settings` (today the template hard-codes `./src/telemetry-settings`); otherwise keep today's root placement. The read for `src/app`/`src/pages` goes on `TargetRead` beside `hasSrc`, so `plan.ts` still decides from what was read.
+
+  </details>
+- [ ] Name the OpenTelemetry API package in the install lines init prints for Node and Next.js apps.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `templates/signal.ts` imports `@opentelemetry/api`, but neither `NODE_PACKAGES` nor the Next.js install line in `lib/scaffold/apply.ts` names it. Under pnpm's strict layout a package only pulled in as a peer is not resolvable from the app's own source, so the first `signal.upheld(...)` fails to import in a fresh app. The demo hides this because its `package.json` lists the API package directly. Fix: add `@opentelemetry/api` to both lines; the test reads every bare import of each runtime's scaffolded files and requires each package to be named in that runtime's printed install line, so the next template import cannot drift.
+
+  </details>
+- [ ] Tell a Python app to load the scaffolded setup itself, not to run under OpenTelemetry's own wrapper.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `guidance("python")` prints `run: opentelemetry-instrument python your_app.py`, and `templates/instrumentation.py` offers it first. That wrapper builds its own tracer provider from the environment (the standard port, `unknown_service`) before the app runs; `instrumentation.py` is then either never imported or its `trace.set_tracer_provider` is refused as an override. Either way the spans miss the daemon and carry no service name or project, against the clauses about where spans go and how they are named. Fix: print a wiring line that imports `instrumentation` at the top of the entry point, reorder the template's docstring so that is the way and the wrapper is not offered, and keep the install line to what the template imports.
+
+  </details>
+- [ ] Make the settings keep the environment value as written when it is not valid percent-encoding, instead of throwing.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `resourceAttribute` in `templates/telemetry-settings.ts` calls `decodeURIComponent` unguarded, so `OTEL_RESOURCE_ATTRIBUTES=deployment.environment=100%` throws a `URIError` from `telemetrySettings`, which runs at import in the instrumentation, the logger, the browser file and the helper: the app fails to start because of its telemetry. Fix: on a decode error use the trimmed raw value. The seat-holds copy of the settings (`examples/seat-holds/src/telemetry-settings.ts`) gets the same change, so the demo stays a copy.
+
+  </details>
+- [ ] Leave out a scaffolded file a person deleted when InDusk updates the project, and say so once.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `decideFile` returns `create` for any missing file, recorded or not, so after a person deletes a file InDusk wrote (the logger they don't want, a root setup they moved), every `indusk update` writes it back, and because a create counts as a first scaffold it reprints the install lines. That forces a template on its owner, against the clause that a newer template is offered, not forced. Fix: a missing file with a record and no `--force` gets a new `removed` action: nothing written, the record kept, one line `left out: <path> (you removed it; delete its entry in .indusk/scaffold.json to have it back)`. The plan test's expectation for the missing-and-recorded combination changes from create to removed; the trajectory row's assertion text does not change, because "leave alone" already covers it.
+
+  </details>
+
+#### Build Phase 4 Verification
+
+- [ ] A Next.js app with its pages in a source folder gets its setup file there, and a Next.js app without one keeps it at the root.
+  <details><summary>Technical</summary>
+
+  T25: red today (the setup lands at the root for a `src/app` project), green once the placement follows the pages.
+
+  </details>
+- [ ] Every package a scaffolded app's files import is named in the install line init prints for that kind of app.
+  <details><summary>Technical</summary>
+
+  T26: red today on `@opentelemetry/api` for Node and Next.js.
+
+  </details>
+- [ ] What init prints and the template say for a Python app loads the scaffolded setup and never names OpenTelemetry's own wrapper.
+  <details><summary>Technical</summary>
+
+  T27: red today on `opentelemetry-instrument` in the printed run line and the template's docstring.
+
+  </details>
+- [ ] An environment value that is not valid percent-encoding is kept as written and never stops the app from starting.
+  <details><summary>Technical</summary>
+
+  T28: red today with a `URIError`.
+
+  </details>
+- [ ] A scaffolded file a person deleted stays deleted through an update, unless they force it; a file InDusk never wrote is still created.
+  <details><summary>Technical</summary>
+
+  T29: red today (the file is recreated and the install lines reprinted).
+
+  </details>
+
+#### Build Phase 4 Context
+
+- [ ] Add to the scaffold's own context file that a deleted scaffolded file stays deleted, and that a Next.js setup file goes where the app's pages are.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/scaffold/CLAUDE.md` (the area file, loaded when the scaffold is edited): two lines, each with its row as the guard.
+
+  </details>
+
+#### Build Phase 4 Document
+
+- [ ] Update the telemetry reference page and the new-project guide where they say where a Next.js setup goes and how a Python app is started.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/telemetry/overview.md`, `apps/docs/src/guide/new-project.md`; grep `apps/docs` for `opentelemetry-instrument` and fix each mention that tells an InDusk-scaffolded app to use it; changelog entry.
+
+  </details>
+
+#### Build Phase 4 Falsification Summary
+
+Looked at and held: the scaffold's decisions for a present file (refresh only on a matching record, never over an edit), the record file's refusal when unreadable, the RENDERED-line substitution, the daemon's collector (its receiver allows any origin, so a browser app's spans are not blocked), the browser file's read of bundler-prefixed variables in Vite and Next.js, the helper's keys against the vocabulary, and the test-run marker. Not hunted: the Python template's log-format line that names trace fields no instrumentation fills in (it predates this plan), and Python apps sending no logs to the daemon (the plan's clauses are about spans).
 
 ## Files Affected
 
