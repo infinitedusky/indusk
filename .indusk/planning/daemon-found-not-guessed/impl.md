@@ -94,6 +94,11 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A35 | One definition reads a record's four ports by role, and one compares them with the stored address: a record on the stored address has no differences, one on another port names that role, the port held and the port expected, and a port the finder could not read (0) is no difference; status's lines and the daemon's reports both say what that one comparison found | Build Phase 7 | Build Phase 7 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
 | A36 | With the record naming processes that have died while this home's daemon runs unrecorded, the state is read as a lost record: a reader finds the running daemon and its record is written again naming it, and `reap` stops nothing; today the running pair is called strays and `reap` would stop it | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
 | A37 | `reap` stops a daemon whose home has been deleted (its config file is gone), and still never stops this home's recorded daemon, another live home's daemon or a stranger | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
+| A38 | With the address file lost while this home's daemon runs on picked ports, the start or takeover that writes the address again keeps every port the running daemon holds for its role, so the daemon is on its stored address afterwards and `status` reports it upheld without a restart | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
+| A39 | A daemon whose home is spelled through a link (a symlinked or `/private`-prefixed path) is this home's own: it is found, taken over and stopped like one named by the exact path, and a different home that resolves elsewhere is still not | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-own-only.test.ts |
+| A40 | Finding pairs a Jaeger with the collector that holds the stored logs port when the Jaeger holds the stored traces port, even when another collector started nearer in time; start time decides only when no stored port says | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found | apps/indusk-mcp/src/__tests__/telemetry-daemon-found.test.ts |
+| A41 | With the record naming a live Jaeger and a dead collector, every reader reaches that Jaeger through the record, as `status` reports the daemon broken; a reader reports no daemon only when the recorded Jaeger is gone | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts |
+| A42 | A start refused because an InDusk daemon holds a stored port suggests `reap` only when that daemon is an orphan or this home's stray, and for a live daemon of another home names that home and how to stop it there | Build Phase 8 | Build Phase 8 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/lib/telemetry/port-guard.test.ts |
 
 ### Deferred Verification
 
@@ -1140,11 +1145,11 @@ This plan grew the daemon's code across several new files, and two things are no
 
   </details>
 
-### Build Phase 8: The audit's two findings — a stale record never makes the running daemon a stray, and reap clears orphans again
+### Build Phase 8: The audit's findings — a stale record, orphans, a lost address file, linked homes, pairing, a half-running daemon's readers and the reap hint
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-A reader who did not build this plan found two places where the code does not do what the decision said, and both hold even now that the daemon has its stable address. When the record names processes that have died while the real daemon runs unrecorded, the running daemon is counted as a stray, so readers see no daemon and reap would stop the one that is running; the decision was to treat that record as lost, find the daemon and write its record again. And reap no longer stops daemons whose home was deleted underneath them, the cleanup behind the leak of test daemons, though the decision kept it. Once this phase closes, a stale record leads to the running daemon being found, and reap clears those orphans while leaving every live daemon alone.
+A reader who did not build this plan found two places where the code does not do what the decision said, and both hold even now that the daemon has its stable address. When the record names processes that have died while the real daemon runs unrecorded, the running daemon is counted as a stray, so readers see no daemon and reap would stop the one that is running; the decision was to treat that record as lost, find the daemon and write its record again. And reap no longer stops daemons whose home was deleted underneath them, the cleanup behind the leak of test daemons, though the decision kept it. Writing the audit up against the code found five more places the code is narrower than the decision: an address file lost while the daemon runs is written again with new ports instead of the ones the daemon holds, a home reached through a link is not recognised as this home, a Jaeger is paired with its collector by start time alone, readers see no daemon while status reports a half-running one, and a refused start suggests reap for daemons reap cannot stop. Once this phase closes, a stale record leads to the running daemon being found, reap clears orphans while leaving every live daemon alone, a lost address file comes back as the address the daemon is on, and readers, status and the refusal messages all describe the same daemon.
 
 - [ ] A record that names only dead processes, while this home's daemon runs, is treated as lost: the daemon is found, its record written again, and nothing is stopped.
   <details><summary>Technical</summary>
@@ -1159,12 +1164,43 @@ A reader who did not build this plan found two places where the code does not do
 
   </details>
 
-#### Build Phase 8 Verification
-
-- [ ] Both findings fail today and pass after the fixes, and the files that depend on the changed modules still pass.
+- [ ] When the address file is lost while the daemon runs, writing it again keeps the ports the running daemon already holds.
   <details><summary>Technical</summary>
 
-  A36 and A37 in `src/__tests__/telemetry-reap-plan.test.ts` (A36 also asserts through the resolver that a reader gets the running daemon's meta), authored red first. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-reap-plan.test.ts src/__tests__/telemetry-daemon-state.test.ts src/__tests__/telemetry-daemon-found.test.ts src/__tests__/telemetry-own-only.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-state.ts src/lib/telemetry/daemon-find.ts src/lib/telemetry/reap-plan.ts && pnpm exec tsc --noEmit`. Rows' State updated in the same edit.
+  `startPlan` in `apps/indusk-mcp/src/lib/telemetry/start-plan.ts:82` (takeover with no stored address) and `:104` (start with none) call `chooseAddress(holders, {}, …)`, so a role on a picked port gets a new free port and the daemon reads as off its address until a restart. Pass the ports the taken candidate holds (its labelled ports from `daemon-find.ts`) as `ownPorts` at `:82`, and at `:104` the record's ports when its processes are alive (`runningDaemonPorts` in `daemon-address.ts:213` already does this for `--reset`; reuse it, do not copy it). Answers row A38.
+
+  </details>
+- [ ] A daemon's home is matched by where it really is, so a home reached through a link is still this home.
+  <details><summary>Technical</summary>
+
+  `isOwn` in `lib/telemetry/daemon-process.ts:84` compares `p.home === home`; compare the resolved real paths of both (the module already resolves with `realpathSync` for `homeKind`), falling back to the exact string when a path cannot be resolved. Answers row A39.
+
+  </details>
+- [ ] Finding pairs a Jaeger with its collector by the stored address first, and by start time only when the address does not say.
+  <details><summary>Technical</summary>
+
+  `pairProcesses` in `lib/telemetry/daemon-find.ts:109` pairs by start time within 20 seconds only; when an address is stored, first pair the Jaeger holding the stored traces port with the collector holding the stored logs port, then fall back to start time for the rest, as the ADR's finding decision said. Answers row A40.
+
+  </details>
+- [ ] Readers reach the recorded Jaeger while it runs, even when its collector has stopped.
+  <details><summary>Technical</summary>
+
+  `resolveLocalDaemonVia` and `resolveLocalDaemonSync` in `lib/telemetry/daemon-state.ts:287-299` return a daemon only for `running` or `found`; for `partial` with `state.recorded.jaeger` alive, return the record's meta `via: "record"` (traces and the interface are Jaeger's; only logs need the collector). Readers and `status` then agree: the daemon is there and broken. Answers row A41.
+
+  </details>
+- [ ] A refused start suggests reap only for a daemon reap can stop, and names another home's daemon instead.
+  <details><summary>Technical</summary>
+
+  `refusalText` in `lib/telemetry/start-plan.ts:136-139` suggests `reap` whenever the holder is any InDusk daemon. Reap stops only this home's strays and orphans, so: an orphan or this home's stray, suggest `indusk telemetry reap`; a live daemon of another home, name its home and say `INDUSK_HOME=<home> indusk telemetry stop`. Answers row A42.
+
+  </details>
+
+#### Build Phase 8 Verification
+
+- [ ] Every finding fails today and passes after its fix, and the files that depend on the changed modules still pass.
+  <details><summary>Technical</summary>
+
+  A36 and A37 in `src/__tests__/telemetry-reap-plan.test.ts` (A36 also asserts through the resolver that a reader gets the running daemon's meta), A38 in `telemetry-start-plan.test.ts`, A39 in `telemetry-own-only.test.ts`, A40 in `telemetry-daemon-found.test.ts`, A41 in `telemetry-readers-follow.test.ts`, A42 in `src/lib/telemetry/port-guard.test.ts`, each authored red first. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-reap-plan.test.ts src/__tests__/telemetry-daemon-state.test.ts src/__tests__/telemetry-daemon-found.test.ts src/__tests__/telemetry-own-only.test.ts src/__tests__/telemetry-start-plan.test.ts src/__tests__/telemetry-readers-follow.test.ts src/lib/telemetry/port-guard.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-state.ts src/lib/telemetry/daemon-find.ts src/lib/telemetry/reap-plan.ts src/lib/telemetry/start-plan.ts src/lib/telemetry/daemon-process.ts src/lib/telemetry/daemon-address.ts && pnpm exec tsc --noEmit`. Rows' State updated in the same edit.
 
   </details>
 
