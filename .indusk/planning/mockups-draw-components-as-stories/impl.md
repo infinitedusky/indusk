@@ -510,12 +510,13 @@ A reader that had not seen the build found gaps between what the plan promises a
   `looks-cli.test.ts`: a fixture approval carrying a `baseRulesHash` other than the catalog's; `indusk looks status` prints `… element rules — nothing held`. T8.
 
   </details>
-- [ ] The check that refuses an arbitrary wrapping class says which standard utility to use.
+- [x] The check that refuses an arbitrary wrapping class says which standard utility to use.
   <details><summary>Technical</summary>
 
   `lint-classes.ts` `arbitrary-class`: for an arbitrary `overflow-wrap` or `word-break` value, the message names `wrap-anywhere` / `wrap-break-word` / `break-all`. This is the enforcer the admin's over-budget `CLAUDE.md` could not hold (Build Phase 2's Context item). T9.
 
   </details>
+  Note: `arbitrary-class` in `lint-classes.ts` now names `wrap-anywhere`, `wrap-break-word` or `break-all` for an arbitrary `overflow-wrap`/`word-break` value (`[overflow-wrap:…]`, `[word-break:…]`, `wrap-[…]`); any other arbitrary value keeps the general message. T9 red (message was the general one), then green.
 - [ ] The frame's height fitting was reviewed and stays as it is: a story's component cannot be pushed down inside its frame.
   <details><summary>Technical</summary>
 
