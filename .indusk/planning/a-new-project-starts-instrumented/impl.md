@@ -477,7 +477,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   `apps/indusk-mcp/src/bin/commands/init.ts`: delete the `[OpenTelemetry]` block (step 7) and its four `String.replace` calls; call `applyScaffold(projectRoot, { force })` after `writeConfig` and the workbench's `extensionsEnable(["worktree"])`, still skipped for `--local` and the package's own repo; skipped too when `otel` is in `disabled_extensions`. `--force` keeps today's meaning (overwrite). `NODE_TEMPLATE_PURPOSE` and the printed install and wire lines move into `apply.ts` per runtime.
 
   </details>
-- [ ] Make update run the scaffold on every run, so a repo that gained an app is scaffolded and an untouched file is refreshed.
+- [x] Make update run the scaffold on every run, so a repo that gained an app is scaffolded and an untouched file is refreshed.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/bin/commands/update.ts`: a `[Telemetry scaffold]` section calling `applyScaffold(projectRoot, { force: false })` after the test-runner detection (step 5c''). No port literal (the reader-module test covers this file).
