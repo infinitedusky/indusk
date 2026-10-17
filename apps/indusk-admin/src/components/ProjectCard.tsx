@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/Badge";
 import { ProjectCard as ProjectCardView } from "@/components/ui/ProjectCard";
 
 export interface ProjectCardData {
@@ -12,9 +11,8 @@ export interface ProjectCardData {
 }
 
 /**
- * The home grid's card for a registered project. Links to `/p/{name}/`, and
- * beneath the approved look adds the project's shape, an in-progress badge when
- * any plan is mid-flight, and when it was last seen.
+ * The home grid's card for a registered project: the approved `project-card`
+ * given the registry's facts, with when it was last seen put in words.
  */
 export function ProjectCard({ project }: { project: ProjectCardData }) {
   return (
@@ -23,21 +21,9 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
       path={project.path}
       activePlanCount={project.activePlanCount}
       href={`/p/${project.name}/`}
-      extra={
-        <span className="mt-2 flex flex-wrap items-center gap-1 text-xs text-ink-faint">
-          {project.shape ? (
-            <Badge variant="neutral" data-testid="project-shape">
-              {project.shape}
-            </Badge>
-          ) : null}
-          {project.hasInProgress ? (
-            <Badge variant="written" data-testid="in-progress-badge">
-              in progress
-            </Badge>
-          ) : null}
-          <span>last seen {formatRelative(project.lastSeenAt)}</span>
-        </span>
-      }
+      shape={project.shape}
+      inProgress={project.hasInProgress}
+      lastSeen={formatRelative(project.lastSeenAt)}
     />
   );
 }

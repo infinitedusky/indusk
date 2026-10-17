@@ -559,6 +559,14 @@ export function planningReaderMock() {
   };
 }
 
+export function planHealthMock() {
+  return {
+    __esModule: true,
+    readPlanHealth: async () => ({}),
+    worktreePromises: () => [],
+  };
+}
+
 export function promisesReaderMock() {
   return {
     __esModule: true,

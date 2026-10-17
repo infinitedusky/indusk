@@ -61,35 +61,41 @@ export const PROMISE_HEALTH_CHIP = {
     label: "broken",
     aria: "broken in the window",
     className: "border border-bad bg-bad text-surface",
+    dot: "bg-bad",
   },
   fixed: {
     label: "broke — fixed",
     aria: "broke in the window, every incident fixed",
     className: "border border-ink-soft bg-ink-soft text-surface",
+    dot: "bg-ink-soft",
   },
   green: {
     label: "holding",
     aria: "seen holding in the window",
     className: "border border-ok bg-ok text-surface",
+    dot: "bg-ok",
   },
   unverified: {
     label: "no signal",
     aria: "no signal in the window",
     className: "border border-ink-faint bg-surface text-ink-soft",
+    dot: "bg-idle",
   },
   amber: {
     label: "known broken",
     aria: "declared known broken",
     className: "border border-warn bg-warn-wash text-warn",
+    dot: "bg-warn",
   },
   grey: {
     label: "retired",
     aria: "retired — not watched",
     className: "border border-line bg-idle-wash text-ink-faint",
+    dot: "bg-idle",
   },
 } satisfies Record<
   PromiseHealth,
-  { label: string; aria: string; className: string }
+  { label: string; aria: string; className: string; dot: string }
 >;
 
 export const PROMISE_KIND_LABELS = {

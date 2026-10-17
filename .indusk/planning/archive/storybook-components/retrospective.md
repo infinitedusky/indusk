@@ -223,3 +223,36 @@ worktree, with no file under `lib/promises/inbox` changed here.
 This machine runs the landed build (`pnpm install:local`, 1.70.0); nothing is published. Publishing is deliberate, through `indusk release`. The regenerated admin bundle (`apps/indusk-mcp/admin/next.config.ts`, `package.json`) is left modified on trunk for that release commit: trunk-guard refuses it as a code commit, as with `f95bbcec`.
 
 Landed on main at bc5102d8, 2026-10-12.
+
+## Maintenance — 2026-10-17
+
+Release 1.71.0's slow tests opened two incidents on this plan's promises:
+`i-2026-10-16-mockups-render-in-the-cockpit` (A30, the composition check, and
+A18, the story-frame check) and `i-2026-10-16-a-mockup-composes-approved-components`
+(A18 alone). Build Phases 12 and 13 closed them.
+
+Both checks had gone stale, not the promises. A30 matched a placed component by
+top-level position, which `component-content` broke by letting components
+nest; A18 ran 113 stories under `next dev` past its 580 s limit. The test
+fixes were made on this branch on 2026-10-16. Once fixed, A30 reported real
+drawing differences, and `mockups-draw-components-as-stories` fixed those and
+landed first; this plan only had to prove the checks green on main and close
+the incidents (`indusk promises fix`). No code changed in the Maintenance
+phases; Shape raised nothing, as there was nothing to review.
+
+What we learned: a contract check that only ever stopped early never measured
+its own run time — A18's limit was set against a run that had never finished,
+and a full run takes 1 665 s, not the 580 s allowed. Carried forward:
+`looks-components.contract.test.ts` runs T2 after A18's 28 minutes and finds
+the built admin gone (`ERR_CONNECTION_REFUSED`); T2 alone passes in 0.7 s. The
+server's exit is not yet explained; until it is, the next release's slow run
+can raise T2 as a new incident.
+
+`indusk promises confirm storybook-components` was not rerun to completion: it
+refuses because `mockups-draw-components-as-stories` has since taken over
+`mockups-render-in-the-cockpit` and `a-mockup-is-approved-by-a-person` with
+wider sentences, and its suggested `promises change` would hand them back to
+this plan with the old ones. This plan's promises were confirmed at its first
+close; `indusk promises check` reads none known-broken.
+
+Maintenance landed on main at 68a1c9cb, 2026-10-17.

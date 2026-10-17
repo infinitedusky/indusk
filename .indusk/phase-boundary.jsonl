@@ -388,6 +388,12 @@
 {"plan":"finished-rituals-stay-done","phase":1,"kind":"build","sha":"3d0f0eefb19e8179892d59de6f14e335b793ee1c","timestamp":"2026-10-16T19:02:53.787Z"}
 {"plan":"finished-rituals-stay-done","phase":2,"kind":"build","sha":"fb5af8a6cc2208a3ecf8328ea4d3a33ab6ec5d91","timestamp":"2026-10-16T19:34:10.064Z"}
 {"plan":"finished-rituals-stay-done","phase":3,"kind":"build","sha":"859186852275e8a832e21953a8ddc751798087d8","timestamp":"2026-10-16T19:38:54.312Z"}
+{"plan":"mockups-draw-components-as-stories","phase":1,"kind":"test","sha":"43ab2abe84a9623d8e1c2f944bcfbc1f18bfbce9","timestamp":"2026-10-17T03:04:13.373Z"}
+{"plan":"mockups-draw-components-as-stories","phase":1,"kind":"build","sha":"4ba5668c3326a796fc86ce7028e2fde769db2180","timestamp":"2026-10-17T03:38:07.513Z"}
+{"plan":"mockups-draw-components-as-stories","phase":2,"kind":"build","sha":"941d43c018f81ea5107c201d91131c68ed3795d8","timestamp":"2026-10-17T03:45:12.776Z"}
+{"plan":"mockups-draw-components-as-stories","phase":3,"kind":"build","sha":"9da0ebdfc9d8af3578293966d1e1542a8e112eca","timestamp":"2026-10-17T17:52:35.585Z"}
+{"plan":"mockups-draw-components-as-stories","phase":4,"kind":"build","sha":"b175f6cc0a77a603d85695134021b254eb492001","timestamp":"2026-10-17T18:03:41.837Z"}
+{"plan":"mockups-draw-components-as-stories","phase":5,"kind":"build","sha":"72b5f5c9fe4eceb943d1a5315405b0311133c872","timestamp":"2026-10-17T18:28:09.836Z"}
 {"plan":"daemon-found-not-guessed","phase":1,"kind":"test","sha":"cb62f389f1c29666e548113e5344cdd6992195bc","timestamp":"2026-10-17T01:46:36.661Z"}
 {"plan":"daemon-found-not-guessed","phase":1,"kind":"build","sha":"069b543cb15d949b5a0784b2c70d10b3f6ac94e9","timestamp":"2026-10-17T02:06:20.187Z"}
 {"plan":"daemon-found-not-guessed","phase":2,"kind":"build","sha":"214f770fd4b130625c68c2b673aa9b2c6e41f891","timestamp":"2026-10-17T02:31:27.578Z"}
@@ -397,6 +403,10 @@
 {"plan":"daemon-found-not-guessed","phase":6,"kind":"build","sha":"3e71ba5b25f0b7fbfdc90157fe5dac14486dc58a","timestamp":"2026-10-17T03:40:42.093Z"}
 {"plan":"daemon-found-not-guessed","phase":7,"kind":"build","sha":"bea5517d4ddc07f12a125de90b3e1566aef394a4","timestamp":"2026-10-17T03:48:39.214Z"}
 {"plan":"daemon-found-not-guessed","phase":8,"kind":"build","sha":"aca486869884cd7ea291a7dd690ed4ff15a3bd6f","timestamp":"2026-10-17T11:45:25.480Z"}
+{"plan":"plan-page-promise-health","phase":1,"kind":"test","sha":"fcb35c898ddbd7a98dddd4dc32a508122aad26a5","timestamp":"2026-10-17T18:03:31.853Z"}
+{"plan":"plan-page-promise-health","phase":1,"kind":"build","sha":"cdc10809b4a29ebe98555a7adc3ef93dae58113f","timestamp":"2026-10-17T18:05:30.969Z"}
+{"plan":"plan-page-promise-health","phase":2,"kind":"build","sha":"59280cf24d63d5b30db86ebbaecfd09350102acc","timestamp":"2026-10-17T18:20:00.633Z"}
+{"plan":"plan-page-promise-health","phase":3,"kind":"build","sha":"2b3dedaf280f5cfc08954a774962244c66c5a1b4","timestamp":"2026-10-17T18:25:58.609Z"}
 {"plan":"impl-tasks-are-instructions","phase":1,"kind":"test","sha":"fc00d26864b8bc3a6663c4fc6fbfac1186e73b96","timestamp":"2026-10-17T17:52:12.770Z"}
 {"plan":"impl-tasks-are-instructions","phase":1,"kind":"build","sha":"5155fdbf37166d768451229dd8ddc1b45a5b59a8","timestamp":"2026-10-17T17:54:46.553Z"}
 {"plan":"impl-tasks-are-instructions","phase":2,"kind":"build","sha":"4d1c35ca468b0d08833ed1515860d7b8c5fd68b3","timestamp":"2026-10-17T18:06:20.285Z"}
@@ -406,3 +416,5 @@
 {"plan":"a-new-project-starts-instrumented","phase":3,"kind":"build","sha":"ece74b06446a3b512485caf4ad598a8693ca2614","timestamp":"2026-10-17T20:08:20.754Z"}
 {"plan":"a-new-project-starts-instrumented","phase":4,"kind":"build","sha":"f49bf050c65b43c94fd67731b79ba751ed6d67fa","timestamp":"2026-10-17T20:21:10.974Z"}
 {"plan":"a-new-project-starts-instrumented","phase":5,"kind":"build","sha":"927d9aac10616db5e864394f102055ecd2be3643","timestamp":"2026-10-17T21:18:31.282Z"}
+{"plan":"new-components-draw-in-their-mockups","phase":1,"kind":"test","sha":"7ba88624ddafe84c67b28b5d40a8a5542a1184ed","timestamp":"2026-10-17T20:09:15.779Z"}
+{"plan":"new-components-draw-in-their-mockups","phase":1,"kind":"build","sha":"f7d79337b0c7c24ac155f5a081dfef61677b02a9","timestamp":"2026-10-17T20:09:57.639Z"}

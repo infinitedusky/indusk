@@ -8,12 +8,12 @@ subplans:
   - impl-tasks-are-instructions
   - a-new-project-starts-instrumented
   - mark-first
+  - a-break-runs-its-tests
   - a-plan-page-shows-its-clauses
   - audit-concerns-are-answered
   - production-is-heard
   - production-keeps-only-what-it-should
   - a-look-comes-due
-  - a-break-on-the-laptop-closes-its-loop
 ---
 
 # Telemetry from day one
@@ -159,7 +159,17 @@ each child is one plan with one landing.
    listed; a measurement is recorded in the brief. Trends, shared history and
    retention past ninety days stay [expectations-loop](../expectations-loop/master.md)'s.
 
-7. **`a-break-on-the-laptop-closes-its-loop`** — optional, Sandy's call;
+7. **`a-break-runs-its-tests`** — no longer optional (Sandy, 2026-10-17):
+   next after `mark-first`, the second half of `tests-never-make-us-wait`
+   (promise-core). Telemetry detects, tests diagnose: a clause's break runs
+   that clause's tests at once — they fail, we broke it (look at when they last
+   passed); they pass, the test does not test what production does; there is
+   none, write the one the break describes. A promise shows when it was last
+   seen holding, and the spot checker's findings become clause signals. The
+   half that separates a failing slow test at release from a production break
+   moved to `tests-never-make-us-wait`. What follows is the plan as first
+   written:
+   Was optional, Sandy's call;
    blocked by `mark-first`'s decision that a signal is keyed by promise and
    clause. For a project naming no production source — Homework Gate's first
    weeks — a break the agent causes while building is a red chip and nothing
@@ -199,7 +209,7 @@ activates) — one plan, after the editor's one-release wait on the wire word.
 The evaluator asked whether a commit emitted its clause's signal. A clause
 carrying its budget or bound machine-readably, with a reader that compares.
 A staging source beside production. Sampling and reader cost. The server
-writing back to the laptop. A break cascading down a trace to its cause, and
+writing back to the local machine. A break cascading down a trace to its cause, and
 signals from the browser — the later cut, as chosen on 2026-10-15.
 
 ## Measurement: from a look to a number (Sandy, 2026-10-16)
@@ -212,7 +222,7 @@ first look at thirty days: the recording server keeps traces for twenty-eight
 days on disk (`DEFAULT_RETENTION_HOURS`, `lib/telemetry/server.ts:65`), so a
 look can still count recent traces when it comes due. It runs out at ninety-day
 looks, at trends, and at rates and percentiles over time: Jaeger is a trace
-viewer, its query API pages with limits, and the laptop daemon keeps nothing
+viewer, its query API pages with limits, and the local daemon keeps nothing
 across a restart (memory store, Sandy, 2026-10-16). Settled in conversation the
 same day, as the next plans after this master's seven, in this order:
 

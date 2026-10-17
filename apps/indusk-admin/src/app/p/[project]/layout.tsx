@@ -19,6 +19,7 @@ import {
   WorktreeRecordError,
 } from "@/components/Worktrees";
 import { readWaiting } from "@/lib/decisions-reader";
+import { worktreePromises } from "@/lib/plan-health";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -92,7 +93,19 @@ export default async function PerProjectLayout({
   // from the alarm source alone (promise-sources, ADR D5).
   const registry = registryOf(promisesRead);
   const reads = registry ? await readHealth(projectPath, registry) : null;
-  const red = registry && reads ? redPlans(registry, reads) : new Set<string>();
+  // The plans' worktrees' promises too, as each plan's page reads them, so a
+  // break red on a plan's page is red here (plan-page-promise-health A7).
+  const red =
+    registry && reads
+      ? redPlans(
+          registry,
+          reads,
+          worktreePromises(
+            projectPath,
+            active.flatMap((p) => (p.worktree ? [p.worktree.path] : [])),
+          ),
+        )
+      : new Set<string>();
   // The nav's count is the dashboard's: the package's standing, from the same
   // health read (plan-cockpit, ADR decision 2).
   // A broken look counts beside them (ui-promises ADR decision 7), from the

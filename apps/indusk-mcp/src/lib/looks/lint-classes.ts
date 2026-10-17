@@ -24,6 +24,10 @@ const SHADOW_UTILITY = /^shadow-(sm|md|lg|xl|2xl|inner)$/;
 const ARBITRARY_UTILITY =
 	/^(?:[\w-]+:)*!?-?[a-z][a-z0-9]*(?:-[a-z0-9]+)*-\[[^\]]+\](?:\/[\w.]+)?$|^(?:[\w-]+:)*\[[\w-]+:[^\]]+\]$/;
 
+/** An arbitrary overflow-wrap or word-break value, as a property (`[overflow-wrap:anywhere]`) or a `wrap-[...]` utility. */
+const ARBITRARY_WRAP =
+	/^(?:[\w-]+:)*!?(?:\[(?:overflow-wrap|word-break):[^\]]+\]|wrap-\[[^\]]+\])$/;
+
 /** Why a class is outside the foundation, or `undefined` when it is inside (or not a utility at all). */
 function classProblem(
 	token: string,
@@ -32,7 +36,9 @@ function classProblem(
 	if (ARBITRARY_UTILITY.test(token)) {
 		return {
 			rule: "arbitrary-class",
-			message: `arbitrary value in ${token} — use a class from the foundation's theme`,
+			message: ARBITRARY_WRAP.test(token)
+				? `arbitrary value in ${token} — use the standard utility: wrap-anywhere, wrap-break-word or break-all`
+				: `arbitrary value in ${token} — use a class from the foundation's theme`,
 		};
 	}
 	const base = (token.split(":").pop() ?? token).replace(/^!/, "").replace(/^-/, "");

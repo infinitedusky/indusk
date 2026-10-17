@@ -1,4 +1,6 @@
+import postcss from "postcss";
 import { describe, expect, it } from "vitest";
+import * as styles from "./component-styles.js";
 import {
 	baseStylesheet,
 	classesOf,
@@ -177,5 +179,84 @@ body { color: var(--color-ink); font-family: var(--font-sans); }
 
 	it("is just the header when the app writes no body rule", () => {
 		expect(baseStylesheet(COMPILED, foundation)).toBe(STYLESHEET_HEADER);
+	});
+});
+
+/**
+ * The element resets a story draws under (mockups-draw-components-as-stories,
+ * A1–A3): the app's compiled `a` and `textarea` rules, cut to a sheet that
+ * reaches only components, so a mockup draws a component as its story does.
+ * Read through the namespace so the file loads before `componentReset` exists.
+ *
+ * promise: mockups-render-in-the-cockpit
+ */
+describe("componentReset", () => {
+	const APP = `
+@layer base {
+	*, ::before { box-sizing: border-box; }
+	html, :host { line-height: 1.5; }
+	body { margin: 0; }
+	a { color: inherit; text-decoration: inherit; }
+	textarea { font: inherit; font-size: 100%; }
+	.px-2 { padding-inline: var(--spacing-2); }
+	[data-component="badge"] p { color: var(--color-ink); }
+}
+`;
+	const SCOPE = ":where([data-component], [data-component] *)";
+	/** The body of the rule whose selector holds the element `tag` and the component scope. */
+	const ruleFor = (css: string, tag: string): string => {
+		const rule = [...css.matchAll(/^([^{}@\n][^{]*)\{([^}]*)\}/gm)].find(
+			([, selector]) =>
+				selector.includes(SCOPE) &&
+				new RegExp(`(^|[\\s)])${tag}\\b|\\b${tag}:where`).test(selector.replace(SCOPE, " ")),
+		);
+		return rule?.[2] ?? "";
+	};
+	const reset = (): string => {
+		const fn = (styles as Record<string, unknown>).componentReset;
+		expect(fn, "componentReset is exported by component-styles").toBeTypeOf("function");
+		return (fn as (css: string, f: Foundation) => string)(APP, foundation);
+	};
+
+	it("A1: a link component draws in its own ink — the sheet carries a's colour reset under components", () => {
+		const css = reset();
+		expect(ruleFor(css, "a")).toContain("color: inherit");
+	});
+
+	it("A2: a text field draws in the app's font and size — the sheet carries textarea's reset", () => {
+		const css = reset();
+		expect(ruleFor(css, "textarea")).toContain("font: inherit");
+		expect(ruleFor(css, "textarea")).toContain("font-size: 100%");
+	});
+
+	it("A3: the resets reach only components, at zero added specificity, and no class or marker rule rides along", () => {
+		const css = reset();
+		expect(css.startsWith(STYLESHEET_HEADER)).toBe(true);
+		for (const selector of css.match(/^[^{}@\n][^{]*(?=\{)/gm) ?? []) {
+			expect(selector).toContain(SCOPE);
+		}
+		expect(css).not.toContain(".px-2");
+		expect(css).not.toContain('[data-component="badge"] p');
+		expect(css).not.toMatch(/(^|[\s,])(html|body|:root|:host)\b/m);
+	});
+	it("T4: a reset for a pseudo-element keeps the scope before it, in a selector a browser accepts", () => {
+		const fn = (styles as Record<string, unknown>).componentReset as (
+			css: string,
+			f: Foundation,
+		) => string;
+		const css = fn(
+			"@layer base { *, ::before, ::after { box-sizing: border-box; } input::placeholder { color: red } }",
+			foundation,
+		);
+		const selectors: string[] = [];
+		postcss.parse(css).walkRules((r) => {
+			selectors.push(...r.selectors);
+		});
+		expect(selectors).toEqual([
+			`*${SCOPE}`,
+			`${SCOPE}::before`,
+			`${SCOPE}::after`,
+			`input${SCOPE}::placeholder`,
+		]);
 	});
 });

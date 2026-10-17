@@ -17,9 +17,13 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **Now (2026-10-08): the InDusk demo.** The project is [indusk-demo](planning/indusk-demo/master.md) — show a promise breaking and the system catching it. Steps 0–4 and step 8 are closed: **incident-recording landed 2026-10-08** ([archive](planning/archive/incident-recording/)). **vscode-extension (demo step 9) is closed** (2026-10-09; [archive](planning/archive/vscode-extension/)): markers, the Promises panel, Fix with Claude; a break showed in VS Code 5.3 s after it happened. **plan-cockpit closed 2026-10-10** ([archive](planning/archive/plan-cockpit/)): the admin is the cockpit — nav by Path, dashboard, promise page with a fix, plan page as two workflows with its decision; audit findings left for a follow-on. **ui-promises closed 2026-10-11** ([archive](planning/archive/ui-promises/)): the admin's look is held to eleven approved mockups on one token foundation — a token changed in the admin alone shows broken on the dashboard; 54 of 66 looks unchecked until the nav, promise and plan pages report their state, and the admin's layout does not yet match its mockups (a component-rebuild follow-on, scope set by the demo design). Next: demo-rehearsal; and the graph-tools leftovers a security researcher reported (unreachable since 1.33.1, still shipped in 1.67.0's `dist/`) to remove, released with credit. **server-provisioning (demo step 5) is closed** (landed 2026-10-08, ahead of order; [archive](planning/archive/server-provisioning/)): `indusk server connect` and `server deploy`; a Fly server is about $8/month and ~6 min to deploy. Not yet published: the first release that publishes the server image needs `docker login ghcr.io` first (known-issues). Any agent starting work on dusk starts there unless Sandy says otherwise.
 
+**Next (Sandy, 2026-10-17) — tests stop making us wait, before anything else.** In order: (1) close `storybook-components`' two Maintenance phases (their checks pass since mockups-draw-components-as-stories landed); (2) `tests-never-make-us-wait` — visual regression out of every gate into a background spot checker, the everyday suite under a minute, a failing slow test never an incident; (3) `mark-first`; (4) `a-break-runs-its-tests` — a clause's break runs that clause's tests; (5) `run-the-master`. `plan-page-shows-its-looks` is parked until (2) lands (it touches looks); `clean-release-build`, `a-new-project-starts-instrumented` and `audit-concerns-are-answered` slot in after (2). See promise-core/master.md and telemetry-from-day-one/master.md.
+
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
 - **a-new-project-starts-instrumented (closed 2026-10-17)** — a scaffolded project reports to the local daemon from its first run, in its code repo, named, with project and environment on every span; it writes signals from a helper it owns; init and the skills say true things. Open from its audit: a declined telemetry recommendation counts only when named `telemetry`, Node/Python/browser still need one hand-wired line, several rows are narrower than their clause; `day-monitor` e2e A24 still waits for "1 violation" where `promises status` says "1 break" (trunk). See [archive](planning/archive/a-new-project-starts-instrumented/).
+- **plan-page-promise-health (closed 2026-10-17)** — a plan's page and brief page colour each promise by its health from `planPromiseHealth`, the nav's red dot reads the same worktree promises, and the pages are tested as drawn. Open: eleven audit findings not taken (a known-broken state promise draws amber; see its `audit.md`). See [archive](planning/archive/plan-page-promise-health/).
+- **daemon-found-not-guessed (closed 2026-10-17)** — one telemetry daemon per machine on its stored address (`indusk telemetry address`: 24318 traces, 24319 logs, 24316 interface, 24317 MCP), found from what runs when its record is lost, never a second; each clause reports itself as a span. An application that sent to 4318 needs the stored address. Open: the extension manifest's health checks, 2,663 dead test entries in the telemetry project registry. See [archive](planning/archive/daemon-found-not-guessed/).
 - **impl-tasks-are-instructions (closed 2026-10-17)** — a task in a new impl reads as an instruction and a verification item as what must hold; a whole-repo gone test guards the old wording. See [archive](planning/archive/impl-tasks-are-instructions/).
 - **daemon-found-not-guessed (closed 2026-10-17)** — one telemetry daemon per machine on its stored address (`indusk telemetry address`: 24318 traces, 24319 logs, 24316 interface, 24317 MCP), found from what runs when its record is lost, never a second; each clause reports itself as a span. An application that sent to 4318 needs the stored address. Open: the extension manifest's health checks, 2,663 dead test entries in the telemetry project registry, and the plan page reading a promise's registry state instead of its health (a bugfix plan). See [archive](planning/archive/daemon-found-not-guessed/).
 - **plans-are-promises (closed 2026-10-16)** — a promise can be stated as clauses (`clauses: required` in a brief, `declare --clause`, `clause:` rows) and a plan closes per clause; accepted and landed by a person next. Open: a promise of only resting clauses cannot close, `change`/`replace` carry no clauses, `indusk plans start` fails under `init --local`. See [archive](planning/archive/plans-are-promises/).
@@ -65,6 +69,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **admin-plan-authoring (closed, 2026-10-06)** — the admin plans, builds unattended to review, shows the evidence and releases on acceptance, through the developer's own `claude` and `indusk plans start | approve | accept | land | next | review`; falsification closed a DNS-rebinding hole. **Open**: U3, the smoke check of the published package right after `pnpm release` (New plan → Build → Accept → `plans land` in a scratch project), result recorded here. Follow-on draft: `bookkeeping-lives-where-it-is-read`. See [archive](planning/archive/admin-plan-authoring/).
 - **day-always-on-deploy (2026-10-04)** — the always-on server deployed on Fly (`indusk-always-on`) and smoked, idle hour passed; three server bugs found and fixed on the way (1.58.2–1.58.4), four more from falsification bumped as 1.58.5 ([archive](planning/archive/day-always-on-deploy/)).
 - **storybook-components (closed, 2026-10-12)** — the admin's nineteen components are each one file with a story per state, approved as snapshots that also bind their stylesheets; mockups compose them by name, a changed component reopens its mockups, and `components.json` is the catalog to read before writing a component. The cockpit does not yet match its mockups (U1), which is carried to mockup-matching. See the [archive](planning/archive/storybook-components/).
+- **mockups-draw-components-as-stories (closed, 2026-10-17)** — a component in a mockup draws as its story does (element resets scoped to components, a mockup's own styles to its page), checked at every device; approvals bind the element rules. storybook-components' Maintenance phases now verify and close the two 1.71.0 incidents. See the [archive](planning/archive/mockups-draw-components-as-stories/).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
@@ -3242,5 +3247,24 @@ Next: Build Phase 1 (rewrite planner step 7, templates, shipped planning rules, 
 ### Cursor
 
 Next: Build Phase 1 of the impl — `componentReset` in `apps/indusk-mcp/src/lib/looks/component-styles.ts`, `_reset.css` written by `indusk looks stories`, mockup and story documents loading it. The browser checks need `pnpm --filter @infinitedusky/indusk-mcp build` before they load.
+
+---
+
+## Session f7a02150 — a-new-project-starts-instrumented — Test Phase 1
+
+**Session ID**: f7a02150-cfec-48ec-ad99-33924492d061
+**Last updated**: 2026-10-17T19:09:53.661Z
+
+### In Flight
+
+Plan a-new-project-starts-instrumented (worktree dusk-worktrees/a-new-project-starts-instrumented, branch plan/a-new-project-starts-instrumented) is at Test Phase 1 with its tests red: 14 rows written and red on their own assertions, the browser-trace and vendor-free guards green, 8 rows deferred in the register. Register reviewed with Sandy 2026-10-17: the span reader gains a clause field in Build Phase 2 (new item there).
+
+### Open Questions
+
+Two guesses to confirm in Build Phase 1: the placement test adds a src/ folder before update scaffolds; the declined-telemetry test assumes the recommendation is named `telemetry`.
+
+### Cursor
+
+Next: Build Phase 1 (tier strong), the scaffold per code repo.
 
 ---

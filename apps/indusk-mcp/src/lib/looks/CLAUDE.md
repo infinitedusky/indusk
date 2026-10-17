@@ -85,3 +85,17 @@ pointer; the pointer holds the story.
   `reuse-run.ts` plans a run's reuse and keeps what held (around `reuse.ts`'s
   rule), `verdict.ts` judges, and `check.ts` is the run (`checkApp`, the
   targets, `judgeLook`); `check.ts` re-exports the names tests import.
+- **A mockup and a story frame draw under `components/_reset.css`**: the app's
+  element rules (no class, no marker) from `componentReset`, each selector under
+  `:where([data-component], [data-component] *)`, so they reach only components;
+  `_base.css` holds `body`; neither is in `componentsHash`. The inverse holds for
+  a mockup's own `<style>`: `pageOnly` scopes it off placed components (a
+  selector naming the marker places one) but not off the components the mockup
+  declares new (`indusk-new-components`), whose only look is its styles, and `splitVariants` loads every
+  component's variant rules after all plain ones. An approval is bound by one
+  rule: `bindingOf` writes the foundation, declarations and element rules
+  (`baseRulesHash`), `boundToNow` reads them for the approval, the look check's
+  `heldTo` and `looks status` alike — a new binding goes in both; an entry
+  without the rules hash binds none. Guarded by `component-styles.test.ts`,
+  `overview.test.ts`, `approvals.test.ts` and `composition.contract.test.ts` —
+  see `/reference/cli/looks`

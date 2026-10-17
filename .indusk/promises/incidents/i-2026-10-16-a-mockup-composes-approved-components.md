@@ -2,7 +2,7 @@
 id: i-2026-10-16-a-mockup-composes-approved-components
 promise: a-mockup-composes-approved-components
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -10,6 +10,7 @@ tests:
   - "apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts > A18 — each story opens on the Looks page at its component's size, and at each device's width on request, served by the admin > A18 every story of the admin is framed to its component, and takes each reference device's width when chosen"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T20:25:59Z'
 ---
 
 ## Symptom
@@ -1208,8 +1209,8 @@ Commits since the last green slow run (c804aaf) touching `apps`, `packages`, `ex
 
 ## Root cause
 
-_Unwritten — a person writes this._
+The story-frame check (A18, `looks-components.contract.test.ts`) had gone stale, not the promise: it ran the admin's 113 stories under `next dev` at about 11 s each (1 192 s measured), past its 580 s limit, so it timed out before reaching a verdict. The composition rules the promise names (`compose.ts`, `lint-components.ts`) were not implicated; their tests (A7–A10, A32) stayed green.
 
 ## Fix
 
-_Not yet fixed._
+742861018 (A18 reads stories from a built admin, not `next dev`) and 29b156c3e (A18's limit raised to 1 800 s, no assertion changed), both landed. Proven 2026-10-17 on main (d435f127d): A18 passed (1 665 s).

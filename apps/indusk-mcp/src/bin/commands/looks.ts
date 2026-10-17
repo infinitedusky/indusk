@@ -48,8 +48,8 @@ export async function looksLint(projectRoot: string, appName: string): Promise<v
 /**
  * `<screen>.<state>  approved|proposed  …` — the status grammar
  * `looks-cli.test.ts` reads. A proposed mockup is held to its last approved
- * version only while that version's foundation and declarations are the
- * current ones (`boundToNow`); otherwise the line says nothing is held.
+ * version only while that version's foundation, declarations and element rules
+ * are the current ones (`boundToNow`); otherwise the line says nothing is held.
  */
 function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 	if (a.state === "approved") return `${mockup.name}  approved  by ${a.entry.by} at ${a.entry.at}`;
@@ -64,7 +64,7 @@ function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 			: "";
 		return boundToNow(app, a.reference)
 			? `${mockup.name}  proposed  ${changed}held to ${last}`
-			: `${mockup.name}  proposed  ${changed}last approved ${last} on another foundation or declarations — nothing held`;
+			: `${mockup.name}  proposed  ${changed}last approved ${last} on another foundation, declarations or element rules — nothing held`;
 	}
 	return `${mockup.name}  proposed  never approved`;
 }
