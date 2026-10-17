@@ -149,6 +149,19 @@ export function liveOtlpEndpointSync(deps: ResolveDeps = {}): string | null {
 }
 
 /**
+ * The running daemon's OTLP/HTTP logs endpoint (its collector's port), or null
+ * when none is running or the finder could not read that port from a socket.
+ * The evaluator's log records go here, never to the traces port.
+ */
+export function liveLogsEndpointSync(deps: ResolveDeps = {}): string | null {
+	const meta = resolveLocalDaemonSync(resolveOpts("evaluator", deps));
+	if (meta === null) return null;
+	const stored = (deps.reads ?? realDaemonReads(deps.home ?? induskHome())).address();
+	const port = meta.logsOtlpPort > 0 ? meta.logsOtlpPort : (stored?.logs ?? 0);
+	return port > 0 ? `http://localhost:${port}` : null;
+}
+
+/**
  * Whether the daemon runs, judged by what its recorded processes are now (their
  * command lines), never by a port answering. A slow port is a running daemon;
  * a record whose processes are gone reads not running and stays where it is.
