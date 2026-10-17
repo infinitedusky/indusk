@@ -12,7 +12,7 @@ gate_policy: ask
 falsification: skipped
 falsification_reason: "Only instruction text and the tests that read it changed; no code path to break."
 cleanup: skipped
-cleanup_reason: "Four prose files and two test files; nothing to decompose."
+cleanup_reason: "One small test helper duplicated across two files; left as is (Sandy)."
 approved_brief: "68e5c8933f4f0c3d3c62ba16ecb0537a828ef0a60d5cdfd59f16450e51517ea8"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-17T17:44:15.988Z"
