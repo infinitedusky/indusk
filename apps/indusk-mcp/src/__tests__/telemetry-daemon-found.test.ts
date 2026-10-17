@@ -2,7 +2,7 @@
 // promise: the-daemon-readers-follow-is-the-one-running
 import { describe, expect, it } from "vitest";
 import { listeningFromProc } from "../lib/telemetry/daemon-reads.js";
-import { findDaemon } from "../lib/telemetry/daemon-state.js";
+import { describeFinding, findDaemon } from "../lib/telemetry/daemon-state.js";
 import { BLOCK, collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
 
 /**
@@ -134,5 +134,16 @@ describe("A10 — a lost daemon is found", () => {
 		});
 		expect(await findDaemon(reads, HOME, "status")).toBeNull();
 		expect(reads.written).toEqual([]);
+	});
+
+	it("says what status prints about a finding, and nothing for a command whose create lost", async () => {
+		const mine = fakeReads({
+			record: null,
+			processes: [jaegerCmd(43599, HOME), collectorCmd(43600, HOME)],
+			listening: { 43599: [4318, 16686], 43600: [] },
+		});
+		const found = await findDaemon(mine, HOME, "status");
+		expect(found && describeFinding(found)).toContain("written again; ports not read: mcp, logs");
+		expect(found && describeFinding({ ...found, finder: false })).toBeNull();
 	});
 });

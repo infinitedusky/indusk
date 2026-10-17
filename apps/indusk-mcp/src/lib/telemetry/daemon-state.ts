@@ -360,6 +360,17 @@ function locateDaemon(
 	};
 }
 
+/**
+ * What a command says about a finding, or `null` when it was not the finder:
+ * the command whose create lost read another's record and has nothing to add.
+ */
+export function describeFinding(found: Found): string | null {
+	if (!found.finder) return null;
+	const unread =
+		found.unknownRoles.length > 0 ? `; ports not read: ${found.unknownRoles.join(", ")}` : "";
+	return `  record was missing: found from the process list and its sockets, written again${unread}`;
+}
+
 /** Under the lock: writes the record when no command has, or reads back the one that did. */
 function recordFound(
 	reads: DaemonReads,

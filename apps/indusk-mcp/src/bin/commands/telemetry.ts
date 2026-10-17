@@ -7,7 +7,12 @@ import {
 	daemonStop,
 } from "../../lib/telemetry/daemon.js";
 import { realDaemonReads } from "../../lib/telemetry/daemon-reads.js";
-import { daemonState, findDaemon, renderStatus } from "../../lib/telemetry/daemon-state.js";
+import {
+	daemonState,
+	describeFinding,
+	findDaemon,
+	renderStatus,
+} from "../../lib/telemetry/daemon-state.js";
 import { deregisterProject, readRegistry, registerProject } from "../../lib/telemetry/registry.js";
 import { induskHome, portAnswers, resolveLocalDaemonHere } from "../../lib/telemetry/status.js";
 
@@ -222,11 +227,7 @@ export async function telemetryStatus(): Promise<void> {
 		const found = await findDaemon(reads, home, "status");
 		if (found !== null) {
 			state = daemonState(reads, home);
-			const unread =
-				found.unknownRoles.length > 0 ? `; ports not read: ${found.unknownRoles.join(", ")}` : "";
-			finding = found.finder
-				? `  record was missing: found from the process list and its sockets, written again${unread}`
-				: null;
+			finding = describeFinding(found);
 		}
 	}
 	const answers =
