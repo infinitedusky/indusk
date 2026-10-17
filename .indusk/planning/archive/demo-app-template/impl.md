@@ -11,7 +11,7 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
-accepted: 2026-10-07T20:22:49.303Z
+accepted: 2026-10-17T02:19:00.106Z
 accepted_by: person
 ---
 
@@ -56,8 +56,8 @@ A stranger runs one command and gets the seat-holds example running, its promise
 | A8 | The whole break in the admin, from opening the example to the promise broken with its span, under two minutes; with the switch off, still broken | Build Phase 4 | Build Phase 4 | passing | live check | a live check of the break and the brief's second expectation, recorded in Build Phase 4; its promise is proven by A6 and A7 | manual: recorded in Build Phase 4 |
 | A9 | The everyday suite still never starts the example, the telemetry daemon or a browser; the guard scans the example's tests too | Build Phase 1 | Build Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | passing | smoke | the example's own deploy promise, the-deployed-demo-page-answers, in its own registry (moved there at Build Phase 4: its sites are the example's Dockerfile and fly.toml, and a copied example carries only its own tokens) | examples/seat-holds/scripts/smoke-deployed.mjs |
-| A11 | the-demo-app-starts-with-its-promise-holding holds again after i-2026-10-16-the-demo-app-starts-with-its-promise-holding: the test that reproduces it, named by its root cause, passes | Build Phase 5 | Build Phase 5 | planned | unit | promise: the-demo-app-starts-with-its-promise-holding |  |
-| A12 | the-demo-break-is-caught-locally holds again after i-2026-10-16-the-demo-break-is-caught-locally: the test that reproduces it, named by its root cause, passes | Build Phase 6 | Build Phase 6 | planned | unit | promise: the-demo-break-is-caught-locally |  |
+| A11 | the-demo-app-starts-with-its-promise-holding holds again after i-2026-10-16-the-demo-app-starts-with-its-promise-holding: the test that reproduces it, named by its root cause, passes | Build Phase 5 | Build Phase 5 | passing | contract | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
+| A12 | the-demo-break-is-caught-locally holds again after i-2026-10-16-the-demo-break-is-caught-locally: the test that reproduces it, named by its root cause, passes | Build Phase 6 | Build Phase 6 | passing | contract | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 
 ## Checklist
 
@@ -231,34 +231,34 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 ### Build Phase 5: Maintenance — i-2026-10-16-the-demo-app-starts-with-its-promise-holding
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-the-demo-app-starts-with-its-promise-holding.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-the-demo-app-starts-with-its-promise-holding.md`)
+- [x] Fix: a code site, a widened test, or a revised promise
 
 #### Build Phase 5 Verification
 
-- [ ] A11: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A11: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
 
 #### Build Phase 5 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — none changed: the test now reads the words one-promise-language set
 
 #### Build Phase 5 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section
 
 ### Build Phase 6: Maintenance — i-2026-10-16-the-demo-break-is-caught-locally
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-the-demo-break-is-caught-locally.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-the-demo-break-is-caught-locally.md`)
+- [x] Fix: a code site, a widened test, or a revised promise
 
 #### Build Phase 6 Verification
 
-- [ ] A12: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A12: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
 
 #### Build Phase 6 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — none changed: the test now reads the words one-promise-language set
 
 #### Build Phase 6 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section

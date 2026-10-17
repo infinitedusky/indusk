@@ -2,7 +2,7 @@
 name: the-demo-break-is-caught-locally
 kind: state
 lifetime: holds
-state: known-broken
+state: enforced
 domain: admin
 owner: demo-app-template
 sites:
