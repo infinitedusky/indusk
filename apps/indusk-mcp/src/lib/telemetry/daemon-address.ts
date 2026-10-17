@@ -129,12 +129,14 @@ export type ChooseResult =
 	| { kind: "refuse"; holders: PortHolder[] };
 
 /**
- * Chooses the address by the one rule. A block port that is free, or held by
- * this home's own daemon, is kept. One held by a process that is not InDusk's
- * is replaced by the port this home's running daemon already holds for that
- * role, else the next of `spare` (free ports the caller picked), and the
- * holder is recorded. One held by another home's InDusk daemon refuses, as
- * does a stranger when no spare port is left.
+ * Chooses the address by the one rule. A role the running daemon of this home
+ * already holds a port for (`ownPorts`) keeps that port, so the address says
+ * where the daemon is; a stranger on the block port is recorded as the holder.
+ * Otherwise a block port that is free, or held by this home's own daemon, is
+ * kept; one held by a process that is not InDusk's is replaced by the next of
+ * `spare` (free ports the caller picked), and the holder is recorded. One held
+ * by another home's InDusk daemon refuses, as does a stranger when no spare
+ * port is left.
  */
 export function chooseAddress(
 	holders: Record<number, Holder | null>,
@@ -149,22 +151,28 @@ export function chooseAddress(
 	for (const role of ADDRESS_ROLES) {
 		const blockPort = PORT_BLOCK[role];
 		const holder = holders[blockPort] ?? null;
-		if (holder === null) {
+		const proc = holder === null ? null : daemonProcessOf(holder.command);
+		const held = holder === null || (proc !== null && isOwn(proc, home)) ? null : holder;
+		const kept = ownPorts[role];
+		if (kept !== undefined && !(held !== null && proc !== null)) {
+			// the running daemon already holds this role's port: the address says so
+			ports[role] = kept;
+			if (held !== null) {
+				picked.push({ role, blockPort, holder: `${held.pid} ${held.command}` });
+			}
+			continue;
+		}
+		if (held === null) {
 			ports[role] = blockPort;
 			continue;
 		}
-		const proc = daemonProcessOf(holder.command);
-		if (proc !== null && isOwn(proc, home)) {
-			ports[role] = blockPort;
-			continue;
-		}
-		const replacement = proc === null ? (ownPorts[role] ?? free.shift()) : undefined;
+		const replacement = proc === null ? free.shift() : undefined;
 		if (replacement === undefined) {
-			refused.push({ role, port: blockPort, ...holder });
+			refused.push({ role, port: blockPort, ...held });
 			continue;
 		}
 		ports[role] = replacement;
-		picked.push({ role, blockPort, holder: `${holder.pid} ${holder.command}` });
+		picked.push({ role, blockPort, holder: `${held.pid} ${held.command}` });
 	}
 	if (refused.length > 0) return { kind: "refuse", holders: refused };
 	return { kind: "chosen", address: { ...(ports as Ports), picked } };
@@ -210,7 +218,7 @@ export type ResetResult =
 	| { ok: false; message: string };
 
 /** The ports this home's running daemon holds, by role, read from its record. */
-function runningDaemonPorts(reads: DaemonReads, home: string): Partial<Ports> {
+export function runningDaemonPorts(reads: DaemonReads, home: string): Partial<Ports> {
 	const meta = reads.record();
 	if (meta === null) return {};
 	const alive = reads.processes().some((row) => {

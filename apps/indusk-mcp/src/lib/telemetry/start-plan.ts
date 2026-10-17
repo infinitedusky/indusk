@@ -9,6 +9,7 @@ import {
 	portsOf,
 	portsOfRecord,
 	ROLE_LABEL,
+	runningDaemonPorts,
 	type StoredAddress,
 } from "./daemon-address.js";
 import { type Candidate, candidatesOf, type Found, takeOverLocked } from "./daemon-find.js";
@@ -59,6 +60,8 @@ export function startPlan(
 		unreadable?: string | null;
 		given?: Partial<Ports>;
 		spare?: number[];
+		/** The ports this home's running daemon holds when the address is lost with a record's Jaeger alive. */
+		running?: Partial<Ports>;
 	},
 ): StartPlan {
 	if (state.kind === "running") return { kind: "running" };
@@ -79,7 +82,7 @@ export function startPlan(
 		}
 		const strays = candidates.filter((c) => c !== taken).flatMap(pidsOf);
 		if (!real || stored !== null) return { kind: "takeover", tracesPort: taken.tracesPort, strays };
-		const chosen = chooseAddress(holders, {}, home, opts.spare ?? []);
+		const chosen = chooseAddress(holders, taken.ports ?? {}, home, opts.spare ?? []);
 		return {
 			kind: "takeover",
 			tracesPort: taken.tracesPort,
@@ -101,7 +104,7 @@ export function startPlan(
 		const conflicts = heldOf(ports, holders);
 		return conflicts.length > 0 ? { kind: "refuse", holders: conflicts } : { kind: "start", ports };
 	}
-	const chosen = chooseAddress(holders, {}, home, opts.spare ?? []);
+	const chosen = chooseAddress(holders, opts.running ?? {}, home, opts.spare ?? []);
 	if (chosen.kind === "refuse") return { kind: "refuse", holders: chosen.holders };
 	return { kind: "start", ports: portsOf(chosen.address), store: chosen.address };
 }
@@ -244,6 +247,7 @@ export async function ensureDaemon(
 			unreadable,
 			given,
 			spare: opts.spare,
+			running: real && address === null ? runningDaemonPorts(reads, home) : undefined,
 		});
 		switch (plan.kind) {
 			case "running":

@@ -1,4 +1,4 @@
-import { JAEGER_DEFAULT_PORTS, type StoredAddress } from "./daemon-address.js";
+import { JAEGER_DEFAULT_PORTS, type Ports, type StoredAddress } from "./daemon-address.js";
 import {
 	type DaemonProcess,
 	daemonProcessOf,
@@ -200,6 +200,23 @@ export interface Candidate {
 	otelcolPid: number;
 	/** The traces port the pair holds, when it could be read. */
 	tracesPort?: number;
+	/** Every port the pair holds, by role, as far as they could be read. */
+	ports?: Partial<Ports>;
+}
+
+/** The ports a labelled pair holds, by the address's roles; a role no socket named is left out. */
+function portsHeld(labelled: RenderedPorts): Partial<Ports> {
+	const held: Partial<Ports> = {};
+	for (const [role, field] of [
+		["traces", "otlpPort"],
+		["ui", "uiPort"],
+		["mcp", "mcpPort"],
+		["logs", "logsOtlpPort"],
+	] as const) {
+		const port = labelled[field];
+		if (port !== undefined) held[role] = port;
+	}
+	return held;
 }
 
 /** The pairs of this home's daemon processes running with no record to name them. */
@@ -208,6 +225,7 @@ export function candidatesOf(reads: DaemonReads, home: string): Candidate[] {
 		jaegerPid: p.jaeger.row.pid,
 		otelcolPid: p.otelcol.row.pid,
 		tracesPort: p.ports.otlpPort,
+		ports: portsHeld(p.ports),
 	}));
 }
 
