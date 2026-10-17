@@ -2,7 +2,7 @@
 id: i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief
 promise: a-plan-page-shows-the-parts-of-its-brief
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -11,6 +11,7 @@ tests:
   - "apps/indusk-admin/src/__tests__/plan-parts.contract.test.ts > A16 — a look drawn while the page is open appears there > A16 a look drawn while the page is open appears there at each device"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:17:26Z'
 ---
 
 ## Symptom
