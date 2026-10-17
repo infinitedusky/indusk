@@ -104,7 +104,7 @@ the wording until they pass.
 
 #### Test Phase 1 Document
 
-- [ ] Note in the test plan that the tests read instructions as text.
+- [x] Note in the test plan that the tests read instructions as text.
   <details><summary>Technical</summary>
 
   Already in `test-plan.md` Purpose; confirm it still matches the tests written.
