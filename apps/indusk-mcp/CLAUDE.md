@@ -175,6 +175,13 @@ pointer; the pointer holds the story.
   `telemetry-readers-follow.test.ts`.
   Code that decides about the daemon takes `DaemonReads`. — guarded by
   `telemetry-daemon-state.test.ts` and `telemetry-test-homes.test.ts`.
+- **The real home's daemon runs on the address in `<home>/telemetry-address.json`**,
+  chosen once (`PORT_BLOCK` 24316-24319, or a port picked once for a block port held at
+  first setup) and never moved; no code names a daemon port but `daemon-address.ts`; a
+  stored port later held by a stranger is refused by name; port options are accepted only
+  in a temporary home; every start goes through `ensureDaemon`; `indusk telemetry
+  address` is how anything else learns it. — guarded by `port-guard.test.ts`,
+  `telemetry-start-plan.test.ts` and `telemetry-address.test.ts`.
 - **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
   every Fly call goes through `FlyCli`, a failed read is refused, never read
   as empty. — see `/reference/cli/server`
@@ -191,8 +198,9 @@ pointer; the pointer holds the story.
 - Find a promise with `findPromise` (`lib/promises/registry.ts`; name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `lib/promises/clause-rules.ts`.
 - **`.mcp.json` is per machine and untracked** (`.gitignore` carries it): `indusk update`
   writes one naming the `indusk` server when a checkout has none and never touches one
-  that exists (`lib/mcp-config.ts`); the daemon's sync edits only the local copy's
-  `jaeger` port. Pulling the commit that untracked it deletes the file from a clone's
+  that exists (`lib/mcp-config.ts`); `register` writes only its own project's
+  `jaeger` entry, at the stored MCP port, and only when it differs; nothing re-points
+  another project's entry. Pulling the commit that untracked it deletes the file from a clone's
   working tree once — run `indusk update`. A test of `update` pins
   `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`: without it `update` on a project lacking
   `local-telemetry` starts a real daemon. A new plan worktree gets a copy of the
@@ -296,8 +304,9 @@ pointer; the pointer holds the story.
   `helpers/plan-worktree-fixture.ts`; trunk-guard —
   `helpers/trunk-guard-fixture.ts`; the throwing git runner —
   `helpers/test-git.ts`; MCP tools — `helpers/tool-call.ts`; the built CLI —
-  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon
-  (`helpers/local-jaeger.ts`); the evaluator runs against a fake `claude` +
+  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon in a
+  temporary home on ports the test gives it (`helpers/local-jaeger.ts`); a decision about
+  the daemon is a unit test over `helpers/daemon-reads.ts`; the evaluator runs against a fake `claude` +
   `helpers/otlp-capture.ts`; the always-on server via
   `helpers/always-on-server.ts`, a free port via `freeLoopbackPort`; Slack
   via `helpers/slack-capture.ts` — never a stub. — see `.indusk/planning/archive/workbench-trust-fixes/`
