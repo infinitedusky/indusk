@@ -218,7 +218,7 @@ rewords every place it names, so the change cannot be partial again.
   `apps/indusk-mcp/templates/workflows/{bugfix,refactor,feature}.md`.
 
   </details>
-- [ ] Reword the gate task placeholders in the planner, falsify and cleanup templates as instructions.
+- [x] Reword the gate task placeholders in the planner, falsify and cleanup templates as instructions.
   <details><summary>Technical</summary>
 
   OTel, Context and Document placeholders in `skills/planner.md`, `skills/falsify.md`, `skills/cleanup.md`.

@@ -94,7 +94,7 @@ When you've formed one or more specific hypotheses, **append a new phase to the 
 
 #### Phase N Context
 
-- [ ] {One plain sentence saying what the falsification taught that the project's instructions should now say}
+- [ ] {One plain instruction saying what to add to the project's instructions from what the falsification taught}
   <details><summary>Technical</summary>
 
   {The concrete CLAUDE.md edit and its tier.}
@@ -103,7 +103,7 @@ When you've formed one or more specific hypotheses, **append a new phase to the 
 
 #### Phase N Document
 
-- [ ] {One plain sentence saying which docs page changes}
+- [ ] {One plain instruction saying which docs page to change}
   <details><summary>Technical</summary>
 
   {The page and the edit.}

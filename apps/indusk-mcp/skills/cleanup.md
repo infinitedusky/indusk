@@ -118,7 +118,7 @@ When you've formed one or more recommendations, **append a new phase to the plan
 
 #### Phase N Context
 
-- [ ] {One plain sentence saying what the project's instructions now say about the new structure}
+- [ ] {One plain instruction saying what to add to the project's instructions about the new structure}
   <details><summary>Technical</summary>
 
   {The concrete CLAUDE.md edit and its tier.}
@@ -127,7 +127,7 @@ When you've formed one or more recommendations, **append a new phase to the plan
 
 #### Phase N Document
 
-- [ ] {One plain sentence saying which docs page changes if the public surface did}
+- [ ] {One plain instruction saying which docs page to change if the public surface did}
   <details><summary>Technical</summary>
 
   {The page and the edit.}

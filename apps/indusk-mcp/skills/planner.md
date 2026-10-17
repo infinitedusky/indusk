@@ -670,7 +670,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 {OPTIONAL: #### Build Phase 1 OTel — include ONLY if the project's `otel.role` in `.indusk/config.json` is unset or `"service"`. Skip the entire OTel block for projects with `otel.role: "library" | "tool" | "none"`. Use `shouldEmitOtelGate(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to decide.}
 
 #### Build Phase 1 OTel
-- [ ] {One plain sentence saying what is now observable.}
+- [ ] {One plain instruction saying what to instrument so it can be observed.}
   <details><summary>Technical</summary>
 
   {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
@@ -695,7 +695,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 {- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})}
 
 #### Build Phase 1 Context
-- [ ] {One plain sentence saying what changes about how the project works.}
+- [ ] {One plain instruction saying which rule to record about how the project works.}
   <details><summary>Technical</summary>
 
   {A rule this phase produces, naming its tier and destination — e.g., "guard: `<test>` carries `lesson: <name>`", "planning: …", "mcp: …", "current.md: …", "root (Conventions): … — always-on because …". An item aimed at the root must say why it must be always-on; one that cannot belongs at a lower tier (see the `/claude-md` tier table). Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
@@ -703,7 +703,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
   </details>
 
 #### Build Phase 1 Document
-- [ ] {One plain sentence saying what a reader can now find in the docs.}
+- [ ] {One plain instruction saying what to write or update in the docs.}
   <details><summary>Technical</summary>
 
   {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
