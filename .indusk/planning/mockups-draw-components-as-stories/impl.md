@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -58,6 +58,8 @@ release raised.
 | A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
 | A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | planned | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 
 ## Checklist
 
@@ -304,6 +306,64 @@ changed; and Sandy approves the changed `message.you` story.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`: mockups draw components with their stories' resets; Message wraps long text.
+
+  </details>
+
+### Build Phase 3: Falsification — approvals blind to the resets, centred stories never fitted
+
+**Tier**: med — the work step's default
+
+This phase tests two things the finished plan claims but nothing checks. First, the cockpit now draws every story and mockup under the app's element resets, but an approval is tied only to the component's own markup and stylesheet. A change to the app's element rules changes what every approved look shows without reopening any of them. Second, the frame-fitting reads a component's left margin as space around it, and a component centred by automatic margins has a margin that grows with the frame. Its frame never shrinks, and the story-frame check, which measures the same way, passes anyway. Once this phase closes, an approval reopens when what it was drawn under changes, and a centred story fits its frame.
+
+- [ ] An approval of a story or a mockup records the app's element rules it was drawn under, and reads proposed once they change.
+  <details><summary>Technical</summary>
+
+  Hypothesis: change `a { color: inherit }` in the app's compiled CSS → `_reset.css` changes and every snapshot draws differently in the cockpit, yet `storyApprovalOf` (keyed on `snapshotHash` + `stylesheetHash` + `boundToNow`'s foundation and declarations) and the mockup's `approvalOf` (`componentsHash`) still read approved. Build Phase 1's note on `componentsHash` rested on a false premise: `baseRulesHash` reopens a story's *look-check reuse* (`reuse.ts`), not its approval. Fix: `approve` records the catalog's `baseRulesHash` on story and mockup entries; `storyApprovalOf` and `approvalOf` compare it when the entry carries one — an entry without it is read as before (absence is a rule, not a migration; the brief does not ask for re-approval).
+
+  </details>
+- [ ] Build Phase 1's note on the reset and approvals says what is true.
+  <details><summary>Technical</summary>
+
+  Correct the note under Build Phase 1's cockpit item: the reset is bound into approvals through `baseRulesHash` on the entry, not through look-check reuse.
+
+  </details>
+- [ ] A component centred by automatic margins counts no margin as space before it when its frame is fitted.
+  <details><summary>Technical</summary>
+
+  Hypothesis: a story whose root is `mx-auto max-w-md` — `getComputedStyle(el).marginLeft` returns the *used* value, half the frame's spare width, so `leadingSpace` returns it and the fitted width is the frame's own; the frame stays at the widest device. A18 cannot see it: it computes `left + width + left`, which also equals the frame. Fix in `useFittedFrame.ts`'s `leadingSpace`: a margin whose computed value is `auto` (`el.computedStyleMap().get("margin-left")` is the keyword `auto`) counts as 0.
+
+  </details>
+- [ ] The components fixture has a story centred by automatic margins, and the story-frame test reads it.
+  <details><summary>Technical</summary>
+
+  Add a component to `apps/indusk-mcp/src/__tests__/fixtures/components-app` whose root is centred with `mx-auto` and a max width, with a story and a rendered snapshot; T2 opens it on the Looks page and asserts the frame's width is the component's width plus twice the container's content inset — not `left + width + left`.
+
+  </details>
+
+#### Build Phase 3 Verification
+
+- [ ] An approval reopens when the element rules it was drawn under change, and a centred story fits its frame — both failing before the fixes.
+  <details><summary>Technical</summary>
+
+  T1: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/approvals.test.ts`. T2: `cd apps/indusk-admin && node ../indusk-mcp/scripts/with-daemon-guard.js npx vitest run --config vitest.system.config.ts -t T2 "src/app/p/[project]/looks/looks-components.contract.test.ts"`.
+
+  </details>
+
+#### Build Phase 3 Context
+
+- [ ] The package's rules say an approval is bound to the element rules its look is drawn under.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the looks entries beside Build Phase 1's `_reset.css` line: a story or mockup approval records `baseRulesHash`; a change to the app's element rules reopens it.
+
+  </details>
+
+#### Build Phase 3 Document
+
+- [ ] The looks reference says a change to the app's element rules reopens approvals.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/cli/looks.md`, beside the `_reset.css` paragraph.
 
   </details>
 
