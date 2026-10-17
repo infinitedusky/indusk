@@ -7,6 +7,7 @@ import {
 	type PortHolder,
 	type Ports,
 	portsOf,
+	portsOfRecord,
 	ROLE_LABEL,
 	type StoredAddress,
 } from "./daemon-address.js";
@@ -358,11 +359,6 @@ export function restartPorts(state: DaemonState, home: string): Ports | null {
 	}
 	const meta = state.meta;
 	if (meta === null) return null;
-	const ports = {
-		traces: meta.otlpPort,
-		logs: meta.logsOtlpPort,
-		ui: meta.uiPort,
-		mcp: meta.mcpPort,
-	};
+	const ports = portsOfRecord(meta);
 	return ADDRESS_ROLES.every((role) => ports[role] > 0) ? ports : null;
 }

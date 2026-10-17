@@ -73,7 +73,9 @@ describe("A29 — the stored address is how anything learns the daemon's ports",
 			address: {
 				...PORT_BLOCK,
 				logs: 51234,
-				picked: [{ role: "logs", blockPort: 24319, holder: "99 /usr/bin/otelcol-contrib --config x.yaml" }],
+				picked: [
+					{ role: "logs", blockPort: 24319, holder: "99 /usr/bin/otelcol-contrib --config x.yaml" },
+				],
 			},
 		});
 	});
@@ -81,7 +83,10 @@ describe("A29 — the stored address is how anything learns the daemon's ports",
 	it("a block port held by another home's InDusk daemon is refused, never taken", () => {
 		const other = { pid: 8, command: jaegerCmd(8, "/home/other/.indusk").command };
 		const chosen = chooseAddress({ 24318: other }, {}, HOME, [51234]);
-		expect(chosen).toMatchObject({ kind: "refuse", holders: [{ role: "traces", port: 24318, pid: 8 }] });
+		expect(chosen).toMatchObject({
+			kind: "refuse",
+			holders: [{ role: "traces", port: 24318, pid: 8 }],
+		});
 	});
 
 	// A reader names no daemon port: it asks the stored address or the record.

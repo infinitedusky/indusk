@@ -2,7 +2,7 @@ import { statSync, utimesSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { markPromise } from "../promises/mark.js";
 import { type SpanEvent, sendWatcherSpan, watcherSpanBody } from "../promises/probe.js";
-import { ADDRESS_ROLES, ROLE_LABEL } from "./daemon-address.js";
+import { portDifferences, ROLE_LABEL } from "./daemon-address.js";
 import type { DaemonReads } from "./daemon-reads.js";
 import type { DaemonState, Found, OwnProcess, SelfTracing } from "./daemon-state.js";
 
@@ -119,17 +119,9 @@ function daemonAttributes(state: ReportState): Record<string, AttrValue> {
 /** Each stored port the daemon does not hold, with the port it holds instead. A port that could not be read (0) is not a difference. */
 function portsNotHeld(state: ReportState): string[] {
 	const { meta, address } = state;
-	if (meta === null || address === null) return [];
-	const held = {
-		traces: meta.otlpPort,
-		logs: meta.logsOtlpPort,
-		ui: meta.uiPort,
-		mcp: meta.mcpPort,
-	};
-	return ADDRESS_ROLES.flatMap((role) =>
-		held[role] > 0 && held[role] !== address[role]
-			? [`${ROLE_LABEL[role]} on ${held[role]}, expected ${address[role]}`]
-			: [],
+	if (meta === null) return [];
+	return portDifferences(meta, address).map(
+		(d) => `${ROLE_LABEL[d.role]} on ${d.held}, expected ${d.expected}`,
 	);
 }
 

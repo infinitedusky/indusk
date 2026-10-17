@@ -1,4 +1,10 @@
-import { JAEGER_DEFAULT_PORTS, ROLE_LABEL, type StoredAddress } from "./daemon-address.js";
+import {
+	type AddressRole,
+	JAEGER_DEFAULT_PORTS,
+	portDifferences,
+	ROLE_LABEL,
+	type StoredAddress,
+} from "./daemon-address.js";
 import {
 	type DaemonProcess,
 	daemonProcessOf,
@@ -114,21 +120,14 @@ export function daemonState(reads: DaemonReads, home: string): DaemonState {
 	};
 }
 
+/** The order status has always listed a record's differing ports in. */
+const STATUS_ORDER: readonly AddressRole[] = ["traces", "ui", "mcp", "logs"];
+
 /** Each port the record holds that is not the stored address's, said as `traces on 4318 (expected 24318)`. A port the finder could not read (0) is not a difference. */
 function portDifferencesOf(meta: DaemonMeta, address: StoredAddress | null): string[] {
-	if (address === null) return [];
-	return (
-		[
-			["traces", meta.otlpPort],
-			["ui", meta.uiPort],
-			["mcp", meta.mcpPort],
-			["logs", meta.logsOtlpPort],
-		] as const
-	).flatMap(([role, port]) =>
-		port > 0 && port !== address[role]
-			? [`${ROLE_LABEL[role]} on ${port} (expected ${address[role]})`]
-			: [],
-	);
+	return portDifferences(meta, address)
+		.sort((a, b) => STATUS_ORDER.indexOf(a.role) - STATUS_ORDER.indexOf(b.role))
+		.map((d) => `${ROLE_LABEL[d.role]} on ${d.held} (expected ${d.expected})`);
 }
 
 /** What one port answered when asked, and how long the asking waited. */

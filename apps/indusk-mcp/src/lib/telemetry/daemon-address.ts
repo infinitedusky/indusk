@@ -68,8 +68,8 @@ export function portsOf(address: Ports): Ports {
 }
 
 /** The four ports a record holds, by role. A port a finder could not read is 0. */
-export function portsOfRecord(_meta: DaemonMeta): Ports {
-	return { traces: 0, logs: 0, ui: 0, mcp: 0 };
+export function portsOfRecord(meta: DaemonMeta): Ports {
+	return { traces: meta.otlpPort, logs: meta.logsOtlpPort, ui: meta.uiPort, mcp: meta.mcpPort };
 }
 
 /** A port a record holds that is not the stored address's. */
@@ -80,8 +80,14 @@ export interface PortDifference {
 }
 
 /** Each port the record holds that is not the stored address's; a port read as 0 is no difference, no address gives none. */
-export function portDifferences(_meta: DaemonMeta, _address: Ports | null): PortDifference[] {
-	return [];
+export function portDifferences(meta: DaemonMeta, address: Ports | null): PortDifference[] {
+	if (address === null) return [];
+	const held = portsOfRecord(meta);
+	return ADDRESS_ROLES.flatMap((role) =>
+		held[role] > 0 && held[role] !== address[role]
+			? [{ role, held: held[role], expected: address[role] }]
+			: [],
+	);
 }
 
 export type AddressRead =
@@ -212,14 +218,10 @@ function runningDaemonPorts(reads: DaemonReads, home: string): Partial<Ports> {
 		return proc !== null && isOwn(proc, home) && row.pid === meta.jaegerPid;
 	});
 	if (!alive) return {};
+	const recorded = portsOfRecord(meta);
 	const held: Partial<Ports> = {};
-	for (const [role, port] of [
-		["traces", meta.otlpPort],
-		["logs", meta.logsOtlpPort],
-		["ui", meta.uiPort],
-		["mcp", meta.mcpPort],
-	] as const) {
-		if (port > 0) held[role] = port;
+	for (const role of ADDRESS_ROLES) {
+		if (recorded[role] > 0) held[role] = recorded[role];
 	}
 	return held;
 }
