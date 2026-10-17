@@ -151,7 +151,7 @@ This phase tests whether a promise with no signal can still look healthy on its 
 
 #### Build Phase 2 Context
 
-- [ ] The admin's context file says a promise only the plan's branch registers takes its health from the same rule.
+- [x] The admin's context file says a promise only the plan's branch registers takes its health from the same rule.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`, the plan-parts rule this plan's Build Phase 1 Context item extended: add "— a promise only the plan's checkout registers too, so no signal is never the enforced green".
@@ -160,7 +160,7 @@ This phase tests whether a promise with no signal can still look healthy on its 
 
 #### Build Phase 2 Document
 
-- [ ] The admin reference says a behaviour promise new on the plan's branch shows no signal until telemetry reports on it.
+- [x] The admin reference says a behaviour promise new on the plan's branch shows no signal until telemetry reports on it.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/overview.md`, the plan page's Promises part: one clause after the health sentence Build Phase 1 wrote.
