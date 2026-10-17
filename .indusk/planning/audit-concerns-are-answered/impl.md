@@ -9,9 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
-approved_brief: "222823c0ebcc766df0e76e22d499892f3f034719817bf22430ce904deaea59b1"
+approved_brief: "37fb8c344bcd9fd645863dc517edb7cf5430df3f1e7a383504d267298d829f3d"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-17T17:47:05.889Z"
+approved_at: "2026-10-17T18:21:12.860Z"
 ---
 
 # Audit concerns are answered by the plan's agent
