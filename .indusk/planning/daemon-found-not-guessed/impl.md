@@ -934,13 +934,15 @@ This phase makes the promise heard in the running system. Each part of the promi
   In `resolveLocal`'s probe path (`apps/indusk-mcp/src/lib/promises/sources.ts:306-311`): when resolved via the record, send a separate `indusk-telemetry` span (a-read-never-loses-the-daemon upheld, the reader's `indusk.project`) beside the `indusk-watcher` probe, throttled by the mtime of a stamp file in the home (`<home>/telemetry-read-report.<project>.stamp`) against an injected clock, 15 minutes. Author A9 in `telemetry-daemon-reports.test.ts`.
 
   </details>
-- [ ] This machine's daemon is restarted onto its stored address, and every registered project that named its old MCP port is pointed at the new one.
+- [x] This machine's daemon is restarted onto its stored address, and every registered project that named its old MCP port is pointed at the new one.
+  Note (2026-10-16): `telemetry restart` from this worktree's build moved jaeger 43599 / otelcol 43600 to jaeger 58972 (24316 interface, 24317 MCP, 24318 traces) and otelcol 58973 (24319 logs); nothing listens on 4318 or 16686; 18 projects' `.mcp.json` re-pointed to :24317. The binaries now run from this worktree's `node_modules`: restart from trunk after landing, before the worktree is removed.
   <details><summary>Technical</summary>
 
   `pnpm build` then `node apps/indusk-mcp/dist/bin/cli.js telemetry address` (the address chosen in Build Phase 3; 24318, 24319, 24316, 24317 if the block was free) and `node apps/indusk-mcp/dist/bin/cli.js telemetry restart`; expected: jaeger and otelcol with new process ids on the stored address, nothing left listening on 4318 or 16686, and `.mcp.json` entries that named `http://localhost:62843/mcp` now name the stored MCP URL (the restart re-points only those). The in-memory store is emptied by this restart, so every promise reads no signal until its next report. Check with `lsof -nP -iTCP:24316-24319 -sTCP:LISTEN` (or the stored ports, if any were picked). Anything on this machine that sent traces to 4318 now reaches nothing until it is given the stored address.
 
   </details>
-- [ ] Sandy has agreed that the live check sends one real broken report, and no promise watch runs while it does.
+- [x] Sandy has agreed that the live check sends one real broken report, and no promise watch runs while it does.
+  Note (2026-10-16): asked: "…That sends one real broken report for a-read-never-loses-the-daemon… Go ahead with both once the code is green?" — user: "Yes, both". `ps -axo command= | grep "promises watch"` empty before the run.
   <details><summary>Technical</summary>
 
   The ADR's first risk: moving the record aside sends a real broken report for `a-read-never-loses-the-daemon`; with no production source in this repository, a `promises watch` run inside the health window would open an incident and reopen this plan with a Maintenance phase. Confirm with Sandy, and check `ps -axo command= | grep "promises watch"` is empty before the run.
