@@ -1,7 +1,7 @@
 ---
 title: "A promise reads the same on its plan's page"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -164,6 +164,76 @@ This phase tests whether a promise with no signal can still look healthy on its 
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/overview.md`, the plan page's Promises part: one clause after the health sentence Build Phase 1 wrote.
+
+  </details>
+
+### Build Phase 3: Cleanup — one source for each health fact, one mock for the health read
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+This plan taught a plan's page to colour each promise by its health. Along the way three things were written twice across files: the dot colours copy the Promises page's chip colours by hand, the admin's health reader repeats a "skip promises the trunk already knows" filter the package's rule already applies, and six page tests each carry the same seven-line stand-in for the health read where a shared test helper already holds its siblings. Once this phase closes, each of those facts lives in one place and the page behaves exactly as it does now.
+
+- [ ] Give the Promises page's chip colours a dot colour for each health, and have the plan page's promise dots read it instead of keeping their own copy.
+  <details><summary>Technical</summary>
+
+  Add a `dot` field (`bg-bad`, `bg-ink-soft`, `bg-ok`, `bg-idle`, `bg-warn`, `bg-idle`) to each entry of `PROMISE_HEALTH_CHIP` in `apps/indusk-admin/src/components/bars/labels.ts`; delete `HEALTH_DOT` from `apps/indusk-admin/src/components/plan/PlanParts.tsx` and draw `PROMISE_HEALTH_CHIP[p.health].dot`. Basis: one source of truth across files — `HEALTH_DOT`'s own doc comment says it is "the colours of `PROMISE_HEALTH_CHIP`", a promise kept by a comment, so a chip colour change would leave the plan page's dots behind with nothing failing but A2. `DOT` (registry state) stays in `PlanParts.tsx`: it has no counterpart elsewhere.
+
+  </details>
+- [ ] Drop the admin health reader's own filter for promises the trunk already registers, and hand the package every promise the plan's checkout registers.
+  <details><summary>Technical</summary>
+
+  In `apps/indusk-admin/src/lib/plan-health.ts`, `readPlanHealth` builds `known` and filters `own.promises` by it; `planPromiseHealth` in `apps/indusk-mcp/src/lib/promises/health.ts` does the same skip (`if (known.has(p.name)) continue`). Pass `own?.promises ?? []` and delete the reader's `known`/`extra`, so the rule of which promise the trunk answers for lives only in the package, where the doc comment on `planPromiseHealth` states it. Behaviour unchanged; A4 holds it.
+
+  </details>
+- [ ] Move the six identical stand-ins for the plan page's health read into the shared cockpit test helper, beside the stand-ins for the other readers.
+  <details><summary>Technical</summary>
+
+  Add `planHealthMock()` returning `{ __esModule: true, readPlanHealth: async () => ({}) }` to `apps/indusk-admin/src/__tests__/helpers/cockpit-fixture.ts`, next to `planningReaderMock`/`promisesReaderMock`; replace the inline `vi.mock("@/lib/plan-health", …)` in `cockpit-phone.test.tsx` and `plan/[name]/{page,header,decision,master,workflows}.test.tsx` with `vi.mock("@/lib/plan-health", async () => (await import("@/__tests__/helpers/cockpit-fixture")).planHealthMock())`, keeping the one-line comment. Basis: rule of three (six copies) and the fixture's established idiom. The `@infinitedusky/indusk-mcp/plans/parts` stand-in beside it is also repeated but predates this plan and one of the six copies differs; left for its own change.
+
+  </details>
+- [ ] Review the package's health module, which is over the size threshold, and leave it as it is.
+  <details><summary>Technical</summary>
+
+  Reviewed `apps/indusk-mcp/src/lib/promises/health.ts` (572 lines, cap 400) — left as-is: this plan added the 25-line `planPromiseHealth`, which composes `alarmRead`, `healthRows` and `healthOf` and is what `redPlans` beside it now reads; moving it out would separate the nav's roll-up from the per-promise answer it is built on. Splitting the module's older reading and incident halves is not this plan's output.
+
+  </details>
+- [ ] Review the changelog, which is over the size threshold, and leave it as it is.
+  <details><summary>Technical</summary>
+
+  Reviewed `apps/docs/src/changelog.md` (1116 lines, cap 400) — left as-is: an append-only log; this plan added one Fixed line.
+
+  </details>
+- [ ] Review the remaining changed files, all under the threshold, and leave them as they are.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/plans/parts.ts` (an optional `health` option threaded through), `plan/[name]/page.tsx` and `brief/page.tsx` (one argument each — the two call sites are the same two lines, but each page already repeats the `readPlanParts` call around them; folding them belongs to whatever unifies the two pages' reads), and the two test files `plan-parts.test.tsx` and `plan-parts-health.test.ts` (each tests one side of the boundary; no shared fixture between the admin's browser project and the package's node tests).
+
+  </details>
+
+#### Build Phase 3 Verification
+
+- [ ] The plan page draws every promise in the same colour as before, the branch-only promise still reads no signal, and every page test still passes with the shared stand-in.
+  <details><summary>Technical</summary>
+
+  No row flips — structure-preserving refactor under A1–A4. `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/plan-parts.test.tsx && pnpm exec vitest related --run src/components/bars/labels.ts src/components/plan/PlanParts.tsx src/lib/plan-health.ts src/__tests__/helpers/cockpit-fixture.ts && pnpm exec tsc --noEmit`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plan-parts-health.test.ts`; `pnpm check`.
+
+  </details>
+
+#### Build Phase 3 Context
+
+- [ ] Nothing to add to the project's instructions: the change is internal and the rule the admin's context file states is unchanged.
+  <details><summary>Technical</summary>
+
+  (none — internal decomposition) `apps/indusk-admin/CLAUDE.md` already says a plan's promise dot is its health from the package's one rule; where the colour constant lives is not a rule.
+
+  </details>
+
+#### Build Phase 3 Document
+
+- [ ] Nothing to change in the docs: no page, command or behaviour a reader sees changes.
+  <details><summary>Technical</summary>
+
+  (none — internal decomposition) `apps/docs/src/reference/admin-ui/overview.md` describes colours, not where they are defined.
 
   </details>
 
