@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -367,12 +367,13 @@ This phase tests two things the finished plan claims but nothing checks. First, 
 
 #### Build Phase 3 Document
 
-- [ ] The looks reference says a change to the app's element rules reopens approvals.
+- [x] The looks reference says a change to the app's element rules reopens approvals.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`, beside the `_reset.css` paragraph.
 
   </details>
+  Note: `_reset.css` paragraph in `apps/docs/src/reference/cli/looks.md` now says an approval records `baseRulesHash` and a change reopens it.
 
 ## Files Affected
 
