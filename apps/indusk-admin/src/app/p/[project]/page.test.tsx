@@ -68,6 +68,10 @@ vi.mock("@/lib/promises-reader", () => ({
 
 // Observed health (day-monitor): the layout imports these for the sidebar's
 // red roll-up; the real module reaches Jaeger and the filesystem.
+// The layout reads the plans' worktrees' promises through the plan-health reader (node:fs); these pages show none.
+vi.mock("@/lib/plan-health", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).planHealthMock(),
+);
 vi.mock("@infinitedusky/indusk-mcp/promises/health", () => ({
   __esModule: true,
   readHealth: async () => ({ ok: false, unknownSince: null, where: "mock" }),

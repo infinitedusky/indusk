@@ -12,8 +12,58 @@ import {
   setUpProject,
   tearDownProject,
 } from "@/__tests__/helpers/looks-page";
+import PlanBriefPage from "@/app/p/[project]/plan/[name]/brief/page";
 import PlanPage from "@/app/p/[project]/plan/[name]/page";
 import { PlanParts } from "@/components/plan/PlanParts";
+
+/**
+ * The one read faked for A5: telemetry. `readHealth` answers one alarm read
+ * with a live break of `BROKEN`; everything between it and the chip — the
+ * pages' `readPlanHealth`, the package's `planPromiseHealth`, `readPlanParts`
+ * — is real. Other promises have no marks, so the rows above are unaffected.
+ */
+const BROKEN = "seats-held";
+vi.mock("@infinitedusky/indusk-mcp/promises/health", async (real) => {
+  const actual =
+    await real<typeof import("@infinitedusky/indusk-mcp/promises/health")>();
+  const at = new Date(Date.UTC(2026, 9, 17, 12));
+  return {
+    ...actual,
+    readHealth: async () => [
+      {
+        name: "local",
+        label: "local",
+        ok: true,
+        at: at.toISOString(),
+        marks: {
+          queryUrl: "http://fake",
+          since: at,
+          byPromise: new Map([
+            [
+              BROKEN,
+              {
+                violations: [
+                  {
+                    promise: BROKEN,
+                    outcome: "violated",
+                    traceId: "t1",
+                    spanId: "s1",
+                    service: "seat-holds",
+                    operation: "hold",
+                    at,
+                    symptom: "held twice",
+                    environment: "local",
+                  },
+                ],
+                truncated: false,
+              },
+            ],
+          ]),
+        },
+      },
+    ],
+  };
+});
 
 // LiveRefresh, drawn on the plan page, reads the app router, which a markup render has not mounted.
 vi.mock("next/navigation", () => ({
@@ -225,5 +275,38 @@ describe("A2 — each health reads on the plan's page as on the Promises page", 
     expect(dotOf(html, "known-broken-one"), "known broken").toBe("bg-warn");
     expect(dotOf(html, "retired-one"), "retired").toBe("bg-idle");
     expect(dotOf(html, "a-state-promise"), "a state promise").toBe("bg-ok");
+  });
+});
+
+const BROKEN_PROMISE = `---
+name: ${BROKEN}
+kind: behaviour
+lifetime: holds
+state: enforced
+domain: demo
+owner: ${PLAN}
+sites: []
+tests: []
+incidents: []
+---
+
+A seat is never held by two players at once.
+`;
+
+describe("A5 — a broken promise is the broken colour on the plan page and the brief page as drawn", () => {
+  // clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken
+  it("A5 the pages' own health read draws a live break bg-bad on both pages", async () => {
+    const promises = join(root, ".indusk", "promises");
+    mkdirSync(promises, { recursive: true });
+    writeFileSync(join(promises, `${BROKEN}.md`), BROKEN_PROMISE);
+    const params = Promise.resolve({ project: PROJECT, name: PLAN });
+    const plan = renderToStaticMarkup(
+      (await PlanPage({ params })) as React.ReactElement,
+    );
+    expect(dotOf(plan, BROKEN), "the plan page").toBe("bg-bad");
+    const brief = renderToStaticMarkup(
+      (await PlanBriefPage({ params })) as React.ReactElement,
+    );
+    expect(dotOf(brief, BROKEN), "the brief page").toBe("bg-bad");
   });
 });

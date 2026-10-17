@@ -1,7 +1,7 @@
 ---
 title: "A promise reads the same on its plan's page"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -45,9 +45,9 @@ Make true the [brief](brief.md)'s promise `a-promise-reads-the-same-on-its-plan-
 | A2 | On a plan's page, a promise that broke and was fixed, one seen holding, one with no signal, one known broken and a state promise each show the colour the Promises page gives them, and the enforced behaviour promise nothing has reported on is grey, not green | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
 | A3 | For a project with a production source holding and a local break, the plan's parts read each promise's health exactly as the nav's red dot does, from the alarm source, so a laptop break alone does not turn the plan page red | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/no-rule-of-its-own | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
 | A4 | On a plan's page, an enforced behaviour promise that the plan's checkout registers and the trunk's registry does not (added, or changed to a behaviour promise, on the plan's branch and confirmed there) reads no signal, not green; today the health is computed over the trunk's registry alone, so it has no entry and falls back to the enforced state's green | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
-| A5 | On a real project, a plan whose enforced behaviour promise has a live break in the alarm source shows that promise's dot in the broken colour on both its plan page and its brief page, with the health reaching the pages through their own reader and only the telemetry read faked | Build Phase 4 | Build Phase 4 | pending | unit | clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
-| A6 | On a plan's page, a promise that the trunk registers as a state promise and the plan's branch changes to an enforced behaviour promise reads no signal, not green; today the trunk's name alone skips it, so it has no health and falls back to the enforced green | Build Phase 4 | Build Phase 4 | pending | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
-| A7 | A behaviour promise only a plan's branch registers, broken in the alarm source, turns the nav's red dot on for that plan, as it is red on the plan's page; today the nav reads the trunk's registry alone, so the plan page is red while the nav stays clear | Build Phase 4 | Build Phase 4 | pending | unit | clause: a-promise-reads-the-same-on-its-plan-page/no-rule-of-its-own | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
+| A5 | On a real project, a plan whose enforced behaviour promise has a live break in the alarm source shows that promise's dot in the broken colour on both its plan page and its brief page, with the health reaching the pages through their own reader and only the telemetry read faked | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
+| A6 | On a plan's page, a promise that the trunk registers as a state promise and the plan's branch changes to an enforced behaviour promise reads no signal, not green; today the trunk's name alone skips it, so it has no health and falls back to the enforced green | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
+| A7 | A behaviour promise only a plan's branch registers, broken in the alarm source, turns the nav's red dot on for that plan, as it is red on the plan's page; today the nav reads the trunk's registry alone, so the plan page is red while the nav stays clear | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/no-rule-of-its-own | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
 
 ## Checklist
 
@@ -247,29 +247,29 @@ This plan taught a plan's page to colour each promise by its health. Along the w
 
 The audit, a reader that had not seen the build, found three ways the promise could still fail with every test passing. No test drew the plan page or the brief page with health flowing through their own reader, so deleting the line that hands it in would go unnoticed. A promise that is a state promise on the trunk and a behaviour promise on the plan's branch is skipped by name and still falls back to green. And the plan page answers for promises only the branch registers while the nav's red dot never sees them, so the two can disagree. Once this phase closes, the pages are tested as drawn, a changed kind reads no signal, and the nav and the plan page answer from the same promises.
 
-- [ ] Render the plan page and the brief page over a real project with only the telemetry read faked, and see a broken promise's dot in the broken colour on both.
+- [x] Render the plan page and the brief page over a real project with only the telemetry read faked, and see a broken promise's dot in the broken colour on both.
   <details><summary>Technical</summary>
 
   Answers A5. In `apps/indusk-admin/src/__tests__/plan-parts.test.tsx`: register an enforced behaviour promise owned by the fixture plan in `.indusk/promises/`, partially mock `@infinitedusky/indusk-mcp/promises/health` so `readHealth` returns one alarm read with a live violation for it (`planPromiseHealth` and the rest real), render `PlanPage` and `PlanBriefPage`, and assert the chip's dot is `bg-bad` on both. Deleting either page's `health:` line turns it red.
 
   </details>
-- [ ] A promise the trunk registers with no health (a state promise) and the branch registers as a behaviour promise takes its health from the branch's declaration.
+- [x] A promise the trunk registers with no health (a state promise) and the branch registers as a behaviour promise takes its health from the branch's declaration.
   <details><summary>Technical</summary>
 
   Answers A6. `planPromiseHealth` in `apps/indusk-mcp/src/lib/promises/health.ts` skips an `extra` promise only when the trunk already answers it (`rows[p.name]`), not whenever the trunk knows the name; a trunk answer is never overridden, so a branch edit cannot quiet a trunk break.
 
   </details>
-- [ ] The nav's red dot reads the same branch-only promises the plan page does.
+- [x] The nav's red dot reads the same branch-only promises the plan page does.
   <details><summary>Technical</summary>
 
   Answers A7. `redPlans(registry, reads, extra = [])` passes `extra` to `planPromiseHealth` and takes each red promise's owner from the trunk's entry, else the branch's. `worktreePromises(projectPath, checkouts)` in `apps/indusk-admin/src/lib/plan-health.ts` returns the promises the checkouts register; `readPlanHealth` uses it for its one checkout and the layout (`app/p/[project]/layout.tsx`) for every active plan's worktree, passing them to `redPlans`.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
 
-- [ ] A6 and A7 fail before their fixes and pass after; A5 fails with either page's health line removed and passes as built; A1–A4 still pass.
+- [x] A6 and A7 fail before their fixes and pass after; A5 fails with either page's health line removed and passes as built; A1–A4 still pass.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plan-parts-health.test.ts && pnpm exec vitest related --run src/lib/promises/health.ts && pnpm exec tsc --noEmit`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/plan-parts.test.tsx && pnpm exec vitest related --run src/lib/plan-health.ts "src/app/p/[project]/layout.tsx" && pnpm exec tsc --noEmit`; `pnpm check`.
@@ -278,7 +278,7 @@ The audit, a reader that had not seen the build, found three ways the promise co
 
 #### Build Phase 4 Context
 
-- [ ] The admin's context file says the nav's red dot reads the plan worktrees' promises too.
+- [x] The admin's context file says the nav's red dot reads the plan worktrees' promises too.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`, the plan-parts rule: the nav's red dot reads the same branch-only promises, through `worktreePromises`.
@@ -287,7 +287,7 @@ The audit, a reader that had not seen the build, found three ways the promise co
 
 #### Build Phase 4 Document
 
-- [ ] The admin reference says the nav's red dot also counts a promise new on a plan's branch.
+- [x] The admin reference says the nav's red dot also counts a promise new on a plan's branch.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/overview.md`, the nav's red dot.
@@ -302,7 +302,8 @@ The audit, a reader that had not seen the build, found three ways the promise co
 | `apps/indusk-mcp/src/lib/plans/parts.ts` | `health` option, `PartPromise.health` |
 | `apps/indusk-admin/src/components/plan/PlanParts.tsx` | dot from health, else state |
 | `apps/indusk-admin/src/app/p/[project]/plan/[name]/page.tsx`, `brief/page.tsx` | read health, pass it in (and the checkout, Build Phase 2) |
-| `apps/indusk-admin/src/lib/plan-health.ts` | the plan page's health read; promises only the checkout registers (Build Phase 2) |
+| `apps/indusk-admin/src/lib/plan-health.ts` | the plan page's health read; promises only the checkout registers (Build Phase 2); `worktreePromises`, shared with the nav (Build Phase 4) |
+| `apps/indusk-admin/src/app/p/[project]/layout.tsx` | the nav's red dot reads the worktrees' promises (Build Phase 4) |
 | `apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts`, `apps/indusk-admin/src/__tests__/plan-parts.test.tsx` | the three rows |
 | `apps/indusk-admin/CLAUDE.md`, `apps/docs/src/reference/admin-ui/overview.md`, `apps/docs/src/changelog.md` | context and docs |
 

@@ -157,3 +157,35 @@ describe("A4 — a promise only the plan's checkout registers reads no signal, n
 		expect(parts.promises.find((p) => p.name === PROMISE)?.health).toBe("unverified");
 	});
 });
+
+describe("A6 — a promise the branch changes to a behaviour promise reads no signal, not green", () => {
+	// clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike
+	it("A6 a state promise on the trunk, behaviour on the branch, is unverified", async () => {
+		const { root, registry: checkout } = project();
+		// The trunk still has the promise as a state promise: it gives it no health.
+		const trunk = {
+			...checkout,
+			promises: checkout.promises.map((p) =>
+				p.name === PROMISE ? { ...p, kind: "state" as const } : p,
+			),
+		};
+		const silent: SourceHealthRead = {
+			...read("production", "holding"),
+			marks: { queryUrl: "http://fake", since: at(0), byPromise: new Map() } as MarkedSpansResult,
+		};
+		const health = planPromiseHealth(trunk, [silent], checkout.promises);
+		const parts = await partsWith(root, health);
+		expect(parts.promises.find((p) => p.name === PROMISE)?.health).toBe("unverified");
+	});
+});
+
+describe("A7 — the nav's red dot sees a promise only the plan's branch registers", () => {
+	// clause: a-promise-reads-the-same-on-its-plan-page/no-rule-of-its-own
+	it("A7 a branch-only behaviour promise broken in the alarm source marks its plan red, as on its page", () => {
+		const { registry: checkout } = project();
+		const trunk = { ...checkout, promises: checkout.promises.filter((p) => p.name !== PROMISE) };
+		const reads = [read("production", "broken")];
+		expect(planPromiseHealth(trunk, reads, checkout.promises)[PROMISE], "the plan page").toBe("red");
+		expect(redPlans(trunk, reads, checkout.promises).has(PLAN), "the nav's red dot").toBe(true);
+	});
+});

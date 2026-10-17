@@ -2,14 +2,29 @@ import {
   planPromiseHealth,
   readHealth,
 } from "@infinitedusky/indusk-mcp/promises/health";
+import type { PromiseEntry } from "@infinitedusky/indusk-mcp/promises/registry";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
+
+/**
+ * The promises the plans' own checkouts (their worktrees) register, read once
+ * for a plan's page and for the nav's red dot, so both hand the package the
+ * same promises; `planPromiseHealth` decides which of them the trunk answers.
+ */
+export function worktreePromises(
+  projectPath: string,
+  checkouts: string[],
+): PromiseEntry[] {
+  return checkouts
+    .filter((c) => c !== projectPath)
+    .flatMap((c) => registryOf(readProjectPromises(c))?.promises ?? []);
+}
 
 /**
  * Each promise's health for a plan's page, from the package's one answer for
  * the alarm source (`planPromiseHealth`, the same the sidebar's red dot reads)
- * and the cached read the layout makes, plus the promises only `checkout`
- * (the plan's worktree) registers. Empty when the registry does not read:
- * a chip then keeps the colour of its registry state.
+ * and the cached read the layout makes, plus the promises `checkout` (the
+ * plan's worktree) registers. Empty when the registry does not read: a chip
+ * then keeps the colour of its registry state.
  */
 export async function readPlanHealth(
   projectPath: string,
@@ -17,13 +32,9 @@ export async function readPlanHealth(
 ) {
   const registry = registryOf(readProjectPromises(projectPath));
   if (!registry) return {};
-  // The plan's own checkout may register promises the project's registry does
-  // not; `planPromiseHealth` skips the ones the trunk answers for.
-  const own =
-    checkout === projectPath ? null : registryOf(readProjectPromises(checkout));
   return planPromiseHealth(
     registry,
     await readHealth(projectPath, registry),
-    own?.promises ?? [],
+    worktreePromises(projectPath, [checkout]),
   );
 }
