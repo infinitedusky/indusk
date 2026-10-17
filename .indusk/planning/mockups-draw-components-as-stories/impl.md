@@ -55,8 +55,8 @@ release raised.
 | A1 | A component built on a link draws in its own ink inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
 | A2 | A component's text field draws in the app's text font and size inside a mockup, as in its story | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
 | A3 | The resets reach only the components inside a mockup; the page around them draws as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
-| A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
-| A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
+| A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
+| A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 
 ## Checklist
@@ -110,6 +110,7 @@ it writes no resets yet. Build Phase 1 then makes the generator tests pass.
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/component-styles.test.ts` — A1–A3 red on assertions, not on load. A4: `composition.contract.test.ts` reports only the project card and prompt box findings. A5: `looks-components.contract.test.ts` fails on `message.you` not fitted. A6: `vitest run src/lib/looks/compose.test.ts` passes.
 
   </details>
+  Note: 2026-10-17 — A18 (A5) passed, 113 stories, 1390 s; A7 passed; A6 7/7; `vitest related` on the phase's admin files 111/111. A30 (A4) failed once on the card's stretched rows, fixed (`content-start`), then passed in 61 s; A18 not re-run for that change — a card alone in its frame has no extra height to place; the landing's slow tier runs it.
 
 #### Test Phase 1 Context
 
@@ -279,7 +280,7 @@ changed; and Sandy approves the changed `message.you` story.
 
 #### Build Phase 2 Verification
 
-- [ ] Both browser checks pass, and the composition rule still holds.
+- [x] Both browser checks pass, and the composition rule still holds.
   <details><summary>Technical</summary>
 
   A4: `cd apps/indusk-admin && node ../indusk-mcp/scripts/with-daemon-guard.js npx vitest run --config vitest.system.config.ts src/__tests__/composition.contract.test.ts` passes. A5: the same for `src/app/p/[project]/looks/looks-components.contract.test.ts`. A6: `vitest run src/lib/looks/compose.test.ts` passes.
