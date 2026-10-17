@@ -80,9 +80,18 @@ export function homeKind(home: string, tempRoots: readonly string[]): "real" | "
 	return under(home) || (resolved !== null && under(resolved)) ? "temporary" : "real";
 }
 
-/** Whether `p` runs out of exactly this home. */
+/** A path as it really is on disk, or as given when it cannot be resolved. */
+function realOrGiven(path: string): string {
+	try {
+		return realpathSync(path);
+	} catch {
+		return path;
+	}
+}
+
+/** Whether `p` runs out of this home: the same place on disk, however either is spelled (a link, `/private/var` for `/var`). */
 export function isOwn(p: DaemonProcess, home: string): boolean {
-	return p.home === home;
+	return p.home === home || realOrGiven(p.home) === realOrGiven(home);
 }
 
 /** Whether `p` runs out of a test's home. */

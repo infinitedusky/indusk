@@ -1,5 +1,5 @@
 import { isOwnProcess, type ProcessDeps, realProcessReads } from "../process-identity.js";
-import { daemonConfigPath } from "./daemon-process.js";
+import { daemonConfigPath, daemonProcessOf, isOwn } from "./daemon-process.js";
 import type { DaemonMeta } from "./status.js";
 
 /**
@@ -56,8 +56,14 @@ export async function stopDaemon(
 			config: daemonConfigPath(home, "otelcol"),
 		},
 	];
+	// The home as the process was started with it, or as it really is: a link and its target are one home.
+	const ownByHome = (pid: number, binary: string): boolean => {
+		const command = deps.alive(pid) ? deps.command(pid) : null;
+		const proc = command === null ? null : daemonProcessOf(command);
+		return proc !== null && command?.includes(binary) === true && isOwn(proc, home);
+	};
 	const own = recorded
-		.filter((p) => isOwnProcess(p.pid, [p.binary, p.config], deps))
+		.filter((p) => isOwnProcess(p.pid, [p.binary, p.config], deps) || ownByHome(p.pid, p.binary))
 		.map((p) => p.pid);
 	const strangers = recorded
 		.filter((p) => deps.alive(p.pid) && !own.includes(p.pid))
