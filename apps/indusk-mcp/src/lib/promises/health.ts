@@ -526,15 +526,26 @@ export function healthRows(
 }
 
 /**
+ * Each promise's health from the alarm source, by name: the one answer the
+ * sidebar's red dot and a plan's page both read, so neither decides its own.
+ * A promise telemetry says nothing about (state, structure) has no entry.
+ */
+export function planPromiseHealth(
+	registry: Registry,
+	reads: SourceHealthRead[],
+): Record<string, PromiseHealth> {
+	const rows = healthRows(registry, alarmRead(reads) ?? null);
+	return Object.fromEntries(Object.entries(rows).map(([name, row]) => [name, row.health]));
+}
+
+/**
  * Plans holding a red promise in the alarm source — the sidebar's roll-up
  * (A23). A promise red only locally, beside a production that holds it, is
  * work in progress and does not mark its plan (promise-sources A6).
  */
 export function redPlans(registry: Registry, reads: SourceHealthRead[]): Set<string> {
-	const rows = healthRows(registry, alarmRead(reads) ?? null);
-	return new Set(
-		registry.promises.filter((p) => rows[p.name]?.health === "red").map((p) => p.owner),
-	);
+	const health = planPromiseHealth(registry, reads);
+	return new Set(registry.promises.filter((p) => health[p.name] === "red").map((p) => p.owner));
 }
 
 /**

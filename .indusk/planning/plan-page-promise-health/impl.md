@@ -76,7 +76,7 @@ This phase writes the three tests that say what the plan page must show: a broke
 
 This phase gives a plan's parts each promise's health, from the same rule and source as the nav's red dot, and has the plan page and the brief page colour each dot by it. A promise telemetry says nothing about keeps the colour of its registry state. When it closes, a broken promise is red on its plan's page, as on the Promises page, and nothing about the pages' layout has changed.
 
-- [ ] The package answers each promise's health from the alarm source, and a plan's parts carry it.
+- [x] The package answers each promise's health from the alarm source, and a plan's parts carry it.
   <details><summary>Technical</summary>
 
   `planPromiseHealth(registry, reads): Record<string, PromiseHealth>` in `apps/indusk-mcp/src/lib/promises/health.ts`, `healthRows(registry, alarmRead(reads) ?? null)` mapped to `health`; `redPlans` reads through it so the nav and the plan page share one answer. `readPlanParts` (`apps/indusk-mcp/src/lib/plans/parts.ts:129`) takes `options.health?: Record<string, PromiseHealth>` and sets `health` on each `PartPromise` that has one. Export from the subpaths the admin already imports (`promises/health`, `plans/parts`).
