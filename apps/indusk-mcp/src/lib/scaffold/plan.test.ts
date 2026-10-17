@@ -5,7 +5,9 @@
 // rendering. A file whose content is not what InDusk recorded is never overwritten.
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { decideFile, scaffoldPlan } from "./plan.js";
+import * as plan from "./plan.js";
+
+const { decideFile, scaffoldPlan } = plan;
 
 const h = (s: string) => createHash("sha256").update(s).digest("hex");
 const NEW = "rendered v2";
@@ -50,10 +52,10 @@ describe("a formatter's layout is not an edit", () => {
 	const NEWER = ONE_LINE.replace("http://a", "http://b");
 
 	it("T30: a recorded file changed only in layout is refreshed, whichever layout it is in", () => {
+		expect(plan.fingerprint, "plan.ts exports fingerprint").toBeTypeOf("function");
+		const recorded = plan.fingerprint(ONE_LINE);
 		for (const current of [BIOME, SINGLE]) {
-			expect(decideFile({ current, recorded: h(ONE_LINE), rendered: NEWER }).action).toBe(
-				"refresh",
-			);
+			expect(decideFile({ current, recorded, rendered: NEWER }).action).toBe("refresh");
 		}
 	});
 

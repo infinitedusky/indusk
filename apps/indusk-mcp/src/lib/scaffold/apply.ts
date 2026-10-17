@@ -7,11 +7,11 @@ import { induskHome } from "../telemetry/status.js";
 import { declaredRepoDirs } from "../worktree/repos.js";
 import {
 	BESIDE_SUFFIX,
+	fingerprint,
 	type PlannedTarget,
 	RUNTIME_MARKERS,
 	type Runtime,
 	scaffoldPlan,
-	sha256,
 	type TargetRead,
 } from "./plan.js";
 import { readRecord, writeRecord } from "./record.js";
@@ -200,7 +200,7 @@ function writeTarget(
 			case "create":
 				mkdirSync(dirname(abs), { recursive: true });
 				writeFileSync(abs, file.rendered);
-				record[file.projectPath] = sha256(file.rendered);
+				record[file.projectPath] = fingerprint(file.rendered);
 				created.push(file.projectPath);
 				firstScaffold = true;
 				console.info(`  create: ${file.projectPath} (${file.purpose})`);
@@ -215,10 +215,10 @@ function writeTarget(
 					writeFileSync(abs, file.rendered);
 					console.info(`  refresh: ${file.projectPath} (${file.purpose})`);
 				}
-				record[file.projectPath] = sha256(file.rendered);
+				record[file.projectPath] = fingerprint(file.rendered);
 				break;
 			case "record":
-				record[file.projectPath] = sha256(file.rendered);
+				record[file.projectPath] = fingerprint(file.rendered);
 				break;
 			case "beside":
 				writeFileSync(`${abs}${BESIDE_SUFFIX}`, file.rendered);

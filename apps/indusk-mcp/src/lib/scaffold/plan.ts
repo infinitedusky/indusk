@@ -27,8 +27,24 @@ export function sha256(text: string): string {
 }
 
 /**
- * What to do with one file. Only a file whose content hashes to what InDusk recorded is
- * written over, so a person's edit and a file InDusk never wrote are never lost; a lost
+ * A hash of a file's text that a formatter cannot change: whitespace and line breaks, `;`,
+ * a trailing comma before a closing bracket, and quote style (`'` read as `"`) are left out.
+ * The record holds this, so a file Biome or Prettier has re-laid-out is still the file InDusk wrote
+ * (lesson: a-formatted-file-is-not-an-edited-one). A changed word still changes it.
+ */
+export function fingerprint(text: string): string {
+	return sha256(
+		text
+			.replace(/'/g, '"')
+			.replace(/\s+/g, "")
+			.replace(/;/g, "")
+			.replace(/,(?=[)\]}])/g, ""),
+	);
+}
+
+/**
+ * What to do with one file. Only a file that is what InDusk recorded (by fingerprint, or by the
+ * exact-text hash older records hold) is written over, so a person's edit and a file InDusk never wrote are never lost; a lost
  * record makes every file unrecorded, and an unrecorded file is never overwritten. A recorded
  * file that is gone was deleted by a person and stays deleted.
  * `force` (init's `--force`) overwrites whatever is there and brings back what was deleted.
@@ -41,8 +57,12 @@ export function decideFile(f: {
 }): { action: FileAction } {
 	if (f.current === null) return { action: f.recorded !== null && !f.force ? "removed" : "create" };
 	if (f.force) return { action: "refresh" };
-	if (f.recorded !== null && sha256(f.current) === f.recorded) return { action: "refresh" };
-	if (f.current === f.rendered) return { action: "record" };
+	if (
+		f.recorded !== null &&
+		(fingerprint(f.current) === f.recorded || sha256(f.current) === f.recorded)
+	)
+		return { action: "refresh" };
+	if (fingerprint(f.current) === fingerprint(f.rendered)) return { action: "record" };
 	return { action: "beside" };
 }
 
@@ -294,7 +314,13 @@ export function scaffoldPlan(targets: TargetRead[], reads: ScaffoldReads): Plann
 				rendered,
 				force: reads.force,
 			});
-			return { ...file, projectPath, rendered, action, current: onDisk === rendered };
+			return {
+				...file,
+				projectPath,
+				rendered,
+				action,
+				current: onDisk !== null && fingerprint(onDisk) === fingerprint(rendered),
+			};
 		});
 		return { name: t.name, rel: t.rel, runtime, ownSetup, files };
 	});
