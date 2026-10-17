@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -60,6 +60,7 @@ release raised.
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 | T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
+| T3 | A proposed story or mockup whose last approval was drawn under other element rules is held to nothing, in the look check and in the status line, as one drawn on another foundation is | Build Phase 4 | Build Phase 4 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 
 ## Checklist
 
@@ -374,6 +375,82 @@ This phase tests two things the finished plan claims but nothing checks. First, 
 
   </details>
   Note: `_reset.css` paragraph in `apps/docs/src/reference/cli/looks.md` now says an approval records `baseRulesHash` and a change reopens it.
+
+### Build Phase 4: Cleanup — one rule for what an approval is bound to, one shape for a story's sheets
+
+**Tier**: med — the work step's default
+
+This plan taught approvals to remember the app's element rules, but it did so beside the older rule rather than inside it. What an approval is bound to is now written in two places when it is recorded and checked by two separate rules when it is read, and the look check and the status line still use only the older one. Once this phase closes, one rule says what an approval is bound to and every reader and writer uses it, and the cockpit's story page is built from the app's sheets passed together rather than as two loose strings that can be swapped.
+
+- [ ] What an approval records about what it was drawn under is built in one place, beside the rule that reads it back, and both kinds of approval use it.
+  <details><summary>Technical</summary>
+
+  Export `bindingOf(app: LooksApp)` from `apps/indusk-mcp/src/lib/looks/approvals.ts` returning `{ foundationHash, declarationsHash, ...(baseRulesHash) }`; `approveMockup` and `approveStory` in `approve.ts` spread it in place of the three fields each writes, and `rulesOf` goes. The writer of the binding set and its reader then live in one module, so the next field bound is one edit on each side, not four.
+
+  </details>
+- [ ] The one rule for whether an approval still binds also covers the element rules, so the look check and the status line stop holding a look to an approval drawn under other rules.
+  <details><summary>Technical</summary>
+
+  Fold `drawnUnderNow` into `boundToNow` in `approvals.ts` (an entry without `baseRulesHash` still binds, as now). `approvalOf` and `storyApprovalOf` then call `boundToNow` alone. Its other callers, `check.ts` (the `heldTo` of mockups and stories) and `bin/commands/looks.ts` (`statusLine`), pick it up unchanged; the status line's "on another foundation or declarations" wording gains "or element rules". This changes what those two report, which is why it carries its own trajectory row rather than relying on parity.
+
+  </details>
+- [ ] The cockpit's story page takes the app's base sheet, reset sheet and component sheets together rather than as trailing strings in a fixed order.
+  <details><summary>Technical</summary>
+
+  `storyDocument(story, tokensCss, sheets: Pick<LooksApp, "styles" | "base" | "reset">)` in `overview.ts`, replacing the positional `styles, base = "", reset = ""` that Build Phase 1's Shape review left for this ritual; `storiesOf` passes `app`, and `overview.test.ts`'s two calls pass an object. `mockupDocument` keeps its trailing `reset`: one optional after the styles, one caller.
+
+  </details>
+- [ ] The five looks modules over the size threshold were reviewed and stay as they are: this plan added a few lines to each, and none grew a second job.
+  <details><summary>Technical</summary>
+
+  `listOversizedChangedFiles` flags `approvals.ts` (410), `approve.ts` (512), `component-styles.ts` (411), `mockups.ts` (590), `stories.ts` (583), all pre-existing. Their additions are a field, a predicate, a sheet writer and a read; splitting any of them is not this plan's output to decompose.
+
+  </details>
+- [ ] The second read of the catalog in the app reader was reviewed and stays: it cannot use the catalog's own reader without an import cycle.
+  <details><summary>Technical</summary>
+
+  `readApp` in `mockups.ts` reads `components.json` for `baseRulesHash` beside `readContentMaps`, rather than through `readCatalog` in `components.ts`, which imports `mockups.ts`; the comment on `readContentMaps` records the cycle. Merging the two reads in one file is local craft that Build Phase 3's Shape review passed.
+
+  </details>
+- [ ] The reset sheet's builder was reviewed and stays beside the base sheet's builder rather than sharing a helper with it: there are two, not three.
+  <details><summary>Technical</summary>
+
+  `componentReset` and `baseStylesheet` in `component-styles.ts` share the parse → `keepRules` → `sheetOf` shape; the predicate they differ on is already one named `isElementSelector`.
+
+  </details>
+- [ ] The project card, its page wrapper, the frame fitting and Message were reviewed and stay: each change is one job in the file that already owns it.
+  <details><summary>Technical</summary>
+
+  `ui/ProjectCard.tsx` is the presentational component and `components/ProjectCard.tsx` adapts registry data to it, per the react extension's one-component-per-file; `useFittedFrame.ts`'s `leadingSpace`/`leftMargin` serve only `measure`; `Message.tsx` gained one class.
+
+  </details>
+
+#### Build Phase 4 Verification
+
+- [ ] A look whose last approval was drawn under other element rules is held to nothing, and the cockpit's story pages come out as before.
+  <details><summary>Technical</summary>
+
+  T3 red then green: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/approvals.test.ts`. Parity: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/` (T1 and `overview.test.ts` green unchanged), `looks-cli.test.ts` green with the widened status wording, typecheck and `pnpm check` clean.
+
+  </details>
+
+#### Build Phase 4 Context
+
+- [ ] The package's rules say there is one rule for what an approval is bound to.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the `_reset.css` / `baseRulesHash` entry: `bindingOf` writes and `boundToNow` reads the foundation, declarations and element rules; a new binding goes in both.
+
+  </details>
+
+#### Build Phase 4 Document
+
+- [ ] The looks reference says a look last approved under other element rules is held to nothing until approved again.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/cli/looks.md`, the `_reset.css` paragraph and the `looks status` line wording.
+
+  </details>
 
 ## Files Affected
 
