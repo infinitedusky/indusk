@@ -254,3 +254,5 @@ refuses because `mockups-draw-components-as-stories` has since taken over
 wider sentences, and its suggested `promises change` would hand them back to
 this plan with the old ones. This plan's promises were confirmed at its first
 close; `indusk promises check` reads none known-broken.
+
+Maintenance landed on main at 68a1c9cb, 2026-10-17.
