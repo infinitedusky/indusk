@@ -61,6 +61,8 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A5 | For an InDusk daemon on ports other than its stored address, such as one started before this change on 4318 and 16686, `status` says which ports differ and `restart` brings it onto the stored address | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
 | A6 | `status` sends an upheld report for one-daemon-on-its-own-ports when one InDusk Jaeger and one collector hold the four ports of the stored address, and otherwise a broken one naming each extra process or each stored port not held | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
 | A29 | Every InDusk reader and command (`status`, the promise readers, the evaluator, `demo`, and the `jaeger` MCP entry register and `update` write) takes the daemon's ports from the stored address or the record, never from a port number in its code; `indusk telemetry address` prints the stored address, `--json` for `init` to hand to an application, and one exported function returns the same; with none stored it says so, exits non-zero and chooses nothing | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
+| A30 | `indusk telemetry address --reset` chooses the address again by the same rule, keeping any port this home's running daemon holds, prints the old and the new address and that every application given the old one needs the new one, and is the only way the stored address ever changes | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
+| A31 | The evaluator sends its log records to the stored address's logs port, never to the traces port, and none is answered 404 | Build Phase 3 | Build Phase 3 | planned | unit | a regression guard over every-commit-evaluated: the evaluator's logs reach the daemon's log channel, which today they never do | apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts |
 | A7 | No status read, extension health check, promise reader, admin page or evaluator lookup removes the record; a slow port reads as running and slow, naming the port and the wait; a stale record with nothing running reads not running, is named, and stays | Test Phase 1 | Build Phase 1 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-daemon-state.test.ts |
 | A8 | With a real daemon in a temporary home and the reading process kept busy longer than the port check waits, a status read reports the daemon slow, not gone, and its record is still there afterwards | Test Phase 1 | Build Phase 1 | planned | contract | clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-slow-not-gone.test.ts |
 | A9 | A promise reader that reaches the daemon through its record sends an upheld report for a-read-never-loses-the-daemon at its probe, throttled; a reader that first had to find the daemon sends the finding's broken report instead | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
@@ -370,6 +372,32 @@ Before any code changes, this phase writes every test that today's code can alre
   });
   it("none on the stored traces port: take none, start nothing, list them all", () => {
     expect(startPlan(found([onOther(1, 2), onOther(3, 4)]), noHolders(), REAL, { address: { ...PORT_BLOCK, picked: [] } })).toMatchObject({ kind: "refuse-several", listed: [1, 2, 3, 4] });
+  });
+  ```
+
+- **A30** — its subjects are `chooseAddress` and the `telemetry address` command, introduced in Build Phase 3. Body reviewed:
+
+  ```typescript
+  // clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+  import { resetAddress } from "../lib/telemetry/daemon-address.js";
+  it("--reset re-chooses by the same rule, keeps the running daemon's ports, and says so", () => {
+    const r = resetAddress(readsWith({ address: { ...PORT_BLOCK, traces: 51000, picked: [{ role: "traces", holder: "otelcol-contrib" }] }, ownDaemonPorts: { mcp: 24317 }, holders: [] }));
+    expect(r.old.traces).toBe(51000);
+    expect(r.new).toMatchObject({ traces: 24318, mcp: 24317 });
+    expect(r.message).toMatch(/every application given the old address/);
+  });
+  it("nothing else changes the stored address", () => {
+    expect(writersOf("telemetry-address.json")).toEqual(["chooseAddress (first setup)", "resetAddress"]);
+  });
+  ```
+
+- **A31** — its subject is the evaluator's log exporter reading the stored logs port, introduced in Build Phase 3 with the stored address. Body reviewed:
+
+  ```typescript
+  // a regression guard over every-commit-evaluated
+  import { evalLogsEndpoint } from "../lib/eval/otel.js";
+  it("the evaluator's logs go to the logs port, never the traces port", () => {
+    expect(evalLogsEndpoint({ traces: "http://localhost:24318", logs: "http://localhost:24319" })).toBe("http://localhost:24319/v1/logs");
   });
   ```
 
@@ -697,6 +725,18 @@ This phase gives the daemon one address of its own and makes starting it safe. T
 
   </details>
 
+- [ ] A person can choose the address again on purpose, and that is the only way it ever changes.
+  <details><summary>Technical</summary>
+
+  `resetAddress(reads)` in `apps/indusk-mcp/src/lib/telemetry/daemon-address.ts` re-runs `chooseAddress`, keeping any port this home's running daemon holds, writes the address under `<home>/telemetry.lock`, and returns the old and new address with a message naming that every application given the old address needs the new one. `indusk telemetry address --reset` prints it; a refusal (another home's daemon on a block port) exits 1. A refused later start names `telemetry address --reset` as the way out. Author A30 in `apps/indusk-mcp/src/__tests__/telemetry-address.test.ts`.
+
+  </details>
+- [ ] The evaluator sends its logs to the daemon's log channel, not to the traces port.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/eval/otel.ts:307-309` builds the log URL from the traces endpoint, which Jaeger answers 404. Extract `evalLogsEndpoint(address)` returning the stored logs URL (`/v1/logs` on the logs port), falling back to today's behaviour only for an explicit `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`. Author A31 in `apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts`.
+
+  </details>
 - [ ] A start in the real home decides from what is running, the stored address and what holds its ports whether to report, take over, start or refuse, and never moves a port.
   <details><summary>Technical</summary>
 
@@ -721,7 +761,7 @@ This phase gives the daemon one address of its own and makes starting it safe. T
 - [ ] The start, register, port-guard and MCP-entry tests pass, and the files that depend on the changed modules still pass.
   <details><summary>Technical</summary>
 
-  `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-start-plan.test.ts src/lib/telemetry/port-guard.test.ts src/__tests__/telemetry-address.test.ts src/__tests__/telemetry-register.test.ts src/__tests__/telemetry-mcp-entries.test.ts src/__tests__/telemetry-test-homes.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-address.ts src/lib/telemetry/start-plan.ts src/lib/telemetry/daemon.ts src/lib/telemetry/daemon-state.ts src/bin/commands/telemetry.ts src/bin/cli.ts src/lib/mcp-config.ts` — A1, A3, A4, A5, A11, A12, A16, A17, A26, A27, A29 green; rows' State updated in the same edit.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-start-plan.test.ts src/lib/telemetry/port-guard.test.ts src/__tests__/telemetry-address.test.ts src/__tests__/telemetry-register.test.ts src/__tests__/telemetry-mcp-entries.test.ts src/__tests__/telemetry-test-homes.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-address.ts src/lib/telemetry/start-plan.ts src/lib/telemetry/daemon.ts src/lib/telemetry/daemon-state.ts src/bin/commands/telemetry.ts src/bin/cli.ts src/lib/mcp-config.ts src/lib/eval/otel.ts && pnpm exec vitest run src/__tests__/telemetry-readers-follow.test.ts` — A1, A3, A4, A5, A11, A12, A16, A17, A26, A27, A29, A30, A31 green; rows' State updated in the same edit.
 
   </details>
 - [ ] The rewritten system tests pass: a temporary-home daemon on four given ports, restart keeping them, and project entries left alone.
@@ -920,6 +960,6 @@ This phase makes the promise heard in the running system. Each part of the promi
 ## Notes
 
 - **Signal, not tests.** Each clause's signal is a span the running daemon receives, sent by the InDusk command that knows the answer. Unit rows assert only what `daemonReports` decides from the reads it is handed; the live check is the one place a report is shown reaching a reader. A lost daemon cannot receive a span at the moment it is lost, so that break is reported by whoever finds it.
-- **Left for Sandy** (from the ADR's review): whether `init` and the admin's new-project flow exit non-zero when a stranger later holds a port of the stored address (at first setup nothing refuses; in that later case `register` exits 1 and `init` finishes with the refusal printed); whether to offer an explicit command to re-choose the address when a stranger squats a stored port; whether to take the one-line fix of the evaluator posting logs to the traces port (`eval/otel.ts:307-309`) here; whether the clauses that report only when a telemetry command runs should also report from a reader's probe, throttled; the 15-minute throttle and the `indusk-telemetry` service split; making `lsof` a stated requirement instead of the `/proc` fallback; and that an SDK exporting to its default (4318 over HTTP, 4317 over gRPC) reaches nothing on the laptop until the application is given the stored address.
+- **Decided by Sandy, 2026-10-16** ("agreed", on the nine recommendations put after the port change): the live check may send one real broken report, run only with `INDUSK_LIVE_CHECK` set; a later collision on a stored port refuses, names the holder and exits non-zero from `start` and `register`, while `init`, `update` and enabling finish with the refusal printed; the evaluator's log port is fixed here (the task above, row A31); clauses that report only when a telemetry command runs are accepted; the 15-minute throttle and the `indusk-telemetry` service split stay; `indusk telemetry address --reset` is added (row A30) as the one way the address changes; a lost address file with no daemon running may come back on different picked ports, accepted and named by `--reset`'s message; the MCP server stays on 24317; another home's daemon on a block port refuses rather than taking free ports. Still open, not blocking: making `lsof` a stated requirement instead of the `/proc` fallback. An SDK exporting to its default (4318 over HTTP, 4317 over gRPC) reaches nothing on the laptop until the application is given the stored address, which is `a-new-project-starts-instrumented`'s.
 - **Projects still naming an old MCP port.** The restart in Build Phase 5 re-points only entries naming exactly the daemon's old MCP port (62843 on 2026-10-16). Any project naming another old port, such as 54677, moves at its own next `indusk update`.
 - **Live check result:** recorded here at Build Phase 5.
