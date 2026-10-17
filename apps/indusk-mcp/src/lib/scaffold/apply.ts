@@ -1,0 +1,227 @@
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, relative } from "node:path";
+import { getProjectGroupId, isExtensionExplicitlyDisabled } from "../config.js";
+import { induskMcpPackageRoot } from "../package-root.js";
+import { daemonAddress } from "../telemetry/daemon-address.js";
+import { induskHome } from "../telemetry/status.js";
+import { declaredRepoDirs } from "../worktree/repos.js";
+import {
+	BESIDE_SUFFIX,
+	type PlannedTarget,
+	RUNTIME_MARKERS,
+	type Runtime,
+	scaffoldPlan,
+	sha256,
+	type TargetRead,
+} from "./plan.js";
+import { readRecord, writeRecord } from "./record.js";
+import { renderTemplate, settingsValues } from "./render.js";
+
+/**
+ * The one place a template reaches a project: `init` and `update` both call
+ * `applyScaffold`. It reads each target (the declared code repos, else the project root —
+ * never a workbench root), asks `scaffoldPlan` what to do, writes, prints a line per file
+ * and keeps `.indusk/scaffold.json`.
+ *
+ * promise: a-new-project-reports-from-its-first-run
+ */
+
+export interface ApplyOptions {
+	/** init's `--force`: overwrite what is there. */
+	force?: boolean;
+	/** `--local` mode: the team owns its OpenTelemetry setup. */
+	local?: boolean;
+}
+
+export interface ApplyResult {
+	/** Project-relative paths written for the first time. */
+	created: string[];
+	skipped?: string;
+}
+
+/** The packages `templates/instrumentation.web.ts` imports, as one install argument list. */
+const BROWSER_OTEL_PACKAGES = [
+	"@opentelemetry/sdk-trace-web",
+	"@opentelemetry/sdk-trace-base",
+	"@opentelemetry/exporter-trace-otlp-http",
+	"@opentelemetry/resources",
+	"@opentelemetry/semantic-conventions",
+	"@opentelemetry/instrumentation",
+	"@opentelemetry/instrumentation-fetch",
+	"@opentelemetry/instrumentation-xml-http-request",
+	"@opentelemetry/instrumentation-document-load",
+	"@opentelemetry/instrumentation-user-interaction",
+].join(" ");
+
+const NODE_PACKAGES = [
+	"@opentelemetry/sdk-node",
+	"@opentelemetry/auto-instrumentations-node",
+	"@opentelemetry/exporter-trace-otlp-http",
+	"@opentelemetry/sdk-trace-base",
+	"@opentelemetry/resources",
+	"@opentelemetry/semantic-conventions",
+	"@opentelemetry/core",
+	"pino",
+	"pino-opentelemetry-transport",
+].join(" ");
+
+/** What a browser-instrumented project must set for a click's trace to reach an API on another origin. */
+function propagationLines(setting: string): string[] {
+	return [
+		`cross-origin API: set ${setting} to the API's origin(s), comma-separated (a * entry is a pattern, e.g. https://*.dev.example.com); same-origin requests need nothing`,
+		"cross-origin API: the API must allow the traceparent header in its CORS settings (Access-Control-Allow-Headers)",
+	];
+}
+
+/** The install and wiring lines a runtime's first scaffold prints. `at` is where its files went. */
+function guidance(runtime: Runtime, instrumentation: string): string[] {
+	switch (runtime) {
+		case "node":
+			return [
+				`install: pnpm add ${NODE_PACKAGES}`,
+				`wire: node --import ./${instrumentation} src/index.ts`,
+			];
+		case "nextjs":
+			return [
+				`install: pnpm add @vercel/otel pino pino-opentelemetry-transport ${BROWSER_OTEL_PACKAGES}`,
+				"wire (server): Next.js loads instrumentation.ts automatically",
+				"wire (client): import './instrumentation.web' in your root client component or layout",
+				...propagationLines("NEXT_PUBLIC_OTEL_PROPAGATE_TO"),
+			];
+		case "browser":
+			return [
+				`install: pnpm add ${BROWSER_OTEL_PACKAGES}`,
+				"wire: import './instrumentation' at the top of your main.tsx or App.tsx",
+				...propagationLines("VITE_OTEL_PROPAGATE_TO"),
+			];
+		case "python":
+			return [
+				"install: pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp",
+				"run: opentelemetry-instrument python your_app.py",
+			];
+	}
+}
+
+const isDir = (path: string) => existsSync(path) && statSync(path).isDirectory();
+
+/** Why this project gets no scaffold, or null. The package's own repository holds the templates as source. */
+function skipReason(projectRoot: string, opts: ApplyOptions): string | null {
+	if (opts.local) return "local mode (team owns OTel setup)";
+	if (
+		existsSync(join(projectRoot, "templates/instrumentation.ts")) ||
+		existsSync(join(projectRoot, "apps/indusk-mcp/templates/instrumentation.ts"))
+	) {
+		return "this is the indusk-mcp package (templates are source, not scaffolded)";
+	}
+	if (isExtensionExplicitlyDisabled(projectRoot, "otel")) {
+		return "otel is in disabled_extensions (.indusk/config.json)";
+	}
+	return null;
+}
+
+/** Read one target from disk. */
+function readTarget(projectRoot: string, name: string, dir: string): TargetRead {
+	return {
+		name,
+		rel: relative(projectRoot, dir),
+		exists: isDir(dir),
+		present: (file) => existsSync(join(dir, file)),
+		hasSrc: isDir(join(dir, "src")),
+		current: (path) => {
+			const file = join(dir, path);
+			return existsSync(file) ? readFileSync(file, "utf-8") : null;
+		},
+	};
+}
+
+const MARKER_NAMES = RUNTIME_MARKERS.flatMap((m) => m.files).join(", ");
+
+/** Write what the plan says for one target, print a line per change, and update the record. */
+function writeTarget(
+	projectRoot: string,
+	target: PlannedTarget,
+	record: Record<string, string>,
+	created: string[],
+): void {
+	const where = target.rel === "" ? "." : target.rel;
+	if (target.runtime === "missing") {
+		console.info(`  skip: ${target.name} (no checkout at ${where})`);
+		return;
+	}
+	if (target.runtime === null) {
+		console.info(
+			`  no app yet: ${target.name} (${where}) — \`indusk update\` scaffolds it once it has one of ${MARKER_NAMES}`,
+		);
+		return;
+	}
+	let firstScaffold = false;
+	for (const file of target.files) {
+		const abs = join(projectRoot, file.projectPath);
+		switch (file.action) {
+			case "create":
+				mkdirSync(dirname(abs), { recursive: true });
+				writeFileSync(abs, file.rendered);
+				record[file.projectPath] = sha256(file.rendered);
+				created.push(file.projectPath);
+				firstScaffold = true;
+				console.info(`  create: ${file.projectPath} (${file.purpose})`);
+				break;
+			case "refresh":
+				if (readFileSync(abs, "utf-8") !== file.rendered) {
+					writeFileSync(abs, file.rendered);
+					console.info(`  refresh: ${file.projectPath} (${file.purpose})`);
+				}
+				record[file.projectPath] = sha256(file.rendered);
+				break;
+			case "record":
+				record[file.projectPath] = sha256(file.rendered);
+				break;
+			case "beside":
+				writeFileSync(`${abs}${BESIDE_SUFFIX}`, file.rendered);
+				console.info(
+					`  beside: ${file.projectPath}${BESIDE_SUFFIX} (you changed ${file.projectPath}; the newer version is beside it)`,
+				);
+				break;
+		}
+	}
+	if (firstScaffold) {
+		const instrumentation = target.files[0]?.projectPath ?? "";
+		const relToTarget = target.rel === "" ? instrumentation : relative(target.rel, instrumentation);
+		for (const line of guidance(target.runtime, relToTarget)) console.info(`  ${line}`);
+	}
+}
+
+/** Scaffold OpenTelemetry into every target of the project, printing an `[OpenTelemetry]` section. */
+export function applyScaffold(projectRoot: string, opts: ApplyOptions = {}): ApplyResult {
+	console.info("\n[OpenTelemetry]");
+	const skipped = skipReason(projectRoot, opts);
+	if (skipped !== null) {
+		console.info(`  skip: ${skipped}`);
+		return { created: [], skipped };
+	}
+
+	const declared = declaredRepoDirs(projectRoot);
+	const targets = (
+		declared.length > 0 ? declared : [{ name: basename(projectRoot), dir: projectRoot }]
+	).map(({ name, dir }) => readTarget(projectRoot, name, dir));
+
+	const templates = join(induskMcpPackageRoot(), "templates");
+	const project = getProjectGroupId(projectRoot);
+	const address = daemonAddress(induskHome());
+	const record = readRecord(projectRoot);
+	const plan = scaffoldPlan(targets, {
+		record: record.files,
+		force: opts.force ?? false,
+		render: (template, service) =>
+			renderTemplate(
+				template,
+				readFileSync(join(templates, template), "utf-8"),
+				settingsValues({ service, project, address }),
+			),
+	});
+
+	const created: string[] = [];
+	for (const target of plan) writeTarget(projectRoot, target, record.files, created);
+	if (plan.some((t) => t.files.length > 0)) writeRecord(projectRoot, record);
+	return { created };
+}
