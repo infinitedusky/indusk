@@ -388,7 +388,7 @@ This plan taught approvals to remember the app's element rules, but it did so be
   Export `bindingOf(app: LooksApp)` from `apps/indusk-mcp/src/lib/looks/approvals.ts` returning `{ foundationHash, declarationsHash, ...(baseRulesHash) }`; `approveMockup` and `approveStory` in `approve.ts` spread it in place of the three fields each writes, and `rulesOf` goes. The writer of the binding set and its reader then live in one module, so the next field bound is one edit on each side, not four.
 
   </details>
-- [ ] The one rule for whether an approval still binds also covers the element rules, so the look check and the status line stop holding a look to an approval drawn under other rules.
+- [x] The one rule for whether an approval still binds also covers the element rules, so the look check and the status line stop holding a look to an approval drawn under other rules.
   <details><summary>Technical</summary>
 
   Fold `drawnUnderNow` into `boundToNow` in `approvals.ts` (an entry without `baseRulesHash` still binds, as now). `approvalOf` and `storyApprovalOf` then call `boundToNow` alone. Its other callers, `check.ts` (the `heldTo` of mockups and stories) and `bin/commands/looks.ts` (`statusLine`), pick it up unchanged; the status line's "on another foundation or declarations" wording gains "or element rules". This changes what those two report, which is why it carries its own trajectory row rather than relying on parity.

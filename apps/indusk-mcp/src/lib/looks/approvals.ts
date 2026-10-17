@@ -214,19 +214,19 @@ export const bindingOf = (
 	...(app.baseRulesHash === undefined ? {} : { baseRulesHash: app.baseRulesHash }),
 });
 
-/** Whether an entry, a mockup's or a story's, was made on the foundation and the declarations as they are now. */
+/**
+ * Whether an entry, a mockup's or a story's, was made on the foundation, the
+ * declarations and the element rules as they are now. An entry that recorded no
+ * element rules binds none and holds, as before the field existed — absence is
+ * a rule, not a migration.
+ */
 export const boundToNow = (
 	app: LooksApp,
-	e: Pick<ApprovalEntry, "foundationHash" | "declarationsHash">,
+	e: Pick<ApprovalEntry, "foundationHash" | "declarationsHash" | "baseRulesHash">,
 ): boolean =>
-	e.foundationHash === app.foundation.hash && e.declarationsHash === app.declarationsHash;
-
-/**
- * Whether an entry was drawn under the element rules the app has now. An
- * entry that recorded none binds none and holds, as before the field existed.
- */
-const drawnUnderNow = (app: LooksApp, e: { baseRulesHash?: string }): boolean =>
-	e.baseRulesHash === undefined || e.baseRulesHash === app.baseRulesHash;
+	e.foundationHash === app.foundation.hash &&
+	e.declarationsHash === app.declarationsHash &&
+	(e.baseRulesHash === undefined || e.baseRulesHash === app.baseRulesHash);
 
 /** Where an app's record is, relative to the project root. */
 export const approvalsPath = (app: string) => join(MOCKUPS_DIR, app, APPROVALS_FILE);
@@ -322,8 +322,7 @@ export function approvalOf(
 		(e) =>
 			e.mockupHash === mockup.hash &&
 			(e.componentsHash ?? NO_COMPONENTS) === mockup.componentsHash &&
-			boundToNow(app, e) &&
-			drawnUnderNow(app, e),
+			boundToNow(app, e),
 	);
 	const unapproved = [...new Set(unapprovedUses(app, mockup, stories).map((u) => u.name))];
 	if (current.length > 0 && unapproved.length === 0) {
@@ -390,8 +389,7 @@ export function storyApprovalOf(
 		(e) =>
 			e.snapshotHash === story.hash &&
 			(e.stylesheetHash ?? null) === story.stylesheetHash &&
-			boundToNow(app, e) &&
-			drawnUnderNow(app, e),
+			boundToNow(app, e),
 	);
 	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
 	const reference = mine[mine.length - 1] ?? null;
