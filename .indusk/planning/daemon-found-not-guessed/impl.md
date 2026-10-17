@@ -688,10 +688,10 @@ This phase makes InDusk find its daemon when the record is gone. A command that 
   `resolveLocalDaemon({ reads, home })` in `daemon-state.ts`, used by: `resolveLocal` (`apps/indusk-mcp/src/lib/promises/sources.ts:99-112`, behind `promises status`, `watch`, `promise_health`, the admin and catchup), the span reader with no endpoint (`apps/indusk-mcp/src/lib/promises/telemetry.ts:339-345`), look standing (`apps/indusk-mcp/src/lib/promises/look-standing.ts:263`), `liveOtlpEndpointSync` (`apps/indusk-mcp/src/lib/telemetry/status.ts:118-126`, synchronous: `spawnSync` of `ps` and `lsof`), `update`'s own-project jaeger sync (`apps/indusk-mcp/src/bin/commands/update.ts:507-526`), `demo` (`apps/indusk-mcp/src/bin/commands/demo.ts:64-84`) and `telemetryReset`. Failures stay `JaegerUnreachable` or `WatcherBlind`, naming the URL. Author A13 and A28 in `apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts`.
 
   </details>
-- [x] Shape: Move the lost-record finding and the line that says it out of `telemetryStatus` into a named `describeFinding` in `daemon-state.ts`, so the sentence status prints about a finding is a function a test can reach
+- [x] Shape: The sentence status prints about a daemon it found is its own named function, so a test can reach it.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/src/bin/commands/telemetry.ts`. Rule: Should this inline block have been a named function? `telemetryStatus` reads, finds, re-reads, words the finding and prints, and the wording has no seam a test reaches without running the CLI.
+  `apps/indusk-mcp/src/bin/commands/telemetry.ts`: move the lost-record finding and the line that says it out of `telemetryStatus` into a named `describeFinding` in `daemon-state.ts`. Rule: Should this inline block have been a named function? `telemetryStatus` reads, finds, re-reads, words the finding and prints, and the wording has no seam a test reaches without running the CLI.
 
   </details>
 - [x] Shape — reviewed a file this phase changed and left it as it is
@@ -783,6 +783,24 @@ This phase gives the daemon one address of its own and makes starting it safe. T
   `apps/indusk-mcp/src/__tests__/telemetry-mcp-port-sync.test.ts`: lines 77-96 become "restart keeps the stored address and leaves every entry byte-for-byte unchanged"; its second test is reversed (another project's stale URL is left alone); its third (`update` repairs its own project's entry) stays. `apps/indusk-mcp/src/__tests__/telemetry-restart-port-pin.test.ts` covers all four ports.
 
   </details>
+- [x] Shape: The step from what is running on the machine to what a start decides on gets its own name, so a test can reach it.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/telemetry/start-plan.ts`: name the derivation of running, found pairs or none out of `ensureDaemon` as `startStateOf(state, candidates)`. Rule: Should this inline block have been a named function? `ensureDaemon` reads, derives the plan input, decides and acts in one body.
+
+  </details>
+- [x] Shape: The table that turns a start option into a port role lives in one place, not two.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/telemetry/daemon.ts`: move the translation of a `Ports` record back into start options out of `daemonRestart` into `optionsOf(ports)` beside `startOptions`, which owns the flag-to-role table. Rule: Does this unit have one reason to change? The role-to-option mapping lives in two places and a new port would change both.
+
+  </details>
+- [x] Shape — reviewed a file this phase changed and left it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/telemetry/daemon.ts`: spawnDaemonProcesses is the old start body moved whole (render two configs, spawn two processes, wait for both): one job, a spawn, and splitting it would be a module boundary for the cleanup to judge on the finished whole
+
+  </details>
 
 #### Build Phase 3 Verification
 
@@ -811,7 +829,7 @@ This phase gives the daemon one address of its own and makes starting it safe. T
 
 #### Build Phase 3 Context
 
-- [ ] The package's context file states how the daemon's address is chosen and kept, the temporary-home rule and that a project's MCP entry is written only on a change.
+- [x] The package's context file states how the daemon's address is chosen and kept, the temporary-home rule and that a project's MCP entry is written only on a change.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": replace "the daemon's sync edits only the local copy's `jaeger` port" with "`register` writes only its own project's `jaeger` entry, at the stored MCP port, and only when it differs; nothing re-points another project's entry". New rule: "The real home's daemon runs on the address in `<home>/telemetry-address.json`, chosen once (`PORT_BLOCK` 24316-24319, or a port picked once for a block port held at first setup) and never moved; no code names a daemon port but `daemon-address.ts`; a stored port later held by a stranger is refused by name; port options are accepted only in a temporary home; `indusk telemetry address` is how anything else learns it. — guarded by `port-guard.test.ts`, `telemetry-start-plan.test.ts` and `telemetry-address.test.ts`." "Tests" section: Jaeger tests start the daemon in a temporary home on ports the test gives it.
