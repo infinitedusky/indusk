@@ -445,13 +445,13 @@ This phase makes a visual test cost what changed. Each look learns which files i
 
 This phase tests the finished plan against the cases it was not built around: a test in the demo example rather than an app, several test files run together where one fails, an everyday test that starts a process through a shared helper, a page that shows an image or depends on the Next.js config, and a test that imports a data file. Each hypothesis is that a plan runs the wrong tests, reports the wrong failure, or that the everyday suite still starts processes it promises not to. Once it closes, each case runs or is reported as the plan's promises say.
 
-- [ ] Treat any folder in the project's workspace that has its own test setup as a package, so the demo example's tests run in it and are reached by its changes.
+- [x] Treat any folder in the project's workspace that has its own test setup as a package, so the demo example's tests run in it and are reached by its changes.
   <details><summary>Technical</summary>
 
   Hypothesis: `packageOf` in `lib/plans/test-set-run.ts` knows only `apps/` and `packages/`, while `pnpm-workspace.yaml` also lists `examples/*`. A row naming `examples/seat-holds/src/telemetry.test.ts` falls to the root-level batch, where the root config's projects (`apps/*`, `packages/*`) find no such file and the set goes red; a change under `examples/` is never searched. Fix: a path's package is the nearest folder above it holding a `vitest.config.*` (stopping at the root). T15.
 
   </details>
-- [ ] Report each test file's own result when several run together, instead of giving them all the batch's exit code.
+- [x] Report each test file's own result when several run together, instead of giving them all the batch's exit code.
   <details><summary>Technical</summary>
 
   Hypothesis: `runFiles` sets `passed: r.code === 0` for every file of a batch, so one failing file marks every file in its package and tier FAIL, and the printout cannot say which failed. Fix: run each batch with `--reporter=json --outputFile.json=<tmp>` (as `findReached` does) and take each file's status from the report; a batch with no report keeps today's whole-batch verdict. T16.
