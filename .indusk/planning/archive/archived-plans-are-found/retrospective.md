@@ -79,3 +79,5 @@ across files; the audit did.
   about 250 s (Build Phase 2)
 - Falsification and cleanup skipped with reasons; the audit's findings became Build
   Phase 2
+
+Landed on main at 811faaf3b, 2026-10-18. Installed with `pnpm install:local`; nothing published.
