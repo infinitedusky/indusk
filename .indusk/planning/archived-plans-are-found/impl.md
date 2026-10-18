@@ -1,7 +1,7 @@
 ---
 title: "Archived plans are found"
 date: 2026-10-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -33,17 +33,17 @@ Every command that acts on a plan finds it whether its folder is in `.indusk/pla
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | A plan's folder is found in the planning folder, or in the archive when it is only there, and is reported missing when it is in neither | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
+| T1 | A plan's folder is found in the planning folder, or in the archive when it is only there, and is reported missing when it is in neither | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/promises/plan-folder.test.ts |
 | T2 | The impl of a plan that has been archived is found by name | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/impl-parser-archive.test.ts |
 | T3 | A plan archived on its own branch can be accepted, and the acceptance is recorded on its impl | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 | T4 | An accepted plan that has been archived lands | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 | T5 | The tests a plan runs at landing are listed for a plan that has been archived | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
-| T6 | A plan whose folder is in both the planning folder and the archive is read from the planning folder | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/active-first | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
+| T6 | A plan whose folder is in both the planning folder and the archive is read from the planning folder | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/active-first | apps/indusk-mcp/src/lib/promises/plan-folder.test.ts |
 | T7 | The amendments of a plan archived after its approval are listed against the brief it was approved with, and can be re-approved | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
-| T8 | A name that is not a plan's folder (the archive folder itself, a file such as `master.md`, a name with path separators or `..`) is not found as a plan by any command | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/promises/plan-folder.test.ts |
-| T9 | Only one module says where a plan's folder is, and the impl lookup, the plan-copy record, the workbench plan and its code file all ask it | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/plan-folder-single-definition.test.ts |
-| T10 | An archived workbench plan's code file is found, so it can be accepted, landed and re-approved | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/worktree/roots.test.ts |
-| T11 | The amendments of an archived plan are read against the registry at the project's root, not one folder too shallow | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
+| T8 | A name that is not a plan's folder (the archive folder itself, a file such as `master.md`, a name with path separators or `..`) is not found as a plan by any command | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/promises/plan-folder.test.ts |
+| T9 | Only one module says where a plan's folder is, and the impl lookup, the plan-copy record, the workbench plan and its code file all ask it | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/plan-folder-single-definition.test.ts |
+| T10 | An archived workbench plan's code file is found, so it can be accepted, landed and re-approved | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/worktree/roots.test.ts |
+| T11 | The amendments of an archived plan are read against the registry at the project's root, not one folder too shallow | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
 
 ## Checklist
 
@@ -224,7 +224,7 @@ The cold audit found that Build Phase 1 wrote a second function for where a plan
 
 #### Build Phase 2 Verification
 
-- [ ] One lookup finds a plan, refuses what is not a plan folder, finds an archived workbench plan's code file, and re-approval reads the right registry.
+- [x] One lookup finds a plan, refuses what is not a plan folder, finds an archived workbench plan's code file, and re-approval reads the right registry.
   <details><summary>Technical</summary>
 
   T8–T11 and T1–T7 still passing: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/plan-folder.test.ts src/__tests__/plan-folder-single-definition.test.ts src/lib/worktree/roots.test.ts src/lib/plans/amendments.test.ts src/lib/impl-parser-archive.test.ts`; the system-tier file after a build; then `indusk plans tests archived-plans-are-found --phase "Build Phase 2"`.
@@ -233,7 +233,7 @@ The cold audit found that Build Phase 1 wrote a second function for where a plan
 
 #### Build Phase 2 Context
 
-- [ ] Correct the package context line to name the existing lookup as the one home for a plan's folder.
+- [x] Correct the package context line to name the existing lookup as the one home for a plan's folder.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, One home per fact: the line Build Phase 1 added names `lib/promises/plan-folder.ts` (`findPlanFolder`, `planFolderStatus`), guarded by T9.
@@ -242,7 +242,7 @@ The cold audit found that Build Phase 1 wrote a second function for where a plan
 
 #### Build Phase 2 Document
 
-- [ ] Make the plans reference page and changelog line name what was actually done.
+- [x] Make the plans reference page and changelog line name what was actually done.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md` and the changelog's unreleased line: one lookup, which also refuses names that are not a plan folder; workbench plans included.
