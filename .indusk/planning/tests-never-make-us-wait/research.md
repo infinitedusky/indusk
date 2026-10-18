@@ -65,6 +65,31 @@ A test row's `For` cell names a promise or a clause, and a test file carries `pr
 already be read from the registry. Nothing records when a test last ran or what it
 returned.
 
+### Prior art: systems that already do this
+
+- **Google's TAP.** Before submission a change runs only the tests relevant to it;
+  after submission the wider set runs in batches over ranges of commits, and an
+  automated culprit finder narrows down which commit broke a failing test. Detection
+  is about one to two hours after the change; work is moving towards running the
+  tests most likely to fail more often. ([What Breaks Google?](https://research.google/pubs/what-breaks-google/),
+  [Speculative testing](https://research.google/pubs/speculative-testing-at-google-with-transition-prediction/),
+  [Flake-aware culprit finding](https://hackthology.com/flake-aware-culprit-finding.html))
+- **Choosing a change's tests.** Vitest has it: `vitest related <files>` and
+  `--changed <ref>` run the tests whose imports reach the changed files
+  ([Vitest `changed`](https://main.vitest.dev/config/changed)). Launchable and
+  Develocity learn the choice from history; Develocity is Gradle and Maven only,
+  Launchable a hosted service. Neither fits.
+  ([Launchable](https://www.launchableinc.com/topics/test-impact-analysis/),
+  [Develocity](https://gradle.com/develocity/product-tour/accelerate/predictive-test-selection))
+- **Visual checks of what changed.** Chromatic's TurboSnap uses git and the bundler's
+  dependency graph to find the stories a change reaches, snapshots those and carries
+  the rest's baselines forward ([TurboSnap](https://www.chromatic.com/features/turbosnap)).
+  Paid and hosted; the looks system already does the comparison, so the shape is
+  borrowed, not the product.
+- **Order.** History-based prioritisation in CI finds that past failures predict
+  future ones; the earliest form ranked tests by when they last ran and whether they
+  had found a fault ([Haghighatkhah et al., 2018](https://arxiv.org/pdf/1809.00143)).
+
 ### Promises in force that this plan comes near
 
 - `everyday-suite-stays-fast` (behaviour): the suite finishes within two minutes; a slow
@@ -105,13 +130,25 @@ All Sandy, 2026-10-17:
 - **No slow tier and no release test.** Tests that start the CLI, a git repository or a
   workbench run when a plan needs them, or when the sampler reaches them. Updating
   InDusk from npm right after a publish is what tests the package.
+- **The sampler runs recently failed tests first, then those run longest ago**
+  (Sandy, 2026-10-17, from the prior art).
+- **A sampler failure is run once more; one that passes then is noted as a flake and
+  breaks nothing**, as the release path treats a flake today (Sandy, 2026-10-17).
+- **Every run records its commit and result; finding the commit that broke a test is
+  `a-break-runs-its-tests`'s** (Sandy, 2026-10-17).
+- **A sampler failure breaks the promise its test names, with "found by the sampler"
+  as its source; no new page.** A page listing each test with its last run is later,
+  if wanted (Sandy, 2026-10-17).
+- **This is package behaviour**: every project InDusk runs gets the same rule for what
+  a plan runs and the same sampler, not only dusk.
 - **Not now:** a clause's break running that clause's tests (`a-break-runs-its-tests`,
   after `mark-first`); landing through pull requests, once InDusk has users or a team.
 
 ## Open Questions
 
-- How often the sampler runs, and how many tests a run takes.
-- Where the sampler's alert reaches the person: the admin, `/catchup`, or both.
+- For the ADR: which process runs the sampler on a schedule (the admin daemon is the
+  likely one), where each run is recorded (machine state under `~/.indusk/projects/`),
+  how many tests a run takes, and what leaves the release path.
 
 ## Sources
 

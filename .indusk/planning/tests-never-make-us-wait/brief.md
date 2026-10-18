@@ -39,10 +39,11 @@ decided are in [research.md](research.md).
    - **`the-changed-looks`** (split). A change to an app's interface checks the looks drawn from the files it changed, on the devices those looks are drawn for.
    - **`no-other-look`** (limit). A look the change did not touch is not checked while the plan is built.
 
-3. **`the-sampler-runs-the-oldest-tests-first`** (state). Every test and every look check records when it last ran and what it returned, and behind the scenes the sampler periodically runs those that ran longest ago.
-   - **`each-run-is-recorded`** (split). Every run of a test or a look check, by a plan, a person or the sampler, records when it ran and whether it passed.
-   - **`oldest-first`** (split). Each sampler run takes the tests and look checks that ran longest ago.
-   - **`found-by-the-sampler`** (split). A failure the sampler finds is reported to the person as found by the sampler, never as broken in production.
+3. **`the-sampler-runs-the-oldest-tests-first`** (state). Every test and every look check records when it last ran and what it returned, and behind the scenes the sampler periodically runs those that failed most recently, then those that ran longest ago.
+   - **`each-run-is-recorded`** (split). Every run of a test or a look check, by a plan, a person or the sampler, records when it ran, at which commit, and whether it passed.
+   - **`failed-then-oldest`** (split). Each sampler run takes the tests and look checks that failed most recently first, then those that ran longest ago.
+   - **`a-flake-breaks-nothing`** (limit). A test that fails for the sampler and passes when run once more is noted as a flake and breaks nothing.
+   - **`found-by-the-sampler`** (split). A failure the sampler finds breaks the promise its test names, and says it was found by the sampler.
    - **`never-waited-on`** (limit). Nothing waits on the sampler: no phase, landing, acceptance or release.
 
 ### Existing promises
@@ -67,12 +68,14 @@ decided are in [research.md](research.md).
 
 - **A time for the suite or a phase.** That is the first expectation, met by degree.
 - **A clause's break running that clause's tests** — `a-break-runs-its-tests`, after `mark-first`.
+- **Finding the commit that broke a test** — `a-break-runs-its-tests`; this plan records the commit on every run so that search can be made.
+- **A page listing each test with its last run** — later, if wanted; the runs it would show are recorded from now on.
 - **Landing through pull requests, a break pinned to one author** — later, once InDusk has users or a team.
 - **Agents that use the app to make telemetry on paths nobody has walked** — future, not planned.
 
 ## Looks
 
-{To settle with Sandy: where the sampler's report reaches the person — a new line or list in the admin changes a look; `/catchup` alone does not.}
+None — a sampler failure reaches the person as a break of its promise, through the activity and the promise's page as any break does today, with the sampler as its source; no screen is laid out differently.
 
 ## Depends On
 
