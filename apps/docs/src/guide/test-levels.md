@@ -50,10 +50,13 @@ a second.
 ## Two tiers
 
 Each package lists, in `vitest.tiers.ts`, the files that start a server, a
-detached process or a packed tarball, or that wait on the wall clock. Those
-files are its **system tier**.
+detached process or a packed tarball, or that wait on the wall clock. A test
+that starts InDusk's command line, git or another Node process is a system test
+too: a process start is most of what made the everyday suite slow (125 such
+files were 80% of its 150 seconds on 2026-10-17). Those files are its **system
+tier**.
 
-- **`pnpm test`** is everything else: rules, in about a minute, with both
+- **`pnpm test`** is everything else: rules, in about half a minute, with both
   packages in parallel. A phase runs only its own rows' tests and
   `vitest related` over the files it changed. That takes seconds.
 - **`pnpm test:system`** runs both packages' system tiers, at landing and on
@@ -70,11 +73,12 @@ InDusk keeps this the way it keeps anything else, as promises:
 
 - **`everyday-tests-never-wait`** (structure). A guard reads every everyday
   test file in both packages and fails, naming the file, line and call, if one
-  starts a server or waits on the clock.
-- **`everyday-suite-stays-fast`** (behaviour, watched). Each `pnpm test` run is
-  marked held or broken with how long it took. A slow run fails nothing; it
-  reads red on the Promises page. A run that overlapped another test run (an
-  evaluator's, usually) is not judged, and neither is one that failed in under
-  two minutes: a crash at startup measures nothing.
+  starts a server, the command line, git or another Node process, or waits on
+  the clock.
+- **`everyday-suite-stays-fast`** (behaviour, watched; replaced by
+  `a-plan-runs-its-tests-and-what-must-not-break` when its plan closes). It is
+  no longer marked: each `pnpm test` run's seconds are appended to
+  `suite-durations.jsonl` in the project's machine state, with whether the run
+  passed and whether it overlapped another test run (an evaluator's, usually).
 
 See the [decision](/decisions/test-kinds) for why.
