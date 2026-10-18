@@ -129,11 +129,13 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			let planDir = planDirOf(live.copy);
 			let plan: PlanSummary = parsePlanIfPresent(planDir);
 			// Not in planning/: an archived plan, judged as one (day-monitor).
-			if (plan.stage === "unknown" && !existsSync(planDir)) {
+			const archivedDir = planFolderPath(live.copy.root, name, true);
+			const trunkArchived = live.copy.source === "trunk" && planDir === archivedDir;
+			if (trunkArchived || (plan.stage === "unknown" && !existsSync(planDir))) {
 				const archived = archivedPlan(live.copy.root, name);
 				if (archived) {
 					plan = archived;
-					planDir = planFolderPath(live.copy.root, name, true);
+					planDir = archivedDir;
 				}
 			}
 

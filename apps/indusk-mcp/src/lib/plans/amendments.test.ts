@@ -83,7 +83,7 @@ describe("an archived plan's amendments are read against the registry at the pro
 	// clause: a-plan-is-found-in-the-archive/the-brief-at-approval
 	// promise: a-plan-is-found-in-the-archive
 	it("T11 a promise only the root registry says the plan owns is compared", async () => {
-		// The brief names no promise: the registry alone says `p` owns `held-seat`.
+		// The brief names none; the registry alone says `p` owns `held-seat`.
 		const brief = BRIEF("Reads fast");
 		const promise = (statement: string) =>
 			writePromise(join(base, "wt", ".indusk", "promises"), {
