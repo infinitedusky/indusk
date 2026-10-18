@@ -83,6 +83,14 @@ export function inSystemTier(tiersSource: string, file: string): boolean {
 const SYSTEM_CONFIG = "vitest.system.config.ts";
 
 /**
+ * Whether a package has a Vitest config of its own. One without (the docs
+ * site) has no tests to reach, and Vitest run there would fall back to the
+ * root config, whose project globs find nothing from inside a package.
+ */
+const hasVitestConfig = (dir: string): boolean =>
+	["ts", "mts", "js", "mjs"].some((ext) => existsSync(join(dir, `vitest.config.${ext}`)));
+
+/**
  * The test files the plan's changes reach, found by running Vitest's related
  * mode in each package a change is in, under its default config and, when the
  * package has one, its system config too: a system-tier test that imports a
@@ -98,6 +106,7 @@ export async function findReached(options: {
 	const failed: Array<{ path: string; output: string }> = [];
 	for (const [pkg, files] of groupByPackage(tracedFiles(options.changed))) {
 		const cwd = join(options.root, pkg);
+		if (!hasVitestConfig(cwd)) continue;
 		const configs = existsSync(join(cwd, SYSTEM_CONFIG)) ? [[], ["--config", SYSTEM_CONFIG]] : [[]];
 		for (const config of configs) {
 			const tmp = mkdtempSync(join(tmpdir(), "plan-tests-"));

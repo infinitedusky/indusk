@@ -57,6 +57,8 @@ it("a file is in the system tier when the package's tiers list names it", () => 
 it("the related run reads the reached files from the report each package writes", async () => {
 	const root = mkdtempSync(join(tmpdir(), "set-run-"));
 	dirs.push(root);
+	mkdirSync(join(root, "apps/a"), { recursive: true });
+	writeFileSync(join(root, "apps/a/vitest.config.ts"), "export default {};\n");
 	const calls: Array<{ args: string[]; cwd: string }> = [];
 	const run: Runner = async (_c, args, cwd) => {
 		calls.push({ args, cwd });
@@ -74,10 +76,25 @@ it("the related run reads the reached files from the report each package writes"
 	expect(calls[0].args.slice(0, 3)).toEqual(["vitest", "related", "src/x.ts"]);
 });
 
+it("a package with no Vitest config of its own has no tests to reach and is not searched", async () => {
+	const root = mkdtempSync(join(tmpdir(), "set-run-"));
+	dirs.push(root);
+	mkdirSync(join(root, "apps/docs/src"), { recursive: true });
+	const calls: string[] = [];
+	const run: Runner = async (_c, _args, cwd) => {
+		calls.push(cwd);
+		return { code: 1, output: "No projects were found" };
+	};
+	const found = await findReached({ root, changed: ["apps/docs/src/config.ts"], run });
+	expect(calls).toEqual([]);
+	expect(found).toEqual({ reached: [], failed: [] });
+});
+
 it("a package with a system config is searched under it too, and the reached files are the union", async () => {
 	const root = mkdtempSync(join(tmpdir(), "set-run-"));
 	dirs.push(root);
 	mkdirSync(join(root, "apps/a"), { recursive: true });
+	writeFileSync(join(root, "apps/a/vitest.config.ts"), "export default {};\n");
 	writeFileSync(join(root, "apps/a/vitest.system.config.ts"), "export default {};\n");
 	const calls: string[][] = [];
 	const run: Runner = async (_c, args, cwd) => {
@@ -97,6 +114,8 @@ it("a package with a system config is searched under it too, and the reached fil
 it("a failed related run is a failure naming the file the report marks failed", async () => {
 	const root = mkdtempSync(join(tmpdir(), "set-run-"));
 	dirs.push(root);
+	mkdirSync(join(root, "apps/a"), { recursive: true });
+	writeFileSync(join(root, "apps/a/vitest.config.ts"), "export default {};\n");
 	const run: Runner = async (_c, args, cwd) => {
 		const out = args.find((a) => a.startsWith("--outputFile.json="))?.split("=")[1] ?? "";
 		writeFileSync(
