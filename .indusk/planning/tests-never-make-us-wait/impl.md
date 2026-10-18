@@ -292,7 +292,7 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
   `apps/indusk-mcp/src/lib/plans/test-set.ts` `planTestSet(reads, { phase } | { landing: true })`, pure (ADR decision 1): rows from the trajectory parser, `reached` handed in, `mustNotBreak` from `parseBriefContract`, the registry from `readPromises` filtered with `findPromise`. Returns `{ files: { path, reason }[], withoutTests: string[], manual: string[] }`. `promise: a-plan-runs-its-tests-and-what-must-not-break` at the site.
 
   </details>
-- [ ] Add a command that runs a plan's test set and says why each file is in it.
+- [x] Add a command that runs a plan's test set and says why each file is in it.
   <details><summary>Technical</summary>
 
   `indusk plans tests <plan> --phase <N> | --landing [--list]` in `src/bin/commands/plans.ts` (ADR decisions 2 and 3): changed files from `changedFilesForPhase` (phase) or the plan branch against the trunk (landing); per package touched, `vitest related <changed> --run --reporter=json --outputFile.json=<tmp>` and its report's files as `reached`; then the rest through `resolveTestCommand`; exit code non-zero when any file fails. A workbench resolves through `resolveExecutionRoots`.
