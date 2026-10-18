@@ -48,18 +48,18 @@ the looks a change touched. The decisions are in [adr.md](adr.md); the assertion
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | T1 | The tests a plan runs at a phase include the test file of every row that phase writes or makes pass, and no row's file from a phase not yet reached | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
 | T2 | A phase that changed a source file runs the tests whose imports reach that file, in each package the phase changed | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T3 | Vitest's related run names, in its JSON report, the test files whose imports reach a given source file | Test Phase 1 | Test Phase 1 | planned | contract | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/__tests__/vitest-related-report.contract.test.ts |
+| T3 | Vitest's related run names, in its JSON report, the test files whose imports reach a given source file | Test Phase 1 | Test Phase 1 | passing | contract | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/__tests__/vitest-related-report.contract.test.ts |
 | T4 | At landing, the tests a plan runs include the tests of every promise its brief lists as Must not break, with its rows' tests and the tests its changes reach | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
 | T5 | A Must-not-break promise whose registry entry names no test is named as having none, not left out | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
 | T6 | The tests a plan runs at landing hold nothing outside its rows, what its changes reach and its Must-not-break promises | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T7 | The work, verify and retrospective skills tell a plan to run its test set, and never the whole suite or the slow tier, at a phase or at landing | Test Phase 1 | Build Phase 2 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
+| T7 | The work, verify and retrospective skills tell a plan to run its test set, and never the whole suite or the slow tier, at a phase or at landing | Test Phase 1 | Build Phase 2 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
 | T8 | A change to a page's file touches the screens drawn from that page, and no other screen | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
 | T9 | A change to a component touches its stories and the screens whose pages import it | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
 | T10 | A change to the app's design foundation, or a closure that cannot be read, touches every look of the app | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
 | T11 | A look check of what changed opens each touched look on every device that look is drawn for | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
 | T12 | A look check of what changed reuses every look the change did not touch, whatever else about the app changed | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/no-other-look | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
-| T13 | An everyday test file that starts InDusk's command line, git or another Node process is refused by the guard, naming the file, line and call; the same file in the system tier is not | Test Phase 1 | Test Phase 1 | planned | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
-| T14 | Every test file this repository holds that starts the command line, git or another Node process is in its package's system tier | Test Phase 1 | Build Phase 1 | planned | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| T13 | An everyday test file that starts InDusk's command line, git or another Node process is refused by the guard, naming the file, line and call; the same file in the system tier is not | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| T14 | Every test file this repository holds that starts the command line, git or another Node process is in its package's system tier | Test Phase 1 | Build Phase 1 | written | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 
 ## Checklist
 
@@ -75,19 +75,19 @@ This phase writes the tests that can be written against today's code: the guard'
   `indusk worktree create tests-never-make-us-wait` (worktree-per-plan default; the worktree from `indusk plans start` already exists, so this confirms and records the assignment).
 
   </details>
-- [ ] Teach the everyday guard that starting InDusk's command line, git or another Node process belongs in the system tier, and write its run over the repository so it fails today.
+- [x] Teach the everyday guard that starting InDusk's command line, git or another Node process belongs in the system tier, and write its run over the repository so it fails today.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts`: add to `PATTERNS` `runCli(`, `runCliAsync(`, and `spawnSync`/`execFileSync`/`spawn`/`execFile` called with `"git"` or `"node"` as the program (helpers stay exempt). T13: the patterns applied to a sample line flag it with the call named, and the same file listed in `SYSTEM` is not flagged. T14: the existing repository scan, now red, naming the slow files. Header tokens: `promise: everyday-tests-never-wait`.
 
   </details>
-- [ ] Write the test that the work, verify and retrospective skills name the plan's test set, so it fails today.
+- [x] Write the test that the work, verify and retrospective skills name the plan's test set, so it fails today.
   <details><summary>Technical</summary>
 
   T7, `apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts`: each of `skills/work.md`, `skills/verify.md`, `skills/retrospective.md` names `indusk plans tests`, and none tells a plan to run `pnpm test`, `pnpm turbo test`, `indusk checks slow` or `test:system` at a phase or at landing (lines inside the release section of the retrospective, which the sampler changes, are read too: they must not tell landing to run them). Red today on `retrospective.md:128` and `:342`, `verify.md:68-72`. Tokens: `clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs`, `promise: a-plan-runs-its-tests-and-what-must-not-break`.
 
   </details>
-- [ ] Write the contract test that Vitest's related run reports the test files it ran, which the plan's test set reads.
+- [x] Write the contract test that Vitest's related run reports the test files it ran, which the plan's test set reads.
   <details><summary>Technical</summary>
 
   T3, `apps/indusk-mcp/src/__tests__/vitest-related-report.contract.test.ts` (system tier, added to `SYSTEM`): in a temporary package with `a.ts`, `a.test.ts` importing it and `b.test.ts` not, `vitest related a.ts --run --reporter=json --outputFile.json=<path>` writes a report whose `testResults[].name` holds `a.test.ts` and not `b.test.ts`. Tokens: `clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach`, `promise: a-plan-runs-its-tests-and-what-must-not-break`.
@@ -183,13 +183,15 @@ This phase writes the tests that can be written against today's code: the guard'
 
 #### Test Phase 1 Verification
 
-- [ ] The guard's new rule, the skills' wording test and Vitest's report test exist, and each red one fails on its own assertion.
+- [x] The guard's new rule, the skills' wording test and Vitest's report test exist, and each red one fails on its own assertion.
   <details><summary>Technical</summary>
 
   T13 and T3 pass; T14 fails naming the slow files; T7 fails naming `retrospective.md` and `verify.md` lines. `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/everyday-tests-never-wait.test.ts src/__tests__/skills-run-the-plan-test-set.test.ts` and `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/vitest-related-report.contract.test.ts`.
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [x] Every deferred test body above has been read and judged.
+  - Judged 2026-10-18 (bodies not edited). T1-T6: logic matches the rows; two fixes for Build Phase 2 to carry: `describe` is imported and unused (biome's unused-import rule fails the file), and the `reads` shape is the contract `planTestSet` must be written to. T8-T10: compile against the designed `touchedLooks` (closures may be `null`) and assert what the rows claim; no change.
+  - **T11, T12 are wrong against today's code and must be rewritten in Build Phase 3.** `planReuse` in `reuse-run.ts` takes positional arguments `(app, root, base, screens, stories, served, opts: CheckOptions)`, not an options object, so `planReuse({ ...base, touched })` does not type-check; it returns a `ReusePlan` with `opened: Map<record, LookKey>`, `screens`, `stories` and `reused: Reused[]` (objects with `app`, `devices`, `at`), not `open`/`.device`/a list of names, so `plan.open` and `expect(plan.reused).toContain("plan.parts")` assert nothing real. There is also no `keyChanged` input; a key change is made by changing the held record or the facts. The body also has no imports and no `base` fixture (`reuse.test.ts` and `check-run.fixtures.ts` hold the existing ones).
   <details><summary>Technical</summary>
 
   Each body compiles at the phase it names and asserts what its row claims.
@@ -198,7 +200,7 @@ This phase writes the tests that can be written against today's code: the guard'
 
 #### Test Phase 1 Context
 
-- [ ] Record nothing new about how the project works; this phase only adds tests whose rules land with their build phases.
+- [x] Record nothing new about how the project works; this phase only adds tests whose rules land with their build phases.
   <details><summary>Technical</summary>
 
   Confirm no context file needs a line: the guard's rule is recorded in Build Phase 1, the command in Build Phase 2.
@@ -207,7 +209,7 @@ This phase writes the tests that can be written against today's code: the guard'
 
 #### Test Phase 1 Document
 
-- [ ] Write nothing in the docs yet; the pages change with the build phases.
+- [x] Write nothing in the docs yet; the pages change with the build phases.
   <details><summary>Technical</summary>
 
   Confirm `apps/docs` needs no change for tests alone.
