@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { type ParsedImpl, parseImplString } from "./impl-parser-core.js";
+import { planFolder } from "./plans/plan-folder.js";
 
 /**
  * The impl parser plus its two filesystem entry points. The parser itself —
@@ -23,11 +24,12 @@ export * from "./impl-parser-core.js";
 export function resolveImplPath(projectRoot: string, plan: string): string | null {
 	const candidates = plan.endsWith("impl.md")
 		? [resolve(projectRoot, plan)]
-		: [
-				resolve(projectRoot, plan, "impl.md"),
-				resolve(projectRoot, ".indusk", "planning", plan, "impl.md"),
-			];
-	return candidates.find((p) => existsSync(p)) ?? null;
+		: [resolve(projectRoot, plan, "impl.md")];
+	const found = candidates.find((p) => existsSync(p));
+	if (found || plan.endsWith("impl.md")) return found ?? null;
+	// promise: a-plan-is-found-in-the-archive — the planning folder, else the archive.
+	const folder = planFolder(projectRoot, plan);
+	return folder !== null && existsSync(join(folder, "impl.md")) ? join(folder, "impl.md") : null;
 }
 
 export function parseImpl(filePath: string): ParsedImpl {

@@ -1,12 +1,12 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { getPlanningDir } from "../config.js";
 import { git } from "../git.js";
 import { currentTrunkBranch } from "../trunk-branch.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { isWorkbench } from "../worktree/repos.js";
 import { chooseCodeRepo, codeRepoBase, type PlanCode, readPlanCode } from "../worktree/roots.js";
 import { PlanCommandRefusal } from "./plan-branch.js";
+import { planFolder } from "./plan-folder.js";
 
 /**
  * A plan in a workbench, as the plan commands act on it
@@ -45,8 +45,8 @@ export async function workbenchPlan(
 	const copies = await resolvePlanCopies(anyCheckout);
 	const root = copies.ok ? copies.projectRoot : anyCheckout;
 	if (!isWorkbench(root)) return null;
-	const dir = join(getPlanningDir(root), plan);
-	if (!existsSync(dir)) throw new PlanCommandRefusal(`no plan named ${plan} in this workbench`);
+	const dir = planFolder(root, plan);
+	if (dir === null) throw new PlanCommandRefusal(`no plan named ${plan} in this workbench`);
 	const read = readPlanCode(root, plan);
 	if (read === null) {
 		throw new PlanCommandRefusal(

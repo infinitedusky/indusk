@@ -2,6 +2,7 @@ import { existsSync, readdirSync, realpathSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { getPlanningDir } from "../config.js";
 import { git, listWorktrees } from "../git.js";
+import { planFolder } from "../plans/plan-folder.js";
 import { type Assignment, readRecord } from "./plan-worktree-record.js";
 import { isWorkbench } from "./repos.js";
 
@@ -210,22 +211,16 @@ function worktreeCopy(
 	const worktree = { name: basename(path), path, branch };
 	const planning = getPlanningDir(path);
 	const active = join(planning, plan);
-	if (existsSync(active)) return { plan, root: path, dir: active, source: "worktree", worktree };
 	const archived = join(planning, "archive", plan);
-	if (existsSync(archived)) {
+	const dir = planFolder(path, plan);
+	if (dir === active) return { plan, root: path, dir, source: "worktree", worktree };
+	if (dir !== null) {
 		// Archived on the trunk as well: a closed plan an incident reopened,
 		// worked here like any other — not one awaiting its landing.
 		if (existsSync(join(getPlanningDir(trunk.root), "archive", plan))) {
-			return { plan, root: path, dir: archived, source: "worktree", worktree };
+			return { plan, root: path, dir, source: "worktree", worktree };
 		}
-		return {
-			plan,
-			root: path,
-			dir: archived,
-			source: "worktree",
-			worktree,
-			archivedInWorktree: true,
-		};
+		return { plan, root: path, dir, source: "worktree", worktree, archivedInWorktree: true };
 	}
 	return {
 		...trunk,
