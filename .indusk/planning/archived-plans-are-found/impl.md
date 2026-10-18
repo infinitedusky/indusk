@@ -1,7 +1,7 @@
 ---
 title: "Archived plans are found"
 date: 2026-10-18
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "b584cda10d74409a5adceafbe0c13bdb650378e3d7bcfaca5c73d779ed789a29"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-18T16:47:02.759Z"
 ---
 
 # Archived plans are found
