@@ -137,6 +137,15 @@ pointer; the pointer holds the story.
   the derived vitest command never passes `--silent`. Ledger failure-safety is
   the inverse of pending-eval's: append only after a clean verdict. — see
   `/decisions/dawn-verify`
+- **A plan's tests come from one command, never a hand-picked list**:
+  `indusk plans tests <plan> --phase N | --landing` over `planTestSet`
+  (`lib/plans/test-set.ts`), the one definition — a phase gets its rows' files
+  and what its changes reach, a landing adds the brief's Must-not-break
+  promises' `tests:`, nothing else. Reached tests are found by running
+  `vitest related`, which cannot list them. Guarded by `test-set.test.ts` (a
+  later phase's row stays out, landing holds nothing extra) and
+  `skills-run-the-plan-test-set.test.ts` (no skill says `pnpm test`).
+  — see `/decisions/tests-never-make-us-wait`
 - **The phase-boundary record** (`.indusk/phase-boundary.jsonl`) is generic
   machine state shared by Shape, `verify` and `Challenge`; every changed-file
   scope excludes `.indusk/`; `readBoundaries` throws on a malformed line; the
