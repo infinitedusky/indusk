@@ -79,10 +79,15 @@ export function inSystemTier(tiersSource: string, file: string): boolean {
 	return tiersSource.includes(`"${file}"`);
 }
 
+/** A package's system-tier Vitest config, which its default config does not run. */
+const SYSTEM_CONFIG = "vitest.system.config.ts";
+
 /**
  * The test files the plan's changes reach, found by running Vitest's related
- * mode in each package a change is in. Vitest cannot list them without running
- * them, so they ran there and are not run again (ADR D2).
+ * mode in each package a change is in, under its default config and, when the
+ * package has one, its system config too: a system-tier test that imports a
+ * changed file is reached like any other (ADR D2, both tiers). Vitest cannot
+ * list them without running them, so they ran there and are not run again.
  */
 export async function findReached(options: {
 	root: string;
@@ -93,22 +98,34 @@ export async function findReached(options: {
 	const failed: Array<{ path: string; output: string }> = [];
 	for (const [pkg, files] of groupByPackage(tracedFiles(options.changed))) {
 		const cwd = join(options.root, pkg);
-		const tmp = mkdtempSync(join(tmpdir(), "plan-tests-"));
-		const out = join(tmp, "report.json");
-		try {
-			const result = await options.run(
-				"npx",
-				["vitest", "related", ...files, "--run", "--reporter=json", `--outputFile.json=${out}`],
-				cwd,
-			);
-			if (existsSync(out)) {
-				for (const path of reachedFromReport(readFileSync(out, "utf-8"), options.root)) {
-					if (!reached.includes(path)) reached.push(path);
+		const configs = existsSync(join(cwd, SYSTEM_CONFIG)) ? [[], ["--config", SYSTEM_CONFIG]] : [[]];
+		for (const config of configs) {
+			const tmp = mkdtempSync(join(tmpdir(), "plan-tests-"));
+			const out = join(tmp, "report.json");
+			try {
+				const result = await options.run(
+					"npx",
+					[
+						"vitest",
+						"related",
+						...files,
+						...config,
+						"--run",
+						"--passWithNoTests",
+						"--reporter=json",
+						`--outputFile.json=${out}`,
+					],
+					cwd,
+				);
+				if (existsSync(out)) {
+					for (const path of reachedFromReport(readFileSync(out, "utf-8"), options.root)) {
+						if (!reached.includes(path)) reached.push(path);
+					}
 				}
+				if (result.code !== 0) failed.push(...failedIn(out, options.root, result.output));
+			} finally {
+				rmSync(tmp, { recursive: true, force: true });
 			}
-			if (result.code !== 0) failed.push(...failedIn(out, options.root, result.output));
-		} finally {
-			rmSync(tmp, { recursive: true, force: true });
 		}
 	}
 	return { reached, failed };

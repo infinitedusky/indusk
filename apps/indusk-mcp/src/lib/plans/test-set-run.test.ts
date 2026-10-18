@@ -74,6 +74,26 @@ it("the related run reads the reached files from the report each package writes"
 	expect(calls[0].args.slice(0, 3)).toEqual(["vitest", "related", "src/x.ts"]);
 });
 
+it("a package with a system config is searched under it too, and the reached files are the union", async () => {
+	const root = mkdtempSync(join(tmpdir(), "set-run-"));
+	dirs.push(root);
+	mkdirSync(join(root, "apps/a"), { recursive: true });
+	writeFileSync(join(root, "apps/a/vitest.system.config.ts"), "export default {};\n");
+	const calls: string[][] = [];
+	const run: Runner = async (_c, args, cwd) => {
+		calls.push(args);
+		const system = args.includes("vitest.system.config.ts");
+		const out = args.find((a) => a.startsWith("--outputFile.json="))?.split("=")[1] ?? "";
+		const name = join(cwd, system ? "src/x.contract.test.ts" : "src/x.test.ts");
+		writeFileSync(out, JSON.stringify({ testResults: [{ name, status: "passed" }] }));
+		return { code: 0, output: "" };
+	};
+	const found = await findReached({ root, changed: ["apps/a/src/x.ts"], run });
+	expect(calls).toHaveLength(2);
+	expect(calls[1]).toEqual(expect.arrayContaining(["--config", "vitest.system.config.ts"]));
+	expect(found.reached.sort()).toEqual(["apps/a/src/x.contract.test.ts", "apps/a/src/x.test.ts"]);
+});
+
 it("a failed related run is a failure naming the file the report marks failed", async () => {
 	const root = mkdtempSync(join(tmpdir(), "set-run-"));
 	dirs.push(root);
