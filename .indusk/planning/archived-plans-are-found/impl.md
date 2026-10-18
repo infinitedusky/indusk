@@ -35,8 +35,8 @@ Every command that acts on a plan finds it whether its folder is in `.indusk/pla
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | T1 | A plan's folder is found in the planning folder, or in the archive when it is only there, and is reported missing when it is in neither | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
 | T2 | The impl of a plan that has been archived is found by name | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/impl-parser-archive.test.ts |
-| T3 | A plan archived on its own branch can be accepted, and the acceptance is recorded on its impl | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
-| T4 | An accepted plan that has been archived lands | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
+| T3 | A plan archived on its own branch can be accepted, and the acceptance is recorded on its impl | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
+| T4 | An accepted plan that has been archived lands | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 | T5 | The tests a plan runs at landing are listed for a plan that has been archived | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 | T6 | A plan whose folder is in both the planning folder and the archive is read from the planning folder | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/active-first | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
 | T7 | The amendments of a plan archived after its approval are listed against the brief it was approved with, and can be re-approved | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
@@ -61,13 +61,13 @@ This phase writes the tests that show today's failures: an archived plan whose i
   T2, `apps/indusk-mcp/src/lib/impl-parser-archive.test.ts`: a temp project with only `.indusk/planning/archive/p/impl.md`; `resolveImplPath(root, "p")` returns that path. Red today (returns null). Tokens: `clause: a-plan-is-found-in-the-archive/one-lookup`, `promise: a-plan-is-found-in-the-archive`.
 
   </details>
-- [ ] Write the tests that an archived plan can be accepted, landed, listed for landing and re-approved, failing today, in the system tier.
+- [x] Write the tests that an archived plan can be accepted, landed, listed for landing and re-approved, failing today, in the system tier.
   <details><summary>Technical</summary>
 
   T3, T4, T5, T7 in `apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts`, on the plan-in-a-worktree fixture (`helpers/plan-worktree-fixture.ts`; read how `plans-land.test.ts` and `amendments.test.ts` build an approved plan): approve the plan, then move its folder to `archive/` on its branch and commit; T3 `acceptPlan` records `accepted:` on the archived impl; T4 `landPlan` lands it; T5 `readsFor(root, plan)` (from `lib/plans/plan-tests.ts`) returns its rows; T7 an edit to the archived brief is listed by `amendmentsOf` against the approved brief and `reapprove` succeeds. Add the file to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts` (it starts git). Tokens for each clause and the promise.
 
   </details>
-  - Note: T5 and T7 are written and red (T5 "no impl.md for seat-holds", T7 "the brief at … approval commit … cannot be read"). T3 (accept) and T4 (land) PASS today in this fixture: `worktreeCopy` in `plan-worktrees.ts` already falls back to `archive/<plan>` for a plan with a live worktree, so `planBranch` finds it. They stay `planned` and this item and the red-tests verification stay open until a failing setup is found or the person decides.
+  - Note: T5 and T7 are written and red (T5 "no impl.md for seat-holds", T7 "the brief at … approval commit … cannot be read"). T3 (accept) and T4 (land) PASS today in this fixture: `worktreeCopy` in `plan-worktrees.ts` already falls back to `archive/<plan>` for a plan with a live worktree, so `planBranch` finds it. They are regression guards (below), passing from this phase: the brief's claim that `accept` could not read an archived plan was wrong, recorded 2026-10-18.
 
 #### Deferred to Build Phase 1
 
@@ -99,9 +99,14 @@ This phase writes the tests that show today's failures: an archived plan whose i
   });
   ```
 
+#### Regression Guards
+
+- **T3** — accepting an archived plan with a live worktree already works (`worktreeCopy` falls back to `archive/<plan>`); the test keeps it working once the lookup moves into one function.
+- **T4** — landing an accepted archived plan already works for the same reason; same purpose.
+
 #### Test Phase 1 Verification
 
-- [ ] The failing tests exist and each fails on its own assertion, not on a missing file.
+- [x] The failing tests exist and each fails on its own assertion, not on a missing file.
   <details><summary>Technical</summary>
 
   T2 red: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/impl-parser-archive.test.ts`; T3, T4, T5, T7 red: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/archived-plan-found.test.ts` (build first).
