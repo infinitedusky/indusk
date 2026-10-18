@@ -43,17 +43,43 @@ export const execRunner: Runner = async (command, args, cwd) => {
 	}
 };
 
-/** The package a repo-relative path belongs to (`apps/<x>` or `packages/<x>`), or null at the root. */
-export function packageOf(path: string): string | null {
-	const m = /^((?:apps|packages)\/[^/]+)\//.exec(path);
-	return m ? m[1] : null;
+/**
+ * Whether a folder has a Vitest config of its own. One without (the docs
+ * site) has no tests to reach, and Vitest run there would fall back to the
+ * root config, whose project globs find nothing from inside a package.
+ */
+const hasVitestConfig = (dir: string): boolean =>
+	["ts", "mts", "js", "mjs"].some((ext) => existsSync(join(dir, `vitest.config.${ext}`)));
+
+/** Whether a repo-relative folder is a package of `root`: it holds a Vitest config. */
+export const configuredIn =
+	(root: string) =>
+	(dir: string): boolean =>
+		hasVitestConfig(join(root, dir));
+
+/**
+ * The package a repo-relative path belongs to: the nearest folder above it
+ * (below the root) that holds a Vitest config, or null. Any workspace folder
+ * with its own test setup counts (`apps/*`, `packages/*`, `examples/*`), as
+ * the workspace file lists them, not a fixed pair of names.
+ */
+export function packageOf(path: string, hasConfig: (dir: string) => boolean): string | null {
+	const parts = path.split("/").slice(0, -1);
+	for (let n = parts.length; n > 0; n--) {
+		const dir = parts.slice(0, n).join("/");
+		if (hasConfig(dir)) return dir;
+	}
+	return null;
 }
 
 /** Paths grouped by the package they belong to, each made package-relative; root-level paths are dropped. */
-export function groupByPackage(paths: readonly string[]): Map<string, string[]> {
+export function groupByPackage(
+	paths: readonly string[],
+	hasConfig: (dir: string) => boolean,
+): Map<string, string[]> {
 	const groups = new Map<string, string[]>();
 	for (const path of paths) {
-		const pkg = packageOf(path);
+		const pkg = packageOf(path, hasConfig);
 		if (!pkg) continue;
 		const list = groups.get(pkg) ?? [];
 		list.push(path.slice(pkg.length + 1));
@@ -83,14 +109,6 @@ export function inSystemTier(tiersSource: string, file: string): boolean {
 const SYSTEM_CONFIG = "vitest.system.config.ts";
 
 /**
- * Whether a package has a Vitest config of its own. One without (the docs
- * site) has no tests to reach, and Vitest run there would fall back to the
- * root config, whose project globs find nothing from inside a package.
- */
-const hasVitestConfig = (dir: string): boolean =>
-	["ts", "mts", "js", "mjs"].some((ext) => existsSync(join(dir, `vitest.config.${ext}`)));
-
-/**
  * The test files the plan's changes reach, found by running Vitest's related
  * mode in each package a change is in, under its default config and, when the
  * package has one, its system config too: a system-tier test that imports a
@@ -104,9 +122,11 @@ export async function findReached(options: {
 }): Promise<{ reached: string[]; failed: Array<{ path: string; output: string }> }> {
 	const reached: string[] = [];
 	const failed: Array<{ path: string; output: string }> = [];
-	for (const [pkg, files] of groupByPackage(tracedFiles(options.changed))) {
+	for (const [pkg, files] of groupByPackage(
+		tracedFiles(options.changed),
+		configuredIn(options.root),
+	)) {
 		const cwd = join(options.root, pkg);
-		if (!hasVitestConfig(cwd)) continue;
 		const configs = existsSync(join(cwd, SYSTEM_CONFIG)) ? [[], ["--config", SYSTEM_CONFIG]] : [[]];
 		for (const config of configs) {
 			const tmp = mkdtempSync(join(tmpdir(), "plan-tests-"));
@@ -178,8 +198,12 @@ export async function runFiles(options: {
 }): Promise<FileResult[]> {
 	const results: FileResult[] = [];
 	const reasonOf = new Map(options.files.map((f) => [f.path, f.reason]));
-	const groups = groupByPackage(options.files.map((f) => f.path));
-	const rootLevel = options.files.filter((f) => !packageOf(f.path)).map((f) => f.path);
+	const hasConfig = configuredIn(options.root);
+	const groups = groupByPackage(
+		options.files.map((f) => f.path),
+		hasConfig,
+	);
+	const rootLevel = options.files.filter((f) => !packageOf(f.path, hasConfig)).map((f) => f.path);
 
 	for (const [pkg, files] of groups) {
 		const cwd = join(options.root, pkg);
