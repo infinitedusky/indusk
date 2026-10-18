@@ -1,7 +1,7 @@
 ---
 title: "Tests never make us wait"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -65,7 +65,7 @@ the looks a change touched. The decisions are in [adr.md](adr.md); the assertion
 | T17 | An everyday test that starts Node or git through a helper (the hook runner, the test git runner) is refused by the guard like one that starts it directly, and every such file is in the system tier | Build Phase 4 | Build Phase 4 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | T18 | A change to a file in the app's public folder or to its Next.js config touches every look of the app | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
 | T19 | A changed JSON file a test imports reaches that test | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/lib/plans/test-set-run.test.ts |
-| T20 | Verification of a phase runs a row's test file the way the plan's test set does: in its own package, a system-tier file under that package's system config, so a passing system-tier test is not reported red | Build Phase 5 | Build Phase 5 | written | unit | a regression guard: one way to run a test file, shared by the plan's test set and phase verification, after this plan moved about 190 files to the system tier | apps/indusk-mcp/src/lib/verify/red-tests.test.ts |
+| T20 | Verification of a phase runs a row's test file the way the plan's test set does: in its own package, a system-tier file under that package's system config, so a passing system-tier test is not reported red | Build Phase 5 | Build Phase 5 | passing | unit | a regression guard: one way to run a test file, shared by the plan's test set and phase verification, after this plan moved about 190 files to the system tier | apps/indusk-mcp/src/lib/verify/red-tests.test.ts |
 
 ## Checklist
 
@@ -521,25 +521,25 @@ Looked at and held: the phase and landing scopes of the test set (rows by phase,
 
 This plan grew a second way to run test files: the plan's test set knows which package and which tier a file belongs to and reports each file's own result, while phase verification still runs every row's file from the repository root, where the system tier is not a project, so a system-tier test would read as failing there. This phase gives both one shared module for running test files, and removes one hidden coupling between a test and a config file. Once it closes, the plan's test set and phase verification run a test file the same way, and every other changed file has been reviewed and left as it is, with its reason.
 
-- [ ] Move the code that runs a set of test files, package by package and tier by tier, into a shared module that both the plan's test set and phase verification use.
+- [x] Move the code that runs a set of test files, package by package and tier by tier, into a shared module that both the plan's test set and phase verification use.
   <details><summary>Technical</summary>
 
   Extract `execRunner`, `Runner`, the package resolution (`packageOf`, `groupByPackage`, `configuredIn`), `inSystemTier`, `runFiles` and the JSON-report reading from `lib/plans/test-set-run.ts` into `lib/tests/run-files.ts` (one home per fact: how a test file is run); `test-set-run.ts` keeps `findReached`, `collectResults` and `describeTestSet` and imports the rest. `detectRedTests` in `lib/verify/red-tests.ts` runs its distinct files through `runFiles` instead of one root-level `runFails` per file, keeping its rule of reading exit codes and report files, never printed output. Add the module to the package's single-definition pins if one exists for test running. T20.
 
   </details>
-- [ ] Give the leak test the switch that stops a test home's daemon directly, instead of importing the everyday config for its side effect.
+- [x] Give the leak test the switch that stops a test home's daemon directly, instead of importing the everyday config for its side effect.
   <details><summary>Technical</summary>
 
   `src/__tests__/test-daemons-never-leak.test.ts` imports `../../vitest.config` only so `INDUSK_SKIP_TELEMETRY_AUTOSTART` is set; pass it in the `runCli` environment the test builds (or set it in the test's own `beforeAll`), and drop the import and its explaining comment.
 
   </details>
-- [ ] Review the everyday guard's test file and leave it as it is.
+- [x] Review the everyday guard's test file and leave it as it is.
   <details><summary>Technical</summary>
 
   Reviewed `src/__tests__/everyday-tests-never-wait.test.ts` (443 lines, over the attention threshold) — left as-is: it is one guard whose rule (the patterns and the helper scan) has no user but its own tests (the guard's sample-line and repository-scan rows); moving the rule out would split it from its only caller with no second use.
 
   </details>
-- [ ] Review the large older files this plan touched lightly and leave them as they are.
+- [x] Review the large older files this plan touched lightly and leave them as they are.
   <details><summary>Technical</summary>
 
   Reviewed `src/bin/cli.ts`, `lib/looks/check.ts`, `lib/looks/mockups.ts`, `skills/work.md` (and its synced copy), `apps/docs` config, changelog and reference pages — left as-is: each was over the threshold before this plan and gained a few lines in an existing sequence (a command registration, an option, a foundation list, a reworded step). The new modules (`lib/plans/test-set.ts`, `lib/looks/{touched,routes,import-closure}.ts`, `lib/plans/plan-tests.ts`) are under the threshold with one job each, and two JSON-report readers inside `test-set-run.ts` are Shape's, not a cross-file copy.
@@ -548,16 +548,23 @@ This plan grew a second way to run test files: the plan's test set knows which p
 
 #### Build Phase 5 Verification
 
-- [ ] Phase verification and the plan's test set run a test file the same way, and a passing system-tier test reads as passing in both.
+- [x] Phase verification and the plan's test set run a test file the same way, and a passing system-tier test reads as passing in both.
   <details><summary>Technical</summary>
 
   T20: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/verify/red-tests.test.ts src/lib/plans/test-set-run.test.ts`; the leak test under the system config: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/test-daemons-never-leak.test.ts`; then `indusk plans tests tests-never-make-us-wait --phase "Build Phase 5"`.
 
   </details>
 
+- [x] Shape — review the files this phase changes against the enabled extensions' craft rules. Reviewed 2026-10-18; nothing to change.
+  <details><summary>Technical</summary>
+
+  `lib/tests/run-files.ts` (one reason to change: how a test file is run), `lib/verify/red-tests.ts` (`runFails` now one line over the injected runner; the full-suite branch keeps it), the leak test. One decision: a runner other than Vitest takes a single file, so `runFiles` batches only under Vitest and runs one file per invocation otherwise (`inBatches`), which keeps `verify.testCommand: node` working as before.
+
+  </details>
+
 #### Build Phase 5 Context
 
-- [ ] Add to the package's context file that running test files has one home, used by the plan's test set and phase verification.
+- [x] Add to the package's context file that running test files has one home, used by the plan's test set and phase verification.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, One home per fact: add `lib/tests/run-files.ts` to the single-definition list (shorten a neighbour; the file is over its budget).
@@ -566,7 +573,7 @@ This plan grew a second way to run test files: the plan's test set knows which p
 
 #### Build Phase 5 Document
 
-- [ ] Say on the verify command's reference page that a row's test runs in its own package and tier.
+- [x] Say on the verify command's reference page that a row's test runs in its own package and tier.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/verify.md`; a changelog line.
