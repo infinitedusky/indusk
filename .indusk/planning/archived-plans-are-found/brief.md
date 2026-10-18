@@ -1,7 +1,7 @@
 ---
 title: "Archived plans are found"
 date: 2026-10-18
-status: draft
+status: accepted
 workflow: bugfix
 clauses: required
 description: "Every command that acts on a plan finds it whether its folder is in planning/ or planning/archive/, so a plan the retrospective has archived can still be accepted, re-approved, tested at landing and landed."
@@ -28,9 +28,9 @@ copy's `dir` in `lib/worktree/plan-worktrees.ts`; ten commands go through them.
 
 ### This plan makes
 
-1. **`a-plan-is-found-in-the-archive`** (state). Every command that acts on a plan finds it in `.indusk/planning/<plan>` or, when not there, in `.indusk/planning/archive/<plan>`.
+1. **`a-plan-is-found-in-the-archive`** (state). Every command that acts on a plan finds it in .indusk/planning/<plan> or, when not there, in .indusk/planning/archive/<plan>.
    - **`one-lookup`** (split). One function says where a plan's folder is, and the impl, the brief and the worktree record all ask it.
-   - **`active-first`** (limit). A plan in both places is read from `.indusk/planning/<plan>`, never the archived copy.
+   - **`active-first`** (limit). A plan in both places is read from .indusk/planning/<plan>, never the archived copy.
    - **`the-brief-at-approval`** (split). Re-approval reads the brief at the approval commit from the path it had then, archived or not.
 
 ### Existing promises
