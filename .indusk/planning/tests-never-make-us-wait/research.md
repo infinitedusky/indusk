@@ -197,6 +197,12 @@ All Sandy, 2026-10-17:
   philosophy that Sandy writes alongside, outside this plan. This plan writes the
   testing step; `mark-first`, `the-sampler` and `a-break-runs-its-tests` each add
   theirs to the same section.
+- **The docs are work, not a promise** (Sandy, 2026-10-17): a promise that a page says
+  something is hard to keep. The section and its testing step are the impl's Document
+  items, and the ADR's Documentation Plan names them. What stays checkable becomes a
+  test row under `a-plan-runs-its-tests-and-what-must-not-break`: a whole-repository
+  check that nothing outside the archive and the changelog describes a slow tier, a
+  release test or a slow test's incident as something that runs.
 - **Not now:** a clause's break running that clause's tests (`a-break-runs-its-tests`,
   after `mark-first`); landing through pull requests, once InDusk has users or a team.
 
