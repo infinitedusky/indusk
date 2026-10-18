@@ -10,44 +10,47 @@
  * guard's: a failing suite still reads as a failing suite, and a passing one
  * that leaked a daemon fails.
  *
- * `--mark <promise>` (the root `pnpm test` only): time the run and mark
- * `everyday-suite-stays-fast` held or broken in the local daemon
- * (`suite-speed.js`, test-kinds). The mark never changes the exit code.
+ * `--record-duration` (the root `pnpm test` only): time the run and append it
+ * to the project's duration record (`suite-speed.js`, tests-never-make-us-wait).
+ * It marks no promise and never changes the exit code.
  *
- * promise: everyday-suite-stays-fast
+ * promise: everyday-suite-stays-fast — kept in the registry only until
+ * tests-never-make-us-wait closes and `promises confirm` retires it for
+ * `a-plan-runs-its-tests-and-what-must-not-break`; nothing marks it any more.
  */
 
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { otherTestRunAlive, SUITE_PROMISE, sendSuiteMark, suiteSpeedMark } from "./suite-speed.js";
+import { otherTestRunAlive, recordSuiteDuration, suiteDurationRecord } from "./suite-speed.js";
 
 let argv = process.argv.slice(2);
-let markPromise = null;
-if (argv[0] === "--mark") {
-	markPromise = argv[1];
-	argv = argv.slice(2);
+let recordDuration = false;
+if (argv[0] === "--record-duration") {
+	recordDuration = true;
+	argv = argv.slice(1);
 }
 const [command, ...args] = argv;
-if (!command || (markPromise !== null && markPromise !== SUITE_PROMISE)) {
-	console.error(`usage: with-daemon-guard.js [--mark ${SUITE_PROMISE}] <command> [args…]`);
+if (!command) {
+	console.error("usage: with-daemon-guard.js [--record-duration] <command> [args…]");
 	process.exit(2);
 }
 
-const overlappedAtStart = markPromise ? await otherTestRunAlive() : false;
+const overlappedAtStart = recordDuration ? await otherTestRunAlive() : false;
 const started = Date.now();
 const run = spawnSync(command, args, { stdio: "inherit" });
 const runCode = run.status ?? 1;
 
-if (markPromise) {
-	const mark = suiteSpeedMark({
+if (recordDuration) {
+	const record = suiteDurationRecord({
 		durationMs: Date.now() - started,
 		overlapped: overlappedAtStart || (await otherTestRunAlive(3_000)),
 		exitCode: runCode,
+		at: new Date().toISOString(),
 	});
 	const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
-	console.error(`${SUITE_PROMISE}: ${await sendSuiteMark(root, mark)}`);
+	console.error(`everyday suite: ${await recordSuiteDuration(root, record)}`);
 }
 
 const guard = spawnSync(
