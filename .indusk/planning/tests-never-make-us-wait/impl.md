@@ -364,19 +364,30 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
 
 This phase makes a visual test cost what changed. Each look learns which files it is drawn from (a screen from its page and that page's imports, a story from its component's), and a look check of what changed opens only the looks whose files changed, on every device they are drawn for, and reuses the rest. Once it closes, a page edit reopens only its screens, and the plan's promises are each proved.
 
-- [ ] Work out which looks a set of changed files touches, from each page's and component's imports.
+- [x] Work out which looks a set of changed files touches, from each page's and component's imports.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/touched.ts` (ADR decision 5): `lookClosures(app, root)` reads each screen's page (`page` in `screens.json`, else derived from `path` under the Next.js `app/` folder with its `layout` files) and each story's component, and their import closure with the app's own TypeScript (`preProcessFile`, `resolveModuleName`, the app's `tsconfig`), `null` when unreadable; `touchedLooks({ closures, foundation, changed })` pure. `screens.json` gains an optional `page` per screen in its reader.
 
   </details>
-- [ ] Let a look check be limited to what changed since a commit, reusing every other look.
+- [x] Let a look check be limited to what changed since a commit, reusing every other look.
   <details><summary>Technical</summary>
 
   `bin/commands/looks.ts`: `--changed <ref>`; `planReuse` (`reuse-run.ts`) takes `touched: Set<string>`: a touched look opens on all its devices, an untouched one is reused from `readHeld` even when its key changed; `--all` still opens all (ADR decision 6). `promise: a-look-check-runs-what-changed` at the sites.
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changes against the enabled extensions' craft rules. Reviewed 2026-10-18; one finding, done below.
+  <details><summary>Technical</summary>
+
+  Read `touched.ts`, `routes.ts`, `import-closure.ts`, `reuse-run.ts`'s `opens`, `changedSinceRef` and the command. `touchedLooks` pure and one rule; route matching, import reading and the git call each in their own unit with the process or the compiler injected or at the edge. Left as is: `changedSinceRef` has no everyday test because it starts git (the everyday guard forbids it); the smoke run below is its check.
+
+  </details>
+- [x] Shape finding: give a screen's and a story's sources their own named functions instead of one long `lookClosures`.
+  <details><summary>Technical</summary>
+
+  `screenSources` and `storySources` in `touched.ts`, out of `lookClosures` (a unit has one reason to change).
+
+  </details>
 
 #### Build Phase 3 Verification
 
