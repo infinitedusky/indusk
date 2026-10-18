@@ -57,6 +57,43 @@ the CLI, a git repository or a workbench: `run/workbench-split` 58 s,
 38 s, `looks-components-cli` 34 s, `promises-check` 27 s, `release-incident` 25 s,
 `promises-confirm` 24 s.
 
+### The full accounting: where the testing model is stated today (2026-10-17)
+
+Outside the plans, the changelog, test files and incidents, 61 files describe the slow
+tier, the system tier, `test:system`, slow tests or the everyday suite. Each is changed,
+removed or left as true by this plan:
+
+- **Promises (6):** `everyday-suite-stays-fast`, `everyday-tests-never-wait`,
+  `slow-checks-run-once-per-tree`, `a-failure-is-read-from-the-report`,
+  `a-release-runs-as-its-project-declares`, `dusk-installs-its-own-build` (and
+  `a-failing-slow-test-breaks-its-promise`, by name).
+- **Skills (4):** `planner.md`, `work.md`, `verify.md`, `retrospective.md`.
+- **Context files (4):** the root `CLAUDE.md`, `apps/indusk-admin/CLAUDE.md`,
+  `apps/indusk-mcp/src/lib/release/CLAUDE.md`, `.indusk/current.md`.
+- **Docs (14):** `guide/test-levels.md`, `guide/ui-promises.md`; decisions `test-kinds`,
+  `release-checks-run-once`, `release-records-its-failures`, `looks-check-speed`,
+  `storybook-components`, `ui-promises`; reference `cli/checks`, `cli/looks`,
+  `cli/promises`, `cli/release`, `skills/retrospective`, `telemetry/cli`,
+  `admin-ui/overview`.
+- **Code (about 20):** `lib/release/{run,route,settle,suspects,bugfix-plan}.ts`,
+  `lib/promises/test-incident.ts`, `lib/checks/steps.ts`, `lib/test-levels.ts`,
+  `lib/config.ts`, `lib/promises/vocabulary.ts`, `bin/commands/{checks,release,update}.ts`,
+  `bin/cli.ts`, `scripts/{rerun-system,suite-speed,check-test-daemons}.js`.
+- **Config (about 10):** the root and three package `package.json`s, each package's
+  `vitest.config.ts`, `vitest.system.config.ts` and `vitest.tiers.ts`, `.indusk/config.json`
+  (`workflow.steps.release.slow_tests`), `.gitignore`.
+- **Lessons (18):** among them `everyday-tests-never-wait`,
+  `slow-schedule-not-slow-suite-change-the-when-not-the-mechanism`,
+  `chained-test-system-skips-later-tiers-on-earlier-failure`,
+  `a-check-tier-with-no-run-moment-goes-stale-silently` (which this plan answers: the
+  sampler is the run moment), `dusk-installs-its-own-build-not-published-per-plan`.
+  Each is kept, rewritten or retired.
+
+Sandy (2026-10-17): this is the crux of the system, so its account must be complete and
+self-consistent, not only written. Hence a fourth promise holding every place above to
+the one guide page, with a whole-repository check that nothing still describes what is
+gone.
+
 ### What tests already say about promises
 
 A test row's `For` cell names a promise or a clause, and a test file carries `promise:

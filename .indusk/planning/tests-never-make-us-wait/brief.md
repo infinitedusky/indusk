@@ -46,6 +46,11 @@ decided are in [research.md](research.md).
    - **`found-by-the-sampler`** (split). A failure the sampler finds breaks the promise its test names, and says it was found by the sampler.
    - **`never-waited-on`** (limit). Nothing waits on the sampler: no phase, landing, acceptance or release.
 
+4. **`the-testing-model-is-written-once`** (structure). One guide page states how InDusk tests, and every skill, context file, docs page, lesson and command's help that speaks of testing agrees with it.
+   - **`one-page`** (split). One guide page says what a plan runs and when, what a visual test checks, what the sampler runs and in what order, and how a failure reaches the person.
+   - **`the-rest-points-to-it`** (split). Every other place that speaks of testing says only what it needs and links the page for the rest.
+   - **`nothing-describes-what-is-gone`** (limit). Nothing outside the archive and the changelog describes a slow tier, a release test or a slow test's incident as something that runs.
+
 ### Existing promises
 
 **Must not break**
@@ -55,6 +60,9 @@ decided are in [research.md](research.md).
 
 **Changes**
 
+- **`a-failure-is-read-from-the-report`**. Which tests failed is read from the test report the project declares, never from the runner's printed output, for a plan's run and the sampler's alike, and a run with no readable report says it failed without naming a test.
+- **`a-release-runs-as-its-project-declares`**. `indusk release` runs a project's declared release and reports it done when the config's completion condition holds, for any project that declares one; it runs no tests.
+- **`dusk-installs-its-own-build`**. After a plan lands, this machine's `indusk` is the landed build, installed from the checkout without a publish; publishing is a deliberate act.
 - **`everyday-tests-never-wait`**. The everyday suite never starts a server, a process, the command line, a git repository or a workbench, and never waits on the wall clock; such a test runs when a plan's rows name it or when the sampler reaches it.
 
 **Replaces**
