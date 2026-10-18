@@ -201,7 +201,7 @@ This phase adds the one function that says where a plan's folder is and makes ev
 
 The cold audit found that Build Phase 1 wrote a second function for where a plan's folder is, when the promise code already had one that also refuses names that are not a plan folder: the archive folder itself, a file, a name with path separators. Our copy dropped that check, and a few places still build a plan's path by hand, so an archived workbench plan is still refused. This phase deletes the copy, routes every lookup through the existing one, and tests the root correction the re-approval fix made. Once it closes there is one lookup, with its safety check, used everywhere a single plan is found.
 
-- [ ] Remove the new folder lookup and make every place that used it ask the existing one instead.
+- [x] Remove the new folder lookup and make every place that used it ask the existing one instead.
   <details><summary>Technical</summary>
 
   Found by the audit (2026-10-18): `lib/promises/plan-folder.ts` (`planFolderStatus`, `planFolderPath`) already answered "where is this plan's folder" for the contract, confirm, check and write code, refusing `archive`, files and unusable segments (`isUsableSegment`); Build Phase 1 added `lib/plans/plan-folder.ts` `planFolder` without that check. Add to the existing module a `findPlanFolder(planRoot, plan): string | null` built on `planFolderStatus` (active or archived → its path; anything else → null); delete `lib/plans/plan-folder.ts` and its test (moving T1/T6's cases to the existing module's test file); repoint `impl-parser.ts`, `plans/workbench-plan.ts`, `worktree/plan-worktrees.ts`. T8, T9.
