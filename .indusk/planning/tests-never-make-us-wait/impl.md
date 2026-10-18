@@ -69,7 +69,7 @@ the looks a change touched. The decisions are in [adr.md](adr.md); the assertion
 
 This phase writes the tests that can be written against today's code: the guard's new rule and its run over the repository, the skills' wording, and how Vitest reports the tests a file reaches. It records the tests whose subject is a module a build phase introduces, with their bodies, so each build phase starts with its tests written. It hands the first build phase a guard that fails on every slow file still in the everyday suite.
 
-- [ ] Create or confirm this plan's worktree, so the admin and the plan tools read the plan from it.
+- [x] Create or confirm this plan's worktree, so the admin and the plan tools read the plan from it.
   <details><summary>Technical</summary>
 
   `indusk worktree create tests-never-make-us-wait` (worktree-per-plan default; the worktree from `indusk plans start` already exists, so this confirms and records the assignment).
