@@ -130,3 +130,5 @@ Build Phases 1 and 5: 0), 0 judged wrong by a human. The context file periodic p
 - `pnpm test`: about 150 s → 33 s; a phase's own set: 4 to 144 files, 3 s to 66 s
 - Trajectory rows: 20, all passing
 - Test files moved to the system tier: about 190
+
+Landed on main at 8452aeb7, 2026-10-18. Installed with `pnpm install:local`; nothing published, since this project publishes when the operator decides.
