@@ -90,6 +90,42 @@ function entriesOf(
 	return route ? [...route.layouts, route.page] : null;
 }
 
+/** What a look is drawn from: its entry files (null when unknown) and the project-relative files it is held to. */
+type LookSources = [name: string, entries: string[] | null, held: string[]];
+
+/** Each declared screen state: its route's page and layouts (or declared page), and its mockup. */
+function screenSources(root: string, app: LooksApp): LookSources[] {
+	const appDir = appRouterDir(root, app);
+	const mockupDir = join(MOCKUPS_DIR, app.app);
+	return app.screens.flatMap((screen) =>
+		screen.states.map((state): LookSources => {
+			const name = `${screen.name}.${state}`;
+			return [
+				`screen:${name}`,
+				entriesOf(root, appDir, screen, state),
+				[posix(join(mockupDir, "screens", `${name}.html`))],
+			];
+		}),
+	);
+}
+
+/** Each story: its catalogued component file, and its snapshot and the component's stylesheet. */
+function storySources(root: string, app: LooksApp): LookSources[] {
+	const catalog = readCatalog(app);
+	const mockupDir = join(MOCKUPS_DIR, app.app);
+	return app.stories.map((story): LookSources => {
+		const file = catalog?.components.find((c) => c.name === story.component)?.file;
+		return [
+			`story:${story.name}`,
+			file ? [resolve(root, file)] : null,
+			[
+				posix(join(mockupDir, "components", `${story.name}.html`)),
+				posix(join(mockupDir, "components", `${story.component}.css`)),
+			],
+		];
+	});
+}
+
 /**
  * The files every look of `app` is drawn from, by look. `ts` is the app's own
  * TypeScript, loaded from its folder when not handed in; without one every
@@ -100,31 +136,7 @@ export function lookClosures(app: LooksApp, root: string, ts?: TypeScript | null
 	const first = app.sources[0];
 	const folder = first === undefined ? undefined : appFolderOf(root, first);
 	const compiler = ts === undefined && folder ? loadTypeScript(folder) : ts;
-	const looks: [string, string[] | null, string[]][] = [];
-	const appDir = appRouterDir(root, app);
-	const mockupDir = join(MOCKUPS_DIR, app.app);
-	for (const screen of app.screens) {
-		for (const state of screen.states) {
-			const name = `${screen.name}.${state}`;
-			looks.push([
-				`screen:${name}`,
-				entriesOf(root, appDir, screen, state),
-				[posix(join(mockupDir, "screens", `${name}.html`))],
-			]);
-		}
-	}
-	const catalog = readCatalog(app);
-	for (const story of app.stories) {
-		const file = catalog?.components.find((c) => c.name === story.component)?.file;
-		looks.push([
-			`story:${story.name}`,
-			file ? [resolve(root, file)] : null,
-			[
-				posix(join(mockupDir, "components", `${story.name}.html`)),
-				posix(join(mockupDir, "components", `${story.component}.css`)),
-			],
-		]);
-	}
+	const looks = [...screenSources(root, app), ...storySources(root, app)];
 	if (!compiler || !folder) return Object.fromEntries(looks.map(([name]) => [name, null]));
 	const importsOf = importReader(compiler, folder, resolve(root));
 	return Object.fromEntries(
