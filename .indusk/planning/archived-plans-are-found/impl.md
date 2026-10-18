@@ -9,6 +9,10 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+falsification: skipped
+falsification_reason: "a one-lookup bugfix the cold audit already read hard; its findings became Build Phase 2"
+cleanup: skipped
+cleanup_reason: "Build Phase 2 was the cleanup: it removed the duplicate lookup the audit found"
 approved_brief: "b584cda10d74409a5adceafbe0c13bdb650378e3d7bcfaca5c73d779ed789a29"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-18T16:55:06.928Z"
@@ -228,6 +232,9 @@ The cold audit found that Build Phase 1 wrote a second function for where a plan
   <details><summary>Technical</summary>
 
   T8–T11 and T1–T7 still passing: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/plan-folder.test.ts src/__tests__/plan-folder-single-definition.test.ts src/lib/worktree/roots.test.ts src/lib/plans/amendments.test.ts src/lib/impl-parser-archive.test.ts`; the system-tier file after a build; then `indusk plans tests archived-plans-are-found --phase "Build Phase 2"`.
+
+  
+  Verified 2026-10-18: T1–T11 pass. The phase's test set (`plans tests --phase "Build Phase 2"`) went red twice, 87–101 of 102, on different files each run; every failing file passes alone (`drafts`, `promises-confirm` rerun here). The cause is the test set running about 100 reached process-starting tests in one parallel batch (load about 130), a flaw in `tests-never-make-us-wait`'s test set, carried to its follow-up.
 
   </details>
 
