@@ -1,7 +1,7 @@
 ---
 title: "Tests never make us wait"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -60,6 +60,11 @@ the looks a change touched. The decisions are in [adr.md](adr.md); the assertion
 | T12 | A look check of what changed reuses every look the change did not touch, whatever else about the app changed | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-look-check-runs-what-changed/no-other-look | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
 | T13 | An everyday test file that starts InDusk's command line, git or another Node process is refused by the guard, naming the file, line and call; the same file in the system tier is not | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | T14 | Every test file this repository holds that starts the command line, git or another Node process is in its package's system tier | Test Phase 1 | Build Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| T15 | A test under `examples/` that a row names runs in its own package, and a change under `examples/` reaches that package's tests | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/lib/plans/test-set-run.test.ts |
+| T16 | When one file of several run together fails, only that file is reported failed, and the others passed | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set-run.test.ts |
+| T17 | An everyday test that starts Node or git through a helper (the hook runner, the test git runner) is refused by the guard like one that starts it directly, and every such file is in the system tier | Build Phase 4 | Build Phase 4 | planned | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| T18 | A change to a file in the app's public folder or to its Next.js config touches every look of the app | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
+| T19 | A changed JSON file a test imports reaches that test | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/lib/plans/test-set-run.test.ts |
 
 ## Checklist
 
@@ -433,6 +438,74 @@ This phase makes a visual test cost what changed. Each look learns which files i
   `apps/docs/src/reference/cli/looks.md`; `decisions/tests-never-make-us-wait.md` (the ADR in docs, with its sidebar entry); changelog.
 
   </details>
+
+### Build Phase 4: Falsification — what the test set and the guard miss
+
+**Tier**: med — the work step's default
+
+This phase tests the finished plan against the cases it was not built around: a test in the demo example rather than an app, several test files run together where one fails, an everyday test that starts a process through a shared helper, a page that shows an image or depends on the Next.js config, and a test that imports a data file. Each hypothesis is that a plan runs the wrong tests, reports the wrong failure, or that the everyday suite still starts processes it promises not to. Once it closes, each case runs or is reported as the plan's promises say.
+
+- [ ] Treat any folder in the project's workspace that has its own test setup as a package, so the demo example's tests run in it and are reached by its changes.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `packageOf` in `lib/plans/test-set-run.ts` knows only `apps/` and `packages/`, while `pnpm-workspace.yaml` also lists `examples/*`. A row naming `examples/seat-holds/src/telemetry.test.ts` falls to the root-level batch, where the root config's projects (`apps/*`, `packages/*`) find no such file and the set goes red; a change under `examples/` is never searched. Fix: a path's package is the nearest folder above it holding a `vitest.config.*` (stopping at the root). T15.
+
+  </details>
+- [ ] Report each test file's own result when several run together, instead of giving them all the batch's exit code.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `runFiles` sets `passed: r.code === 0` for every file of a batch, so one failing file marks every file in its package and tier FAIL, and the printout cannot say which failed. Fix: run each batch with `--reporter=json --outputFile.json=<tmp>` (as `findReached` does) and take each file's status from the report; a batch with no report keeps today's whole-batch verdict. T16.
+
+  </details>
+- [ ] Make the everyday guard count a call to a shared test helper that starts Node or git as a process start, and move the tests it then flags to the system tier.
+  <details><summary>Technical</summary>
+
+  Hypothesis: the guard exempts `src/__tests__/helpers/` and matches only direct calls, so 40 everyday tests that run hook scripts through `helpers/hook-runner.ts` (`runHook`, `validateWrite`, `gateTransition`) and 15 that run git through `helpers/test-git.ts` (`git`, `initRepoWithCommit`) start processes unflagged, against `everyday-tests-never-wait`'s new sentence. Fix: the guard reads each helper module, finds its exported functions that start a process (directly or through another of its own functions), and flags calls to them in everyday files; then move every file it flags to `SYSTEM`. T17. Counted 2026-10-18; recount when the work starts.
+
+  </details>
+- [ ] Count the app's public folder and its Next.js config among the files that touch every look.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `foundationFiles` in `lib/looks/touched.ts` holds the mockup foundation, stylesheets and Tailwind/PostCSS config, but not files under the app's `public/` folder (images a page shows by URL, never imported) nor `next.config.*`; a changed `public/logo.svg` or `next.config.ts` touches no look. Fix: add both to the foundation (over-reports, as an unreadable closure does). T18.
+
+  </details>
+- [ ] Hand a changed JSON file to the search for reached tests, so a test that imports it runs.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `tracedFiles` passes only code extensions to `vitest related`, so a changed `.json` a test imports (`import fixture from "./x.json"`) reaches nothing. Fix: pass `.json` too (documents stay out). T19.
+
+  </details>
+
+#### Build Phase 4 Verification
+
+- [ ] The demo example's tests run in their own package, one failing file is reported alone, helper-started processes are flagged and moved, a public file or the Next.js config touches every look, and a changed JSON reaches its tests.
+  <details><summary>Technical</summary>
+
+  T15, T16, T19: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/test-set-run.test.ts`; T17: `... src/__tests__/everyday-tests-never-wait.test.ts`; T18: `... src/lib/looks/touched.test.ts`; then `indusk plans tests tests-never-make-us-wait --phase "Build Phase 4"`.
+
+  </details>
+
+#### Build Phase 4 Context
+
+- [ ] Add to the package's test rules that a helper which starts a process makes every test calling it a system test.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, Tests: one line, T17 as its guard (the file is over its budget: shorten a neighbouring line to make room).
+
+  </details>
+
+#### Build Phase 4 Document
+
+- [ ] Say in the test-levels guide that a test calling a helper that starts a process is a system test, and add a changelog line.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/test-levels.md`; the changelog's unreleased section.
+
+  </details>
+
+#### Build Phase 4 Falsification Summary
+
+Looked at and held: the phase and landing scopes of the test set (rows by phase, Must-not-break promises by name or alias, a promise missing from the registry named rather than dropped), landing's changed files from the merge base, the related search's system-config pass and its skip of a package with no tests, route matching (groups, dynamic and catch-all segments; an unmatched route over-reports), stylesheets and styling config as foundation, an unreadable closure touching every look, and `--changed` taking committed, unstaged and untracked files. Not hunted: a project whose InDusk root is below its git top-level (paths from `git diff` are top-level-relative), and an unreadable promise registry at landing, which lists every Must-not-break promise as having no tests rather than failing.
 
 ## Files Affected
 
