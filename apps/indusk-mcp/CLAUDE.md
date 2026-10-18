@@ -29,9 +29,11 @@ pointer; the pointer holds the story.
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
   — `promise-health-single-definition.test.ts`; display names and plan dates
-  (`promises/display`: `readPlanName`, the nav's copy, worktree first) — `display-names-single-definition.test.ts`. A git primitive belongs in
-  `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
-  (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
+  (`promises/display`: `readPlanName`, worktree first) — `display-names-single-definition.test.ts`;
+  running test files (`lib/tests/run-files.ts`, used by the plan's test set and
+  phase verification) — `run-files-single-definition.test.ts`. A git primitive
+  belongs in `lib/git.ts` (`cleanup/oversized.ts`'s synchronous `git()` is the
+  one exclusion).
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
