@@ -394,6 +394,12 @@ This phase makes a visual test cost what changed. Each look learns which files i
   Found at verification (2026-10-18): this phase's change to `bin/cli.ts` reached `src/__tests__/always-on-health-tool.test.ts` (system tier) through the plan's test set, and its A19 matched `(\d+) violations?` while `promises status` prints `N break(s)` since one-promise-language; it failed on main too. Now matches `(\d+) breaks?`; passes under the system config.
 
   </details>
+- [x] Skip the search for reached tests in a package that has no tests of its own, instead of failing the whole set.
+  <details><summary>Technical</summary>
+
+  Found at verification (2026-10-18): this phase changed `apps/docs/src/.vitepress/config.ts`; `findReached` ran `vitest related` in `apps/docs`, which has no Vitest config, so Vitest fell back to the root config and failed with "No projects were found", making the set red with no file named. `findReached` now skips a package without its own `vitest.config.*`; a test in `test-set-run.test.ts` holds it. Not handled here, for falsification: `packageOf` knows only `apps/` and `packages/`, so a change under `examples/` is never searched.
+
+  </details>
 
 #### Build Phase 3 Verification
 
