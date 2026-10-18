@@ -88,8 +88,8 @@ export function groupByPackage(
 	return groups;
 }
 
-/** A path Vitest could trace imports from. A document or a data file reaches no test. */
-const CODE_FILE = /\.(?:[cm]?[jt]sx?)$/;
+/** A path Vitest could trace imports from: code, and JSON a test can import. A document reaches no test. */
+const CODE_FILE = /\.(?:[cm]?[jt]sx?|json)$/;
 export const tracedFiles = (paths: readonly string[]): string[] =>
 	paths.filter((p) => CODE_FILE.test(p));
 
