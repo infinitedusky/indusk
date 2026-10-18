@@ -186,6 +186,17 @@ All Sandy, 2026-10-17:
   reader starts, those pages are brought into line with it, and what this plan retires
   (the slow tier, the release test) is removed from them. The ADR's Documentation Plan
   names it and the impl gives it a Document item.
+- **Two plans, testing first** (Sandy, 2026-10-17): this plan only narrows what runs:
+  the tests a plan writes, the tests its changes reach, and the tests of its Must not
+  break promises, and visual tests of what changed. The sampler and its follow-ups
+  are the next plan, `the-sampler`, which takes the decisions above about order,
+  flakes, recorded commits and how a failure is reported. Until it lands, a test no
+  plan names or reaches does not run; that is the accepted trade.
+- **The docs get a "Testing and telemetry approach" section** (Sandy, 2026-10-17): a
+  list of steps that together form the approach, opened by an article on the
+  philosophy that Sandy writes alongside, outside this plan. This plan writes the
+  testing step; `mark-first`, `the-sampler` and `a-break-runs-its-tests` each add
+  theirs to the same section.
 - **Not now:** a clause's break running that clause's tests (`a-break-runs-its-tests`,
   after `mark-first`); landing through pull requests, once InDusk has users or a team.
 
