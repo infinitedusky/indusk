@@ -1,7 +1,7 @@
 ---
 title: "Tests never make us wait"
 date: 2026-10-17
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "While a plan is built, it runs the tests it writes, the tests its changes reach and the tests of what its brief says must not break, and a visual test checks only the looks that changed; nothing else runs."
@@ -30,16 +30,11 @@ behind the scenes, is the next plan; this one only narrows what runs.
    - **`its-own-tests`** (split). Each phase runs the tests of the rows it writes or changes.
    - **`what-its-changes-reach`** (split). Each phase runs the tests whose imports reach the files it changed.
    - **`what-must-not-break`** (split). The tests of every promise the brief lists as Must not break run at landing.
-   - **`nothing-else-runs`** (limit). No other test runs while a plan is built, landed or released.
+   - **`nothing-else-runs`** (limit). No other test runs while a plan is built or landed.
 
 2. **`a-look-check-runs-what-changed`** (state). A visual test checks only the looks a change touched.
    - **`the-changed-looks`** (split). A change to an app's interface checks the looks drawn from the files it changed, on the devices those looks are drawn for.
    - **`no-other-look`** (limit). A look the change did not touch is not checked while the plan is built.
-
-3. **`testing-has-its-step-in-the-approach`** (structure). The docs' Testing and telemetry approach section has a testing step, and every place that speaks of testing links it and none contradicts it.
-   - **`the-testing-step`** (split). The section's testing step says what a plan runs at each moment, what a visual test checks, and how a failure reaches the person.
-   - **`the-rest-points-to-it`** (split). The skills that run a plan (work, verify, retrospective, planner) and the other docs pages on testing link the testing step.
-   - **`nothing-describes-what-is-gone`** (limit). Nothing outside the archive and the changelog describes a slow tier, a release test or a slow test's incident as something that runs.
 
 ### Existing promises
 
@@ -50,23 +45,19 @@ behind the scenes, is the next plan; this one only narrows what runs.
 
 **Changes**
 
-- **`a-release-runs-as-its-project-declares`**. `indusk release` runs a project's declared release and reports it done when the config's completion condition holds, for any project that declares one; it runs no tests.
-- **`dusk-installs-its-own-build`**. After a plan lands, this machine's `indusk` is the landed build, installed from the checkout without a publish; publishing is a deliberate act.
-- **`everyday-tests-never-wait`**. The everyday suite never starts a server, a process, the command line, a git repository or a workbench, and never waits on the wall clock; such a test runs when a plan's rows name it or its changes reach it.
+- **`everyday-tests-never-wait`**. The everyday suite never starts a server, a process, the command line, a git repository or a workbench, and never waits on the wall clock; such a test runs when a plan's rows name it or its changes reach it, and in the release's tests.
 
 **Replaces**
 
 - **`a-look-check-costs-what-changed`**, by **`a-look-check-runs-what-changed`**.
 - **`everyday-suite-stays-fast`**, by **`a-plan-runs-its-tests-and-what-must-not-break`**.
-- **`slow-checks-run-once-per-tree`**, by **`a-plan-runs-its-tests-and-what-must-not-break`**.
-- **`a-failing-slow-test-breaks-its-promise`**, by **`a-plan-runs-its-tests-and-what-must-not-break`**.
-- **`a-failure-is-read-from-the-report`**, by **`a-plan-runs-its-tests-and-what-must-not-break`**.
 
 ### Not promised
 
 - **A time for the suite or a phase.** That is the first expectation, met by degree.
 - **The sampler** — every run recorded with its commit, the rest of the tests and looks run behind the scenes, recently failed then oldest first, a flake re-run once, a failure reported as a break found by the sampler — the next plan, `the-sampler`. Until it lands, a test no plan names or reaches does not run.
-- **Whether the testing step is well written.** Its test checks that the step exists, is linked and contradicts nothing; the prose is read by a person. The article on the philosophy that opens the section is Sandy's, written alongside, not part of this plan.
+- **The release's tests.** They still run after a publish, blocking nothing, until `the-sampler` replaces them.
+- **The Testing and telemetry approach section.** This plan documents what it builds the usual way; a documentation plan at the end of this run builds the section, a content page that explains the whole approach.
 - **A clause's break running that clause's tests, and finding the commit that broke a test** — `a-break-runs-its-tests`.
 - **Landing through pull requests, a break pinned to one author** — later, once InDusk has users or a team.
 

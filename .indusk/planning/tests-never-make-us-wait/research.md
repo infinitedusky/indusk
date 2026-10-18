@@ -209,6 +209,14 @@ All Sandy, 2026-10-17:
   nothing to run). Its test checks structure: the step exists, the skills and pages
   link it, nothing describes what is gone. Supersedes "the docs are work, not a
   promise" above.
+- **The approach section is its own plan, at the end** (Sandy, 2026-10-17): this plan
+  and the sampler document what they build the usual way; a documentation plan after
+  them builds the Testing and telemetry approach section as part of the application,
+  a content page explaining the whole thing. Supersedes the docs entries above.
+- **The release's tests leave with the sampler, not here**: a promise replaces only
+  one other, and the sampler is what takes the release run's place, so
+  `slow-checks-run-once-per-tree`, `a-failing-slow-test-breaks-its-promise` and
+  `a-failure-is-read-from-the-report` are `the-sampler`'s to change or replace.
 - **Not now:** a clause's break running that clause's tests (`a-break-runs-its-tests`,
   after `mark-first`); landing through pull requests, once InDusk has users or a team.
 
