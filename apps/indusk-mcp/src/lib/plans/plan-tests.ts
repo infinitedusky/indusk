@@ -7,19 +7,13 @@ import { resolveImplPath } from "../impl-parser.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { changedFilesForPhase } from "../shape/changed.js";
+import { execRunner, type Runner, runFiles } from "../tests/run-files.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 import { resolveTestCommand } from "../verify/red-tests.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import { PlanCommandRefusal } from "./plan-branch.js";
 import { planTestSet, type TestSet, type TestSetReads, type TestSetScope } from "./test-set.js";
-import {
-	collectResults,
-	describeTestSet,
-	execRunner,
-	findReached,
-	type Runner,
-	runFiles,
-} from "./test-set-run.js";
+import { collectResults, describeTestSet, findReached } from "./test-set-run.js";
 
 /**
  * `indusk plans tests` (tests-never-make-us-wait ADR D3): what a plan runs at a

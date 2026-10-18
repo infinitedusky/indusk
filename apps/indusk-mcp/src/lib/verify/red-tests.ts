@@ -1,6 +1,6 @@
 import { access, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { execRunner, type Runner } from "../plans/test-set-run.js";
+import { execRunner, type Runner, runFiles } from "../tests/run-files.js";
 import type { Trajectory, TrajectoryRow } from "../trajectory/parser.js";
 import type { VerifyFinding } from "./verify.js";
 
@@ -155,12 +155,17 @@ export async function detectRedTests(options: {
 		return { findings, unverifiedRows };
 	}
 
-	// One invocation per distinct file, however many rows point at it.
+	// Each distinct file is run once, however many rows point at it, the way the
+	// plan's test set runs it: in its own package, a system-tier file under that
+	// package's system config. The verdict is the exit code or the report file.
 	const files = [...new Set(checkable.flatMap((row) => row.test ?? []))];
-	const failedFiles = new Set<string>();
-	for (const file of files) {
-		if (await runFails(run, options.root, command, [file])) failedFiles.add(file);
-	}
+	const ran = await runFiles({
+		root: options.root,
+		command,
+		files: files.map((path) => ({ path, reason: "a passing row's test" })),
+		run,
+	});
+	const failedFiles = new Set(ran.filter((r) => !r.passed).map((r) => r.path));
 
 	const findings: VerifyFinding[] = [];
 	for (const row of checkable) {
