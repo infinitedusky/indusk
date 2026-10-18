@@ -1075,6 +1075,22 @@ plansCmd
 	});
 
 plansCmd
+	.command("tests <name>")
+	.description(
+		"Run a plan's own tests: its rows' tests, the tests its changes reach and, at landing, the tests of the promises its brief lists as Must not break — each file printed with its reason; exit 1 when any fails",
+	)
+	.option("--phase <ref>", 'A phase: "Build Phase 1", "Test Phase 1" or a bare build number')
+	.option(
+		"--landing",
+		"The whole plan: every row, what its branch changed, and the Must-not-break promises",
+	)
+	.option("--list", "Print the rows' and Must-not-break promises' files and run nothing")
+	.action(async (name: string, opts: { phase?: string; landing?: boolean; list?: boolean }) => {
+		const { plansTests } = await import("./commands/plans.js");
+		await plansTests(rootOrExit(), name, opts);
+	});
+
+plansCmd
 	.command("audit-inputs <name>")
 	.description(
 		"What the auditor is handed, as JSON: the plan's documents, the impl as merged at approval, the trajectory as it stands, the branch's diff and a stat of the whole tree",
