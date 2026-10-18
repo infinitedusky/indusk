@@ -1,7 +1,7 @@
 ---
 title: "A plan runs what must not break"
 date: 2026-10-18
-status: draft
+status: accepted
 workflow: bugfix
 clauses: required
 description: "Each phase runs its own rows and the tests of the promises its brief says must not break, and a landing runs every row and those same tests; the tests a change merely imports are no longer run, and a promise's clauses can be changed with it."
