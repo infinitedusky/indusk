@@ -570,6 +570,7 @@ export function checkerHashOf(checker: {
 
 /** The styling configuration files of an app's own folder: Tailwind and PostCSS. */
 const STYLING_CONFIG = /^(tailwind|postcss)\.config\./;
+const NEXT_CONFIG = /^next\.config\./;
 
 /**
  * The nearest folder at or above `source` that holds a `package.json` — the
@@ -591,6 +592,25 @@ export function appFolderOf(root: string, source: string): string {
  */
 export async function configHashOf(root: string, app: Pick<LooksApp, "sources">): Promise<string> {
 	return filesHashOf(root, await configFilesOf(root, app));
+}
+
+/**
+ * The files a page shows or is built with that no import names, absolute: the
+ * app's `public/` folder (images and fonts a page reaches by URL) and its
+ * `next.config.*`. A change to one restyles or rebuilds any look, so the
+ * looks check counts them with the foundation (tests-never-make-us-wait).
+ */
+export async function servedFilesOf(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+): Promise<string[]> {
+	const files: string[] = [];
+	for (const folder of new Set(app.sources.map((s) => appFolderOf(root, s)))) {
+		const here = existsSync(folder) ? await readdir(folder) : [];
+		files.push(...here.filter((f) => NEXT_CONFIG.test(f)).map((f) => join(folder, f)));
+		files.push(...(await filesUnder(join(folder, "public"))));
+	}
+	return files;
 }
 
 /** The files `configHashOf` hashes, absolute: the configuration no source file holds. */

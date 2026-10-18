@@ -9,6 +9,7 @@ import {
 	type DeclaredScreen,
 	type LooksApp,
 	MOCKUPS_DIR,
+	servedFilesOf,
 } from "./mockups.js";
 import { routeOf } from "./routes.js";
 
@@ -18,8 +19,8 @@ import { routeOf } from "./routes.js";
  * for a screen, its page, the layouts above it and everything they import; for
  * a story, its component and everything that imports; and, for both, the
  * mockup or snapshot it is held to. Anything that restyles every look touches
- * every look: the app's foundation, declarations, stylesheets and styling
- * configuration, and any look whose files cannot be read. Looks are named as
+ * every look: the app's foundation, declarations, stylesheets, styling
+ * configuration, the app's public files and its Next.js config, and any look whose files cannot be read. Looks are named as
  * the held record names them (`screen:home.full`, `story:badge.ok`), since a
  * screen and a story can share a name.
  *
@@ -64,7 +65,8 @@ export async function foundationFiles(root: string, app: LooksApp): Promise<stri
 	].map((f) => posix(join(dir, f)));
 	const styles = (await appSourceFiles(root, app.sources)).filter((f) => f.endsWith(".css"));
 	const config = await configFilesOf(root, app);
-	return [...own, ...[...styles, ...config].map((f) => posix(relative(root, f)))];
+	const served = await servedFilesOf(root, app);
+	return [...own, ...[...styles, ...config, ...served].map((f) => posix(relative(root, f)))];
 }
 
 /** The `app/` folder of the app's sources: `<source>/app` or `<source>/src/app`. */
