@@ -207,19 +207,20 @@ The cold audit found that Build Phase 1 wrote a second function for where a plan
   Found by the audit (2026-10-18): `lib/promises/plan-folder.ts` (`planFolderStatus`, `planFolderPath`) already answered "where is this plan's folder" for the contract, confirm, check and write code, refusing `archive`, files and unusable segments (`isUsableSegment`); Build Phase 1 added `lib/plans/plan-folder.ts` `planFolder` without that check. Add to the existing module a `findPlanFolder(planRoot, plan): string | null` built on `planFolderStatus` (active or archived → its path; anything else → null); delete `lib/plans/plan-folder.ts` and its test (moving T1/T6's cases to the existing module's test file); repoint `impl-parser.ts`, `plans/workbench-plan.ts`, `worktree/plan-worktrees.ts`. T8, T9.
 
   </details>
-- [ ] Route the remaining hand-built plan paths through the lookup, so an archived workbench plan's code file is found.
+- [x] Route the remaining hand-built plan paths through the lookup, so an archived workbench plan's code file is found.
   <details><summary>Technical</summary>
 
   `readPlanCode` in `lib/worktree/roots.ts:121` (builds `.indusk/planning/<plan>/code.json`), the trunk copy in `plan-worktrees.ts`, `papers publish` and the plan MCP tools the audit names: grep `src/lib` and `src/bin` for `"planning", plan` / `planning/${` single-plan joins and route each through `findPlanFolder` (listing all plans stays on `planFolders`). T10.
 
   </details>
-- [ ] Test the correction that re-approval reads an archived plan's registry from the project's root.
+- [x] Test the correction that re-approval reads an archived plan's registry from the project's root.
   <details><summary>Technical</summary>
 
   `amendments.ts:111` computes the project root from the plan folder; for an archived plan Build Phase 1 corrected it from one level too shallow, and the audit infers T7 still passes with the correction reverted. T11 in `lib/plans/amendments.test.ts`: an archived plan whose brief lists a promise that exists only in the root registry reports it as known (fails with the shallow root).
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changes against the enabled extensions' craft rules.
+  - Reviewed `promises/plan-folder.ts` (`findPlanFolder`), `impl-parser.ts`, `workbench-plan.ts`, `plan-worktrees.ts`, `roots.ts`, `papers/publish.ts`, `plan-tools.ts`: each change is a one-line route through the lookup; nothing to add. T11 was authored with the tests and fails (`expected [] to include 'promise held-seat'`) when the archived-root correction in `amendments.ts` is reverted, and passes with it.
 
 #### Build Phase 2 Verification
 
