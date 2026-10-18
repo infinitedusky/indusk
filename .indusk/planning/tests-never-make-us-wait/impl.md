@@ -1,7 +1,7 @@
 ---
 title: "Tests never make us wait"
 date: 2026-10-17
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "8bd6c4ba125e076ed97d19811da0d82596a5c234b644e5e085982333549bea6f"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-18T11:38:10.079Z"
 ---
 
 # Tests never make us wait
