@@ -276,6 +276,10 @@ const config = defineConfig({
 						{ text: "Server Provisioning", link: "/decisions/server-provisioning" },
 						{ text: "VS Code Extension", link: "/decisions/vscode-extension" },
 						{ text: "Test Kinds", link: "/decisions/test-kinds" },
+						{
+							text: "Tests Never Make Us Wait",
+							link: "/decisions/tests-never-make-us-wait",
+						},
 						{ text: "Planner Promises", link: "/decisions/planner-promises" },
 						{ text: "Plans Are Promises", link: "/decisions/plans-are-promises" },
 						{ text: "Sessions per Plan", link: "/decisions/sessions-per-plan" },

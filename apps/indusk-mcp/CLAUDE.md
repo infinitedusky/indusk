@@ -29,9 +29,11 @@ pointer; the pointer holds the story.
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
   — `promise-health-single-definition.test.ts`; display names and plan dates
-  (`promises/display`: `readPlanName`, the nav's copy, worktree first) — `display-names-single-definition.test.ts`. A git primitive belongs in
-  `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
-  (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
+  (`promises/display`: `readPlanName`, worktree first) — `display-names-single-definition.test.ts`;
+  running test files (`lib/tests/run-files.ts`, used by the plan's test set and
+  phase verification) — `run-files-single-definition.test.ts`. A git primitive
+  belongs in `lib/git.ts` (`cleanup/oversized.ts`'s synchronous `git()` is the
+  one exclusion).
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
@@ -137,6 +139,15 @@ pointer; the pointer holds the story.
   the derived vitest command never passes `--silent`. Ledger failure-safety is
   the inverse of pending-eval's: append only after a clean verdict. — see
   `/decisions/dawn-verify`
+- **A plan's tests come from one command, never a hand-picked list**:
+  `indusk plans tests <plan> --phase N | --landing` over `planTestSet`
+  (`lib/plans/test-set.ts`), the one definition — a phase gets its rows' files
+  and what its changes reach, a landing adds the brief's Must-not-break
+  promises' `tests:`, nothing else. Reached tests are found by running
+  `vitest related`, which cannot list them. Guarded by `test-set.test.ts` (a
+  later phase's row stays out, landing holds nothing extra) and
+  `skills-run-the-plan-test-set.test.ts` (no skill says `pnpm test`).
+  — see `/decisions/tests-never-make-us-wait`
 - **The phase-boundary record** (`.indusk/phase-boundary.jsonl`) is generic
   machine state shared by Shape, `verify` and `Challenge`; every changed-file
   scope excludes `.indusk/`; `readBoundaries` throws on a malformed line; the
@@ -216,18 +227,18 @@ pointer; the pointer holds the story.
   commits in the destination, never pushes by default, pushes last, and never
   lets a git failure escape past a commit it made. — see `/reference/cli/papers`
 - **A look's verdict is decided in `looks/verdict` from values handed to it;
-  the browser only measures** (`looks/check` reads `:root` and computed styles
-  and passes them in). Held or broken, the finding's token or element, and its
-  nearest token are never computed in the browser, the CLI or the admin — a
-  verdict decided where the page runs cannot be read without Chromium. —
-  guarded by `verdict.test.ts`; see `/reference/cli/looks`
-- **The no-raw-value lint is three modules, and a new rule goes in its own**:
-  `lint-values` (the strict list, the stylelint rules, `cssFindings`),
-  `lint-classes` (the Tailwind vocabulary a theme reset changes) and the token
-  checks in `lint`, which also orchestrates; `lint-types` holds the shared
-  shapes so neither imports `lint` back. A rule added to `lint.ts` is the
-  500-line file this split undid — guarded by the file-size attention-focus and
-  `looks-lint-rules.test.ts`; see `/reference/cli/looks`
+  the browser only measures** (`looks/check` passes in `:root` and computed
+  styles): a verdict decided where the page runs cannot be read without
+  Chromium — guarded by `verdict.test.ts`; see `/reference/cli/looks`
+- **A look is touched by its import closure; one that cannot be read touches
+  every look** (`looks/touched`; foundation, stylesheets and styling config
+  touch all). `check --changed` hands `planReuse` that set — guarded by T10 in
+  `touched.test.ts`; see `/reference/cli/looks`
+- **The no-raw-value lint is three modules, a new rule in its own**:
+  `lint-values`, `lint-classes`, and the token checks in `lint` (which
+  orchestrates); `lint-types` holds shared shapes. A rule added to `lint.ts` is
+  the 500-line file this split undid — guarded by the file-size attention-focus
+  and `looks-lint-rules.test.ts`; see `/reference/cli/looks`
 
 - **What `init` prints is checked against the command line**: every `indusk` command and file `init` prints is checked by `init-next-steps.test.ts`, so a new printed command must exist.
 
@@ -294,7 +305,8 @@ pointer; the pointer holds the story.
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
-- The root run builds this package before its tests (`turbo.json` `@infinitedusky/indusk-mcp#test`): a test behind `SHOULD_SKIP` skips silently without `dist/`, so a row on the built CLI must not rest on a build someone remembered.
+- The root run builds this package first (`turbo.json`): a test behind `SHOULD_SKIP` skips silently without `dist/`.
+- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes every test calling it a system test: list the file in `vitest.tiers.ts` `SYSTEM`; `everyday-tests-never-wait` reads the helpers and fails the file.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —

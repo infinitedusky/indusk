@@ -1,5 +1,5 @@
 /**
- * promise: a-look-check-costs-what-changed
+ * promise: a-look-check-runs-what-changed
  * promise: tokens-are-held-exactly
  *
  * When a look's last held result is reused, and where it is kept

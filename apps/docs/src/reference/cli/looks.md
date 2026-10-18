@@ -376,13 +376,14 @@ screen is the catalog's gap); a name in two is `duplicate component`, and when
 one is the component's own file by name every other is also
 `component markup outside its file: <file>:<line> <name>`.
 
-## `indusk looks check <app> [--url <url>] [--only <look>...] [--all]`
+## `indusk looks check <app> [--url <url>] [--only <look>...] [--all] [--changed <ref>]`
 
 Holds the running app to what a person approved, by value, in a real Chromium.
 `--url` is the app's base URL; without it the check uses `url` in the app's
 `screens.json`, and with neither it refuses rather than guess. A screen is
 opened at `<url><path>?state=<state>`, where `path` is the screen's own `path`
 in `screens.json` and otherwise `/<name>`.
+A screen may also give `page`, the file that draws it relative to the project root, for a route the app-router match does not find (`indusk looks check --changed` reads its imports from it); it is ignored unless a non-empty string.
 
 For each declared screen state whose mockup is approved — or whose last
 approved version was approved on the foundation and declarations as they are
@@ -503,6 +504,40 @@ the key. **`--all`** opens
 every look whatever held: run it after a change the key cannot see, at a UI
 plan's live check, and as the slow tests do after every landing and at every
 release.
+
+**`--changed <ref>`** opens only the looks a change touched, and reports every
+other look from its last held result. The changed files are those committed
+since the branch left `<ref>` (`git diff <ref>...HEAD`), modified in the working
+tree, or untracked; the first line says how many looks they touch
+(`changed since main: 27 of 181 looks touched`). A look is touched when a
+changed file is one it is drawn from:
+
+- **A screen** is drawn from its page, the `layout` files above it, and
+  everything those import. The page is the screen's `page` in `screens.json`
+  (a path from the project root) when it names one, else the Next.js app-router
+  page its `path` (or the state's entry in `paths`) matches under the app's
+  `app/` folder: a `[param]` folder matches any one segment, a `(group)` folder
+  takes none, and the query string is ignored.
+- **A story** is drawn from its component's file (the catalog's) and
+  everything that imports.
+- **Either** is also held to its mockup or snapshot, so a changed
+  `screens/<screen>.<state>.html`, `components/<story>.html` or the component's
+  stylesheet touches it.
+- **Every look** is touched by a change to the app's foundation tokens,
+  `devices.json`, `screens.json`, the generated stylesheet and the other
+  stylesheets under `sources`, the Tailwind and PostCSS config, `.storybook`
+  and `pnpm-lock.yaml`.
+
+Imports are read with the app's own TypeScript (`typescript` loaded from the
+app's folder, with the app's `tsconfig` paths), staying inside the project. When
+the app has no TypeScript to load, or a screen's page cannot be found, what a
+change reaches cannot be told, so any change touches every look: the check
+over-reports and never under-reports. A touched look is opened on every device
+and scheme it is drawn for; an untouched look with a held result is reused
+**even when its key changed** (a page edit moves every screen's key, which is
+why `--changed` exists). An untouched look that was never held still opens,
+since there is nothing to report for it. `--all` and `--only` win over
+`--changed`.
 
 **A development server is refused.** Before any look opens, the check reads the
 page at the base URL's own path (and the first story's frame) over plain HTTP

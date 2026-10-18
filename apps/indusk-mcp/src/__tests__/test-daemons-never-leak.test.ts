@@ -15,6 +15,11 @@ import { stopTelemetryForHome, telemetryProcessesFor } from "./helpers/telemetry
  * for every temporary home a test made — 860 were found running on
  * 2026-10-03, 2,058 on 2026-08-13. Read from the process list, as they were
  * found, because their only record lives in a home the test deletes.
+ *
+ * The switch that stops them is `INDUSK_SKIP_TELEMETRY_AUTOSTART`. The system
+ * tier's config deliberately does not set it, so each child here is given it
+ * explicitly: what this proves is that init, run with the switch, starts
+ * nothing (tests-never-make-us-wait).
  */
 
 const made: string[] = [];
@@ -40,7 +45,10 @@ function fixtureProject(): string {
 describe("A1 — a test that runs init starts no telemetry daemon", () => {
 	it("through the CLI helper", () => {
 		const home = tempDir("leak-home-");
-		const r = runCli(fixtureProject(), ["init", "--force"], { INDUSK_HOME: home });
+		const r = runCli(fixtureProject(), ["init", "--force"], {
+			INDUSK_HOME: home,
+			INDUSK_SKIP_TELEMETRY_AUTOSTART: "1",
+		});
 		expect(r.code, r.stderr).toBe(0);
 		expect(
 			telemetryProcessesFor(home),
@@ -53,7 +61,12 @@ describe("A1 — a test that runs init starts no telemetry daemon", () => {
 		const r = spawnSync("node", [CLI_BIN, "init", "--force"], {
 			cwd: fixtureProject(),
 			encoding: "utf-8",
-			env: { ...process.env, INDUSK_HOME: home, INDUSK_SKIP_UPDATE_CHECK: "1" },
+			env: {
+				...process.env,
+				INDUSK_HOME: home,
+				INDUSK_SKIP_UPDATE_CHECK: "1",
+				INDUSK_SKIP_TELEMETRY_AUTOSTART: "1",
+			},
 		});
 		expect(r.status, r.stderr).toBe(0);
 		expect(

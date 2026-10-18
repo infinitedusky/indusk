@@ -2,7 +2,7 @@
 name: everyday-suite-stays-fast
 kind: behaviour
 lifetime: holds
-state: enforced
+state: retired
 domain: planning
 owner: test-kinds
 sites:
@@ -16,3 +16,4 @@ The everyday suite, `pnpm test` at the root, finishes within two minutes. Every 
 
 ## History
 - 2026-10-05 — registered (test-kinds, Build Phase 5), at 53–55 s per run.
+- 2026-10-18 — retired, confirmed for tests-never-make-us-wait: replaced by `a-plan-runs-its-tests-and-what-must-not-break`.

@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
  * `indusk checks show` prints for the project at hand.
  *
  * The steps live in the package's skills: the retrospective's Steps 10 and 11
- * (landing and the bump), the verify skill's "Test (all)" row and the work
+ * (landing and the bump), the verify skill's "Test (landing)" row and the work
  * skill's line on what a phase runs. The rest of the retrospective cites the
  * package's own source for its gates, which is a different matter.
  *
@@ -32,7 +32,7 @@ function steps(): Record<string, string> {
 	const landing = retro.slice(retro.indexOf("### Step 10"));
 	const verify = read("verify.md")
 		.split("\n")
-		.filter((l) => l.includes("Test (all)"))
+		.filter((l) => l.includes("Test (landing)"))
 		.join("\n");
 	const work = read("work.md")
 		.split("\n")
@@ -40,7 +40,7 @@ function steps(): Record<string, string> {
 		.join("\n");
 	return {
 		"retrospective.md Steps 10–11": landing,
-		"verify.md Test (all)": verify,
+		"verify.md Test (landing)": verify,
 		"work.md what a phase runs": work,
 	};
 }

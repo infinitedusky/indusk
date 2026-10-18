@@ -246,7 +246,7 @@ parent with its own `master.md` naming them.
      holds one or more promises of clauses (2026-10-16; was "a plan is one
      promise"); each promise's clause plan replaces the test plan and is written
      before the ADR; a clause can rest on another promise.
-   - **`tests-never-make-us-wait`** (Sandy, 2026-10-17: before `mark-first`;
+   - **`tests-never-make-us-wait`** (closed 2026-10-18; [retrospective](../archive/tests-never-make-us-wait/retrospective.md); the sampler is `the-sampler`) (Sandy, 2026-10-17: before `mark-first`;
      not yet written) — development had slowed to a crawl on tests: a CSS
      bugfix took five build phases, one story-frame check 23 minutes, the
      everyday suite 3 m 45 s. The change made now is checked now, in seconds;

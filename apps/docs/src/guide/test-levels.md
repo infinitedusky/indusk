@@ -12,7 +12,7 @@ validates.
 | Level | The question it answers | When it runs |
 |---|---|---|
 | `unit` | Is this rule right? | In the phase that writes it; part of `pnpm test` |
-| `contract` | Do we still fit something we do not own: Jaeger's API, npm, a browser, the OS, Claude Code? | `pnpm test:system`, at landing and on release |
+| `contract` | Do we still fit something we do not own: Jaeger's API, npm, a browser, the OS, Claude Code? | `pnpm test:system`, on release, and in a plan when its rows or changes reach the file |
 | `live check` | Does the whole story work against the real system? | Once, recorded in the plan with its result |
 | `smoke` | Is the deployed thing alive? | At deploy |
 | `promise` | Is it still true in production? | Continuously, by the watcher |
@@ -20,7 +20,7 @@ validates.
 ```mermaid
 flowchart LR
   unit --> P[every phase]
-  contract --> L[landing and release]
+  contract --> L[release, or a plan that reaches it]
   live["live check"] --> F[once, when a feature closes]
   smoke --> D[deploy]
   promise --> C[continuously]
@@ -50,14 +50,35 @@ a second.
 ## Two tiers
 
 Each package lists, in `vitest.tiers.ts`, the files that start a server, a
-detached process or a packed tarball, or that wait on the wall clock. Those
-files are its **system tier**.
+detached process or a packed tarball, or that wait on the wall clock. A test
+that starts InDusk's command line, git or another Node process is a system test
+too, and so is one that calls a shared helper that starts one (`runHook`, `git`;
+the guard reads the helpers): a process start is most of what made the everyday suite slow (125 such
+files were 80% of its 150 seconds on 2026-10-17). Those files are its **system
+tier**.
 
-- **`pnpm test`** is everything else: rules, in about a minute, with both
+- **`pnpm test`** is everything else: rules, in under a minute (54 s on 2026-10-18), with both
   packages in parallel. A phase runs only its own rows' tests and
   `vitest related` over the files it changed. That takes seconds.
-- **`pnpm test:system`** runs both packages' system tiers, at landing and on
-  release.
+- **`pnpm test:system`** runs both packages' system tiers, on release (after
+  the publish, blocking nothing), and a plan runs a file from it only when one
+  of its rows names the file or its changes reach it.
+
+## What a plan runs
+
+A plan does not run `pnpm test` while it is built or when it lands. One
+command, [`indusk plans tests`](/reference/cli/plans#plans-tests-name-phase-ref-landing-list),
+computes what it owes:
+
+- **At a phase** (`--phase N`): the test files of the rows that phase writes or
+  makes pass, and the tests whose imports reach the files the phase changed.
+  Seconds.
+- **At landing** (`--landing`): every row's tests, the tests the plan's branch
+  reaches, and the tests of each promise the brief lists as Must not break.
+
+Each file prints with the reason it is in the set. Until
+the sampler (the next plan) runs the rest behind the scenes, a test no plan
+names, reaches or protects does not run unless a person runs it.
 
 No test run is replayed from turbo's cache (`"cache": false` on the `test`
 task). turbo keys a cache on a package's own files, and some tests read beyond
@@ -70,11 +91,12 @@ InDusk keeps this the way it keeps anything else, as promises:
 
 - **`everyday-tests-never-wait`** (structure). A guard reads every everyday
   test file in both packages and fails, naming the file, line and call, if one
-  starts a server or waits on the clock.
-- **`everyday-suite-stays-fast`** (behaviour, watched). Each `pnpm test` run is
-  marked held or broken with how long it took. A slow run fails nothing; it
-  reads red on the Promises page. A run that overlapped another test run (an
-  evaluator's, usually) is not judged, and neither is one that failed in under
-  two minutes: a crash at startup measures nothing.
+  starts a server, the command line, git or another Node process, or waits on
+  the clock.
+- **`everyday-suite-stays-fast`** (behaviour, watched; replaced by
+  `a-plan-runs-its-tests-and-what-must-not-break` when its plan closes). It is
+  no longer marked: each `pnpm test` run's seconds are appended to
+  `suite-durations.jsonl` in the project's machine state, with whether the run
+  passed and whether it overlapped another test run (an evaluator's, usually).
 
 See the [decision](/decisions/test-kinds) for why.

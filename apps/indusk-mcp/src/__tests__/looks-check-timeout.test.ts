@@ -1,5 +1,5 @@
 /**
- * promise: a-look-check-costs-what-changed — looks-check-speed A15: a slow look
+ * promise: a-look-check-runs-what-changed — looks-check-speed A15: a slow look
  * never ends the run (the clause shipped in storybook-components), held while
  * the opening of looks is rewritten.
  */

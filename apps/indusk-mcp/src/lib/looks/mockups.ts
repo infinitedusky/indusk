@@ -32,6 +32,12 @@ export interface DeclaredScreen {
 	/** Where the running app serves this screen; `/<name>` when not declared. */
 	path?: string;
 	/**
+	 * The file that draws this screen, relative to the project root, when it is
+	 * not the Next.js app-router page `path` names (`indusk looks check
+	 * --changed` reads the screen's imports from it). Only ever a string.
+	 */
+	page?: string;
+	/**
 	 * A path per state, overriding `path` for those states: a state that exists
 	 * only at another address (`{ "conversation": "/new/{seed}" }`).
 	 */
@@ -261,6 +267,12 @@ function declaredNew(html: string, name: "indusk-new-tokens" | "indusk-new-compo
 		.filter(Boolean);
 }
 
+/** A screen's `page` survives the reader only as a non-empty string. */
+function withValidPage(screen: DeclaredScreen): DeclaredScreen {
+	const { page, ...rest } = screen;
+	return typeof page === "string" && page !== "" ? { ...rest, page } : rest;
+}
+
 export async function readApp(root: string, app: string): Promise<LooksApp> {
 	const dir = join(root, MOCKUPS_DIR, app);
 	if (!existsSync(dir)) {
@@ -339,7 +351,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		foundation,
 		...facts,
 		declarationsHash: declarationsHashOf(facts),
-		screens: declared.screens ?? [],
+		screens: (declared.screens ?? []).map(withValidPage),
 		uncatalogued: declared.uncatalogued ?? [],
 		uncomposed: declared.uncomposed ?? [],
 		...(declared.url ? { url: declared.url } : {}),
@@ -558,12 +570,13 @@ export function checkerHashOf(checker: {
 
 /** The styling configuration files of an app's own folder: Tailwind and PostCSS. */
 const STYLING_CONFIG = /^(tailwind|postcss)\.config\./;
+const NEXT_CONFIG = /^next\.config\./;
 
 /**
  * The nearest folder at or above `source` that holds a `package.json` — the
  * app a source directory belongs to — else the source's parent.
  */
-function appFolderOf(root: string, source: string): string {
+export function appFolderOf(root: string, source: string): string {
 	for (let dir = join(root, source); dir.startsWith(root) && dir !== root; dir = dirname(dir)) {
 		if (existsSync(join(dir, "package.json"))) return dir;
 	}
@@ -578,6 +591,33 @@ function appFolderOf(root: string, source: string): string {
  * to any of them reopens everything (looks-check-speed ADR decision 2).
  */
 export async function configHashOf(root: string, app: Pick<LooksApp, "sources">): Promise<string> {
+	return filesHashOf(root, await configFilesOf(root, app));
+}
+
+/**
+ * The files a page shows or is built with that no import names, absolute: the
+ * app's `public/` folder (images and fonts a page reaches by URL) and its
+ * `next.config.*`. A change to one restyles or rebuilds any look, so the
+ * looks check counts them with the foundation (tests-never-make-us-wait).
+ */
+export async function servedFilesOf(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+): Promise<string[]> {
+	const files: string[] = [];
+	for (const folder of new Set(app.sources.map((s) => appFolderOf(root, s)))) {
+		const here = existsSync(folder) ? await readdir(folder) : [];
+		files.push(...here.filter((f) => NEXT_CONFIG.test(f)).map((f) => join(folder, f)));
+		files.push(...(await filesUnder(join(folder, "public"))));
+	}
+	return files;
+}
+
+/** The files `configHashOf` hashes, absolute: the configuration no source file holds. */
+export async function configFilesOf(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+): Promise<string[]> {
 	const files: string[] = [];
 	for (const folder of new Set(app.sources.map((s) => appFolderOf(root, s)))) {
 		const here = existsSync(folder) ? await readdir(folder) : [];
@@ -586,5 +626,5 @@ export async function configHashOf(root: string, app: Pick<LooksApp, "sources">)
 	}
 	const lock = join(root, "pnpm-lock.yaml");
 	if (existsSync(lock)) files.push(lock);
-	return filesHashOf(root, files);
+	return files;
 }
