@@ -452,7 +452,7 @@ export interface CheckOptions {
 	 * The looks a change touched (`touchedLooks`), by record name
 	 * (`screen:home.empty`, `story:badge.ok`): only these open; every other look
 	 * with a held result is reported from it even when its key changed
-	 * (`indusk looks check --changed`). Not yet read.
+	 * (`indusk looks check --changed`). `only` and `all` win over it.
 	 */
 	touched?: ReadonlySet<string>;
 	/** The project the check runs in: held results are read and kept for it. Without it nothing is reused or kept. */

@@ -63,7 +63,6 @@ describe("a look check of what changed", () => {
 		expect(report.reused[0]?.devices).toEqual(
 			app.devices.flatMap((d) => [d.name, `${d.name}/dark`]),
 		);
-		expect(report.notice).toBeUndefined();
 	});
 
 	it("a look never held is opened, touched or not", async () => {

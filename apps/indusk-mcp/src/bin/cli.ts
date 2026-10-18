@@ -1251,10 +1251,19 @@ looksCmd
 		"check just these looks, a screen state (home.empty) or a story (badge.ok); repeatable or comma-separated",
 	)
 	.option("--all", "open every look, even one unchanged since it last held")
-	.action(async (app: string, opts: { url?: string; only?: string[]; all?: boolean }) => {
-		const { looksCheck } = await import("./commands/looks.js");
-		await looksCheck(rootOrExit(), app, opts);
-	});
+	.option(
+		"--changed <ref>",
+		"open only the looks drawn from files changed since <ref>, and report every other look from its last held result",
+	)
+	.action(
+		async (
+			app: string,
+			opts: { url?: string; only?: string[]; all?: boolean; changed?: string },
+		) => {
+			const { looksCheck } = await import("./commands/looks.js");
+			await looksCheck(rootOrExit(), app, opts);
+		},
+	);
 
 looksCmd
 	.command("stories <app>")
