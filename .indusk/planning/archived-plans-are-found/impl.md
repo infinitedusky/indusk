@@ -149,7 +149,7 @@ This phase adds the one function that says where a plan's folder is and makes ev
   `apps/indusk-mcp/src/lib/plans/plan-folder.ts` `planFolder(projectRoot, plan): string | null`, from `getPlanningDir` (`lib/config.ts`); `promise: a-plan-is-found-in-the-archive` at the site.
 
   </details>
-- [ ] Make the impl lookup and the plan-copy record ask that function.
+- [x] Make the impl lookup and the plan-copy record ask that function.
   <details><summary>Technical</summary>
 
   `resolveImplPath` (`lib/impl-parser.ts`, and `impl-parser-core.ts` if it has its own copy) and the trunk and worktree copies in `lib/worktree/plan-worktrees.ts` (`dir`); grep every `join(getPlanningDir(…), plan)` and `".indusk", "planning", plan` under `src/lib` and `src/bin` and route plan-folder lookups through `planFolder` (listing all plans stays as it is).
