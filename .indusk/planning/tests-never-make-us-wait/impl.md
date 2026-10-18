@@ -406,7 +406,7 @@ This phase makes a visual test cost what changed. Each look learns which files i
 
 #### Build Phase 3 Context
 
-- [ ] Add to the package's context file that a look is touched by its import closure, and that an unreadable closure touches every look.
+- [x] Add to the package's context file that a look is touched by its import closure, and that an unreadable closure touches every look.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, Promises and telemetry (looks lines): one line, T10 as its guard.
@@ -415,7 +415,7 @@ This phase makes a visual test cost what changed. Each look learns which files i
 
 #### Build Phase 3 Document
 
-- [ ] Document the look check of what changed and the screen's optional page.
+- [x] Document the look check of what changed and the screen's optional page.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`; `decisions/tests-never-make-us-wait.md` (the ADR in docs, with its sidebar entry); changelog.
