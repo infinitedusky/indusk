@@ -155,7 +155,7 @@ This phase adds the one function that says where a plan's folder is and makes ev
   `resolveImplPath` (`lib/impl-parser.ts`, and `impl-parser-core.ts` if it has its own copy) and the trunk and worktree copies in `lib/worktree/plan-worktrees.ts` (`dir`); grep every `join(getPlanningDir(…), plan)` and `".indusk", "planning", plan` under `src/lib` and `src/bin` and route plan-folder lookups through `planFolder` (listing all plans stays as it is).
 
   </details>
-- [ ] Make re-approval and the amendments list read the approved brief from the path it had at the approval commit.
+- [x] Make re-approval and the amendments list read the approved brief from the path it had at the approval commit.
   <details><summary>Technical</summary>
 
   `lib/plans/approved-brief.ts` / `amendments.ts` / `reapprove.ts`: when `git show <approval>:<current brief path>` finds nothing, read `<approval>:.indusk/planning/<plan>/brief.md` (the path before archiving).
