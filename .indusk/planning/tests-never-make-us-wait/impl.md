@@ -298,7 +298,7 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
   `indusk plans tests <plan> --phase <N> | --landing [--list]` in `src/bin/commands/plans.ts` (ADR decisions 2 and 3): changed files from `changedFilesForPhase` (phase) or the plan branch against the trunk (landing); per package touched, `vitest related <changed> --run --reporter=json --outputFile.json=<tmp>` and its report's files as `reached`; then the rest through `resolveTestCommand`; exit code non-zero when any file fails. A workbench resolves through `resolveExecutionRoots`.
 
   </details>
-- [ ] Make the work, verify and retrospective skills run the plan's test set, never the whole suite, and resync their installed copies.
+- [x] Make the work, verify and retrospective skills run the plan's test set, never the whole suite, and resync their installed copies.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/work.md` (`:283` table), `verify.md` (`:68-72`, `:150-151`), `retrospective.md` (`:128`, `:342`: landing runs `indusk plans tests <plan> --landing`); copy to `.claude/skills/`; run `skill-sync-parity.test.ts`.
