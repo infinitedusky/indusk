@@ -53,11 +53,11 @@ the looks a change touched. The decisions are in [adr.md](adr.md); the assertion
 | T5 | A Must-not-break promise whose registry entry names no test is named as having none, not left out | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
 | T6 | The tests a plan runs at landing hold nothing outside its rows, what its changes reach and its Must-not-break promises | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
 | T7 | The work, verify and retrospective skills tell a plan to run its test set, and never the whole suite or the slow tier, at a phase or at landing | Test Phase 1 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
-| T8 | A change to a page's file touches the screens drawn from that page, and no other screen | Build Phase 3 | Build Phase 3 | written | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
-| T9 | A change to a component touches its stories and the screens whose pages import it | Build Phase 3 | Build Phase 3 | written | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
-| T10 | A change to the app's design foundation, or a closure that cannot be read, touches every look of the app | Build Phase 3 | Build Phase 3 | written | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
-| T11 | A look check of what changed opens each touched look on every device that look is drawn for | Build Phase 3 | Build Phase 3 | written | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
-| T12 | A look check of what changed reuses every look the change did not touch, whatever else about the app changed | Build Phase 3 | Build Phase 3 | written | unit | clause: a-look-check-runs-what-changed/no-other-look | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
+| T8 | A change to a page's file touches the screens drawn from that page, and no other screen | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
+| T9 | A change to a component touches its stories and the screens whose pages import it | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
+| T10 | A change to the app's design foundation, or a closure that cannot be read, touches every look of the app | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
+| T11 | A look check of what changed opens each touched look on every device that look is drawn for | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
+| T12 | A look check of what changed reuses every look the change did not touch, whatever else about the app changed | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-look-check-runs-what-changed/no-other-look | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
 | T13 | An everyday test file that starts InDusk's command line, git or another Node process is refused by the guard, naming the file, line and call; the same file in the system tier is not | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | T14 | Every test file this repository holds that starts the command line, git or another Node process is in its package's system tier | Test Phase 1 | Build Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 
@@ -391,7 +391,7 @@ This phase makes a visual test cost what changed. Each look learns which files i
 
 #### Build Phase 3 Verification
 
-- [ ] A changed page touches its screens, a changed component its stories and the screens importing it, and a foundation change every look.
+- [x] A changed page touches its screens, a changed component its stories and the screens importing it, and a foundation change every look.
   <details><summary>Technical</summary>
 
   T8, T9, T10: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/touched.test.ts`.
