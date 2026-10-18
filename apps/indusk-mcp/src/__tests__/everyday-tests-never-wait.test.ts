@@ -16,8 +16,10 @@ import { SYSTEM as MCP_SYSTEM } from "../../vitest.tiers";
  * runs at landing and on release. Eight such files in the admin once made
  * every phase wait five minutes.
  *
- * A process that runs and exits (`spawnSync`, `execFile` of git or the CLI)
- * is a contract with that tool for one call, and is allowed.
+ * So does a test that starts InDusk's command line, git or another Node
+ * process, even one that runs and exits (tests-never-make-us-wait, T13/T14):
+ * a process start is most of the suite's time. A plan runs such a file when
+ * its rows name it or its changes reach it, and the release runs it.
  */
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
@@ -29,6 +31,12 @@ const PATTERNS: Array<{ name: string; re: RegExp; unlessFakeTimers?: boolean }> 
 	{ name: "starts a local Jaeger", re: /\bstartLocalJaeger\(/ },
 	{ name: "starts two Jaeger sources", re: /\bstartTwoSources\(/ },
 	{ name: "starts a detached process", re: /\bspawn\([^)]*detached:\s*true/s },
+	// A process start, even one that exits: InDusk's command line, git, or node.
+	{ name: "starts the command line", re: /\brunCli(?:Async)?\(/ },
+	{
+		name: "starts git or node",
+		re: /\b(?:spawnSync|execFileSync|spawn|execFile)\(\s*(?:"(?:git|node)"|'(?:git|node)'|process\.execPath\b)/,
+	},
 	{ name: "sleeps", re: /\bsleep\(\s*[\w.]+/, unlessFakeTimers: true },
 	// The wait idiom: a promise resolved after N ms. A deadline timer that fires
 	// only when a test fails (\`setTimeout(() => r("still open"), 3_000)\`), or
@@ -99,15 +107,24 @@ export function scan(file: string, raw: string): Finding[] {
 	return found;
 }
 
+/** Whether the suite runs `file` (a package-relative path) every day: not in the system tier, not a helper. */
+export function isEveryday(file: string, system: string[]): boolean {
+	return !system.includes(file) && !file.includes("/helpers/");
+}
+
+/** What the guard finds in `source` at package-relative `file`: nothing when the system tier holds it. */
+export function scanEveryday(file: string, source: string, system: string[]): Finding[] {
+	return isEveryday(file, system) ? scan(file, source) : [];
+}
+
 async function everydayFiles(pkg: { dir: string; system: string[] }): Promise<string[]> {
 	const root = join(REPO, pkg.dir);
 	const files = await glob("src/**/*.test.{ts,tsx}", { cwd: root, nodir: true });
-	const system = new Set(pkg.system);
-	return files.filter((f) => !system.has(f) && !f.includes("/helpers/")).sort();
+	return files.filter((f) => isEveryday(f, pkg.system)).sort();
 }
 
 describe("everyday-tests-never-wait", () => {
-	it("no everyday test in either package starts a server or waits on the clock (A14)", async () => {
+	it("no everyday test in either package starts a server, a process or waits on the clock (A14, T14)", async () => {
 		const findings: Finding[] = [];
 		for (const pkg of await packages()) {
 			for (const f of await everydayFiles(pkg)) {
@@ -119,7 +136,7 @@ describe("everyday-tests-never-wait", () => {
 		const report = findings.map((x) => `  ${x.file}:${x.line} — ${x.call}`).join("\n");
 		expect(
 			findings,
-			`These everyday tests start a server or wait on the clock. Give the rule its clock and its reads as inputs, or move the file to its package's vitest.tiers.ts SYSTEM (lesson: everyday-tests-never-wait):\n${report}`,
+			`These everyday tests start a server or a process (the command line, git, node) or wait on the clock. Give the rule its clock and its reads as inputs, or move the file to its package's vitest.tiers.ts SYSTEM (lesson: everyday-tests-never-wait):\n${report}`,
 		).toEqual([]);
 	});
 
@@ -195,11 +212,9 @@ describe("everyday-tests-never-wait", () => {
 		}
 	});
 
-	it("a process that runs and exits does not trip the guard (A15)", () => {
+	it("a short timer, a comment and a string do not trip the guard (A15)", () => {
 		const source = [
-			`const out = spawnSync("git", ["rev-parse", "HEAD"], { cwd });`,
-			`execFile(process.execPath, [cli, "promises", "check"], done);`,
-			`const r = spawn("node", [cli, "status"], { stdio: "pipe" });`,
+			`const out = spawnSync(bin, ["rev-parse", "HEAD"], { cwd });`,
 			`setTimeout(resolve, 50);`,
 			`setTimeout(() => r("still open after 3 s"), 3_000);`,
 			`const child = "setTimeout(() => {}, 60_000)";`,
@@ -239,6 +254,26 @@ describe("everyday-tests-never-wait", () => {
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
 		}
+	});
+
+	// promise: everyday-tests-never-wait — tests-never-make-us-wait T13.
+	it("a test that starts the command line, git or node is refused, naming the call; in the system tier it is not (T13)", () => {
+		const source = [
+			`const r = await runCli(["status"], { cwd });`,
+			`const a = await runCliAsync(["plans"], { cwd });`,
+			`const g = spawnSync("git", ["rev-parse", "HEAD"], { cwd });`,
+			`execFileSync('git', ["init"]);`,
+			`execFile(process.execPath, [cli, "promises", "check"], done);`,
+			`const n = spawn("node", [cli, "status"], { stdio: "pipe" });`,
+		].join("\n");
+		const file = "src/__tests__/fixture.test.ts";
+		const found = scanEveryday(file, source, []);
+		expect(found.map((f) => f.line).sort()).toEqual([1, 2, 3, 4, 5, 6]);
+		expect(found.every((f) => f.file === file)).toBe(true);
+		expect(found.find((f) => f.line === 1)?.call).toBe("starts the command line: runCli(");
+		expect(found.find((f) => f.line === 3)?.call).toContain('starts git or node: spawnSync("git"');
+		expect(scanEveryday(file, source, [file])).toEqual([]);
+		expect(scanEveryday("src/__tests__/helpers/cli.ts", source, [])).toEqual([]);
 	});
 
 	it("each pattern catches what it names", () => {
