@@ -13,10 +13,6 @@
  * `--record-duration` (the root `pnpm test` only): time the run and append it
  * to the project's duration record (`suite-speed.js`, tests-never-make-us-wait).
  * It marks no promise and never changes the exit code.
- *
- * promise: everyday-suite-stays-fast — kept in the registry only until
- * tests-never-make-us-wait closes and `promises confirm` retires it for
- * `a-plan-runs-its-tests-and-what-must-not-break`; nothing marks it any more.
  */
 
 import { spawnSync } from "node:child_process";

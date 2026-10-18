@@ -261,7 +261,7 @@ describe("everyday-tests-never-wait", () => {
 		if (example) expect(await everydayFiles(example)).toContain("src/seats.test.ts");
 	});
 
-	// promise: everyday-tests-never-wait, everyday-suite-stays-fast — ui-promises A25.
+	// promise: everyday-tests-never-wait — ui-promises A25.
 	// A look check opens Chromium: it is a contract with the browser, so it lives in
 	// the system tier. The generic scan above reads for servers and waits, not for a
 	// browser, so this names the look checks' files directly.

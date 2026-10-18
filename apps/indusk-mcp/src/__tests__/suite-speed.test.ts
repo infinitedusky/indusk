@@ -10,10 +10,6 @@ import {
 } from "../../scripts/suite-speed.js";
 
 /**
- * promise: everyday-suite-stays-fast — kept in the registry only until
- * tests-never-make-us-wait closes and `promises confirm` retires it; nothing
- * marks it any more.
- *
  * tests-never-make-us-wait: each everyday run's duration is recorded in the
  * project's machine state, and marks no promise (the brief's expectation reads
  * the record). A run that overlapped another is flagged, not judged; a record
@@ -77,7 +73,7 @@ describe("the everyday suite's duration record", () => {
 				pid: 11,
 				ppid: 10,
 				command:
-					"node apps/indusk-mcp/scripts/with-daemon-guard.js --mark everyday-suite-stays-fast",
+					"node apps/indusk-mcp/scripts/with-daemon-guard.js --record-duration",
 			},
 			{ pid: 12, ppid: 11, command: "node /repo/node_modules/vitest/vitest.mjs run" },
 			{
