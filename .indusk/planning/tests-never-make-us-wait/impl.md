@@ -286,7 +286,7 @@ This phase takes the slow files out of the everyday suite. Every test that start
 
 This phase gives a plan its test set and makes it the only thing a plan runs. One command computes the set from the plan's rows, the files a phase changed and the brief's Must-not-break promises, runs it, and says why each file is in it; the skills that drive a phase and a landing name that command in place of the whole suite. Once it closes, a phase runs its own tests in seconds and a landing runs what the plan touched and must not break, and the next phase does the same for looks.
 
-- [ ] Compute a plan's test set from its rows, the files it changed and its brief's Must-not-break promises.
+- [x] Compute a plan's test set from its rows, the files it changed and its brief's Must-not-break promises.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/test-set.ts` `planTestSet(reads, { phase } | { landing: true })`, pure (ADR decision 1): rows from the trajectory parser, `reached` handed in, `mustNotBreak` from `parseBriefContract`, the registry from `readPromises` filtered with `findPromise`. Returns `{ files: { path, reason }[], withoutTests: string[], manual: string[] }`. `promise: a-plan-runs-its-tests-and-what-must-not-break` at the site.
