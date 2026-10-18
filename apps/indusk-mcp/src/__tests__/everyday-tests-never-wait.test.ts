@@ -107,22 +107,99 @@ export function scan(file: string, raw: string): Finding[] {
 	return found;
 }
 
+/** Calls that start a process, directly. */
+const DIRECT_START =
+	/\b(?:spawn|spawnSync|exec|execSync|execFile|execFileSync|fork|runCli|runCliAsync)\(/;
+
+/** A helper module's top-level functions and what each one's body holds. */
+function functionsOf(source: string): Array<{ name: string; body: string; exported: boolean }> {
+	const starts = [
+		...source.matchAll(
+			/^(export\s+)?(?:async\s+)?(?:function\s+(\w+)|const\s+(\w+)\s*(?::[^=]+)?=\s*(?:async\s*)?(?:function|\())/gm,
+		),
+	];
+	return starts.map((m, i) => ({
+		name: (m[2] ?? m[3]) as string,
+		exported: m[1] !== undefined,
+		body: source.slice(m.index, starts[i + 1]?.index ?? source.length),
+	}));
+}
+
+/** The named imports of `source` from a helper module: local name to [module, exported name]. */
+function helperImports(source: string): Map<string, [module: string, name: string]> {
+	const imports = new Map<string, [string, string]>();
+	for (const m of source.matchAll(
+		/import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*["'][^"']*\bhelpers\/([\w-]+)(?:\.js|\.ts)?["']/g,
+	)) {
+		for (const part of m[1].split(",")) {
+			const [name, local] = part.trim().split(/\s+as\s+/);
+			if (name && !part.trim().startsWith("type ")) imports.set(local ?? name, [m[2], name]);
+		}
+	}
+	return imports;
+}
+
 /**
  * The functions each helper module exports that start a process, by module
  * name (tests-never-make-us-wait T17): directly, or by calling another such
- * function in the same module or one imported from another helper.
+ * function in the same module or one imported from another helper. Comment
+ * lines are prose, not calls. Starters are found by fixpoint: a function joins
+ * the set when its body calls one already in it.
  */
-export function helperStarters(_helpers: Record<string, string>): Map<string, Set<string>> {
-	return new Map();
+export function helperStarters(helpers: Record<string, string>): Map<string, Set<string>> {
+	const parsed = Object.entries(helpers).map(([module, raw]) => {
+		const source = raw
+			.split("\n")
+			.map((l) => (/^\s*(?:\/\/|\*|\/\*)/.test(l) ? "" : l))
+			.join("\n");
+		return { module, fns: functionsOf(source), imports: helperImports(source) };
+	});
+	const starters = new Map(parsed.map((p) => [p.module, new Set<string>()]));
+	for (const p of parsed)
+		for (const f of p.fns) if (DIRECT_START.test(f.body)) starters.get(p.module)?.add(f.name);
+	for (let changed = true; changed; ) {
+		changed = false;
+		for (const p of parsed) {
+			const mine = starters.get(p.module) as Set<string>;
+			for (const f of p.fns) {
+				if (mine.has(f.name)) continue;
+				const calls = (name: string) =>
+					new RegExp(`\\b${name}\\(`).test(f.body.slice(f.body.indexOf("{")));
+				const viaSame = [...mine].some(calls);
+				const viaImport = [...p.imports].some(
+					([local, [mod, name]]) => starters.get(mod)?.has(name) && calls(local),
+				);
+				if (viaSame || viaImport) {
+					mine.add(f.name);
+					changed = true;
+				}
+			}
+		}
+	}
+	// Only what a test can import is the guard's business; keep every starter, exported or not,
+	// since a test importing a non-exported name does not compile.
+	return starters;
 }
 
-/** Calls in `source` to a starter imported from a helper module. */
+/** Calls in `source` to a process-starting function imported from a helper module, matched by the imported name. */
 export function scanHelperCalls(
-	_file: string,
-	_source: string,
-	_starters: Map<string, Set<string>>,
+	file: string,
+	raw: string,
+	starters: Map<string, Set<string>>,
 ): Finding[] {
-	return [];
+	const source = raw
+		.split("\n")
+		.map((l) => (/^\s*(?:\/\/|\*|\/\*|import\b)/.test(l) ? "" : l))
+		.join("\n");
+	const found: Finding[] = [];
+	for (const [local, [module, name]] of helperImports(raw)) {
+		if (!starters.get(module)?.has(name)) continue;
+		for (const m of source.matchAll(new RegExp(`(?<![\\w.])${local}\\(`, "g"))) {
+			const line = source.slice(0, m.index).split("\n").length;
+			found.push({ file, line, call: `starts a process through a helper: ${name}(` });
+		}
+	}
+	return found.sort((a, b) => a.line - b.line);
 }
 
 /** Whether the suite runs `file` (a package-relative path) every day: not in the system tier, not a helper. */
@@ -131,8 +208,16 @@ export function isEveryday(file: string, system: string[]): boolean {
 }
 
 /** What the guard finds in `source` at package-relative `file`: nothing when the system tier holds it. */
-export function scanEveryday(file: string, source: string, system: string[]): Finding[] {
-	return isEveryday(file, system) ? scan(file, source) : [];
+export function scanEveryday(
+	file: string,
+	source: string,
+	system: string[],
+	starters: Map<string, Set<string>> = new Map(),
+): Finding[] {
+	if (!isEveryday(file, system)) return [];
+	const direct = scan(file, source);
+	const lines = new Set(direct.map((d) => d.line));
+	return [...direct, ...scanHelperCalls(file, source, starters).filter((h) => !lines.has(h.line))];
 }
 
 /** The process-starting functions of a package's helper modules, by module name. */
@@ -160,13 +245,8 @@ describe("everyday-tests-never-wait", () => {
 				// This file names the patterns it looks for.
 				if (f.endsWith("everyday-tests-never-wait.test.ts")) continue;
 				const source = readFileSync(join(REPO, pkg.dir, f), "utf-8");
-				const direct = scan(join(pkg.dir, f), source);
-				findings.push(...direct);
-				// A helper that starts a process makes its callers start one (T17); a line
-				// the direct patterns already named is not named twice.
-				for (const h of scanHelperCalls(join(pkg.dir, f), source, starters)) {
-					if (!direct.some((d) => d.line === h.line)) findings.push(h);
-				}
+				// A helper that starts a process makes its callers start one (T17).
+				findings.push(...scanEveryday(join(pkg.dir, f), source, [], starters));
 			}
 		}
 		const report = findings.map((x) => `  ${x.file}:${x.line} — ${x.call}`).join("\n");
@@ -350,6 +430,8 @@ describe("everyday-tests-never-wait", () => {
 		expect(found[0].call).toBe("starts a process through a helper: validateWrite(");
 		expect(found[1].call).toBe("starts a process through a helper: git(");
 		expect(scanHelperCalls(file, "const x = headLabel;", starters)).toEqual([]);
+		expect(scanEveryday(file, source, [], starters).map((f) => f.line)).toEqual([4, 5]);
+		expect(scanEveryday(file, source, [file], starters)).toEqual([]);
 	});
 
 	it("each pattern catches what it names", () => {
