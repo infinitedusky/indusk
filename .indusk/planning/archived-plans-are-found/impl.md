@@ -175,7 +175,7 @@ This phase adds the one function that says where a plan's folder is and makes ev
 
 #### Build Phase 1 Context
 
-- [ ] Add to the package's context file that a plan's folder has one lookup, active first, then the archive.
+- [x] Add to the package's context file that a plan's folder has one lookup, active first, then the archive.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, One home per fact: `planFolder` (`lib/plans/plan-folder.ts`) with T1/T6 as its guard (shorten a neighbour; the file is over its budget).
