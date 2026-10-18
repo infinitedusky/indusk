@@ -13,9 +13,9 @@ import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import { PlanCommandRefusal } from "./plan-branch.js";
 import { planTestSet, type TestSet, type TestSetReads, type TestSetScope } from "./test-set.js";
 import {
+	collectResults,
 	describeTestSet,
 	execRunner,
-	type FileResult,
 	findReached,
 	type Runner,
 	runFiles,
@@ -120,26 +120,13 @@ export async function plansTestsOutcome(
 			"the project names no test command (verify.testRunner or verify.testCommand in .indusk/config.json), so the plan's tests cannot be run",
 		);
 	}
-	const results: FileResult[] = await runFiles({
+	const results = await runFiles({
 		root: roots.codeRoot,
 		command,
 		files: set.files.filter((f) => !reached.includes(f.path)),
 		run,
 	});
-	const failedReached = new Set(failed.map((f) => f.path));
-	const all: FileResult[] = [
-		...reached.map((path) => ({
-			path,
-			reason: "reached",
-			passed: !failedReached.has(path),
-			output: failed.find((f) => f.path === path)?.output ?? "",
-		})),
-		// A related run that failed without naming a file is still a failure.
-		...failed
-			.filter((f) => !reached.includes(f.path))
-			.map((f) => ({ path: f.path, reason: "reached", passed: false, output: f.output })),
-		...results,
-	];
+	const all = collectResults(reached, failed, results);
 	const bad = all.filter((r) => !r.passed);
 	const label = "phase" in options.scope ? phaseLabel(options.scope.phase) : "landing";
 	const text = [

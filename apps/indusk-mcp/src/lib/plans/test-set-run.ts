@@ -216,3 +216,29 @@ export function describeTestSet(set: TestSet, results?: readonly FileResult[]): 
 	if (set.manual.length > 0) lines.push("", `manual, not run: ${set.manual.join("; ")}`);
 	return lines.join("\n");
 }
+
+/**
+ * Every file's verdict: the files the related run reached (failed by name when
+ * its report says so), a related run that failed without naming a file, and the
+ * files run after it.
+ */
+export function collectResults(
+	reached: readonly string[],
+	failed: ReadonlyArray<{ path: string; output: string }>,
+	ran: readonly FileResult[],
+): FileResult[] {
+	const failure = (path: string) => failed.find((f) => f.path === path);
+	return [
+		...reached.map((path) => ({
+			path,
+			reason: "reached",
+			passed: !failure(path),
+			output: failure(path)?.output ?? "",
+		})),
+		// A related run that failed without naming a file is still a failure.
+		...failed
+			.filter((f) => !reached.includes(f.path))
+			.map((f) => ({ path: f.path, reason: "reached", passed: false, output: f.output })),
+		...ran,
+	];
+}

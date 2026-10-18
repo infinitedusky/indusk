@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
 import {
+	collectResults,
 	describeTestSet,
 	findReached,
 	groupByPackage,
@@ -129,4 +130,9 @@ it("the printed set gives each file its reason and names what is not run", () =>
 	expect(text).toContain("FAIL a.test.ts  (row T1)");
 	expect(text).toContain("no tests: bare");
 	expect(text).toContain("manual, not run: T9: signed off");
+});
+
+it("a related run that failed without naming a file still makes the set red", () => {
+	const all = collectResults([], [{ path: "(a related run)", output: "boom" }], []);
+	expect(all.map((r) => r.passed)).toEqual([false]);
 });
