@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { CLI_BIN, runCli } from "./helpers/cli.js";
-import "../../vitest.config";
 import { stopTelemetryForHome, telemetryProcessesFor } from "./helpers/telemetry-reap.js";
 
 /**
@@ -17,11 +16,10 @@ import { stopTelemetryForHome, telemetryProcessesFor } from "./helpers/telemetry
  * 2026-10-03, 2,058 on 2026-08-13. Read from the process list, as they were
  * found, because their only record lives in a home the test deletes.
  *
- * The switch that stops them is the everyday config's
- * (`INDUSK_SKIP_TELEMETRY_AUTOSTART`, set as `vitest.config.ts` loads). This
- * file runs in the system tier, whose config deliberately does not set it, so
- * it loads the everyday config itself: what it proves is that init, run with
- * that config's environment, starts nothing (tests-never-make-us-wait).
+ * The switch that stops them is `INDUSK_SKIP_TELEMETRY_AUTOSTART`. The system
+ * tier's config deliberately does not set it, so each child here is given it
+ * explicitly: what this proves is that init, run with the switch, starts
+ * nothing (tests-never-make-us-wait).
  */
 
 const made: string[] = [];
@@ -47,7 +45,10 @@ function fixtureProject(): string {
 describe("A1 — a test that runs init starts no telemetry daemon", () => {
 	it("through the CLI helper", () => {
 		const home = tempDir("leak-home-");
-		const r = runCli(fixtureProject(), ["init", "--force"], { INDUSK_HOME: home });
+		const r = runCli(fixtureProject(), ["init", "--force"], {
+			INDUSK_HOME: home,
+			INDUSK_SKIP_TELEMETRY_AUTOSTART: "1",
+		});
 		expect(r.code, r.stderr).toBe(0);
 		expect(
 			telemetryProcessesFor(home),
@@ -60,7 +61,12 @@ describe("A1 — a test that runs init starts no telemetry daemon", () => {
 		const r = spawnSync("node", [CLI_BIN, "init", "--force"], {
 			cwd: fixtureProject(),
 			encoding: "utf-8",
-			env: { ...process.env, INDUSK_HOME: home, INDUSK_SKIP_UPDATE_CHECK: "1" },
+			env: {
+				...process.env,
+				INDUSK_HOME: home,
+				INDUSK_SKIP_UPDATE_CHECK: "1",
+				INDUSK_SKIP_TELEMETRY_AUTOSTART: "1",
+			},
 		});
 		expect(r.status, r.stderr).toBe(0);
 		expect(
