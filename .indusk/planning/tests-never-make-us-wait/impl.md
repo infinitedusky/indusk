@@ -334,7 +334,7 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
 
 #### Build Phase 2 Context
 
-- [ ] Add to the package's context file that a plan's tests come from one command, never a hand-picked list.
+- [x] Add to the package's context file that a plan's tests come from one command, never a hand-picked list.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, Run, verify, Shape, cleanup: one line, `planTestSet` the one definition, T1 and T6 as its guards.
@@ -343,7 +343,7 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
 
 #### Build Phase 2 Document
 
-- [ ] Document the plan tests command and what a landing runs.
+- [x] Document the plan tests command and what a landing runs.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md` (`plans tests`), `reference/skills/retrospective.md`, `guide/test-levels.md` (what a phase and a landing run); changelog.
