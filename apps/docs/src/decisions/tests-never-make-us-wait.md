@@ -16,10 +16,11 @@ it must not break, and a visual test opens only the looks a change touched.**
 | Decision | What it is |
 | --- | --- |
 | The test set is computed once | `planTestSet` in `lib/plans/test-set.ts`: a phase gets its rows' files plus the tests its changed files reach; landing adds the tests of every promise the brief lists as Must not break. A promise that names no test is listed as having none, never dropped. |
-| Reached tests are Vitest's | `vitest related <changed files>` runs in each package the change touches, in both tiers; the files it ran are the reached set. |
-| One command | `indusk plans tests <plan> --phase N \| --landing [--list]` runs the set and prints each file with its reason. The work, verify and retrospective skills name it in place of the whole suite. |
-| The guard counts processes | A test that starts the command line, git or Node is a system test; the 125 files that did moved to their package's system tier. |
-| A look is touched by its import closure | A screen's page, layouts and imports, a story's component and imports, read with the app's own TypeScript. Foundation, stylesheets and styling config touch every look, and so does a closure that cannot be read. |
+| Reached tests are Vitest's | `vitest related <changed files>` runs in each package the change touches (a package is the nearest folder with its own Vitest config, so `examples/*` counts), under its default and its system config; the files it ran are the reached set. Code and JSON files are searched; documents are not. |
+| One command | `indusk plans tests <plan> --phase N \| --landing [--list]` runs the set and prints each file with its reason and its own result (read from Vitest's JSON report). The work, verify and retrospective skills name it in place of the whole suite. |
+| One way to run a test file | `lib/tests/run-files.ts` runs files package by package and tier by tier, for the plan's test set and for `indusk verify`, so a passing system-tier row is not reported red. Verify now reads Vitest's JSON report file for per-file results, a reversal of the earlier runner-agnostic rule, which held only exit codes; other runners still get one file per call and an exit code. |
+| The guard counts processes | A test that starts the command line, git or Node, directly or through a test helper that does, is a system test; about 190 files moved to their package's system tier, and `pnpm test` went from about 150 s to 33 s. |
+| A look is touched by its import closure | A screen's page, layouts and imports, a story's component and imports, read with the app's own TypeScript. Foundation, stylesheets, styling config, the app's `public/` files and its Next.js config touch every look, and so does a closure that cannot be read. |
 | `looks check --changed <ref>` | A touched look opens on every device; an untouched one is reused from its held result even when its key moved. `--all` and `--only` win. |
 | The suite's time is still recorded | Each `pnpm test` appends its seconds to machine state; it no longer marks the promise this plan replaced. |
 
@@ -35,6 +36,15 @@ it must not break, and a visual test opens only the looks a change touched.**
 - A route the app-router match gets wrong, or an app with no TypeScript to load,
   touches every look: the check over-reports and never under-reports. A screen's
   `page` in `screens.json` overrides the match.
+
+## Known gaps
+
+- A changed `package.json` or Vitest config makes Vitest's related search rerun
+  that package's whole suite, both tiers: one dependency bump costs a full run.
+- The everyday guard misses a helper that starts git through another helper's
+  import, and does not scan the editor extension's tests; a few of this repo's
+  fast tests still start git. The fast/slow split is this repository's own
+  arrangement and is to leave InDusk.
 
 ## Rejected
 
