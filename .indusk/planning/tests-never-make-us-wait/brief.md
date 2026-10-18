@@ -36,6 +36,11 @@ behind the scenes, is the next plan; this one only narrows what runs.
    - **`the-changed-looks`** (split). A change to an app's interface checks the looks drawn from the files it changed, on the devices those looks are drawn for.
    - **`no-other-look`** (limit). A look the change did not touch is not checked while the plan is built.
 
+3. **`testing-has-its-step-in-the-approach`** (structure). The docs' Testing and telemetry approach section has a testing step, and every place that speaks of testing links it and none contradicts it.
+   - **`the-testing-step`** (split). The section's testing step says what a plan runs at each moment, what a visual test checks, and how a failure reaches the person.
+   - **`the-rest-points-to-it`** (split). The skills that run a plan (work, verify, retrospective, planner) and the other docs pages on testing link the testing step.
+   - **`nothing-describes-what-is-gone`** (limit). Nothing outside the archive and the changelog describes a slow tier, a release test or a slow test's incident as something that runs.
+
 ### Existing promises
 
 **Must not break**
@@ -61,7 +66,7 @@ behind the scenes, is the next plan; this one only narrows what runs.
 
 - **A time for the suite or a phase.** That is the first expectation, met by degree.
 - **The sampler** — every run recorded with its commit, the rest of the tests and looks run behind the scenes, recently failed then oldest first, a flake re-run once, a failure reported as a break found by the sampler — the next plan, `the-sampler`. Until it lands, a test no plan names or reaches does not run.
-- **The docs.** A new Testing and telemetry approach section, a list of steps that together form the approach, gets its testing step, and every place that speaks of testing is brought into line with it; that is the impl's Document work, not a promise. The article on the philosophy that opens the section is Sandy's, written alongside.
+- **Whether the testing step is well written.** Its test checks that the step exists, is linked and contradicts nothing; the prose is read by a person. The article on the philosophy that opens the section is Sandy's, written alongside, not part of this plan.
 - **A clause's break running that clause's tests, and finding the commit that broke a test** — `a-break-runs-its-tests`.
 - **Landing through pull requests, a break pinned to one author** — later, once InDusk has users or a team.
 

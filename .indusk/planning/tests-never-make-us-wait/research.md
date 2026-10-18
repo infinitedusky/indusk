@@ -203,6 +203,12 @@ All Sandy, 2026-10-17:
   test row under `a-plan-runs-its-tests-and-what-must-not-break`: a whole-repository
   check that nothing outside the archive and the changelog describes a slow tier, a
   release test or a slow test's incident as something that runs.
+- **A promise can be the agent's commitment to do what the plan says** (Sandy,
+  2026-10-17): written down so it can be checked. The docs step is one, and it can
+  break later, so it holds (not `established`, which retires and leaves the sampler
+  nothing to run). Its test checks structure: the step exists, the skills and pages
+  link it, nothing describes what is gone. Supersedes "the docs are work, not a
+  promise" above.
 - **Not now:** a clause's break running that clause's tests (`a-break-runs-its-tests`,
   after `mark-first`); landing through pull requests, once InDusk has users or a team.
 
