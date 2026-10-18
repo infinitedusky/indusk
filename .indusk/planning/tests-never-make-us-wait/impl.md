@@ -316,6 +316,12 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
   `collectResults` in `test-set-run.ts`, out of `plansTestsOutcome` in `plan-tests.ts` (a unit has one reason to change).
 
   </details>
+- [x] Find the tests a change reaches in the system tier too, not only the everyday suite, as the ADR decided.
+  <details><summary>Technical</summary>
+
+  Found at review (2026-10-18): `findReached` in `test-set-run.ts` ran `vitest related` under the package's default config only, so a system-tier test that imports a changed file was never in the set, narrower than the clause `what-its-changes-reach` and ADR decision 2 ("both tiers"). Fix: in each package that has `vitest.system.config.ts`, run the related search a second time with `--config vitest.system.config.ts` and take the union; a test in `test-set-run.test.ts` holds it.
+
+  </details>
 
 #### Build Phase 2 Verification
 
