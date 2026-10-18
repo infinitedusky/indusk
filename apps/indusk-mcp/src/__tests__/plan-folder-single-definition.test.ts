@@ -27,7 +27,7 @@ const ASKS = [
 
 describe("T9 one module says where a plan's folder is", () => {
 	it("there is exactly one plan-folder module", () => {
-		const found = globSync("**/plan-folder.ts", { cwd: SRC }).sort();
+		const found = globSync("**/plan-folder.ts", { cwd: SRC, ignore: ["__tests__/**"] }).sort();
 		expect(
 			found,
 			`lesson: structural-single-definition-test-for-must-agree-invariants — one plan-folder lookup, ${ONE}; found:\n${found.join("\n")}`,
