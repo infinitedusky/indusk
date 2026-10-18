@@ -4,7 +4,7 @@ date: 2026-10-17
 status: draft
 workflow: feature
 clauses: required
-description: "While a plan is built, it runs the tests it writes, the tests its changes reach and the tests of what its brief says must not break, and a visual test checks only the looks that changed; nothing else runs, and the docs' Testing and telemetry approach section gains its testing step."
+description: "While a plan is built, it runs the tests it writes, the tests its changes reach and the tests of what its brief says must not break, and a visual test checks only the looks that changed; nothing else runs."
 ---
 
 # Tests never make us wait — Brief
@@ -36,11 +36,6 @@ behind the scenes, is the next plan; this one only narrows what runs.
    - **`the-changed-looks`** (split). A change to an app's interface checks the looks drawn from the files it changed, on the devices those looks are drawn for.
    - **`no-other-look`** (limit). A look the change did not touch is not checked while the plan is built.
 
-3. **`testing-has-its-step-in-the-approach`** (structure). The docs' Testing and telemetry approach section is a list of steps that together form the approach, its testing step says what runs while a plan is built and how a failure reaches the person, and every other place that speaks of testing agrees with it and links it.
-   - **`the-testing-step`** (split). The testing step says what a plan runs at each moment, what a visual test checks, and how a failure reaches the person, from what InDusk does today and where it is going.
-   - **`the-rest-points-to-it`** (split). Every skill, context file, docs page, lesson and command's help that speaks of testing says only what it needs and links the step for the rest.
-   - **`nothing-describes-what-is-gone`** (limit). Nothing outside the archive and the changelog describes a slow tier, a release test or a slow test's incident as something that runs.
-
 ### Existing promises
 
 **Must not break**
@@ -66,8 +61,7 @@ behind the scenes, is the next plan; this one only narrows what runs.
 
 - **A time for the suite or a phase.** That is the first expectation, met by degree.
 - **The sampler** — every run recorded with its commit, the rest of the tests and looks run behind the scenes, recently failed then oldest first, a flake re-run once, a failure reported as a break found by the sampler — the next plan, `the-sampler`. Until it lands, a test no plan names or reaches does not run.
-- **The article on the philosophy that opens the Testing and telemetry approach section** — Sandy's, written alongside, not part of this plan.
-- **The section's other steps** (telemetry, the sampler, a break running its tests) — added by `mark-first`, `the-sampler` and `a-break-runs-its-tests`, each to the same section.
+- **The docs.** A new Testing and telemetry approach section, a list of steps that together form the approach, gets its testing step, and every place that speaks of testing is brought into line with it; that is the impl's Document work, not a promise. The article on the philosophy that opens the section is Sandy's, written alongside.
 - **A clause's break running that clause's tests, and finding the commit that broke a test** — `a-break-runs-its-tests`.
 - **Landing through pull requests, a break pinned to one author** — later, once InDusk has users or a team.
 
