@@ -141,6 +141,14 @@ All Sandy, 2026-10-17:
   if wanted (Sandy, 2026-10-17).
 - **This is package behaviour**: every project InDusk runs gets the same rule for what
   a plan runs and the same sampler, not only dusk.
+- **One docs page explains the whole thing** (Sandy, 2026-10-17): what a plan runs and
+  when, what a visual test checks, what the sampler runs, in what order, and how a
+  failure reaches you, from one page in the guide. Today the model is spread across
+  `guide/test-kinds.md`, `guide/test-levels.md`, `guide/test-trajectory.md` and the
+  `release-checks-run-once` and `looks-check-speed` decisions; the new page is where a
+  reader starts, those pages are brought into line with it, and what this plan retires
+  (the slow tier, the release test) is removed from them. The ADR's Documentation Plan
+  names it and the impl gives it a Document item.
 - **Not now:** a clause's break running that clause's tests (`a-break-runs-its-tests`,
   after `mark-first`); landing through pull requests, once InDusk has users or a team.
 
