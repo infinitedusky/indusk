@@ -143,7 +143,7 @@ This phase writes the tests that show today's failures: an archived plan whose i
 
 This phase adds the one function that says where a plan's folder is and makes every lookup ask it: the impl lookup, the plan-copy record that approval, acceptance and landing read, and the read of the approved brief that re-approval compares against. Once it closes, an archived plan is accepted, re-approved, tested at landing and landed where it lies.
 
-- [ ] Add the function that says where a plan's folder is: the planning folder first, else the archive.
+- [x] Add the function that says where a plan's folder is: the planning folder first, else the archive.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/plan-folder.ts` `planFolder(projectRoot, plan): string | null`, from `getPlanningDir` (`lib/config.ts`); `promise: a-plan-is-found-in-the-archive` at the site.
