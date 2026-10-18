@@ -1,7 +1,16 @@
 // clause: a-look-check-runs-what-changed/the-changed-looks
 // promise: a-look-check-runs-what-changed
-import { describe, expect, it } from "vitest";
-import { touchedLooks } from "./touched.js";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import type { LooksApp } from "./mockups.js";
+import { foundationFiles, touchedLooks } from "./touched.js";
+
+const temps: string[] = [];
+afterEach(() => {
+	for (const d of temps.splice(0)) rmSync(d, { recursive: true, force: true });
+});
 
 /** Looks are named as the held record names them: `screen:<name>.<state>`, `story:<component>.<state>`. */
 const closures = {
@@ -37,5 +46,35 @@ describe("which looks a change touches", () => {
 		expect(touchedLooks({ closures, foundation: ["tokens.json"], changed: ["README.md"] })).toEqual(
 			[],
 		);
+	});
+
+	it("T18 the app's public files and Next.js config touch every look", async () => {
+		const root = mkdtempSync(join(tmpdir(), "foundation-"));
+		temps.push(root);
+		for (const f of [
+			"apps/web/package.json",
+			"apps/web/next.config.ts",
+			"apps/web/public/img/logo.svg",
+			"apps/web/src/app/page.tsx",
+		]) {
+			mkdirSync(dirname(join(root, f)), { recursive: true });
+			writeFileSync(join(root, f), "x");
+		}
+		const app = {
+			app: "web",
+			sources: ["apps/web/src"],
+			screens: [],
+			stories: [],
+		} as unknown as LooksApp;
+		const foundation = await foundationFiles(root, app);
+		expect(foundation).toContain("apps/web/public/img/logo.svg");
+		expect(foundation).toContain("apps/web/next.config.ts");
+		expect(foundation).not.toContain("apps/web/src/app/page.tsx");
+		expect(
+			touchedLooks({ closures, foundation, changed: ["apps/web/public/img/logo.svg"] }),
+		).toHaveLength(3);
+		expect(
+			touchedLooks({ closures, foundation, changed: ["apps/web/next.config.ts"] }),
+		).toHaveLength(3);
 	});
 });

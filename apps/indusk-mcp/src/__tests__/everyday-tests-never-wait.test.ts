@@ -1,6 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
@@ -107,6 +107,24 @@ export function scan(file: string, raw: string): Finding[] {
 	return found;
 }
 
+/**
+ * The functions each helper module exports that start a process, by module
+ * name (tests-never-make-us-wait T17): directly, or by calling another such
+ * function in the same module or one imported from another helper.
+ */
+export function helperStarters(_helpers: Record<string, string>): Map<string, Set<string>> {
+	return new Map();
+}
+
+/** Calls in `source` to a starter imported from a helper module. */
+export function scanHelperCalls(
+	_file: string,
+	_source: string,
+	_starters: Map<string, Set<string>>,
+): Finding[] {
+	return [];
+}
+
 /** Whether the suite runs `file` (a package-relative path) every day: not in the system tier, not a helper. */
 export function isEveryday(file: string, system: string[]): boolean {
 	return !system.includes(file) && !file.includes("/helpers/");
@@ -115,6 +133,16 @@ export function isEveryday(file: string, system: string[]): boolean {
 /** What the guard finds in `source` at package-relative `file`: nothing when the system tier holds it. */
 export function scanEveryday(file: string, source: string, system: string[]): Finding[] {
 	return isEveryday(file, system) ? scan(file, source) : [];
+}
+
+/** The process-starting functions of a package's helper modules, by module name. */
+async function packageStarters(pkg: { dir: string }): Promise<Map<string, Set<string>>> {
+	const root = join(REPO, pkg.dir);
+	const helpers: Record<string, string> = {};
+	for (const f of await glob("src/**/helpers/*.ts", { cwd: root, nodir: true })) {
+		helpers[basename(f).replace(/\.ts$/, "")] = readFileSync(join(root, f), "utf-8");
+	}
+	return helperStarters(helpers);
 }
 
 async function everydayFiles(pkg: { dir: string; system: string[] }): Promise<string[]> {
@@ -127,10 +155,18 @@ describe("everyday-tests-never-wait", () => {
 	it("no everyday test in either package starts a server, a process or waits on the clock (A14, T14)", async () => {
 		const findings: Finding[] = [];
 		for (const pkg of await packages()) {
+			const starters = await packageStarters(pkg);
 			for (const f of await everydayFiles(pkg)) {
 				// This file names the patterns it looks for.
 				if (f.endsWith("everyday-tests-never-wait.test.ts")) continue;
-				findings.push(...scan(join(pkg.dir, f), readFileSync(join(REPO, pkg.dir, f), "utf-8")));
+				const source = readFileSync(join(REPO, pkg.dir, f), "utf-8");
+				const direct = scan(join(pkg.dir, f), source);
+				findings.push(...direct);
+				// A helper that starts a process makes its callers start one (T17); a line
+				// the direct patterns already named is not named twice.
+				for (const h of scanHelperCalls(join(pkg.dir, f), source, starters)) {
+					if (!direct.some((d) => d.line === h.line)) findings.push(h);
+				}
 			}
 		}
 		const report = findings.map((x) => `  ${x.file}:${x.line} — ${x.call}`).join("\n");
@@ -274,6 +310,46 @@ describe("everyday-tests-never-wait", () => {
 		expect(found.find((f) => f.line === 3)?.call).toContain('starts git or node: spawnSync("git"');
 		expect(scanEveryday(file, source, [file])).toEqual([]);
 		expect(scanEveryday("src/__tests__/helpers/cli.ts", source, [])).toEqual([]);
+	});
+
+	// promise: everyday-tests-never-wait — tests-never-make-us-wait T17.
+	it("a test calling a helper that starts a process is refused, naming the helper call; in the system tier it is not (T17)", () => {
+		const helpers = {
+			"hook-runner": [
+				'import { spawn } from "node:child_process";',
+				"function spawnHook(hook: string) { return spawn(process.execPath, [hook]); }",
+				"export function runHook(hook: string) { return spawnHook(hook); }",
+				"export async function validateWrite(p: string) { return runHook(p); }",
+				"export function fixtureDir() { return '/tmp'; }",
+			].join("\n"),
+			"test-git": [
+				'import { spawnSync } from "node:child_process";',
+				"export const git = (cwd: string, args: string[]) => spawnSync('git', args, { cwd });",
+				"export function initRepoWithCommit(dir: string) { git(dir, ['init']); }",
+				"export const headLabel = 'main';",
+			].join("\n"),
+		};
+		const starters = helperStarters(helpers);
+		expect([...(starters.get("hook-runner") ?? [])].sort()).toEqual([
+			"runHook",
+			"spawnHook",
+			"validateWrite",
+		]);
+		expect([...(starters.get("test-git") ?? [])].sort()).toEqual(["git", "initRepoWithCommit"]);
+
+		const source = [
+			'import { fixtureDir, validateWrite } from "./helpers/hook-runner.js";',
+			'import { git as run, headLabel } from "../helpers/test-git.js";',
+			"const d = fixtureDir();",
+			"const r = await validateWrite(d);",
+			'run(d, ["init"]);',
+		].join("\n");
+		const file = "src/__tests__/fixture.test.ts";
+		const found = scanHelperCalls(file, source, starters);
+		expect(found.map((f) => f.line)).toEqual([4, 5]);
+		expect(found[0].call).toBe("starts a process through a helper: validateWrite(");
+		expect(found[1].call).toBe("starts a process through a helper: git(");
+		expect(scanHelperCalls(file, "const x = headLabel;", starters)).toEqual([]);
 	});
 
 	it("each pattern catches what it names", () => {
