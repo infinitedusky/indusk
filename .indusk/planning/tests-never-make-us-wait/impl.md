@@ -1,7 +1,7 @@
 ---
 title: "Tests never make us wait"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -409,7 +409,7 @@ This phase makes a visual test cost what changed. Each look learns which files i
   T8, T9, T10: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/touched.test.ts`.
 
   </details>
-- [ ] A look check of what changed opens touched looks on every device and reuses the rest.
+- [x] A look check of what changed opens touched looks on every device and reuses the rest.
   <details><summary>Technical</summary>
 
   T11, T12: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/reuse-run.test.ts`; then `indusk plans tests tests-never-make-us-wait --phase "Build Phase 3"`.
