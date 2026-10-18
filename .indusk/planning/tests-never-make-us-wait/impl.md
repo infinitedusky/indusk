@@ -304,7 +304,18 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
   `apps/indusk-mcp/skills/work.md` (`:283` table), `verify.md` (`:68-72`, `:150-151`), `retrospective.md` (`:128`, `:342`: landing runs `indusk plans tests <plan> --landing`); copy to `.claude/skills/`; run `skill-sync-parity.test.ts`.
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changes against the enabled extensions' craft rules. Reviewed 2026-10-18; one finding, done below.
+  <details><summary>Technical</summary>
+
+  Read `test-set.ts`, `test-set-run.ts`, `plan-tests.ts`, the `plans tests` wrapper and the three skills. `planTestSet` pure, one reason to change; the process start is only `execRunner`, injected everywhere else. `plansTestsOutcome` also merged three result lists inline: extracted as the finding below. Left as is: `inSystemTier` reads `vitest.tiers.ts` as text (substring on the quoted path) rather than importing it, because the package's config is TypeScript outside `src` and a wrong guess errs toward running the file in the everyday config, which fails loudly.
+
+  </details>
+- [x] Shape finding: give the merging of the set's verdicts its own named, tested function instead of leaving it inline in the command.
+  <details><summary>Technical</summary>
+
+  `collectResults` in `test-set-run.ts`, out of `plansTestsOutcome` in `plan-tests.ts` (a unit has one reason to change).
+
+  </details>
 
 #### Build Phase 2 Verification
 
