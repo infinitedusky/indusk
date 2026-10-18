@@ -102,7 +102,9 @@ function trunkCopy(
 	projectRoot: string,
 	plan: string,
 ): { plan: string; root: string; dir: string; source: "trunk" } {
-	return { plan, root: projectRoot, dir: join(getPlanningDir(projectRoot), plan), source: "trunk" };
+	// promise: a-plan-is-found-in-the-archive — a plan archived on the trunk is found there.
+	const dir = findPlanFolder(projectRoot, plan) ?? join(getPlanningDir(projectRoot), plan);
+	return { plan, root: projectRoot, dir, source: "trunk" };
 }
 
 function trunkPlans(projectRoot: string): string[] {

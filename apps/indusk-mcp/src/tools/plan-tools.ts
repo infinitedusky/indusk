@@ -7,6 +7,7 @@ import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { isFinishedDocumentStatus, nextRequiredDocument } from "../lib/lifecycle.js";
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
+import { planFolderPath } from "../lib/promises/plan-folder.js";
 import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
 import { DOCUMENT_LABELS } from "../lib/workflow-types.js";
 import {
@@ -132,7 +133,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 				const archived = archivedPlan(live.copy.root, name);
 				if (archived) {
 					plan = archived;
-					planDir = join(getPlanningDir(live.copy.root), ARCHIVE_DIR, name);
+					planDir = planFolderPath(live.copy.root, name, true);
 				}
 			}
 
