@@ -158,7 +158,14 @@ it("files run once per package, and a system-tier file under that package's syst
 		],
 		run,
 	});
-	expect(calls).toEqual([
+	// Each batch is also asked for a JSON report, which gives each file its own verdict.
+	expect(calls.every((c) => c.includes("--reporter=json"))).toBe(true);
+	expect(calls.every((c) => c.some((a) => a.startsWith("--outputFile.json=")))).toBe(true);
+	expect(
+		calls.map((c) =>
+			c.filter((a) => a !== "--reporter=json" && !a.startsWith("--outputFile.json=")),
+		),
+	).toEqual([
 		["vitest", "run", "fast.test.ts"],
 		["vitest", "run", "--config", "vitest.system.config.ts", "slow.test.ts"],
 	]);

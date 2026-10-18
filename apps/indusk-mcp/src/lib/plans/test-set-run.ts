@@ -186,6 +186,59 @@ export interface FileResult {
 }
 
 /**
+ * Run one batch of files and give each file its own verdict. A Vitest command
+ * is asked for a JSON report and each file's status is read from it; a batch
+ * with no report (another runner, a run that died before writing one) keeps
+ * the whole batch's exit code for every file.
+ */
+async function runBatch(
+	options: {
+		command: { command: string; args: string[] };
+		run: Runner;
+	},
+	cwd: string,
+	batch: { files: string[]; extra: string[] },
+): Promise<{ output: string; verdict: (file: string) => boolean }> {
+	const tmp = mkdtempSync(join(tmpdir(), "plan-tests-"));
+	const out = join(tmp, "report.json");
+	const isVitest = options.command.args.includes("vitest");
+	try {
+		const report = isVitest ? ["--reporter=json", `--outputFile.json=${out}`] : [];
+		const r = await options.run(
+			options.command.command,
+			[...options.command.args, ...report, ...batch.extra, ...batch.files],
+			cwd,
+		);
+		const status = existsSync(out) ? statusByFile(readFileSync(out, "utf-8"), cwd) : null;
+		return {
+			output: r.output,
+			verdict: (file) => {
+				const own = status?.get(resolve(cwd, file));
+				return own === undefined ? r.code === 0 : own !== "failed";
+			},
+		};
+	} finally {
+		rmSync(tmp, { recursive: true, force: true });
+	}
+}
+
+/** Each test file's status in a Vitest JSON report, by absolute path; null when the report is not JSON. */
+function statusByFile(reportJson: string, cwd: string): Map<string, string> | null {
+	try {
+		const report = JSON.parse(reportJson) as {
+			testResults?: Array<{ name?: string; status?: string }>;
+		};
+		return new Map(
+			(report.testResults ?? []).flatMap((r) =>
+				r.name && r.status ? [[resolve(cwd, r.name), r.status] as [string, string]] : [],
+			),
+		);
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Run the files a package's own Vitest config can run, in one invocation per
  * package; a file in a package's system tier runs under that package's system
  * config instead. The command is the project's own (`resolveTestCommand`).
@@ -217,34 +270,26 @@ export async function runFiles(options: {
 		];
 		for (const batch of batches) {
 			if (batch.files.length === 0) continue;
-			const r = await options.run(
-				options.command.command,
-				[...options.command.args, ...batch.extra, ...batch.files],
-				cwd,
-			);
+			const ran = await runBatch(options, cwd, batch);
 			for (const f of batch.files) {
 				const path = `${pkg}/${f}`;
 				results.push({
 					path,
 					reason: reasonOf.get(path) ?? "",
-					passed: r.code === 0,
-					output: r.output,
+					passed: ran.verdict(f),
+					output: ran.output,
 				});
 			}
 		}
 	}
 	if (rootLevel.length > 0) {
-		const r = await options.run(
-			options.command.command,
-			[...options.command.args, ...rootLevel],
-			options.root,
-		);
+		const ran = await runBatch(options, options.root, { files: rootLevel, extra: [] });
 		for (const path of rootLevel)
 			results.push({
 				path,
 				reason: reasonOf.get(path) ?? "",
-				passed: r.code === 0,
-				output: r.output,
+				passed: ran.verdict(path),
+				output: ran.output,
 			});
 	}
 	return results;
