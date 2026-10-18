@@ -16,6 +16,8 @@ cleanup_reason: "Build Phase 2 was the cleanup: it removed the duplicate lookup 
 approved_brief: "b584cda10d74409a5adceafbe0c13bdb650378e3d7bcfaca5c73d779ed789a29"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-18T16:55:06.928Z"
+accepted: 2026-10-18T23:50:43.880Z
+accepted_by: person
 ---
 
 # Archived plans are found
