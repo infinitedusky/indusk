@@ -424,3 +424,6 @@
 {"plan":"tests-never-make-us-wait","phase":3,"kind":"build","sha":"3f6f818411efd91718501feb666c8d83a16993f6","timestamp":"2026-10-18T12:54:56.069Z"}
 {"plan":"tests-never-make-us-wait","phase":4,"kind":"build","sha":"087a06000eaf08eb03e96e1082fcb442731310b6","timestamp":"2026-10-18T13:57:53.539Z"}
 {"plan":"tests-never-make-us-wait","phase":5,"kind":"build","sha":"8b3d901cf15b50ede0cf61866e43f6d695302dfb","timestamp":"2026-10-18T14:14:39.306Z"}
+{"plan":"archived-plans-are-found","phase":1,"kind":"test","sha":"b661fa6a9f241a55638fb948c18c8c1c6e32a75a","timestamp":"2026-10-18T16:57:42.537Z"}
+{"plan":"archived-plans-are-found","phase":1,"kind":"build","sha":"5f31a5cab0272ec3c2ffb94f9e758b326d4b9dc3","timestamp":"2026-10-18T16:59:12.667Z"}
+{"plan":"archived-plans-are-found","phase":2,"kind":"build","sha":"0affdff1711251d5b8c7b6e69a9e48b2576467a1","timestamp":"2026-10-18T22:50:41.831Z"}

@@ -34,13 +34,16 @@ pointer; the pointer holds the story.
   phase verification) — `run-files-single-definition.test.ts`. A git primitive
   belongs in `lib/git.ts` (`cleanup/oversized.ts`'s synchronous `git()` is the
   one exclusion).
+- A plan's folder has one lookup, `findPlanFolder` (`lib/promises/plan-folder.ts`, beside
+  `planFolderStatus`): planning folder, then `archive/`, null for the archive folder, a file
+  or an unusable name; never a hand-built `.indusk/planning/<plan>` join. Guard: T9,
+  `plan-folder-single-definition.test.ts`.
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
 - **A new status or kind word is registered with every status-keyed detector
   in the commit that introduces it** — today `archive-dead.ts`
-  (`BLOCKING_STATUSES`) and `plan-tools.ts` (`isActivePlanStatus`); `published`
-  went six phases unregistered. — see `/lessons/register-new-vocabulary-with-every-keyed-detector`
+  (`BLOCKING_STATUSES`) and `plan-tools.ts` (`isActivePlanStatus`). — see `/lessons/register-new-vocabulary-with-every-keyed-detector`
 - **A newly tracked InDusk artifact is registered with every "what changed"
   detector AND given a merge strategy in the commit that first writes it** —
   `phantom.ts`'s `isMachineState`, `shape/changed.ts`'s `isNotCode`,

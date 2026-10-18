@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
+import { findPlanFolder } from "../promises/plan-folder.js";
 import { declaredRepoDirs, isWorkbench, readWorkbenchRepos } from "./repos.js";
 
 /**
@@ -118,8 +119,11 @@ export type ReadPlanCode = { ok: true; code: PlanCode } | { ok: false; problem: 
  * promise: a-plan-knows-its-code
  */
 export function readPlanCode(planRoot: string, plan: string): ReadPlanCode | null {
-	const rel = join(".indusk", "planning", plan, PLAN_CODE_FILE);
-	const path = join(planRoot, rel);
+	// promise: a-plan-is-found-in-the-archive — an archived plan's code file is found too.
+	const folder = findPlanFolder(planRoot, plan);
+	if (folder === null) return null;
+	const path = join(folder, PLAN_CODE_FILE);
+	const rel = relative(planRoot, path);
 	if (!existsSync(path)) return null;
 	let raw: unknown;
 	try {

@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { amendmentsWaiting } from "./amendments.js";
+import { writePromise } from "../../__tests__/helpers/promises-fixture.js";
+import { amendmentsOf, amendmentsWaiting } from "./amendments.js";
 import { approvalFrontmatter } from "./approved-brief.js";
 
 /**
@@ -75,5 +76,41 @@ describe("amendmentsWaiting finds what a plan's brief says now that it did not a
 		const dir = approvedWithWorktree(BRIEF("Reads fast"), "wip: not an approval");
 		writeFileSync(join(dir, "brief.md"), BRIEF("Reads in five seconds"));
 		expect(await amendmentsWaiting(dir)).toEqual([]);
+	});
+});
+
+describe("an archived plan's amendments are read against the registry at the project's root", () => {
+	// clause: a-plan-is-found-in-the-archive/the-brief-at-approval
+	// promise: a-plan-is-found-in-the-archive
+	it("T11 a promise only the root registry says the plan owns is compared", async () => {
+		// The brief names none; the registry alone says `p` owns `held-seat`.
+		const brief = BRIEF("Reads fast");
+		const promise = (statement: string) =>
+			writePromise(join(base, "wt", ".indusk", "promises"), {
+				name: "held-seat",
+				kind: "state",
+				state: "declared",
+				domain: "seating",
+				owner: "p",
+				statement,
+			});
+		writePlan(main, brief, approvedImpl(brief));
+		writePromise(join(main, ".indusk", "promises"), {
+			name: "held-seat",
+			kind: "state",
+			state: "declared",
+			domain: "seating",
+			owner: "p",
+			statement: "A seat is held.",
+		});
+		git(main, "add", "-A");
+		git(main, "commit", "-q", "-m", "plan(p): impl approved");
+		const wt = join(base, "wt");
+		git(main, "worktree", "add", "-q", "-b", "plan/p", wt);
+		mkdirSync(join(wt, ".indusk", "planning", "archive"), { recursive: true });
+		git(wt, "mv", ".indusk/planning/p", ".indusk/planning/archive/p");
+		promise("A seat is held for ten minutes.");
+		const found = await amendmentsOf(join(wt, ".indusk", "planning", "archive", "p"));
+		expect(found.map((a) => `${a.part} ${a.name}`)).toContain("promise held-seat");
 	});
 });
