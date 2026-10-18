@@ -33,13 +33,13 @@ Every command that acts on a plan finds it whether its folder is in `.indusk/pla
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | A plan's folder is found in the planning folder, or in the archive when it is only there, and is reported missing when it is in neither | Build Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
-| T2 | The impl of a plan that has been archived is found by name | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/impl-parser-archive.test.ts |
+| T1 | A plan's folder is found in the planning folder, or in the archive when it is only there, and is reported missing when it is in neither | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
+| T2 | The impl of a plan that has been archived is found by name | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/impl-parser-archive.test.ts |
 | T3 | A plan archived on its own branch can be accepted, and the acceptance is recorded on its impl | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 | T4 | An accepted plan that has been archived lands | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
-| T5 | The tests a plan runs at landing are listed for a plan that has been archived | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
-| T6 | A plan whose folder is in both the planning folder and the archive is read from the planning folder | Build Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/active-first | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
-| T7 | The amendments of a plan archived after its approval are listed against the brief it was approved with, and can be re-approved | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
+| T5 | The tests a plan runs at landing are listed for a plan that has been archived | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
+| T6 | A plan whose folder is in both the planning folder and the archive is read from the planning folder | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/active-first | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
+| T7 | The amendments of a plan archived after its approval are listed against the brief it was approved with, and can be re-approved | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 
 ## Checklist
 
@@ -161,11 +161,12 @@ This phase adds the one function that says where a plan's folder is and makes ev
   `lib/plans/approved-brief.ts` / `amendments.ts` / `reapprove.ts`: when `git show <approval>:<current brief path>` finds nothing, read `<approval>:.indusk/planning/<plan>/brief.md` (the path before archiving).
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changes against the enabled extensions' craft rules.
+  - Reviewed `plan-folder.ts`, `impl-parser.ts`, `plan-worktrees.ts`, `workbench-plan.ts` and `amendments.ts`: each does one job and reads plainly; nothing to add. The pre-archive brief read in `amendments.ts` stays inline (one use).
 
 #### Build Phase 1 Verification
 
-- [ ] An archived plan is found, accepted, landed, listed for landing and re-approved, and a plan in both places is read from the planning folder.
+- [x] An archived plan is found, accepted, landed, listed for landing and re-approved, and a plan in both places is read from the planning folder.
   <details><summary>Technical</summary>
 
   T1, T2, T6: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/plan-folder.test.ts src/lib/impl-parser-archive.test.ts`; T3, T4, T5, T7: the system-tier file after a build; then `indusk plans tests archived-plans-are-found --phase "Build Phase 1"`.
