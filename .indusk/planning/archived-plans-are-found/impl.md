@@ -1,7 +1,7 @@
 ---
 title: "Archived plans are found"
 date: 2026-10-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -184,7 +184,7 @@ This phase adds the one function that says where a plan's folder is and makes ev
 
 #### Build Phase 1 Document
 
-- [ ] Say on the plans command's reference page that a plan is found in the archive, and add a changelog line.
+- [x] Say on the plans command's reference page that a plan is found in the archive, and add a changelog line.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`; the changelog's unreleased section.
