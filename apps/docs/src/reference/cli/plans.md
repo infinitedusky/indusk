@@ -140,6 +140,16 @@ What an unattended build does next, read from the plan as it stands — its work
 
 Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.
 
+### `plans tests <name> --phase <ref> | --landing [--list]`
+
+Runs the tests a plan owes, and says why each file is in the set. Nothing else runs: a test no row names, no change reaches and no protected promise lists is not part of building the plan.
+
+- **`--phase <ref>`** (`"Build Phase 2"`, `"Test Phase 1"` or a bare build number) runs the test files of the trajectory rows whose *Writable at* or *Passes at* is that phase, and the tests whose imports reach the files the phase changed (read from the phase-boundary record, as Shape reads it).
+- **`--landing`** runs every row's test files, the tests the plan's branch reaches (its changes since it left the trunk), and the tests listed under `tests:` for every promise the brief lists as **Must not break**. A Must-not-break promise that names no test is printed as having none, never dropped.
+- **`--list`** prints the rows' and Must-not-break promises' files and runs nothing; the tests the changes reach are found by running them, so `--list` cannot show them.
+
+Vitest cannot list the tests related to a file without running them, so in each package a change is in the command runs `vitest related <changed files>` and reads the files it ran from the JSON report; those files are not run again. The rest run through the project's test command, once per package, a file in the package's system tier (`vitest.tiers.ts`) under that package's system config. A row's `manual:` reference is listed and not run. Each file prints with its reason (`row T1`, `reached`, `must not break: <promise>`); the exit code is non-zero when any file fails. In a one-repo workbench the changes and the tests are the code repo's. The work, verify and retrospective skills name this command at a phase and at landing in place of the whole suite. See [test levels](/guide/test-levels#what-a-plan-runs).
+
 ### `plans review <name> [--json]`
 
 What a person reads before accepting a built plan, assembled from its documents and its branch. The admin's review panel renders the JSON.
