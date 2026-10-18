@@ -46,13 +46,13 @@ the looks a change touched. The decisions are in [adr.md](adr.md); the assertion
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | The tests a plan runs at a phase include the test file of every row that phase writes or makes pass, and no row's file from a phase not yet reached | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T2 | A phase that changed a source file runs the tests whose imports reach that file, in each package the phase changed | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T1 | The tests a plan runs at a phase include the test file of every row that phase writes or makes pass, and no row's file from a phase not yet reached | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T2 | A phase that changed a source file runs the tests whose imports reach that file, in each package the phase changed | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
 | T3 | Vitest's related run names, in its JSON report, the test files whose imports reach a given source file | Test Phase 1 | Test Phase 1 | passing | contract | clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach | apps/indusk-mcp/src/__tests__/vitest-related-report.contract.test.ts |
-| T4 | At landing, the tests a plan runs include the tests of every promise its brief lists as Must not break, with its rows' tests and the tests its changes reach | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T5 | A Must-not-break promise whose registry entry names no test is named as having none, not left out | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T6 | The tests a plan runs at landing hold nothing outside its rows, what its changes reach and its Must-not-break promises | Build Phase 2 | Build Phase 2 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T7 | The work, verify and retrospective skills tell a plan to run its test set, and never the whole suite or the slow tier, at a phase or at landing | Test Phase 1 | Build Phase 2 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
+| T4 | At landing, the tests a plan runs include the tests of every promise its brief lists as Must not break, with its rows' tests and the tests its changes reach | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T5 | A Must-not-break promise whose registry entry names no test is named as having none, not left out | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T6 | The tests a plan runs at landing hold nothing outside its rows, what its changes reach and its Must-not-break promises | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T7 | The work, verify and retrospective skills tell a plan to run its test set, and never the whole suite or the slow tier, at a phase or at landing | Test Phase 1 | Build Phase 2 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
 | T8 | A change to a page's file touches the screens drawn from that page, and no other screen | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
 | T9 | A change to a component touches its stories and the screens whose pages import it | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
 | T10 | A change to the app's design foundation, or a closure that cannot be read, touches every look of the app | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/touched.test.ts |
@@ -319,13 +319,13 @@ This phase gives a plan its test set and makes it the only thing a plan runs. On
 
 #### Build Phase 2 Verification
 
-- [ ] A phase's set holds its rows' files and what its changes reach, and a landing's adds the Must-not-break promises' tests and nothing else.
+- [x] A phase's set holds its rows' files and what its changes reach, and a landing's adds the Must-not-break promises' tests and nothing else.
   <details><summary>Technical</summary>
 
   T1, T2, T4, T5, T6: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/test-set.test.ts`.
 
   </details>
-- [ ] The skills name the plan's test set and never the whole suite.
+- [x] The skills name the plan's test set and never the whole suite.
   <details><summary>Technical</summary>
 
   T7: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/skills-run-the-plan-test-set.test.ts src/__tests__/skill-sync-parity.test.ts`; then `indusk plans tests tests-never-make-us-wait --phase "Build Phase 2"` on this plan itself, which must exit 0.
