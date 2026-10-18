@@ -59,7 +59,7 @@ the looks a change touched. The decisions are in [adr.md](adr.md); the assertion
 | T11 | A look check of what changed opens each touched look on every device that look is drawn for | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/the-changed-looks | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
 | T12 | A look check of what changed reuses every look the change did not touch, whatever else about the app changed | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-look-check-runs-what-changed/no-other-look | apps/indusk-mcp/src/lib/looks/reuse-run.test.ts |
 | T13 | An everyday test file that starts InDusk's command line, git or another Node process is refused by the guard, naming the file, line and call; the same file in the system tier is not | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
-| T14 | Every test file this repository holds that starts the command line, git or another Node process is in its package's system tier | Test Phase 1 | Build Phase 1 | written | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| T14 | Every test file this repository holds that starts the command line, git or another Node process is in its package's system tier | Test Phase 1 | Build Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 
 ## Checklist
 
@@ -222,35 +222,40 @@ This phase writes the tests that can be written against today's code: the guard'
 
 This phase takes the slow files out of the everyday suite. Every test that starts InDusk's command line, git or another Node process moves to its package's system tier, where a plan runs it only when its rows name it or its changes reach it, and the promise about the everyday suite says so. Once it closes, a person running the everyday suite waits about half a minute, and the next phase can make a plan run only its own set.
 
-- [ ] Move every test file the guard now flags into its package's system tier.
+- [x] Move every test file the guard now flags into its package's system tier.
   <details><summary>Technical</summary>
 
   Add each file T14 names to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts` (and `apps/indusk-admin/vitest.tiers.ts` if any), sorted, under a comment naming this plan. Run the moved files once under `vitest.system.config.ts` to confirm they still pass there.
 
   </details>
-- [ ] Change the everyday-suite promise to say what the suite now holds.
+- [x] Change the everyday-suite promise to say what the suite now holds.
   <details><summary>Technical</summary>
 
   `indusk promises change everyday-tests-never-wait --plan tests-never-make-us-wait --statement "The everyday suite never starts a server, a process, the command line, a git repository or a workbench, and never waits on the wall clock; such a test runs when a plan's rows name it or its changes reach it, and in the release's tests." --reason "tests-never-make-us-wait: a test that starts the command line or git is a process start, and those files were 80% of the suite's time"`.
 
   </details>
-- [ ] Keep recording how long each everyday run takes, without naming the promise this plan replaces.
+- [x] Keep recording how long each everyday run takes, without naming the promise this plan replaces.
   <details><summary>Technical</summary>
 
   `package.json` `test` and `apps/indusk-mcp/scripts/suite-speed.js`: the `--mark everyday-suite-stays-fast` becomes a duration record the brief's expectation reads (the run's seconds, held in machine state), with no promise mark. Its own test, if one reads the mark name, follows.
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changes against the enabled extensions' craft rules. Reviewed; nothing to change.
+  <details><summary>Technical</summary>
+
+  Reviewed 2026-10-18: both `vitest.tiers.ts`, `suite-speed.js`, `with-daemon-guard.js`, `suite-speed.test.ts` and `test-daemons-never-leak.test.ts`; biome clean; the record takes its folder as an input and never throws.
+
+  </details>
 
 #### Build Phase 1 Verification
 
-- [ ] No everyday test starts the command line, git or another Node process, and the moved files still pass in the system tier.
+- [x] No everyday test starts the command line, git or another Node process, and the moved files still pass in the system tier.
   <details><summary>Technical</summary>
 
   T14 passes: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/everyday-tests-never-wait.test.ts`; the moved files: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts <moved files>`.
 
   </details>
-- [ ] The everyday suite's time is recorded and comes down.
+- [x] The everyday suite's time is recorded and comes down.
   <details><summary>Technical</summary>
 
   `pnpm test` once; read the recorded duration (expect roughly 30 s against 150 s on 2026-10-17); `pnpm promises:check`.
@@ -259,7 +264,7 @@ This phase takes the slow files out of the everyday suite. Every test that start
 
 #### Build Phase 1 Context
 
-- [ ] Replace the root's test-kinds decision line with this plan's, keeping the root under its budget.
+- [x] Replace the root's test-kinds decision line with this plan's, keeping the root under its budget.
   <details><summary>Technical</summary>
 
   root (Key Decisions): replace "Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`" with "A plan runs its tests, what its changes reach and its Must-not-break tests; processes in the system tier — see `/decisions/tests-never-make-us-wait`" — always-on because every plan's verification follows it. The root has 68 bytes of headroom (14,677 of 14,745), so it is a replacement, not an addition.
@@ -268,7 +273,7 @@ This phase takes the slow files out of the everyday suite. Every test that start
 
 #### Build Phase 1 Document
 
-- [ ] Say in the test-levels guide that a test which starts a process is a system test.
+- [x] Say in the test-levels guide that a test which starts a process is a system test.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/test-levels.md`; the changelog's unreleased section.
