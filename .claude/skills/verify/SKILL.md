@@ -16,7 +16,7 @@ Verify has two roles:
 
 When writing an impl (via the plan skill), every phase should have a `#### Phase N Verification` section. The verification items must be:
 
-- **Specific commands** — `pnpm turbo test --filter=mcp`, not "run the tests"
+- **Specific commands** — `indusk plans tests <plan> --phase N`, or the one test file for a row, not "run the tests"
 - **Expected output** — "1 test passing", "server returns 200 on /health", "tsc exits with 0"
 - **Progressive** — each phase proves itself before the next begins. Phase 2's verification should confirm Phase 1 still works too (regression)
 
@@ -48,7 +48,7 @@ If the impl has a `## Test Trajectory` section and a Verification item says "T3 
 
 1. Read the Trajectory table, find the row with matching ID
 2. The item's parenthetical usually contains the command directly — use that
-3. If the parenthetical is missing or generic (`pnpm test`), derive a filter from the row's `Asserts` column:
+3. If the parenthetical is missing or generic ("run the tests"), derive a filter from the row's `Asserts` column:
    - Extract backtick-quoted code identifiers (highest priority)
    - Fall back to the longest camelCase/kebab-case identifier
    - Use as `-t "{keyword}"` filter with the project's test runner
@@ -65,11 +65,11 @@ Use the `resolveTestIdCommand(trajectory, id)` helper from [`apps/indusk-mcp/src
    - Skip for: test file changes, markdown changes, generated files
    - Catches: style errors, common bug patterns, unused imports
 
-3. **Affected tests** — `pnpm turbo test --filter={app}`
+3. **The plan's tests** — `indusk plans tests <plan> --phase N` (at landing, `--landing`)
    - Skip for: markdown changes, config-only changes with no test files
    - Catches: behavioral regressions, broken logic
-   - Run affected app's tests, not the full suite
-   - **Grep for affected tests** — search for imports of the changed modules to find test files that depend on the changed code.
+   - Runs the phase's own rows' tests and the tests whose imports reach the files the phase changed, not the full suite; `--list` shows the rows' files without running anything.
+   - A hand-picked list or a search for importers is not needed: the command finds the tests the changes reach.
 
 4. **Build** — `pnpm turbo build --filter={app}`
    - Only for: shared package changes, build config changes
@@ -138,7 +138,7 @@ Verification commands are auto-discovered from the project. Call `quality_check`
 - **package.json scripts**: `typecheck`, `lint`, `test`, `build`, `check`
 - **Config files**: `biome.json` → biome check, `tsconfig.json` → tsc --noEmit, `vitest.config.*` → vitest run
 
-Explicit commands in impl verification sections override auto-discovery. If an impl says "run `pnpm turbo test --filter=mcp`", use that exact command. If an impl just says "run tests", use the auto-discovered test command.
+Explicit commands in impl verification sections override auto-discovery. If an impl says "run `indusk plans tests my-plan --phase 2`", use that exact command. If an impl just says "run tests", use the auto-discovered test command.
 
 ## Commands Reference
 
@@ -146,9 +146,8 @@ Explicit commands in impl verification sections override auto-discovery. If an i
 |---|---|---|
 | Type check | `tsc --noEmit` | Any TypeScript change |
 | Lint | `pnpm check` | Any source file change |
-| Test (scoped) | `pnpm turbo test --filter={app}` | Any logic change |
-| Test (related) | `pnpm exec vitest related <changed files>` | Any phase: the tests that import what the phase changed |
-| Test (all) | the everyday tests + `indusk checks slow` (the slow tests `indusk checks show` names) | At landing; release skips a slow run landing already covered — never as a phase's default (test-kinds) |
+| Test (a phase) | `indusk plans tests <plan> --phase N` | Any phase: its rows' tests and the tests that import what it changed |
+| Test (landing) | `indusk plans tests <plan> --landing` | At landing: every row, what the plan reaches, the brief's Must-not-break promises — never the whole suite |
 | Build (scoped) | `pnpm turbo build --filter={app}` | Shared package or build config changes |
 | Auto-discover | `quality_check` with mode `discover` | See what checks are available |
 | Run all checks | `quality_check` with no args | Run all discovered checks at once |
