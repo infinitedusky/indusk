@@ -382,10 +382,16 @@ This phase makes a visual test cost what changed. Each look learns which files i
   Read `touched.ts`, `routes.ts`, `import-closure.ts`, `reuse-run.ts`'s `opens`, `changedSinceRef` and the command. `touchedLooks` pure and one rule; route matching, import reading and the git call each in their own unit with the process or the compiler injected or at the edge. Left as is: `changedSinceRef` has no everyday test because it starts git (the everyday guard forbids it); the smoke run below is its check.
 
   </details>
-- [x] Shape finding: give a screen's and a story's sources their own named functions instead of one long `lookClosures`.
+- [x] Shape finding: give a screen's sources and a story's sources their own named functions instead of one long function that reads both.
   <details><summary>Technical</summary>
 
   `screenSources` and `storySources` in `touched.ts`, out of `lookClosures` (a unit has one reason to change).
+
+  </details>
+- [x] Make the always-on health tool's agreement test read the command line's word for a broken promise, so the plan's own test set passes.
+  <details><summary>Technical</summary>
+
+  Found at verification (2026-10-18): this phase's change to `bin/cli.ts` reached `src/__tests__/always-on-health-tool.test.ts` (system tier) through the plan's test set, and its A19 matched `(\d+) violations?` while `promises status` prints `N break(s)` since one-promise-language; it failed on main too. Now matches `(\d+) breaks?`; passes under the system config.
 
   </details>
 
