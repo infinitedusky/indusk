@@ -1,7 +1,7 @@
 ---
 title: "Tests never make us wait"
 date: 2026-10-17
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
