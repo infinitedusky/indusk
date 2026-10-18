@@ -225,18 +225,18 @@ pointer; the pointer holds the story.
   commits in the destination, never pushes by default, pushes last, and never
   lets a git failure escape past a commit it made. — see `/reference/cli/papers`
 - **A look's verdict is decided in `looks/verdict` from values handed to it;
-  the browser only measures** (`looks/check` reads `:root` and computed styles
-  and passes them in). Held or broken, the finding's token or element, and its
-  nearest token are never computed in the browser, the CLI or the admin — a
-  verdict decided where the page runs cannot be read without Chromium. —
-  guarded by `verdict.test.ts`; see `/reference/cli/looks`
-- **The no-raw-value lint is three modules, and a new rule goes in its own**:
-  `lint-values` (the strict list, the stylelint rules, `cssFindings`),
-  `lint-classes` (the Tailwind vocabulary a theme reset changes) and the token
-  checks in `lint`, which also orchestrates; `lint-types` holds the shared
-  shapes so neither imports `lint` back. A rule added to `lint.ts` is the
-  500-line file this split undid — guarded by the file-size attention-focus and
-  `looks-lint-rules.test.ts`; see `/reference/cli/looks`
+  the browser only measures** (`looks/check` passes in `:root` and computed
+  styles): a verdict decided where the page runs cannot be read without
+  Chromium — guarded by `verdict.test.ts`; see `/reference/cli/looks`
+- **A look is touched by its import closure; one that cannot be read touches
+  every look** (`looks/touched`; foundation, stylesheets and styling config
+  touch all). `check --changed` hands `planReuse` that set — guarded by T10 in
+  `touched.test.ts`; see `/reference/cli/looks`
+- **The no-raw-value lint is three modules, a new rule in its own**:
+  `lint-values`, `lint-classes`, and the token checks in `lint` (which
+  orchestrates); `lint-types` holds shared shapes. A rule added to `lint.ts` is
+  the 500-line file this split undid — guarded by the file-size attention-focus
+  and `looks-lint-rules.test.ts`; see `/reference/cli/looks`
 
 - **What `init` prints is checked against the command line**: every `indusk` command and file `init` prints is checked by `init-next-steps.test.ts`, so a new printed command must exist.
 
