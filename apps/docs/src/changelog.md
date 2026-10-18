@@ -6,7 +6,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
-- **A plan the retrospective archived is found by every plan command** (archived-plans-are-found): the impl lookup, the test set listed at landing and re-approval each rebuilt `.indusk/planning/<plan>` and missed `archive/<plan>`, so closing a plan meant moving it out of the archive and back. One lookup (`planFolder`) now asks the planning folder first, then the archive, and re-approval reads the approved brief from the path it had at the approval commit. See [`plans`](/reference/cli/plans#archived-plans-are-found).
+- **A plan the retrospective archived is found by every plan command** (archived-plans-are-found): the impl lookup, the test set listed at landing and re-approval each rebuilt `.indusk/planning/<plan>` and missed `archive/<plan>`, so closing a plan meant moving it out of the archive and back. One lookup (`findPlanFolder`, the one the promise code already had, which also refuses names that are not a plan's folder) now asks the planning folder first, then the archive, for workbench plans and their code files too, and re-approval reads the approved brief from the path it had at the approval commit. See [`plans`](/reference/cli/plans#archived-plans-are-found).
 
 - **Phase verification runs a row's test the way the plan's test set does** (tests-never-make-us-wait): `indusk verify` ran every row's test file from the repository root, where a system-tier test is not a project and would read as failing. Both now run test files through one module (`lib/tests/run-files.ts`): a file in its own package, a system-tier file under that package's system config, each file's verdict from its exit code or report file. See [`verify`](/reference/cli/verify).
 

@@ -190,7 +190,7 @@ Every one of these reads the plan's code from `code.json`. A code file that name
 
 ## Archived plans are found
 
-Every command that acts on a plan finds it in `.indusk/planning/<plan>` or, when it is not there, in `.indusk/planning/archive/<plan>`, through one lookup (`planFolder`). A plan the retrospective archived before it lands is accepted, re-approved, tested at landing and landed where it lies, with no moving it out of the archive and back. A plan in both places is read from the planning folder. Re-approval and `plans amendments` read the approved brief from the path it had at the approval commit, archived or not.
+Every command that acts on a plan finds it in `.indusk/planning/<plan>` or, when it is not there, in `.indusk/planning/archive/<plan>`, through one lookup (`findPlanFolder`, which also refuses names that are not a plan's folder: the archive folder itself, a file such as `master.md`, a name with path separators or `..`). A workbench plan's `code.json` is found there too. A plan the retrospective archived before it lands is accepted, re-approved, tested at landing and landed where it lies, with no moving it out of the archive and back. A plan in both places is read from the planning folder. Re-approval and `plans amendments` read the approved brief from the path it had at the approval commit, archived or not.
 
 ## Housekeeping
 
