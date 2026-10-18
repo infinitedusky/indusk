@@ -303,7 +303,8 @@ pointer; the pointer holds the story.
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
-- The root run builds this package before its tests (`turbo.json` `@infinitedusky/indusk-mcp#test`): a test behind `SHOULD_SKIP` skips silently without `dist/`, so a row on the built CLI must not rest on a build someone remembered.
+- The root run builds this package first (`turbo.json`): a test behind `SHOULD_SKIP` skips silently without `dist/`.
+- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes every test calling it a system test: list the file in `vitest.tiers.ts` `SYSTEM`; `everyday-tests-never-wait` reads the helpers and fails the file.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —

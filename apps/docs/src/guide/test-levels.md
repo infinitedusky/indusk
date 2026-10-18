@@ -52,7 +52,8 @@ a second.
 Each package lists, in `vitest.tiers.ts`, the files that start a server, a
 detached process or a packed tarball, or that wait on the wall clock. A test
 that starts InDusk's command line, git or another Node process is a system test
-too: a process start is most of what made the everyday suite slow (125 such
+too, and so is one that calls a shared helper that starts one (`runHook`, `git`;
+the guard reads the helpers): a process start is most of what made the everyday suite slow (125 such
 files were 80% of its 150 seconds on 2026-10-17). Those files are its **system
 tier**.
 
