@@ -56,7 +56,7 @@ too: a process start is most of what made the everyday suite slow (125 such
 files were 80% of its 150 seconds on 2026-10-17). Those files are its **system
 tier**.
 
-- **`pnpm test`** is everything else: rules, in about half a minute, with both
+- **`pnpm test`** is everything else: rules, in under a minute (54 s on 2026-10-18), with both
   packages in parallel. A phase runs only its own rows' tests and
   `vitest related` over the files it changed. That takes seconds.
 - **`pnpm test:system`** runs both packages' system tiers, at landing and on
