@@ -34,12 +34,12 @@ Every command that acts on a plan finds it whether its folder is in `.indusk/pla
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | T1 | A plan's folder is found in the planning folder, or in the archive when it is only there, and is reported missing when it is in neither | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
-| T2 | The impl of a plan that has been archived is found by name | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/impl-parser-archive.test.ts |
+| T2 | The impl of a plan that has been archived is found by name | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/lib/impl-parser-archive.test.ts |
 | T3 | A plan archived on its own branch can be accepted, and the acceptance is recorded on its impl | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 | T4 | An accepted plan that has been archived lands | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
-| T5 | The tests a plan runs at landing are listed for a plan that has been archived | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
+| T5 | The tests a plan runs at landing are listed for a plan that has been archived | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/one-lookup | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 | T6 | A plan whose folder is in both the planning folder and the archive is read from the planning folder | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/active-first | apps/indusk-mcp/src/lib/plans/plan-folder.test.ts |
-| T7 | The amendments of a plan archived after its approval are listed against the brief it was approved with, and can be re-approved | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
+| T7 | The amendments of a plan archived after its approval are listed against the brief it was approved with, and can be re-approved | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-is-found-in-the-archive/the-brief-at-approval | apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts |
 
 ## Checklist
 
@@ -49,13 +49,13 @@ Every command that acts on a plan finds it whether its folder is in `.indusk/pla
 
 This phase writes the tests that show today's failures: an archived plan whose impl is not found, that cannot be accepted, landed or listed for landing, and whose amendments cannot be read. It records the two tests whose subject is the new lookup function, with their bodies, so the build phase starts with every test written.
 
-- [ ] Create or confirm this plan's worktree, so the plan tools read the plan from it.
+- [x] Create or confirm this plan's worktree, so the plan tools read the plan from it.
   <details><summary>Technical</summary>
 
   `indusk worktree create archived-plans-are-found` from the trunk (the worktree from `indusk plans start` exists; this confirms the assignment).
 
   </details>
-- [ ] Write the test that an archived plan's impl is found by name, failing today.
+- [x] Write the test that an archived plan's impl is found by name, failing today.
   <details><summary>Technical</summary>
 
   T2, `apps/indusk-mcp/src/lib/impl-parser-archive.test.ts`: a temp project with only `.indusk/planning/archive/p/impl.md`; `resolveImplPath(root, "p")` returns that path. Red today (returns null). Tokens: `clause: a-plan-is-found-in-the-archive/one-lookup`, `promise: a-plan-is-found-in-the-archive`.
@@ -67,6 +67,7 @@ This phase writes the tests that show today's failures: an archived plan whose i
   T3, T4, T5, T7 in `apps/indusk-mcp/src/__tests__/archived-plan-found.test.ts`, on the plan-in-a-worktree fixture (`helpers/plan-worktree-fixture.ts`; read how `plans-land.test.ts` and `amendments.test.ts` build an approved plan): approve the plan, then move its folder to `archive/` on its branch and commit; T3 `acceptPlan` records `accepted:` on the archived impl; T4 `landPlan` lands it; T5 `readsFor(root, plan)` (from `lib/plans/plan-tests.ts`) returns its rows; T7 an edit to the archived brief is listed by `amendmentsOf` against the approved brief and `reapprove` succeeds. Add the file to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts` (it starts git). Tokens for each clause and the promise.
 
   </details>
+  - Note: T5 and T7 are written and red (T5 "no impl.md for seat-holds", T7 "the brief at … approval commit … cannot be read"). T3 (accept) and T4 (land) PASS today in this fixture: `worktreeCopy` in `plan-worktrees.ts` already falls back to `archive/<plan>` for a plan with a live worktree, so `planBranch` finds it. They stay `planned` and this item and the red-tests verification stay open until a failing setup is found or the person decides.
 
 #### Deferred to Build Phase 1
 
@@ -106,7 +107,7 @@ This phase writes the tests that show today's failures: an archived plan whose i
   T2 red: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/impl-parser-archive.test.ts`; T3, T4, T5, T7 red: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/archived-plan-found.test.ts` (build first).
 
   </details>
-- [ ] The deferred test body has been read and judged.
+- [x] The deferred test body has been read and judged.
   <details><summary>Technical</summary>
 
   The T1/T6 body compiles at Build Phase 1 and asserts what its rows claim.
@@ -115,7 +116,7 @@ This phase writes the tests that show today's failures: an archived plan whose i
 
 #### Test Phase 1 Context
 
-- [ ] Record nothing new; the rule lands with the build phase.
+- [x] Record nothing new; the rule lands with the build phase.
   <details><summary>Technical</summary>
 
   Confirm no context file needs a line yet.
@@ -124,7 +125,7 @@ This phase writes the tests that show today's failures: an archived plan whose i
 
 #### Test Phase 1 Document
 
-- [ ] Write nothing in the docs yet.
+- [x] Write nothing in the docs yet.
   <details><summary>Technical</summary>
 
   Confirm the docs change with Build Phase 1.
