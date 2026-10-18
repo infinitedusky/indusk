@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { CLI_BIN, runCli } from "./helpers/cli.js";
+import "../../vitest.config";
 import { stopTelemetryForHome, telemetryProcessesFor } from "./helpers/telemetry-reap.js";
 
 /**
@@ -15,6 +16,12 @@ import { stopTelemetryForHome, telemetryProcessesFor } from "./helpers/telemetry
  * for every temporary home a test made — 860 were found running on
  * 2026-10-03, 2,058 on 2026-08-13. Read from the process list, as they were
  * found, because their only record lives in a home the test deletes.
+ *
+ * The switch that stops them is the everyday config's
+ * (`INDUSK_SKIP_TELEMETRY_AUTOSTART`, set as `vitest.config.ts` loads). This
+ * file runs in the system tier, whose config deliberately does not set it, so
+ * it loads the everyday config itself: what it proves is that init, run with
+ * that config's environment, starts nothing (tests-never-make-us-wait).
  */
 
 const made: string[] = [];

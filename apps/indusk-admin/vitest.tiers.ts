@@ -51,6 +51,14 @@ export const SYSTEM = [
   // The master plan page, the retitled plan and nav screens and the
   // subplan-row stories read approved and are held by value (plan-stories A6).
   "src/__tests__/plan-stories.contract.test.ts",
+  // tests-never-make-us-wait: a test that starts the command line, git or Node is a
+  // process start, and process starts were 80% of the everyday suite's time. They run
+  // when a plan's rows name them or its changes reach them, and in the system tier.
+  "src/app/p/[project]/looks/looks-components.test.tsx",
+  "src/app/p/[project]/looks/looks.test.tsx",
+  "src/lib/__tests__/planning-reader.own-branch.test.ts",
+  "src/lib/decisions-reader.amendments.test.ts",
+  "src/lib/planning-reader.title.test.ts",
 ];
 
 /**
@@ -70,9 +78,7 @@ export const SYSTEM_TIER_ENV = "INDUSK_ADMIN_SYSTEM_TIER";
  * ui-promises A1, A2, A13, A14, and A29, A30 in the approve route's own file), which a browser cannot reach.
  */
 export const NODE_PAGES = [
-  "src/app/p/[project]/looks/looks.test.tsx",
   "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
-  "src/app/p/[project]/looks/looks-components.test.tsx",
   "src/app/p/[project]/looks/looks-unapprove.test.tsx",
   // A plan's page over a real project (brief-as-the-contract A5, A15).
   "src/__tests__/plan-parts.test.tsx",
