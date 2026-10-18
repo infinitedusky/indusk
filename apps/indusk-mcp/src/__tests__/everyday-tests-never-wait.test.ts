@@ -111,8 +111,8 @@ export function scan(file: string, raw: string): Finding[] {
 const DIRECT_START =
 	/\b(?:spawn|spawnSync|exec|execSync|execFile|execFileSync|fork|runCli|runCliAsync)\(/;
 
-/** A helper module's top-level functions and what each one's body holds. */
-function functionsOf(source: string): Array<{ name: string; body: string; exported: boolean }> {
+/** A helper module's top-level functions (exported or not) and what each one's body holds. */
+function functionsOf(source: string): Array<{ name: string; body: string }> {
 	const starts = [
 		...source.matchAll(
 			/^(export\s+)?(?:async\s+)?(?:function\s+(\w+)|const\s+(\w+)\s*(?::[^=]+)?=\s*(?:async\s*)?(?:function|\())/gm,
@@ -120,7 +120,6 @@ function functionsOf(source: string): Array<{ name: string; body: string; export
 	];
 	return starts.map((m, i) => ({
 		name: (m[2] ?? m[3]) as string,
-		exported: m[1] !== undefined,
 		body: source.slice(m.index, starts[i + 1]?.index ?? source.length),
 	}));
 }
@@ -176,8 +175,6 @@ export function helperStarters(helpers: Record<string, string>): Map<string, Set
 			}
 		}
 	}
-	// Only what a test can import is the guard's business; keep every starter, exported or not,
-	// since a test importing a non-exported name does not compile.
 	return starters;
 }
 
