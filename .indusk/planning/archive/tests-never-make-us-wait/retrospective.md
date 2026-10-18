@@ -78,6 +78,7 @@ Carried, not done:
 - Audit finding: the planner's impl template still says the whole suite runs at
   landing; `quality_check` runs the whole `test` script; nothing tells a plan to use
   `looks check --changed`.
+- Bug found at landing: `indusk plans tests --landing` refuses an archived plan, and the retrospective archives before it lands, so this plan's own landing check did not run; `pnpm test` was also skipped at this close by Sandy's call (2026-10-18).
 - Retire `everyday-tests-never-wait` and take the tier logic out of InDusk, once
   retiring exists (`a-promise-can-be-retired`); `pnpm test` then runs everything.
 
