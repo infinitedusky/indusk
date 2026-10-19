@@ -366,7 +366,7 @@ This phase makes each run of a plan's tests leave one record: which plan, which 
 
 This phase reads everything the earlier phases wrote, plus the phase openings that were always recorded, and prints a plan's phases, steps and test runs in the order they happened with their durations and a total from acceptance to landing. It must cope with plans recorded before any of this existed. It then documents the command.
 
-- [ ] Write the tests for the view, so they fail first.
+- [x] Write the tests for the view, so they fail first.
   <details><summary>Technical</summary>
 
   A6, A10, A11, A12 and A19's second half in `lib/timing/view.test.ts`, per the deferral body above; commit red.
