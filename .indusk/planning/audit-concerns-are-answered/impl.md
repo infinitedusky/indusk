@@ -1,7 +1,7 @@
 ---
 title: "A plan is read cold before approval, and every audit concern is answered"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -106,6 +106,7 @@ amendment. Every concern waved away is shown to the person.
 | A40 | A clause named with trailing punctuation in a signal answer is read without it | Build Phase 8 | Build Phase 8 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A41 | A signal answer in a plan review is refused, naming the finding | Build Phase 8 | Build Phase 8 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A42 | Before approval, a brief changed since it was accepted is listed with the plan review's dismissals at the ready-for-approval stop | Build Phase 8 | Build Phase 8 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
+| A43 | The audit's instructions, for both the post-build audit and the plan review, tell the agent to run the reader in the foreground and wait for it, and never to end its turn while the reader runs | Build Phase 9 | Build Phase 9 | planned | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 
 ### Deferred Verification
 
@@ -850,6 +851,52 @@ The audit of this plan ran under the old instruction not to act on findings, so 
   </details>
 
   Build Phase 8 notes (unattended): Shape: reviewed, nothing found. Decisions: (1) the build reads the audit through `BuildPlan.auditOpen` (set by `readBuildPlan`, shape plus the plan's own registry) and an unreadable approval through `approvalUnreadable`; `nextBuildStep` reads both, so the retrospective gate stays an existence check. (2) `audit-gate.test.ts` and `plans-next.test.ts` expected `plans next` to answer `review` for any `audit.md`; they now expect `audit` for one that is not answered (A33's behaviour) and the walk's fixture writes an answered audit; the retrospective readiness assertions are unchanged. (3) A review with no `read:` hash counts as out of date (a cold read must be tied to its documents); `plans review-inputs` now prints `read`, so the documents-only clause's allowed keys and A18's assertion include it. (4) A fix to a document after a review makes that review stale, so the planning run reads the plan cold again; the loop ends at a pass that needs no fix. (5) `briefChanges` is compared with the brief at the newest `plan(<plan>): brief accepted` commit and is empty when no such commit or no git; the admin's rendering of the new `ready-for-approval` field is not part of this phase. (6) The audit skill and its synced copy now tell the planning agent to write `read:`.
+
+### Build Phase 9: The reader runs in the foreground
+
+**Tier**: med — the work step's default
+
+Added 2026-10-19 (Sandy's order of events, step 3). The first unattended planning runs after landing failed at the plan review: the session started the cold reader as a background agent, ended its turn saying it would answer when the reader finished, and the run read the ended turn as a failed step, so no plan review was written. This phase tells the agent, in the audit skill, to run the reader in the foreground and wait for it, for the post-build audit and the plan review alike, so a planning run can reach ready for approval.
+
+- [ ] Tell the agent in the audit instructions to run the reader in the foreground and wait for it.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/skills/audit.md`, step 3 (Spawn the reader) and the Before approval section's step 2: call the Agent tool with `run_in_background: false`, wait for its report, and never end the turn while the reader runs; in an unattended run an ended turn ends the step. A43.
+
+  </details>
+- [ ] Resync the project's copy of the audit skill.
+  <details><summary>Technical</summary>
+
+  `.claude/skills/audit.md` from the package; `skill-sync-parity.test.ts` passes (A8).
+
+  </details>
+
+#### Build Phase 9 Verification
+
+- [ ] The audit instructions say the reader runs in the foreground, and the project's copy matches.
+  <details><summary>Technical</summary>
+
+  A43 and A8: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 9"`.
+
+  </details>
+
+#### Build Phase 9 Context
+
+- [ ] Add to the package's rules that a ritual's reader runs in the foreground.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the `lib/audit/` entry: an unattended step that spawns a reader waits for it in the foreground; an ended turn ends the step.
+
+  </details>
+
+#### Build Phase 9 Document
+
+- [ ] Say in the audit skill's reference page that the reader runs in the foreground.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/skills/audit.md`, one line under the steps.
+
+  </details>
 
 ## Files Affected
 
