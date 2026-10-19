@@ -34,11 +34,11 @@ Each phase runs its own rows' tests and the tests of the brief's Must-not-break 
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | A phase's tests are the files of the rows it writes or makes pass and the tests of the brief's Must-not-break promises, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T2 | A landing's tests are every row's files and the Must-not-break promises' tests, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T3 | Running a plan's tests starts no search for the tests its changed files reach | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/plan-tests.test.ts |
-| T4 | The work, verify and retrospective skills say a phase runs its rows and its Must-not-break tests, and never mention tests a change reaches | Test Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
-| T5 | Changing a promise can replace its clauses, and the registry then holds the new clauses and not the old | Test Phase 1 | Build Phase 1 | planned | unit | the means of this change: `promises change` could rewrite only a sentence | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
+| T1 | A phase's tests are the files of the rows it writes or makes pass and the tests of the brief's Must-not-break promises, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T2 | A landing's tests are every row's files and the Must-not-break promises' tests, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T3 | Running a plan's tests starts no search for the tests its changed files reach | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/plan-tests.test.ts |
+| T4 | The work, verify and retrospective skills say a phase runs its rows and its Must-not-break tests, and never mention tests a change reaches | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
+| T5 | Changing a promise can replace its clauses, and the registry then holds the new clauses and not the old | Test Phase 1 | Build Phase 1 | written | unit | the means of this change: `promises change` could rewrite only a sentence | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 
 ## Checklist
 
@@ -66,7 +66,7 @@ This phase writes the tests that show what changes: a phase's set that should ho
   T3 in `apps/indusk-mcp/src/lib/plans/plan-tests.test.ts` (create if missing): `plansTestsOutcome` with a fake `Runner` that records calls, on a temp plan with one row; assert no call's args include `related`. Red today.
 
   </details>
-- [ ] Write the tests that the skills name the new rule and that a promise change can carry clauses, failing today.
+- [x] Write the tests that the skills name the new rule and that a promise change can carry clauses, failing today.
   <details><summary>Technical</summary>
 
   T4: extend `skills-run-the-plan-test-set.test.ts` so each of work, verify and retrospective mentions Must-not-break tests at a phase and none mentions tests a change reaches (`related`, `reach`). T5 in `promises-change.test.ts`: `indusk promises change <name> --plan p --statement … --reason … --clause "a (split). …"` leaves the registry entry with exactly the given clauses. Red today (unknown option `--clause`). That file runs the built CLI; it is already in the system tier if the guard put it there, else add it.
