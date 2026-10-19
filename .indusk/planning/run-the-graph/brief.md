@@ -20,6 +20,24 @@ promise stated as clauses. It stays a draft until that plan is built, since its
 promises are declared with their clauses (`indusk promises declare --clause`),
 which does not exist before then.
 
+## The end state, in stories
+
+Gone through with Sandy one by one (2026-10-19); each promise below comes from
+one of these.
+
+1. **You approve a plan, and every phase that can start, starts.** You approve
+   a plan with six build phases. Each phase says which other phases it needs.
+   Phases 1 and 3 need nothing, so both start the moment you approve. Phase 2
+   needs 1, so it starts when 1 finishes. Phase 5 needs 2 and 3, so it starts
+   once both are done. Nothing waits on a phase it does not need.
+
+2. **Two plans want the same file.** A phase in `homework-gate-login` and a
+   phase in `homework-gate-reports` both need `auth.ts`. The earlier plan's
+   phase goes first. The other phase waits until that phase is finished, then
+   starts with that phase's work merged in, and its plan lands after the first
+   one. Every other phase in both plans keeps running. If two phases interfere
+   without sharing a file, the check when each merges into its plan catches it.
+
 ## Expectations
 
 1. **A master finishes in about the time of its longest chain of dependent phases, not the sum of its phases.**
