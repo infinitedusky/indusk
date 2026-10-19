@@ -1,3 +1,4 @@
+// promise: a-plan-says-how-long-it-took
 // clause: a-plan-says-how-long-it-took/test-runs-are-recorded
 // clause: a-plan-says-how-long-it-took/a-record-never-blocks
 import { execFileSync } from "node:child_process";

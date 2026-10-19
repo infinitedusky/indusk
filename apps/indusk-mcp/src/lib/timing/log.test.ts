@@ -1,3 +1,4 @@
+// promise: a-plan-says-how-long-it-took
 // clause: a-plan-says-how-long-it-took/a-record-never-blocks
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

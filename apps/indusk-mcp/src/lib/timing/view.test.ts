@@ -1,3 +1,4 @@
+// promise: a-plan-says-how-long-it-took
 // clause: a-plan-says-how-long-it-took/one-view
 // clause: a-plan-says-how-long-it-took/steps-are-timed
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
