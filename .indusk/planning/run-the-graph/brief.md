@@ -59,6 +59,12 @@ one of these.
    its output wait; everything else keeps building while you are away. When you
    answer, the held phase catches up and carries on.
 
+6. **You look at the admin.** With `a-run-can-be-trusted` built, every phase
+   shows what it is doing ("Build Phase 3, running"), what it is waiting on
+   (another phase, a file, your answer), or why it stopped, with Restart; a
+   finished plan reads complete with its confirmation list. Seeing the graph
+   itself comes with `activity-and-graph`; this plan changes no screen.
+
 **The rule under all of them: nothing stops, and a hold is cheap.** A running
 phase always finishes. A phase can be put on hold (an expensive question, an
 amendment); it is set aside and gives up its turn on its files, so phases
