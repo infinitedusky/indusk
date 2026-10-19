@@ -50,3 +50,17 @@ export function writeScanRecord(
 export function scanFinishedAfter(record: ScanRecord | undefined, since: number): boolean {
 	return record?.ok === true && record.startedAt > since;
 }
+
+/**
+ * A recorder pass's outcome from what `recordBreaks` resolved with: not finished when its
+ * production read failed (`error`) or it was refused before reading (`refused`), else ok.
+ * The admin hands it to the recorder loop as `outcomeOf` (A102).
+ */
+export function recordPassOutcome(result: unknown): Pick<ScanRecord, "ok" | "error"> {
+	const r = (result ?? {}) as { error?: unknown; refused?: unknown };
+	if (r.error !== undefined && r.error !== null) {
+		return { ok: false, error: r.error instanceof Error ? r.error.message : String(r.error) };
+	}
+	if (typeof r.refused === "string") return { ok: false, error: r.refused };
+	return { ok: true };
+}

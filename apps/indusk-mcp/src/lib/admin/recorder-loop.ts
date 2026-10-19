@@ -35,6 +35,12 @@ export interface RecorderLoopOptions {
 	 * `ok: false` with the message). A failing record never fails the loop.
 	 */
 	scanRecord?: (root: string, scan: ScanRecord) => void;
+	/**
+	 * Whether a pass that resolved scanned what it was for: `recordBreaks` never throws on a
+	 * failed production read, it resolves with `error` set, and such a pass did not finish a
+	 * scan (A102). Absent, a pass that resolves is ok.
+	 */
+	outcomeOf?: (result: unknown) => Pick<ScanRecord, "ok" | "error">;
 	/** The clock the scan record reads. */
 	now?: () => number;
 	log?: (line: string) => void;
@@ -62,7 +68,8 @@ export function startRecorderLoops(opts: RecorderLoopOptions): RecorderLoops {
 		const startedAt = now();
 		let outcome: Pick<ScanRecord, "ok" | "error"> = { ok: true };
 		try {
-			await opts.record(root);
+			const result = await opts.record(root);
+			if (opts.outcomeOf) outcome = opts.outcomeOf(result);
 		} catch (err) {
 			outcome = { ok: false, error: (err as Error).message };
 			log(`recorder: a pass for ${root} failed: ${(err as Error).message}`);

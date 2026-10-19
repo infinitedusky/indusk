@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { startRecorderLoops } from "./recorder-loop.js";
 import {
 	readScanRecords,
+	recordPassOutcome,
 	type ScanRecord,
 	scanFinishedAfter,
 	writeScanRecord,
@@ -110,6 +111,19 @@ describe("A89 — the loop writes down each scan", () => {
 			[true, undefined],
 		]);
 		expect(scanFinishedAfter(records[0][1], 1_000_000)).toBe(false);
+	});
+
+	it("A102 the package's outcome of a recordBreaks result, which the admin hands the loop, says the same", () => {
+		expect(recordPassOutcome({ error: new Error("jaeger query timed out") })).toEqual({
+			ok: false,
+			error: "jaeger query timed out",
+		});
+		expect(recordPassOutcome({ refused: "names no production source" })).toEqual({
+			ok: false,
+			error: "names no production source",
+		});
+		expect(recordPassOutcome({ changes: [] })).toEqual({ ok: true });
+		expect(recordPassOutcome(undefined)).toEqual({ ok: true });
 	});
 
 	it("the record file is written whole, per project, with no temp file left", () => {
