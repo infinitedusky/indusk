@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { text } from "node:stream/consumers";
 import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
+import { clauseTestRunner } from "../../lib/promises/closing-inputs.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { confirmPlan } from "../../lib/promises/confirm.js";
 import {
@@ -293,7 +294,12 @@ export async function promisesConfirm(
 		}
 		codeRoot = roots.codeRoot;
 	}
-	const result = await confirmPlan({ planRoot: projectRoot, codeRoot, plan });
+	const result = await confirmPlan({
+		planRoot: projectRoot,
+		codeRoot,
+		plan,
+		runTests: clauseTestRunner(projectRoot, codeRoot),
+	});
 	if (!result.ok) {
 		for (const r of result.refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(

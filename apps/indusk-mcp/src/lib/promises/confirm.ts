@@ -5,7 +5,12 @@ import { clauseTokenPattern } from "../tokens.js";
 import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
-import type { ClauseTestRunner, SignalReader } from "./clause-proof.js";
+import {
+	type ClauseTestRunner,
+	clauseTestsHalf,
+	provableClauses,
+	type SignalReader,
+} from "./clause-proof.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import { type PlanFolder, planFileRel, planFolderPath, planFolderStatus } from "./plan-folder.js";
 import {
@@ -127,6 +132,14 @@ function unmadeChanges(folder: PlanFolder, registry: Registry): CheckRefusal[] {
 		}
 	}
 	return out;
+}
+
+/** Whether the plan's brief opts in to clauses (`clauses: required`): its promises close on their tests run now and their signals. */
+export function writtenAsClauses(folder: PlanFolder): boolean {
+	const briefPath = join(folder.dir, "brief.md");
+	if (!existsSync(briefPath)) return false;
+	const brief = parseBriefContract(readFileSync(briefPath, "utf-8"));
+	return brief.shape === "contract" && brief.clausesRequired;
 }
 
 /** What a proven promise's confirmation will write. */
@@ -361,6 +374,28 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 		} else ready.push(verdict);
 	}
 	if (refusals.length > 0) return refuse(refusals);
+
+	// A plan written as clauses closes on what the system says now, not on its
+	// rows' State cells (mark-first ADR D2); a plan written before keeps the rule above.
+	if (writtenAsClauses(folder)) {
+		const held = ready.map((r) => ({ promise: r.proof.promise, rows: r.proof.rows }));
+		const proving = held.filter((h) => provableClauses(h.promise).length > 0);
+		if (proving.length > 0) {
+			if (!input.runTests) {
+				return refuse([
+					{
+						file: planFileRel(folder, "impl.md"),
+						message: `${plan} is written as clauses (\`clauses: required\`), so closing runs each clause's tests now — this close was given no test runner; close it with \`indusk promises confirm ${plan}\``,
+					},
+				]);
+			}
+			const tests = await clauseTestsHalf(proving, codeRoot, input.runTests);
+			for (const message of tests.refusals) {
+				refusals.push({ file: planFileRel(folder, "impl.md"), message });
+			}
+		}
+		if (refusals.length > 0) return refuse(refusals);
+	}
 
 	const day = (input.now ?? new Date()).toISOString().slice(0, 10);
 	const confirmed = ready

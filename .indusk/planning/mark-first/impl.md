@@ -452,12 +452,13 @@ is the promise's core, and it is the phase where a mistake would block every
 plan, so it reads the system through inputs a test can replace and leaves a plan
 written before clauses on the old rule.
 
-- [ ] Make closing run the tests a clause's rows name and refuse a clause whose test fails now.
+- [x] Make closing run the tests a clause's rows name and refuse a clause whose test fails now.
   <details><summary>Technical</summary>
 
   `confirmPlan` in `lib/promises/confirm.ts` gains inputs `runTests(files): Promise<{file, passed}[]>` and `readSignals(promise): Promise<ClauseReports>` (injected at the CLI edge with a vitest runner over `rowsProvingClause` files and the daemon reader `promises status` already uses). The refusal names `promise/clause` and the test file, and says which half is missing: tests or signal (A1, A3, A9). Only when the brief has `clauses: required`; a plan without clauses keeps the old rule (A25).
 
   </details>
+**Decision D-17:** the two halves live in a new `lib/promises/clause-proof.ts` (`clauseTestsHalf`, `clauseSignalHalf`, the input types), so closing and landing call one function each and `confirm.ts` only wires them; the real runner is `clauseTestRunner` in `closing-inputs.ts`, over `runFiles` with the project's test command (pinned as a third consumer in `run-files-single-definition.test.ts`), passed by `indusk promises confirm` and the `confirm_promises` tool. The inputs are optional on `ConfirmInput`, so A25's legacy call is unchanged, and a plan written as clauses given none is refused, never closed on its State cells. A file the runner does not report counts as failing. `promise-clauses-close.test.ts` (the `a-plan-holds-the-promises-it-lands` story) now hands in a passing runner and upheld signals, because its fixture brief has `clauses: required`; what it asserts is unchanged.
 - [ ] Make closing refuse a clause whose signal has not reported upheld, and enforce the promise when all clauses pass.
   <details><summary>Technical</summary>
 
