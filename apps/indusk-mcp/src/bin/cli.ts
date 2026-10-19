@@ -1210,6 +1210,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("archive <plan>")
+	.description(
+		"Move a closed plan's folder into .indusk/planning/archive/ with git mv — the retrospective's archival step. Refused while the plan owns a declared promise (confirm first), when the archive already holds the name, or when the folder is not an active plan's",
+	)
+	.action(async (plan: string) => {
+		const { plansArchive } = await import("./commands/plans.js");
+		plansArchive(rootOrExit(), plan);
+	});
+
+plansCmd
 	.command("archive-dead")
 	.description(
 		"Move dead-draft plans (all docs draft/abandoned, older than planning.dead_draft_days) to .indusk/planning/archive/ — moved, never deleted",
@@ -1499,9 +1509,29 @@ promisesCmd
 	)
 	.option("--all", "every plan folder, active and archived")
 	.option("--impl-stdin", "judge the impl given on stdin in place of the one on disk")
+	.option(
+		"--clause-signals-only",
+		"ask only whether the impl names each clause's signal and no live check proves a clause (what the impl hook asks of a draft)",
+	)
 	.action(async function (this: Command, plan: string | undefined) {
 		const { promisesContract } = await import("./commands/promises.js");
 		await promisesContract(rootOrExit(), plan, this.opts());
 	});
 
-program.parse();
+// The shell guard's decisions are judged here, not in the hook that wrote
+// them (a-run-can-be-trusted, Decision 8): at the start of any command, at
+// most once a minute, best-effort and silent. `promises contract` is skipped:
+// the impl hook runs it on every edit and must stay quick.
+program.hook("preAction", async (_program, action) => {
+	if (action.name() === "contract") return;
+	try {
+		const root = resolveProjectRoot(process.cwd());
+		if (root === null) return;
+		const { drainPlanWriteDecisions } = await import("../lib/promises/clause-verdicts.js");
+		await drainPlanWriteDecisions(root, { throttle: true });
+	} catch {
+		// a signal is best-effort: it never fails the command
+	}
+});
+
+await program.parseAsync();

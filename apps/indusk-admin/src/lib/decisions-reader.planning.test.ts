@@ -51,6 +51,10 @@ vi.mock("@infinitedusky/indusk-mcp/build", async () => {
 });
 vi.mock("@infinitedusky/indusk-mcp/plans", () => ({
   acceptPlan: async () => {},
+  // The planning start brings the trunk in first (a-brief-is-accepted-on-current-main);
+  // these rows are about the waiting list, so the merge is stood in for, as the sibling
+  // build-host tests do.
+  bringTrunkIntoPlan: async () => undefined,
 }));
 vi.mock("./session-host", () => ({
   planLocation: async () => ({ root: "/p", cwd: "/p" }),

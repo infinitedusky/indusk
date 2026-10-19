@@ -111,6 +111,8 @@ vi.mock("@/lib/decisions-reader", () => ({
   __esModule: true,
   readWaiting: async () => [],
   readPlanHistory: () => [],
+  withSituations: async (_project: string, _path: string, plans: unknown[]) =>
+    plans,
 }));
 
 vi.mock("@/lib/registry-client", () => ({

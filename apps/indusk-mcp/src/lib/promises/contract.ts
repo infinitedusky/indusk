@@ -15,6 +15,7 @@ import {
 	sameSentence,
 } from "./brief-contract.js";
 import { clausePlanRefusals, clauseRefusals, clauseRowRefusals } from "./clause-rules.js";
+import { type ClauseSignalRefusal, clauseSignalRefusals } from "./clause-signal-rules.js";
 import {
 	describeInterfaceFiles,
 	filesAffectedOf,
@@ -61,6 +62,8 @@ export interface ContractRefusal {
 	/** Plan-root-relative path of the document the refusal is about. */
 	file: string;
 	message: string;
+	/** Which clause-signal rule refused, for the refusals of `clause-signal-rules.ts`. */
+	rule?: ClauseSignalRefusal["rule"];
 }
 
 export interface ContractSummary {
@@ -107,6 +110,12 @@ export interface ContractOptions {
 	 */
 	looksAtApprovalOnly?: boolean;
 	skipDraft?: boolean;
+	/**
+	 * Ask only the two clause-signal rules (`clause-signal-rules.ts`) of the impl
+	 * given, whatever else the contract holds: what the impl hook asks while an impl
+	 * is still a draft, when the rest of the contract is not yet its to hold.
+	 */
+	clauseSignalsOnly?: boolean;
 }
 
 function resolveFolder(planRoot: string, plan: string): PlanFolder | string {
@@ -379,6 +388,18 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 	const implText = opts.implText ?? (existsSync(implPath) ? readFileSync(implPath, "utf-8") : null);
 	// An archived plan is held only to its own brief; its impl is history.
 	const impl = folder.archived || implText === null ? null : readImpl(implText);
+	if (opts.clauseSignalsOnly) {
+		const found =
+			brief !== null && impl?.ok === true && implText !== null
+				? clauseSignalRefusals(brief, implText, impl.trajectory)
+				: [];
+		return found.length === 0
+			? { ok: true, summary }
+			: {
+					ok: false,
+					refusals: found.map((f) => ({ file: implFile, message: f.message, rule: f.rule })),
+				};
+	}
 	const building =
 		impl?.ok === true &&
 		impl.frontmatter.status !== undefined &&
@@ -454,6 +475,13 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 				...(brief === null ? [] : clauseRowRefusals(brief, impl.trajectory)),
 			]) {
 				refusals.push({ file: implFile, message });
+			}
+			// An impl still being written is asked for its signals (Decision 9); one past
+			// `draft`, and the sweep over every plan, never newly refuse for them.
+			if (brief !== null && impl.frontmatter.status === "draft" && !opts.skipDraft && implText) {
+				for (const f of clauseSignalRefusals(brief, implText, impl.trajectory)) {
+					refusals.push({ file: implFile, message: f.message, rule: f.rule });
+				}
 			}
 		}
 		const r = registryRead as Registry | ContractRefusal[] | null;

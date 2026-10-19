@@ -21,5 +21,6 @@ export function snapshotOf(plan: Plan): PlanSnapshot & { name: string } {
     skippedRituals: plan.skippedRituals,
     finishedRituals: plan.finishedRituals,
     planReview: plan.planReview,
+    ...(plan.live ? { live: plan.live } : {}),
   };
 }

@@ -1,4 +1,4 @@
-import type { SessionManager } from "../session/manager.js";
+import type { SessionManager, SessionRecord } from "../session/manager.js";
 import { decideBuildPermission, refuseBuildQuestion } from "../session/permissions.js";
 import {
 	isRateLimitedResult,
@@ -135,6 +135,12 @@ export interface BuildSessionOptions {
 	retryDelaysMs?: number[];
 	sleep?: (ms: number) => Promise<void>;
 	onEvent?: (ev: StartedEvent) => void;
+	/**
+	 * Told, right after the step's `claude` child is spawned, of the manager's own record for it
+	 * (`pid`, `bin`, `startedAt`): what a run's record on disk keeps to tell a live run from a dead one
+	 * (a-run-can-be-trusted, Decision 4). Told again for each rate-limit retry's new session.
+	 */
+	onSession?: (record: SessionRecord) => void;
 	/** For a `shorten-reason` step: the reason to rewrite. */
 	reason?: ShortenReason;
 }
@@ -205,6 +211,10 @@ async function oneSession(
 		},
 	});
 	holder.id = id;
+	if (opts.onSession) {
+		const record = opts.manager.running().find((r) => r.id === id);
+		if (record) opts.onSession(record);
+	}
 	const code = await session.done;
 	if (result?.ok) return { error: null, rateLimited: false };
 	if (result) {

@@ -14,9 +14,10 @@ import {
 	PLAN,
 	PLAN_DIR,
 } from "./helpers/brief-app.js";
-import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { SHOULD_SKIP } from "./helpers/cli.js";
 import { briefText } from "./helpers/plan-fixture.js";
 import { DOMAIN } from "./helpers/plan-lifecycle-fixture.js";
+import { approveWithReview } from "./helpers/plan-review-fixture.js";
 import { writePromise } from "./helpers/promises-fixture.js";
 import { git } from "./helpers/test-git.js";
 
@@ -52,7 +53,7 @@ beforeEach(() => {
 	app = briefAppProject("archived-plan-found");
 	writePromiseWith(SENTENCE);
 	app.writePlan({ brief: brief(), impl: implOf("internal") });
-	const approved = runCli(app.trunk, ["plans", "approve", PLAN]);
+	const approved = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 	expect(approved.code, `${approved.stdout}\n${approved.stderr}`).toBe(0);
 	// What the retrospective does on the plan's branch before landing.
 	mkdirSync(join(app.wt, ".indusk", "planning", "archive"), { recursive: true });

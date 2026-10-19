@@ -16,6 +16,7 @@ import {
 	setFrontmatterKeys,
 	setImplKeys,
 } from "./plan-branch.js";
+import { type PlanReviewState, readPlanReview } from "./plan-review.js";
 import { commitAtRoot, type WorkbenchPlan, workbenchPlan } from "./workbench-plan.js";
 
 /**
@@ -67,6 +68,7 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 	const briefFile = join(pb.dir, "brief.md");
 	const brief = existsSync(briefFile) ? readFileSync(briefFile, "utf-8") : null;
 	if (brief !== null) await refuseUnapprovedLooks(pb.plan, pb.worktree, brief);
+	refuseUnreadyPlanReview(plan, readPlanReview(pb.dir));
 
 	await refuseDirtyTrunk(pb, paths, `before approving ${plan}`);
 	await setImplKeys(
@@ -95,6 +97,26 @@ async function refuseUnapprovedLooks(plan: string, root: string, brief: string):
 }
 
 /**
+ * Refuse unless the plan review is written for the documents as they stand with every
+ * finding answered: the one reader the admin's offer of approval asks too, so the command
+ * and the offer never disagree (a-run-can-be-trusted, Decision 11).
+ *
+ * promise: approval-waits-for-a-finished-plan
+ */
+function refuseUnreadyPlanReview(plan: string, state: PlanReviewState): void {
+	if (state === "answered") return;
+	const why: Record<Exclude<PlanReviewState, "answered">, string> = {
+		missing: "it has no plan-review.md",
+		stale:
+			"its plan-review.md was written for other documents than stand now (its `read:` hash is not theirs)",
+		unanswered: "its plan-review.md leaves a finding unanswered",
+	};
+	throw new PlanCommandRefusal(
+		`${plan} cannot be approved; it needs its plan review: ${why[state]}. Run \`/audit ${plan} --before-approval\` and answer every finding.`,
+	);
+}
+
+/**
  * Approving a workbench plan (workbench-plan-authoring D3): its documents
  * already live at the workbench root, so nothing is merged. The brief check
  * runs as in normal mode, and refuses with its message; then the impl is
@@ -118,6 +140,7 @@ async function approveWorkbenchPlan(wp: WorkbenchPlan): Promise<ApprovedPlan> {
 	const briefFile = join(wp.dir, "brief.md");
 	const brief = existsSync(briefFile) ? readFileSync(briefFile, "utf-8") : null;
 	if (brief !== null) await refuseUnapprovedLooks(wp.plan, wp.root, brief);
+	refuseUnreadyPlanReview(wp.plan, readPlanReview(wp.dir));
 	const record =
 		brief === null ? {} : approvalFrontmatter(brief, await approvedBy(wp.root), new Date());
 	writeFileSync(

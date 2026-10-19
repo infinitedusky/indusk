@@ -12,6 +12,7 @@ import {
   PlanParts,
   WaitingAmendments,
 } from "@/components/plan/PlanParts";
+import { PlanSituationLine } from "@/components/plan/PlanSituationLine";
 import { PlanStatusCard } from "@/components/plan/PlanStatusCard";
 import { PlanSummary } from "@/components/plan/PlanSummary";
 import { BuildControls } from "@/components/session/BuildControls";
@@ -19,7 +20,11 @@ import { PlanSession, planOpening } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
-import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
+import {
+  readPlanHistory,
+  readWaiting,
+  withSituations,
+} from "@/lib/decisions-reader";
 import { planLookState } from "@/lib/look-state";
 import { masterStory } from "@/lib/master-story";
 import { extractPhases } from "@/lib/phases";
@@ -50,7 +55,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
   const { project, name } = await params;
   const found = await readPlanPage(project, name);
   if (!found) return null;
-  const { projectPath, plan } = found;
+  const { projectPath } = found;
 
   // The dates the released card reads come from the package.
   const dates = (await readHealthNames(projectPath)).planDates[name];
@@ -58,9 +63,31 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // The one decision the plan waits on, and what it was answered before
   // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
   // the card while it waits on them, so neither is offered twice.
-  const waiting = plan.archived
+  const waiting = found.plan.archived
     ? undefined
-    : (await readWaiting(project, projectPath, [plan]))[0];
+    : (await readWaiting(project, projectPath, [found.plan]))[0];
+
+  // What the plan reads as and what runs for it, from the package's one reader, so the
+  // steps, the sentence and the confirmation list all say what is true (a-run-can-be-trusted).
+  const checkoutForParts = found.plan.worktree?.path ?? projectPath;
+  const partsForConfirm = await readPlanParts(checkoutForParts, name, {
+    archived: found.plan.archived || Boolean(found.plan.archivedInWorktree),
+    health: await readPlanHealth(projectPath, checkoutForParts),
+  });
+  const plan = (
+    await withSituations(
+      project,
+      projectPath,
+      [found.plan],
+      waiting ? [waiting] : [],
+      {
+        confirmFor: {
+          plan: name,
+          promises: partsForConfirm.promises.map((p) => p.name),
+        },
+      },
+    )
+  )[0];
 
   // What the page offers, one rule for a normal-mode plan (its worktree) and
   // a workbench plan (its code file) — workbench-plan-authoring A10.
@@ -75,11 +102,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // The brief's three parts, read by the package from the checkout the plan is
   // worked in (its worktree, else the project's own), on every request, so a
   // promise or a look the agent writes shows on the next refresh.
-  const checkout = plan.worktree?.path ?? projectPath;
-  const parts = await readPlanParts(checkout, name, {
-    archived: plan.archived || Boolean(plan.archivedInWorktree),
-    health: await readPlanHealth(projectPath, checkout),
-  });
+  const parts = partsForConfirm;
 
   // A master (a plan that declares subplans) tells its story where a plan's
   // rail, status card and parts stand: `plan.master`, its rows the Path group
@@ -173,6 +196,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         archived={plan.archived || Boolean(plan.archivedInWorktree)}
       />
       <WaitingAmendments project={project} plan={name} parts={parts} />
+      {plan.situation ? <PlanSituationLine situation={plan.situation} /> : null}
       {waiting && waiting.on !== "amendment" ? (
         <DecisionCard project={project} waiting={waiting} />
       ) : (

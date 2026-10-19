@@ -16,6 +16,7 @@
  * admin (test-kinds), naming the file, line and call.
  */
 export const SYSTEM = [
+	"src/__tests__/accept-brief-signals.contract.test.ts",
 	"src/__tests__/admin-bundle-pack.test.ts",
 	"src/__tests__/admin-cli-lifecycle.test.ts",
 	"src/__tests__/admin-recorder.test.ts",
@@ -35,6 +36,7 @@ export const SYSTEM = [
 	"src/__tests__/cli-bare-ui-cwd-aware.test.ts",
 	"src/__tests__/clause-signal.live.test.ts",
 	"src/__tests__/demo-command.test.ts",
+	"src/__tests__/impl-clause-signals.contract.test.ts",
 	"src/__tests__/looks-admin-all.contract.test.ts",
 	"src/__tests__/looks-browser.contract.test.ts",
 	"src/__tests__/looks-check-speed.contract.test.ts",
@@ -44,9 +46,12 @@ export const SYSTEM = [
 	"src/__tests__/monitor-plans.test.ts",
 	"src/__tests__/monitor-status.test.ts",
 	"src/__tests__/monitor-watch.test.ts",
+	"src/__tests__/plan-write-guard.contract.test.ts",
 	"src/__tests__/promise-sources.test.ts",
 	"src/__tests__/promise-timeline-reader.test.ts",
 	"src/__tests__/release-junit.contract.test.ts",
+	"src/__tests__/run-liveness.contract.test.ts",
+	"src/lib/run-record/landed.test.ts",
 	"src/__tests__/session-protocol-contract.test.ts",
 	"src/__tests__/signal-helper-daemon.contract.test.ts",
 	"src/__tests__/telemetry-cli-lifecycle.test.ts",
@@ -192,6 +197,7 @@ export const SYSTEM = [
 	"src/__tests__/worktree-wt-resolve.test.ts",
 	"src/__tests__/wt-declared-layout.test.ts",
 	"src/lib/bookkeeping/home.test.ts",
+	"src/lib/plans/accept-brief-signals.test.ts",
 	"src/lib/plans/accept-brief.test.ts",
 	"src/lib/plans/amendments.test.ts",
 	"src/lib/plans/land-own-worktree.test.ts",

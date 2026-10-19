@@ -2,7 +2,7 @@
 
 import type { Review, RunnerStop } from "@infinitedusky/indusk-mcp/build";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { postJson } from "@/lib/post-json";
 import { ReviewPanel } from "./ReviewPanel";
@@ -36,31 +36,43 @@ export function BuildControls({
 }) {
   const router = useRouter();
   const [state, setState] = useState<BuildState | null>(null);
+  // The phase the plan is on and how the run stopped, worded by the package from the plan.
+  const [phase, setPhase] = useState<string | null>(null);
+  const [sentence, setSentence] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [review, setReview] = useState<Review | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
+  const poll = useCallback(async (): Promise<boolean> => {
+    const r = await fetch(
+      `/api/plans/build?project=${encodeURIComponent(project)}&plan=${encodeURIComponent(plan)}`,
+    );
+    if (!r.ok) return false;
+    const body = (await r.json()) as {
+      build: BuildState | null;
+      phase: string | null;
+      sentence: string | null;
+      sessionId: string | null;
+    };
+    setState(body.build);
+    setPhase(body.phase);
+    setSentence(body.sentence);
+    setSessionId(body.sessionId);
+    return true;
+  }, [project, plan]);
+
   useEffect(() => {
     let live = true;
-    const poll = async () => {
-      const r = await fetch(
-        `/api/plans/build?project=${encodeURIComponent(project)}&plan=${encodeURIComponent(plan)}`,
-      );
-      if (!live || !r.ok) return;
-      const body = (await r.json()) as {
-        build: BuildState | null;
-        sessionId: string | null;
-      };
-      setState(body.build);
-      setSessionId(body.sessionId);
+    const tick = async () => {
+      if (live) await poll();
     };
-    void poll();
-    const timer = setInterval(() => void poll(), 3000);
+    void tick();
+    const timer = setInterval(() => void tick(), 3000);
     return () => {
       live = false;
       clearInterval(timer);
     };
-  }, [project, plan]);
+  }, [poll]);
 
   useEffect(() => {
     if (!inReview) return;
@@ -82,6 +94,7 @@ export function BuildControls({
       return;
     }
     setState(r.body);
+    await poll();
     router.refresh();
   };
 
@@ -102,11 +115,11 @@ export function BuildControls({
       {running && state?.step ? (
         <p className="text-ink-soft">
           Running: {state.step}
-          {state.detail ? ` — ${state.detail}` : ""}
+          {phase ? ` — ${phase}` : state.detail ? ` — ${state.detail}` : ""}
         </p>
       ) : null}
       {!running && state?.stop ? (
-        <p className="text-ink-soft">{describeStop(state.stop)}</p>
+        <p className="text-ink-soft">{sentence}</p>
       ) : null}
       {state?.release ? (
         <p className={state.release.released ? "text-ok" : "text-bad"}>
@@ -132,21 +145,4 @@ export function BuildControls({
       ) : null}
     </div>
   );
-}
-
-function describeStop(stop: RunnerStop): string {
-  switch (stop.step) {
-    case "review":
-      return "Built. It waits for your review.";
-    case "amendment":
-      return `Stopped: the brief changed after you approved it (${stop.amendments.join(", ")}). It waits for your re-approval.`;
-    case "judgement":
-      return `Stopped for a judgement the plan declared — ${stop.item}`;
-    case "cannot-continue":
-      return `Stopped: ${stop.why}`;
-    case "released":
-      return "Built, accepted by its workflow, and released.";
-    case "release-failed":
-      return `Built and accepted by its workflow; the release stopped: ${stop.why}`;
-  }
 }

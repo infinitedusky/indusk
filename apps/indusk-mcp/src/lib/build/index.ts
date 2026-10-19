@@ -3,6 +3,21 @@
  * one definition behind `indusk plans next | review` and the admin.
  */
 
+// The run record and its rules (a-run-can-be-trusted). The admin imports them from
+// `@infinitedusky/indusk-mcp/run-record`, which a test that stands this export in for the
+// runner leaves real; they are named here too, for callers that read the build as one surface.
+export {
+	type Restart,
+	type RestartReads,
+	type RunKind,
+	type RunRecord,
+	type RunStatus,
+	readRunRecord,
+	restartStep,
+	runStatus,
+	startRunRecord,
+	writeRunRecord,
+} from "../run-record/index.js";
 export { type TimedStepDeps, timedStep } from "../timing/timed-step.js";
 export {
 	type BuildSessionOptions,

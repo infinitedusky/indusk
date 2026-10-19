@@ -29,6 +29,7 @@ import { phaseModel } from "../../lib/models/phase-model.js";
 import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import { type Amendment, AmendmentsUnreadable, amendmentsOf } from "../../lib/plans/amendments.js";
+import { archivePlan } from "../../lib/plans/archive.js";
 import { askAdminToPlan } from "../../lib/plans/ask-admin.js";
 import {
 	acceptBrief,
@@ -385,6 +386,23 @@ export function plansLand(cwd: string, name: string): Promise<void> {
 		const checks = l.checks.length > 0 ? ` after ${l.checks.length} check(s)` : "";
 		return `Landed ${l.plan} on the trunk at ${l.merge.slice(0, 8)}${checks}; its worktree and branch are removed.`;
 	});
+}
+
+/**
+ * `indusk plans archive <plan>` — the retrospective's archival step: `git mv`
+ * of the plan's folder into `archive/`, through the package so the shell
+ * guard never has to let a raw `mv` of a plan folder by. Exit 1 on a refusal.
+ */
+export function plansArchive(projectRoot: string, plan: string): void {
+	const result = archivePlan(projectRoot, plan);
+	if (!result.ok) {
+		console.error(`plans archive: ${result.reason}`);
+		process.exitCode = 1;
+		return;
+	}
+	console.info(
+		`Archived ${plan} to ${result.to} (staged with git mv; commit it with the archive).`,
+	);
 }
 
 export interface PlansArchiveDeadOptions {

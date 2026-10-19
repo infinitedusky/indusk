@@ -17,7 +17,8 @@ are about keeping the two lanes in step.
   they must exist in `.claude/hooks/` or the importer dies at load
   (`globSync("*.js")` copies them). Each mirrors exactly ONE `src/lib` module
   (`_impl-headings.js`, `_trajectory-parser.js`, `_impl-phases.js`,
-  `_hook-paths.js`, `_inbox.js` ← `lib/promises/inbox.ts`), pinned by count — "change the TS and every port together"
+  `_hook-paths.js`, `_inbox.js` ← `lib/promises/inbox.ts`, `_clause-verdicts.js` ←
+  `lib/promises/clause-verdicts.ts`), pinned by count — "change the TS and every port together"
   is checkable by reading two filenames. `check-gates.js` mirrors the terminal
   state set inline, deliberately.
 - **Hook commands are registered by the project root, never relative to the
@@ -98,6 +99,19 @@ are about keeping the two lanes in step.
   boundary** against a process running as the person — a script that builds
   the path passes it; the hashes bound to what was shown hold there. Guarded
   by `looks-approval-guard.test.ts`.
+- **`plan-write-guard.js` refuses a shell command that writes, moves or deletes
+  a plan document** (`.indusk/planning/[archive/]<plan>/…`). It is registered
+  under Bash only — one matcher is the whole gate, since Edit/Write already
+  pass the plan's checks — and, like `looks-approval-guard.js`, reads command
+  text, never a script (a tripwire, not a boundary). It allows reads, text
+  mentions, fd redirects, `indusk` commands and the git commands that move
+  between committed states, and allows anything it cannot parse. It records
+  decisions, never verdicts, through `_clause-verdicts.js`; `plan-write-witness.js`
+  (PostToolUse) snapshots the root the guard recorded, never the after payload's
+  `cwd`, and records Edit/Write writes under plan folders, which the drain
+  (disk + `shell-quote`) leaves out of a shell command's changes. A hook test
+  sets `INDUSK_HOME`. Guarded by `plan-write-guard.test.ts`,
+  `plan-write-guard.contract.test.ts` (A99), `clause-verdicts.test.ts` (A100).
 - **`break-inbox.js` runs on every prompt** (`UserPromptSubmit`, no matcher):
   it reads two small files in the project's home (`projectHome` from
   `_hook-paths.js`) and exits; it never blocks and never grows a second read.

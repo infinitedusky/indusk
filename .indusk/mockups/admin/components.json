@@ -1,5 +1,5 @@
 {
-	"renderedFrom": "d452d8e55b5ecf672da8310e4c60f20bc6bc6acdd115d4d728e18c5a0a9283bd",
+	"renderedFrom": "5b8e27b018bd8e731f7b874a80c69c1029fb232db7dc4824868f4a1cdcedc40a",
 	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
@@ -491,6 +491,26 @@
 					"name": "working",
 					"id": "ui-decisioncard--working",
 					"snapshotHash": "10820004f9c6776dae0142091004eb7869b642a3de3da5d7bff108142f7ffc90",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							[
+								0,
+								2
+							]
+						]
+					}
+				},
+				{
+					"name": "complete",
+					"id": "ui-decisioncard--complete",
+					"snapshotHash": "880cf8b54fbdbf2d1d7e44b4e111a111916d0563ab020182f7298755c6e1bbdf",
 					"content": {
 						"title": [
 							[
@@ -3003,6 +3023,21 @@
 					"name": "default",
 					"id": "ui-railgroup--default",
 					"snapshotHash": "8d77a848575c43ed4f8be05977424076fc2c5e4e11d9410344ad2f81939fedb0",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								0,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "planning-with-audit",
+					"id": "ui-railgroup--planning-with-audit",
+					"snapshotHash": "ee8b6c310a9c08fe398573d0be6a26d24c4a353cbc2b84ee0a600014e64adc9d",
 					"content": {
 						"title": [
 							[

@@ -1,3 +1,5 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
@@ -16,6 +18,12 @@ process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART = "1";
 // installed globally, not the code under test — which is also why the switch
 // above did nothing until it was here (test-daemons-never-leak).
 process.env.INDUSK_BIN ??= `node ${path.resolve(__dirname, "../indusk-mcp/dist/bin/cli.js")}`;
+
+// A run's record is machine state in the InDusk home (a-run-can-be-trusted): a test that starts
+// a run through the build host writes one, and it must not land in the person's real home.
+process.env.INDUSK_HOME ??= mkdtempSync(
+  path.join(tmpdir(), "indusk-admin-test-home-"),
+);
 
 /** The `@/` alias every project shares. */
 const resolve = { alias: { "@": path.resolve(__dirname, "src") } };
