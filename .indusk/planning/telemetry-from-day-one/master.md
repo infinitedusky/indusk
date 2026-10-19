@@ -85,7 +85,7 @@ each child is one plan with one landing.
    [retrospective](../archive/a-new-project-starts-instrumented/retrospective.md).
 
 3. **`mark-first`** ("Tests and telemetry linked to clauses", retitled from
-   "Signal first" on 2026-10-17) — blocked by the scaffold plan for the
+   "Signal first" on 2026-10-17) — landed 2026-10-19 (`ae84e545`). Was blocked by the scaffold plan for the
    keys it reads, and by `daemon-found-not-guessed` because closing asks the
    daemon; still blocks `run-the-master`. Moved behind the scaffold on
    2026-10-16 (Sandy): write before read — a closing rule that asks for a
@@ -133,7 +133,10 @@ each child is one plan with one landing.
    clause it upholds; split out of it on 2026-10-17 (Sandy). The audit finds
    what could go wrong; the plan's agent, with the build's context, answers
    each concern with a fix, a signal or a reason; every "nothing needed" is
-   shown to the person (shape agreed 2026-10-17). Its brief is a draft.
+   shown to the person (shape agreed 2026-10-17). Widened 2026-10-19 (Sandy):
+   a cold read of the plan before approval, the audit before falsification, and
+   an answer that changes the brief stops the build as an amendment. Building
+   2026-10-19.
 
 4. **`production-is-heard`** — blocked by `a-new-project-starts-instrumented`;
    before Homework Gate's first deploy; in parallel with the next. Production
