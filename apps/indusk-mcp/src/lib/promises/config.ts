@@ -34,7 +34,7 @@ export function getQuietWindowDays(projectRoot: string): number {
 }
 
 /**
- * The project a promise mark belongs to (`indusk.project`): the configured
+ * The project a promise signal belongs to (`indusk.project`): the configured
  * group id when there is one, else the name of the **main checkout** — the
  * folder holding the repository's shared git directory — so the trunk and
  * every plan worktree agree (day-monitor A28). A worktree's own folder is

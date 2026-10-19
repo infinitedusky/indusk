@@ -107,7 +107,7 @@ function record(p: PromiseProject): { incident: string; id: string; owner: strin
 	if (!read.ok) throw new Error(`fixture registry did not read: ${JSON.stringify(read)}`);
 	const promise = read.registry.promises.find((x) => x.name === NAME);
 	if (!promise) throw new Error("fixture promise missing");
-	const change = recordViolations(read.registry, promise, [violation()], "deployed", new Date());
+	const [change] = recordViolations(read.registry, promise, [violation()], "deployed", new Date());
 	if (!change) throw new Error("nothing was recorded");
 	return {
 		id: change.id,

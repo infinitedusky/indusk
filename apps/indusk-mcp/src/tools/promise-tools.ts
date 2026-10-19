@@ -1,5 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { clauseTestRunner, localSignalReader } from "../lib/promises/closing-inputs.js";
+import { markClosing } from "../lib/promises/closing-signal.js";
 import { confirmPlan } from "../lib/promises/confirm.js";
 import { openIncidentsAt, promiseHealth } from "../lib/promises/health.js";
 import { WatcherBlind } from "../lib/promises/probe.js";
@@ -170,7 +172,14 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 				if (isRootsRefusal(roots)) return text({ error: roots.error }, true);
 				codeRoot = roots.codeRoot;
 			}
-			const result = await confirmPlan({ planRoot: projectRoot, codeRoot, plan });
+			const result = await confirmPlan({
+				planRoot: projectRoot,
+				codeRoot,
+				plan,
+				runTests: clauseTestRunner(projectRoot, codeRoot),
+				readSignals: localSignalReader(projectRoot),
+			});
+			await markClosing(projectRoot, plan, result);
 			if (!result.ok) {
 				return text({ refusals: result.refusals, written: result.written }, true);
 			}

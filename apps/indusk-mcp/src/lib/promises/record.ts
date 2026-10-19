@@ -5,6 +5,7 @@ import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { initEvalOtel } from "../eval/otel.js";
 import { appendHeard, type HeardRow } from "./heard.js";
 import { appendInbox } from "./inbox.js";
+import { type IncidentVerdict, incidentVerdict, markIncidentVerdict } from "./incident-signal.js";
 import { markPromise } from "./mark.js";
 import { commitRecorded } from "./record-commit.js";
 import { readPromises } from "./registry.js";
@@ -58,6 +59,8 @@ export interface RecordDeps {
 	env?: NodeJS.ProcessEnv;
 	/** The project's home; `bookkeepingRoots(planRoot).home` unless given. */
 	home?: string;
+	/** Where the verdict on an incident a clause's break opened is written; the command tracer unless given. */
+	markIncident?: (verdict: IncidentVerdict) => Promise<void>;
 }
 
 export interface RecordedChange {
@@ -77,7 +80,7 @@ export interface RecordResult {
 	/** Every change, as `watch` reports them, and which Jaeger answered. */
 	changes: WatchChange[];
 	source: string;
-	/** The pass's own mark; absent when nothing was attempted (a refusal). */
+	/** The pass's own signal; absent when nothing was attempted (a refusal). */
 	mark?: PassMark;
 	/** Set when the pass was refused before it read anything, naming why. */
 	refused?: string;
@@ -162,9 +165,33 @@ async function pass(
 	} catch (err) {
 		return failed(result, mark, err);
 	}
+	await markClauseIncidents(planRoot, watched.changes, deps.markIncident);
 	result.mark = { outcome: "upheld" };
 	mark(result.mark);
 	return result;
+}
+
+/**
+ * The signal of `a-break-names-its-clause`: one verdict for each incident this
+ * pass opened from a break that named a clause, judged by that incident's own
+ * clause (the recorder opens one incident per clause). An extended incident
+ * was named when it opened; a break naming no clause has nothing to name.
+ */
+async function markClauseIncidents(
+	planRoot: string,
+	changes: WatchChange[],
+	write: RecordDeps["markIncident"] = markIncidentVerdict,
+): Promise<void> {
+	for (const c of changes) {
+		if (c.kind !== "opened" || !c.clause) continue;
+		const clause = c.clause;
+		try {
+			const verdict = incidentVerdict(planRoot, c.id, c.promise, clause);
+			if (verdict) await write(verdict);
+		} catch {
+			// A verdict that could not be read or written never fails the pass.
+		}
+	}
 }
 
 function nothingRecorded(): RecordResult {
@@ -261,8 +288,8 @@ export function recorderMark(span: Parameters<typeof markPromise>[0], m: PassMar
 }
 
 /**
- * The pass's mark as a span, through the exporter InDusk's own marks use
- * (the evaluator's and the own-branch mark's). Never throws: a recorder whose
+ * The pass's signal as a span, through the exporter InDusk's own signals use
+ * (the evaluator's and the own-branch signal's). Never throws: a recorder whose
  * telemetry is down still records.
  */
 function realMark(planRoot: string): (m: PassMark) => void {

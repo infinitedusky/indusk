@@ -24,7 +24,10 @@ const asJaegerSpan = (s: ReadableSpan) => ({
 	startTime: 1_000_000,
 	duration: 1_000,
 	processID: "p",
-	tags: Object.entries(s.attributes).map(([key, value]) => ({ key, value: String(value) })),
+	// Read back as a running system's span: the test-run marker is what makes a reader skip it (mark-first A6).
+	tags: Object.entries(s.attributes)
+		.filter(([key]) => key !== "indusk.run")
+		.map(([key, value]) => ({ key, value: String(value) })),
 	logs: s.events.map((e) => ({
 		timestamp: 0,
 		fields: [

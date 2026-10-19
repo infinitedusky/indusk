@@ -11,6 +11,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **The admin knows the package root** (the-admin-knows-the-package-root): `indusk ui` hands the package root it resolved to the admin daemon, and `induskMcpPackageRoot()` trusts it when it holds this package, so a planning run inside the admin reaches "ready for approval" instead of "cannot continue".
+
 - **The admin builds again with the planning reader** (admin-builds-with-the-planning-reader): the reader runs the shipped impl hook through the package root and the running Node binary, which the admin's production bundler leaves alone; `pnpm install:local` had failed on main.
 
 - **Only the conversation that accepted the brief starts the run** (a-brief-is-planned-unasked): `indusk plans accept-brief` records `accepted_at` in the brief, and a planning conversation's end starts the run only when the brief was accepted after that conversation began. A person who planned by hand and only paused, or a brief accepted by hand, starts nothing at a conversation's end.
@@ -67,6 +69,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - **`promises status` says when a promise is broken or broke and was fixed** (daemon-found-not-guessed): a behaviour promise's break-count line now opens with `broken — ` while a break is live, or `broke — fixed — ` when every break's incident is fixed, by the same rule the admin and the editor use, each source judged by its own rule (the local section by its newest signal beside a production source), so the three agree.
 
 ### Added
+
+- **A clause is proved by its tests and its signal, a break names its clause, and the word is signal** (mark-first): closing a plan written as clauses runs the tests its rows name and asks the local daemon whether each clause's signal has reported upheld, and refuses by `promise/clause`; landing runs the tests; an incident a clause's signal opens is named `promise/clause`, with the plan and phase that added the signal as a pointer; a clause that never reported reads *no signal*, never holding; a span made by a test run is not a signal; InDusk's own commands share one tracer that exports to the daemon. A promise's telemetry is called a signal everywhere (skills, docs, comments), and the writers say `broken` (every reader still reads `violated`). Update every checkout with `indusk update`: an older InDusk refuses the registry state `known-broken`. See [Signals](/guide/signals) and [the decision](/decisions/mark-first).
 
 - **`indusk telemetry address`** (daemon-found-not-guessed): prints the stored address (`--json` for `init` to hand to an application); `--reset` chooses it again and is the only way it changes. Port options (`--otlp-port`, `--ui-port`, new `--logs-port` and `--mcp-port`) remain only for a temporary home.
 

@@ -80,6 +80,14 @@ refusal names both. A clause that rests on its own promise, or on one the
 registry does not hold, is refused by `indusk promises check`, naming the
 clause. A brief without `clauses: required` is read as it always was.
 
+A clause is proved twice. Its **tests** (the rows that name it, each carrying
+the clause's token) are run when the plan closes or lands, whatever the row's
+State says. Its **signal** is written from the clause's sentence, not copied
+from a test, and has to have reported upheld in a run of the real system
+before the plan closes; a clause that never reported reads *no signal*, not
+holding. When a clause's signal later reports broken, the incident it opens
+names `promise/clause`. See [Signals](/guide/signals).
+
 ### Existing promises
 
 **Must not break**

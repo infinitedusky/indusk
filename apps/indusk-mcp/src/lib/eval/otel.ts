@@ -3,7 +3,7 @@
  *
  * On via `eval.otel.enabled: true` in `.indusk/config.json`, the
  * `INDUSK_EVAL_OTEL=1` env var, or — by default — while the local telemetry
- * daemon runs (day-monitor: the evaluator's promise mark goes to the Jaeger
+ * daemon runs (day-monitor: the evaluator's promise signal goes to the Jaeger
  * the monitor reads). Exports to `OTEL_EXPORTER_OTLP_ENDPOINT`, else the
  * daemon's OTLP endpoint. `eval.otel.enabled: false` keeps it off.
  *
@@ -100,8 +100,8 @@ const DEFAULT_DATASET = "agent";
 export function isEvalOtelEnabled(projectRoot: string, deps: ResolveDeps = {}): EvalOtelConfig {
 	const envFlag = process.env.INDUSK_EVAL_OTEL;
 	// The local telemetry daemon, when it runs, is where the evaluator's
-	// promise mark goes by default (day-monitor, ADR D10): the monitor reads
-	// that Jaeger, and a mark nobody configured an exporter for is never seen.
+	// promise signal goes by default (day-monitor, ADR D10): the monitor reads
+	// that Jaeger, and a signal nobody configured an exporter for is never seen.
 	const localEndpoint = liveOtlpEndpointSync(deps);
 	const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? localEndpoint;
 	const explicitDataset = process.env.INDUSK_EVAL_OTEL_DATASET;

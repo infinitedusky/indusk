@@ -85,7 +85,7 @@ each child is one plan with one landing.
    [retrospective](../archive/a-new-project-starts-instrumented/retrospective.md).
 
 3. **`mark-first`** ("Tests and telemetry linked to clauses", retitled from
-   "Signal first" on 2026-10-17) — blocked by the scaffold plan for the
+   "Signal first" on 2026-10-17) — landed 2026-10-19 (`ae84e545`). Was blocked by the scaffold plan for the
    keys it reads, and by `daemon-found-not-guessed` because closing asks the
    daemon; still blocks `run-the-master`. Moved behind the scaffold on
    2026-10-16 (Sandy): write before read — a closing rule that asks for a
@@ -127,13 +127,26 @@ each child is one plan with one landing.
    never declared per phase: phases and clauses are many-to-many. A change to
    the plan page, so its looks are drawn and approved in the cockpit before it
    builds.
+   **Also (Sandy, 2026-10-19):** an amendment holds only what it touches. An
+   amendment to a clause holds the phases whose rows name that clause, plus
+   the phases downstream of them in the boundary map; a promise's sentence
+   holds all its clauses' phases; a look holds the phases that touch its
+   interface files; an expectation holds nothing. Every other phase keeps
+   building, and a held phase resumes on re-approval. Today an amendment
+   holds every build checkbox in the plan. Approving an amendment runs a
+   follow-on audit scoped to the changed promise or clause — whether the
+   closed phases' rows still prove the new sentence — answered as any audit
+   is; landing reruns every row, so the audit need not run tests.
 
 3c. **`audit-concerns-are-answered`** ("Audit concerns are answered by the
    plan's agent") — blocked by `mark-first`, since a signal answer names the
    clause it upholds; split out of it on 2026-10-17 (Sandy). The audit finds
    what could go wrong; the plan's agent, with the build's context, answers
    each concern with a fix, a signal or a reason; every "nothing needed" is
-   shown to the person (shape agreed 2026-10-17). Its brief is a draft.
+   shown to the person (shape agreed 2026-10-17). Widened 2026-10-19 (Sandy):
+   a cold read of the plan before approval, the audit before falsification, and
+   an answer that changes the brief stops the build as an amendment. Building
+   2026-10-19.
 
 4. **`production-is-heard`** — blocked by `a-new-project-starts-instrumented`;
    before Homework Gate's first deploy; in parallel with the next. Production

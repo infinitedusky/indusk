@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { readConfig } from "../config.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import { citedNames } from "./citations.js";
+import { restsOnly } from "./clause-standing.js";
 import { checkAllContracts } from "./contract.js";
 import { planFolderStatus } from "./plan-folder.js";
 import {
@@ -207,13 +208,15 @@ function stateRefusals(
 					});
 				}
 			}
-			if (tests === 0) {
+			// A promise made only of resting clauses is kept by what it rests on: no test or site of its own (mark-first A15).
+			const resting = restsOnly(p);
+			if (tests === 0 && !resting) {
 				refusals.push({
 					file: registryFile(p.file),
 					message: `${p.name}: enforced ${p.kind} promise has no test naming it (a test file listed under \`tests:\` carrying "promise: ${p.name}")`,
 				});
 			}
-			if (p.kind !== "structure" && sites === 0) {
+			if (p.kind !== "structure" && sites === 0 && !resting) {
 				refusals.push({
 					file: registryFile(p.file),
 					message: `${p.name}: enforced ${p.kind} promise has no code site naming it (a file listed under \`sites:\` carrying "promise: ${p.name}")`,

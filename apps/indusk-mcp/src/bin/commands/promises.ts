@@ -2,6 +2,8 @@ import { resolve } from "node:path";
 import { text } from "node:stream/consumers";
 import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
+import { clauseTestRunner, localSignalReader } from "../../lib/promises/closing-inputs.js";
+import { markClosing } from "../../lib/promises/closing-signal.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { confirmPlan } from "../../lib/promises/confirm.js";
 import {
@@ -22,7 +24,8 @@ import {
 	type SourceRead,
 	sourceAdvice,
 } from "../../lib/promises/sources.js";
-import { formatStatus, parseDuration } from "../../lib/promises/status.js";
+import { formatStatus, parseDuration, shownClauses } from "../../lib/promises/status.js";
+import { markStatusSignal, statusVerdict } from "../../lib/promises/status-signal.js";
 import { watchReport } from "../../lib/promises/watch.js";
 import {
 	changePromise,
@@ -99,6 +102,13 @@ export async function promisesStatus(
 	const promises = read.registry.promises;
 	const reads = await readSources(projectRoot, read.registry, { sinceMs });
 	const alarm = alarmSource(reads.map((r) => r.name));
+	// The signal of no-signal-is-not-holding, judged from the clauses this run
+	// shows (mark-first D-28): every source that answered, its watcher probed.
+	const verdict = statusVerdict(
+		reads.flatMap((r) => (r.ok ? shownClauses(promises, r.marks) : [])),
+		true,
+	);
+	if (verdict) await markStatusSignal(projectRoot, verdict);
 	if (reads.length === 1) {
 		// One source: today's output, with no section header (A7).
 		const [only] = reads;
@@ -293,7 +303,14 @@ export async function promisesConfirm(
 		}
 		codeRoot = roots.codeRoot;
 	}
-	const result = await confirmPlan({ planRoot: projectRoot, codeRoot, plan });
+	const result = await confirmPlan({
+		planRoot: projectRoot,
+		codeRoot,
+		plan,
+		runTests: clauseTestRunner(projectRoot, codeRoot),
+		readSignals: localSignalReader(projectRoot),
+	});
+	await markClosing(projectRoot, plan, result);
 	if (!result.ok) {
 		for (const r of result.refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(

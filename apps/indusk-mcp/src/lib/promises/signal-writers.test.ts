@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { Tracer } from "@opentelemetry/api";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { git } from "../../__tests__/helpers/test-git.js";
 import { markEvaluation } from "../eval/otel.js";
 import { type LookResult, reportLooks } from "../looks/report.js";
@@ -15,15 +15,20 @@ import { trunkCommitMarks } from "./trunk-commit.js";
 // promise: a-promise-is-upheld-or-broken
 
 /**
- * A3 of one-promise-language: InDusk's own signals — the evaluator's, the
- * recorder's, the trunk-commit signal's and the looks check's — still write
- * the word `violated` on the wire this release, so a recording server already
- * deployed keeps reading them; and what they wrote reads back as broken.
- * Switching the asserted wire word to `broken` is the `mark-first` plan's.
+ * A3 of one-promise-language, switched by mark-first (A26): InDusk's own
+ * signals — the evaluator's, the recorder's, the trunk-commit signal's and the
+ * looks check's — write the word `broken` on the wire, and what they wrote
+ * reads back as broken. Every reader still takes the older `violated` too.
  *
  * Each caller is driven through its own path against a recording span; what
  * it wrote is then handed to the span parser as Jaeger would return it.
  */
+
+// A writer under a test runner marks its span as a test run and the readers skip it
+// (A6). These tests round-trip a writer through the reader, so they write as a
+// running system would: outside a test runner.
+beforeEach(() => vi.stubEnv("VITEST", ""));
+afterEach(() => vi.unstubAllEnvs());
 
 interface Recorded {
 	attributes: Record<string, string>;
@@ -75,14 +80,23 @@ function readBack(rec: Recorded) {
 	);
 }
 
-/** The assertions every writer shares: `violated` on the wire, the event carried, broken on the way back. */
+/** The assertions every writer shares: `broken` on the wire, the event carried, broken on the way back. */
 function expectWrittenViolatedReadBroken(rec: Recorded) {
-	expect(rec.attributes["indusk.promise.outcome"]).toBe("violated");
+	expect(rec.attributes["indusk.promise.outcome"]).toBe("broken");
 	expect(rec.events.map((e) => e.name)).toContain("indusk.promise.violated");
 	expect(readBack(rec)?.outcome).toBe("broken");
 }
 
-describe("A3 — InDusk's own signals write violated this release and read back broken", () => {
+describe("A26 — every reader still reads the older word", () => {
+	it("a span an older InDusk wrote as violated reads back as broken", () => {
+		const { span, rec } = recordingSpan();
+		span.setAttribute("indusk.promise", "a-promise");
+		span.setAttribute("indusk.promise.outcome", "violated");
+		expect(readBack(rec)?.outcome).toBe("broken");
+	});
+});
+
+describe("A26 — InDusk's own signals write broken and read back broken", () => {
 	it("the evaluator's failed evaluation", () => {
 		const { span, rec } = recordingSpan();
 		markEvaluation(span as never, { error: true, message: "the model refused" } as never, "demo");
@@ -125,7 +139,7 @@ describe("A3 — InDusk's own signals write violated this release and read back 
 			for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
 		});
 
-		it("is a broken verdict in code, written violated and read back broken", async () => {
+		it("is a broken verdict in code, written broken and read back broken", async () => {
 			const dir = mkdtempSync(join(tmpdir(), "signal-writers-"));
 			dirs.push(dir);
 			git(dir, ["init", "-q", "-b", "main"]);
@@ -185,14 +199,14 @@ describe("A3 — InDusk's own signals write violated this release and read back 
 			};
 		}
 
-		it("a broken report is written violated, carries its clause, and reads back broken", () => {
+		it("a broken report is written broken, carries its clause, and reads back broken", () => {
 			const { tags, parsed } = readReport({
 				clause: "strays-are-cleared",
 				outcome: "broken",
 				symptom: "strays-are-cleared: still running: jaeger 4",
 				attributes: {},
 			});
-			expect(tags).toContainEqual({ key: "indusk.promise.outcome", value: "violated" });
+			expect(tags).toContainEqual({ key: "indusk.promise.outcome", value: "broken" });
 			expect(tags).toContainEqual({ key: "indusk.clause", value: "strays-are-cleared" });
 			expect(parsed?.outcome).toBe("broken");
 		});

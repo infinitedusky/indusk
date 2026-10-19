@@ -46,7 +46,7 @@ describe("reportLooks — a look is a span like a promise's run", () => {
 		expect(held?.attributes[PROMISE_MARK.outcome]).toBe("upheld");
 		expect(held?.attributes[PROMISE_MARK.project]).toBe("demo-project");
 		expect(held?.attributes["indusk.look.device"]).toBe("phone");
-		expect(broken?.attributes[PROMISE_MARK.outcome]).toBe("violated");
+		expect(broken?.attributes[PROMISE_MARK.outcome]).toBe("broken");
 		expect(broken?.attributes["indusk.look.screen"]).toBe("home");
 		expect(broken?.attributes["indusk.look.state"]).toBe("empty");
 		expect(broken?.attributes["indusk.look.device"]).toBe("desktop");

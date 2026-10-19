@@ -102,7 +102,24 @@ export interface FileResult {
 	reason: string;
 	passed: boolean;
 	output: string;
+	/**
+	 * The JSON report says no test of the file ran — each was skipped, todo or
+	 * pending, or it had none. Vitest marks such a file `passed`, so `passed`
+	 * keeps that verdict for the plan's test set and phase verification; a
+	 * caller for whom a test not run is not a test passed (a clause's tests,
+	 * mark-first decision D-30) reads this. Absent when there was no report.
+	 */
+	ranNoTest?: boolean;
 }
+
+/** What a JSON report says of one file: its own status, and whether any of its tests ran. */
+interface FileStatus {
+	status: string;
+	ranNoTest: boolean;
+}
+
+/** A test status that means the test ran: it passed or it failed. */
+const RAN = new Set(["passed", "failed"]);
 
 /**
  * Run one batch of files and give each file its own verdict. A Vitest command
@@ -117,7 +134,11 @@ async function runBatch(
 	},
 	cwd: string,
 	batch: { files: string[]; extra: string[] },
-): Promise<{ output: string; verdict: (file: string) => boolean }> {
+): Promise<{
+	output: string;
+	verdict: (file: string) => boolean;
+	ranNoTest: (file: string) => boolean | undefined;
+}> {
 	const tmp = mkdtempSync(join(tmpdir(), "plan-tests-"));
 	const out = join(tmp, "report.json");
 	const isVitest = options.command.args.includes("vitest");
@@ -133,8 +154,9 @@ async function runBatch(
 			output: r.output,
 			verdict: (file) => {
 				const own = status?.get(resolve(cwd, file));
-				return own === undefined ? r.code === 0 : own !== "failed";
+				return own === undefined ? r.code === 0 : own.status !== "failed";
 			},
+			ranNoTest: (file) => status?.get(resolve(cwd, file))?.ranNoTest,
 		};
 	} finally {
 		rmSync(tmp, { recursive: true, force: true });
@@ -142,20 +164,36 @@ async function runBatch(
 }
 
 /** Each test file's status in a Vitest JSON report, by absolute path; null when the report is not JSON. */
-function statusByFile(reportJson: string, cwd: string): Map<string, string> | null {
+function statusByFile(reportJson: string, cwd: string): Map<string, FileStatus> | null {
 	try {
 		const report = JSON.parse(reportJson) as {
-			testResults?: Array<{ name?: string; status?: string }>;
+			testResults?: Array<{
+				name?: string;
+				status?: string;
+				assertionResults?: Array<{ status?: string }>;
+			}>;
 		};
 		return new Map(
 			(report.testResults ?? []).flatMap((r) =>
-				r.name && r.status ? [[resolve(cwd, r.name), r.status] as [string, string]] : [],
+				r.name && r.status
+					? [
+							[
+								resolve(cwd, r.name),
+								{
+									status: r.status,
+									ranNoTest: !(r.assertionResults ?? []).some((t) => RAN.has(t.status ?? "")),
+								},
+							] as [string, FileStatus],
+						]
+					: [],
 			),
 		);
 	} catch {
 		return null;
 	}
 }
+
+const ranNoTestOf = (v: boolean | undefined) => (v === undefined ? {} : { ranNoTest: v });
 
 /**
  * One invocation for the files of a tier under Vitest, which takes many; a
@@ -210,6 +248,7 @@ export async function runFiles(options: {
 					reason: reasonOf.get(path) ?? "",
 					passed: ran.verdict(f),
 					output: ran.output,
+					...ranNoTestOf(ran.ranNoTest(f)),
 				});
 			}
 		}
@@ -222,6 +261,7 @@ export async function runFiles(options: {
 				reason: reasonOf.get(path) ?? "",
 				passed: ran.verdict(path),
 				output: ran.output,
+				...ranNoTestOf(ran.ranNoTest(path)),
 			});
 	}
 	return results;

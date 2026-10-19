@@ -38,7 +38,7 @@ pointer; the pointer holds the story.
   `planFolderStatus`): planning folder, then `archive/`, null for the archive folder, a file
   or an unusable name; never a hand-built `.indusk/planning/<plan>` join. Guard: T9,
   `plan-folder-single-definition.test.ts`.
-- **Code the admin bundles finds shipped files through `induskMcpPackageRoot()` and runs scripts with `process.execPath`, never `"node"`** — Turbopack resolves `spawnSync("node", [path])` and `import.meta.url` paths at build time. — guarded by `read-planning-hook-path.test.ts`.
+- **Code the admin bundles finds shipped files through `induskMcpPackageRoot()` and runs scripts with `process.execPath`, never `"node"`** — Turbopack resolves `spawnSync("node", [path])` and `import.meta.url` paths at build time, so the lookup trusts a root handed through `INDUSK_MCP_PACKAGE_ROOT` (set by `indusk ui` in `daemonEnv`) when it holds this package, and `sessionEnv` (`lib/session/start.ts`) drops it from the sessions the admin starts, whose own lookup is correct. — guarded by `read-planning-hook-path.test.ts`, `package-root.test.ts`, `daemon-env.test.ts`, `start-env.test.ts`.
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
@@ -223,6 +223,7 @@ pointer; the pointer holds the story.
   and `symptom`; a credential with a line separator is refused by name. The
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
+- **A command's own spans come from `commandTracer()`** (`lib/telemetry/command-tracer.ts`): a lazy provider exporting to the daemon found at its stored address, the API's no-op tracer when none runs, never registered globally; a short-lived command calls `flushCommandTracer()` before it exits. The evaluator keeps `initEvalOtel`. — see `/decisions/mark-first`
 - Find a promise with `findPromise` (`lib/promises/registry.ts`; name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `lib/promises/clause-rules.ts`.
 - **`.mcp.json` is per machine and untracked**: only `ensureMcpJson` creates it (naming
   `indusk`), and `update` only when none exists; `register` writes only its own
