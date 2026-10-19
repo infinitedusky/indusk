@@ -294,13 +294,14 @@ This phase connects the loop to the moments that start it: accepting a brief, ap
   Found at the start of this phase: Build Phase 3's `nextPlanningStep` and `runPlanning` take a `PlanningState`, and no code builds one from a plan on disk. `lib/build/read-planning.ts` `readPlanningState(anyCheckout, plan, deps?)`: the documents the plan's workflow needs (`parsePlan` for `workflow` and `documentsOff`, `requiredDocuments`) and which exist (`findPlanFolder`); the contract check (`checkPlanContract`); the impl's structure check, by running the shipped `hooks/validate-impl-structure.js` on the impl's content (stdin `{tool_name:"Write",tool_input:{file_path,content},cwd}`, exit 0 is ok) through an injectable runner; `unapprovedMockups(root, briefText)`; the impl's status; a `blocker:` line in any of the three documents; and the brief's status, for the host. Unit-tested with fakes.
 
   </details>
-- [ ] Let the admin start a planning run when a brief is ready, and have accepting a brief and approving a look ask it to.
+- [x] Let the admin start a planning run when a brief is ready, and have accepting a brief and approving a look ask it to.
+  - Decision: approving a look asks only for the plan whose worktree recorded the approval (`checkout.plan`), not for every accepted brief waiting on looks. An approval is written and committed in one checkout and no other plan's worktree holds it, so no other plan's state changed; a null checkout (the project's own) asks for nothing. `accept-brief` reaches the admin at the address `indusk ui` recorded (`daemonStatus`), posting the registry's name for the project, and says so when no admin runs, the project is unregistered or the admin refuses.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/build-host.ts` `startPlanning` (ADR decision 5) behind `POST /api/plans/plan`; `accept-brief` posts to the running admin and says so when none runs; the look-approval route asks after approving. Starting a build is refused inside a planning step (decision 7). T2.
 
   </details>
-- [ ] Make approving a plan from the admin start its build.
+- [x] Make approving a plan from the admin start its build.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/app/api/plans/approve/route.ts`: after `approvePlan` returns, `startBuild` (ADR decision 6). T8.
