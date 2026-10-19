@@ -124,7 +124,7 @@ This phase changes what a plan runs: the Must-not-break promises' tests move fro
   `apps/indusk-mcp/skills/{work,verify,retrospective}.md` where they describe `indusk plans tests`; copy to `.claude/skills/`; run `skill-sync-parity.test.ts`. T4.
 
   </details>
-- [ ] Let a promise change carry the promise's clauses.
+- [x] Let a promise change carry the promise's clauses.
   <details><summary>Technical</summary>
 
   `indusk promises change` gains a repeatable `--clause` (the same spec `declare` takes; read `bin/commands/promises.ts` and `lib/promises/write.ts` `changePromise`); given clauses replace the entry's list, and the change's History records the old clauses; without `--clause` the clauses stay. The MCP `change_promise` tool takes the same. T5.
