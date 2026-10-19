@@ -82,11 +82,29 @@ it("A3 a test phase and a build phase of the same number are closed separately",
 	const { root, home, warn } = setup();
 	await open(root, 1, "test");
 	await open(root, 1, "build");
-	await recordPhaseClose(root, { plan: "p", phase: 1, kind: "test", sha: "s", now: at(5), home, warn });
-	await recordPhaseClose(root, { plan: "p", phase: 1, kind: "build", sha: "s", now: at(9), home, warn });
+	await recordPhaseClose(root, {
+		plan: "p",
+		phase: 1,
+		kind: "test",
+		sha: "s",
+		now: at(5),
+		home,
+		warn,
+	});
+	await recordPhaseClose(root, {
+		plan: "p",
+		phase: 1,
+		kind: "build",
+		sha: "s",
+		now: at(9),
+		home,
+		warn,
+	});
 	const records = await readTimings(timingLogPath(root, "p", home));
-	expect(records.map((r) => r.kind === "phase-close" && r.kind && (r as { phase: number }).phase)).toEqual([1, 1]);
-	expect(records).toHaveLength(2);
+	expect(records.map((r) => (r.kind === "phase-close" ? r.phaseKind : null))).toEqual([
+		"test",
+		"build",
+	]);
 });
 
 it("A14 with the timing folder unwritable, closing resolves with a warning", async () => {

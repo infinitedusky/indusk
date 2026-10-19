@@ -18,7 +18,14 @@ const tmp = () => {
 it("A17 a garbage line, a half-written last line and an older shape are skipped, the good ones kept in order", async () => {
 	const path = join(tmp(), "plan.jsonl");
 	const good1 = { v: 1, kind: "phase-close", plan: "p", at: "2026-01-01T00:00:00.000Z", phase: 1 };
-	const good2 = { v: 1, kind: "step-start", plan: "p", at: "2026-01-01T00:01:00.000Z", id: "a", step: "work" };
+	const good2 = {
+		v: 1,
+		kind: "step-start",
+		plan: "p",
+		at: "2026-01-01T00:01:00.000Z",
+		id: "a",
+		step: "work",
+	};
 	writeFileSync(
 		path,
 		[

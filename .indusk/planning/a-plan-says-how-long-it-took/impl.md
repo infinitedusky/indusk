@@ -45,9 +45,9 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | Opening a phase records its opening time, and the record that already existed for a phase's start still reads the same | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
-| A2 | Closing a phase records its closing time against the phase that was open, never earlier than its opening time | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
-| A3 | A phase closed twice, or closed without having been opened, keeps one honest record and invents no time | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
+| A1 | Opening a phase records its opening time, and the record that already existed for a phase's start still reads the same | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
+| A2 | Closing a phase records its closing time against the phase that was open, never earlier than its opening time | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
+| A3 | A phase closed twice, or closed without having been opened, keeps one honest record and invents no time | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
 | A4 | A planning step that finishes leaves a record with its start, end and outcome "finished", still there after the step's session is gone | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A5 | A build step that ends in a blocker, a failure or a stop leaves a record naming that outcome | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A6 | A step killed before it wrote its end shows in the view as started and never ended, not missing | Build Phase 2 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/view.test.ts |
@@ -58,12 +58,12 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 | A11 | The command's total runs from the brief's acceptance to landing; for a plan not yet landed it says so and shows the time so far | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A12 | A plan recorded before this change prints what exists, says what has no record, and does not fail | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A13 | Run against a real plan in the worktree, the command prints a readable table a person can use to say which phase took longest | Build Phase 4 | Build Phase 4 | planned | live check | clause: a-plan-says-how-long-it-took/one-view | manual: `indusk plans time a-plan-says-how-long-it-took` from the plan's worktree; read which phase took longest |
-| A14 | With the phase record unwritable, opening and closing a phase still succeed, with a warning that the time was not recorded | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
+| A14 | With the phase record unwritable, opening and closing a phase still succeed, with a warning that the time was not recorded | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
 | A15 | With the step record unwritable, an unattended step still runs to its normal outcome and the build carries on | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A16 | With the test-run record unwritable, the plan's tests still run and the command exits with the tests' own result | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
-| A17 | A record file that is corrupt, half-written or from an older shape is skipped by the view and by every writer, never thrown from | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
+| A17 | A record file that is corrupt, half-written or from an older shape is skipped by the view and by every writer, never thrown from | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
 | A18 | Recording a test run runs exactly the same files for the same plan, phase and landing as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the brief lists a-plan-runs-its-tests-and-what-must-not-break under Must not break, so the existing selection is pinned before any recorder touches it | apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts |
-| A19 | A duration is read from timestamps the same way across time zones and daylight-saving changes | Build Phase 1 | Build Phase 4 | planned | unit | durations come from timestamps; a zone-dependent reading would make the data the later per-phase test decision rests on wrong | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A19 | A duration is read from timestamps the same way across time zones and daylight-saving changes | Build Phase 1 | Build Phase 4 | written | unit | durations come from timestamps; a zone-dependent reading would make the data the later per-phase test decision rests on wrong | apps/indusk-mcp/src/lib/timing/view.test.ts |
 
 ## Checklist
 
@@ -174,25 +174,25 @@ This phase creates the place every timed record goes, one append-only log per pl
   A1, A2, A3, A14, A17 and A19's first half in `lib/timing/phase-close.test.ts` and `lib/timing/log.test.ts`, per the deferral bodies above; commit red (`(write red)` against the missing module).
 
   </details>
-- [ ] Create the timing log module: where a plan's log lives, appending one line, and reading every line that parses.
+- [x] Create the timing log module: where a plan's log lives, appending one line, and reading every line that parses.
   <details><summary>Technical</summary>
 
   `lib/timing/log.ts`. Path: `join(bookkeepingRoots(anyCheckout).home, "timing", `${plan}.jsonl`)` (the same home `indusk eval home` prints; `lib/bookkeeping/roots.ts`). Line shape `{ v: 1, kind, plan, at, ...}`; `at` is `new Date(now()).toISOString()` from an injected `now`. Kinds: `phase-close` (`phase`, optional `kind`, `sha`), `step-start` / `step-end` (`id`, `step`, optional `phase`; end adds `outcome` of `finished | blocked | failed | stopped`), `test-run` (`scope`, `files`, `startedAt`, `durationMs`, `passed`). `readTimings(path)` returns `[]` for a missing file and skips any line that is not JSON, not an object with `v: 1` and a known `kind`.
 
   </details>
-- [ ] Add the one safe-write wrapper every recorder is called through.
+- [x] Add the one safe-write wrapper every recorder is called through.
   <details><summary>Technical</summary>
 
   `lib/timing/safe.ts`: `recordSafely(fn: () => Promise<void>, warn = (m) => console.warn(m)): Promise<void>` catches anything thrown, warns once with `timing: could not record — <message>` and resolves. No recorder in `lib/timing/` is called except through it.
 
   </details>
-- [ ] Record a phase's close, writing nothing for a phase already closed or never opened.
+- [x] Record a phase's close, writing nothing for a phase already closed or never opened.
   <details><summary>Technical</summary>
 
   `lib/timing/phase-close.ts`: `recordPhaseClose(root, { plan, phase, kind?, sha, now })`. Reads the opening from `readBoundaries` inside a try (a throw there means unreadable, so warn and write nothing); no opening or an existing `phase-close` for that phase (earliest wins) writes nothing and warns; a close earlier than its opening is clamped away by refusing to write and warning. `recordPhaseStart` and `.indusk/phase-boundary.jsonl` are not changed.
 
   </details>
-- [ ] Find the one place a phase is closed and call the phase-close recorder there.
+- [x] Find the one place a phase is closed and call the phase-close recorder there. (Result: no single code site exists; see Notes — the view derives a close from the next phase's opening. `recordPhaseClose` is built and tested but not called by production code.)
   <details><summary>Technical</summary>
 
   The ADR's open decision. `recordPhaseStart` has no production caller in `src/` or `hooks/` (only the definition and tests), so find where phase starts and closes are actually written first: read `check-gates.js`, `lib/trajectory/state-ops.ts` and `bin/commands/run.ts`. Call `recordPhaseClose` through `recordSafely` at the gate every close passes through; if there are two sites, both call the same function. If a site cannot be found without changing a gate's behaviour, write nothing there and record the decision in Notes: the view derives a phase's close from the next phase's opening in Build Phase 4, and a person amends `phases-are-timed`.
@@ -201,13 +201,13 @@ This phase creates the place every timed record goes, one append-only log per pl
 
 #### Build Phase 1 Verification
 
-- [ ] The log, safe-writer and phase-close tests now pass, and the existing phase-start record still reads the same.
+- [x] The log, safe-writer and phase-close tests now pass, and the existing phase-start record still reads the same.
   <details><summary>Technical</summary>
 
   A1, A2, A3, A14, A17 pass (goes green): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing/phase-close.test.ts src/lib/timing/log.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/timing/log.ts src/lib/timing/phase-close.ts src/lib/shape/boundary.ts`. A19 flips to `written` (its view half waits for Build Phase 4).
 
   </details>
-- [ ] The package type-checks and passes the project's lint.
+- [x] The package type-checks and passes the project's lint. (tsc exits 0; biome is clean on every file this plan touched; repo-wide `pnpm check` exits 1 on files this plan did not touch — see Notes.)
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` exits 0; `pnpm check` exits 0.
@@ -216,13 +216,13 @@ This phase creates the place every timed record goes, one append-only log per pl
 
 #### Build Phase 1 Context
 
-- [ ] Add the Key Decisions line for this plan, once, with the code.
+- [x] Add the Key Decisions line for this plan, once, with the code.
   <details><summary>Technical</summary>
 
   `root (Key Decisions): "- Plan timing: one per-plan log in machine state, written through one never-raising writer, read by \`indusk plans time\` — see /decisions/plan-timing" — always-on because every shipped decision keeps its one line there (claude-md skill); the rule behind it lives below.`
 
   </details>
-- [ ] Record the rule that a timing record never stops the work, where timing code is written.
+- [x] Record the rule that a timing record never stops the work, where timing code is written.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md` (a short entry): timing writes go only through `recordSafely`; the phase-boundary reader's throw is not tolerated by the timing view but caught beside it. `guard: lib/timing/phase-close.test.ts carries clause: a-plan-says-how-long-it-took/a-record-never-blocks`.
@@ -231,7 +231,7 @@ This phase creates the place every timed record goes, one append-only log per pl
 
 #### Build Phase 1 Document
 
-- [ ] Note in the plan's Notes which site closes a phase, so the docs page can say it.
+- [x] Note in the plan's Notes which site closes a phase, so the docs page can say it.
   <details><summary>Technical</summary>
 
   Notes section of this impl carries the site found (or the derived-close decision); the reference page is written in Build Phase 4.
@@ -462,6 +462,9 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 - **Decision: no OTel gate.** `otel.role` is `library` in `.indusk/config.json`, and the ADR records that nothing here leaves the machine.
 - **Decision: `gate_policy: ask` with a real item in every gate.** No gate is skipped, so no skip needs a reason.
 - **Decision: A6 and A19 pass at Build Phase 4, though written earlier.** Their record is written in Build Phase 2 and Build Phase 1; what they assert is how the view shows it.
-- **Open: the phase-close site.** The ADR assumed a single phase-start writer; a read of `src/` and `hooks/` found no production caller of `recordPhaseStart`. Build Phase 1's last item finds the real site; the fallback is the ADR's derived close.
+- **Decision (Build Phase 1): no phase-close call site; the close is derived.** `recordPhaseStart` has no production caller at all: phase starts are written only by the executing agent following the work skill's `node -e` instruction, and `lib/run/loop.ts` (Dawn's loop) writes none. The one deterministic close point, `check-gates.js`, is a blocking hook; adding a write there changes a gate, which the plan forbids. Wiring only the loop would call `recordPhaseClose` for phases never opened and would write into the real machine-state home from loop tests. So `recordPhaseClose` ships tested and callable (the record is `phase-close`, field `phaseKind` for the test/build sequence because `kind` names the record), and Build Phase 4's view ends a phase at the next phase's opening. A person amends `phases-are-timed` if exact closes are wanted: the work skill would gain a close instruction beside its start instruction.
+- **Note (Build Phase 1): repo-wide `pnpm check` is red before this plan** (biome 2.5.14 against an admin config on 2.4.8, mockup CSS, `examples/seat-holds`); biome is clean on every file this plan touched.
+- **Shape (Build Phase 1)**: reviewed `log.ts`, `safe.ts`, `phase-close.ts` for intra-unit craft; nothing found. Each has one reason to change and a seam a test reaches (injected clock, home, warn).
+- **Open (superseded): the phase-close site.** The ADR assumed a single phase-start writer; a read of `src/` and `hooks/` found no production caller of `recordPhaseStart`. Build Phase 1's last item finds the real site; the fallback is the ADR's derived close.
 - **Open: how a stopped step is told from a failed one.** Decided for now: a thrown abort is `stopped`, anything else with an error is `failed`; Build Phase 2 reads the session manager and refines it, recording the result here.
 - **Open: the landing time source.** Build Phase 4 confirms whether the archive records one; the fallback is the landing merge commit's time.

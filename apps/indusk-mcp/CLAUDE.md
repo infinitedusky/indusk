@@ -180,6 +180,12 @@ pointer; the pointer holds the story.
   phase below it from all three parsers. Falsification log fields are
   single-line; frontmatter regexes for value-bearing keys are line-anchored.
 
+- **Timing never stops the work it records** (`lib/timing/`): every timing write goes through
+  `recordSafely`, which warns once and resolves; the reader skips what it cannot read. The
+  phase-boundary reader's throw is not tolerated by the timing view but caught beside it.
+  Guarded by `timing/phase-close.test.ts` (`clause: a-plan-says-how-long-it-took/a-record-never-blocks`).
+  — see `/decisions/plan-timing`
+
 ## Promises and telemetry
 
 - A daemon process is InDusk's by `daemonProcessOf` (`daemon-process.ts`: binary +
