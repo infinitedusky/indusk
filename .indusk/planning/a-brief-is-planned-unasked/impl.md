@@ -240,7 +240,7 @@ This phase builds the loop that writes the plan: a decision that names the next 
   `lib/build/next-planning-step.ts` `nextPlanningStep(state)` (ADR decision 2), pure. T3, T4.
 
   </details>
-- [ ] Give each planning step its prompt: write only that document, unattended, to the planner's rules.
+- [x] Give each planning step its prompt: write only that document, unattended, to the planner's rules.
   <details><summary>Technical</summary>
 
   `lib/build/build-session.ts` `stepPrompt` gains `plan-test-plan`, `plan-adr`, `plan-impl` (ADR decision 3); `stepEnv` sets the step name. T5.
