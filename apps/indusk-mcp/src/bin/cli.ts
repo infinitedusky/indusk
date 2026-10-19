@@ -1210,6 +1210,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("archive <plan>")
+	.description(
+		"Move a closed plan's folder into .indusk/planning/archive/ with git mv — the retrospective's archival step. Refused while the plan owns a declared promise (confirm first), when the archive already holds the name, or when the folder is not an active plan's",
+	)
+	.action(async (plan: string) => {
+		const { plansArchive } = await import("./commands/plans.js");
+		plansArchive(rootOrExit(), plan);
+	});
+
+plansCmd
 	.command("archive-dead")
 	.description(
 		"Move dead-draft plans (all docs draft/abandoned, older than planning.dead_draft_days) to .indusk/planning/archive/ — moved, never deleted",
