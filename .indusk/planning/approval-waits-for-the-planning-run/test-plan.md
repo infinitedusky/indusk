@@ -8,88 +8,89 @@ status: draft
 
 ## Purpose
 
-This document lists the behavioral assertions that, taken together, mean the fix is working: a plan written by the unattended planning run is not offered for approval (under Needs you, with Approve) until the run has stopped at ready for approval. Each assertion names its level — unit / contract / live check / smoke / promise, the smallest that can prove it — and so when its test runs. They are grouped by the promise in the brief that they prove.
+This document lists the behavioral assertions that, taken together, mean the fix works: a plan is offered for approval only once its impl is written, no session is still writing it, and its `plan-review.md` is written with every finding answered; a plan written without an answered plan review, that no planning run is still writing, is listed under Needs you as needing its plan review; and every Approve button the admin draws asks that same answer. Each assertion names its level — unit / contract / live check / smoke / promise, the smallest that can prove it — and so when its test runs. They are grouped by the promise in the brief that they prove.
 
-The assertions here become the source rows for the impl's `## Test Trajectory` table.
+The assertions here become the rows of the impl's `## Test Trajectory` table, with the same IDs.
 
-The brief makes no new promise. It changes one existing promise, `approval-waits-for-a-finished-plan`, and must not break two others, `decisions-wait-in-one-place` and `an-accepted-brief-is-planned-unasked`. The changed promise is stated here as three clauses, because its new sentence has three conditions that each can be broken on its own: the impl is written, no session is still writing it, and any planning run for it has stopped ready for approval. The first two are held today (rows A8 and A12 of `cockpit-audit-fixes`, in `waiting.test.ts`); the third is the fix.
+The brief makes no new promise. It changes one existing promise, `approval-waits-for-a-finished-plan`, and must not break two others, `decisions-wait-in-one-place` and `an-accepted-brief-is-planned-unasked`. The brief is not `clauses: required`, so rows name the promise, not clauses.
 
-## Decisions made while writing this plan
+## What changed since the first draft
 
-Unattended run (`INDUSK_GATE_POLICY=auto`); nobody could be asked. Each decision and why:
-
-1. **The clause split is mine.** The brief is not `clauses: required`, so no registry holds the clause names; I wrote three clauses from the promise's three conditions so each has its own measure. Reason: the bug is the third condition missing, and a single undivided assertion would not show which condition broke.
-2. **Levels are unit and contract, with one live check.** The rule is a pure function (`planWaiting` in `plans/waiting`) fed by the admin's reader; the gap is in what the reader hands it. A unit row proves the rule from inputs; a contract row proves the reader (`readWaiting`) hands it the planning run's state. The real gap (a step's session over, the next not yet started) only happens in a running planning run, so one live check covers it. Reason: smallest level that proves each fact, and the user's rule that a slow tier never blocks landing.
-3. **"The run has stopped" is observed, not defined here.** Whether the run's stop is read from its recorded stop step or from the run being no longer active is the ADR's choice; every assertion below is phrased on what Needs you shows, so either works. Reason: the test plan constrains the ADR, not the reverse.
-4. **A planning run that crashed or was abandoned is an open decision, not asserted.** A run that ended without stopping at ready for approval (error, killed admin) would, under the new rule, hide approval forever unless "stopped" includes any end. I assert only that an ended run, whatever the end, stops hiding approval (A6); whether a crashed run should instead show something else is recorded under Notes for the ADR. Reason: hiding a finished plan indefinitely is a worse failure than offering it, and the brief does not say.
-5. **No Untestable Assertions.** Everything here is observable; the live check needs a running daemon, which the slow tier has (`pnpm e2e`).
+The first draft of this plan withheld approval only while the admin's planning run was going, and offered it after any end of the run. Its cold read (`plan-review.md`) showed three ways that still offered an unread plan: a run that stopped on a failure, an admin restart mid-run (the run's state is held only in memory), and the plan page's and brief page's own Approve buttons, which never asked the rule. The brief was amended: approval is read from a file, the plan's `plan-review.md` with every finding answered; the run's state decides only whether anything is listed while the run is still going, and what a stopped run's card says. Every assertion below is written for the amended brief.
 
 ## Behavioral Assertions
 
-### `approval-waits-for-a-finished-plan`
+### Changes: `approval-waits-for-a-finished-plan`
 
-A plan is listed as waiting for approval only when its impl is written, no session is still writing it, and any planning run for it has stopped ready for approval.
+A plan is offered for approval only when its impl is written, no session is still writing it, and its plan review is written with every finding answered; a plan whose impl is written without an answered plan review, and that no run is still writing, is listed as needing its plan review.
 
-### `impl-is-written` — the plan's impl exists and its other documents are accepted
+- Signal: Needs you and the Approve buttons in the admin; upheld when no plan without an answered `plan-review.md` shows Approve anywhere, broken naming the plan and the page that offered it. No telemetry mark exists for this promise (`otel.role` is `library`); the approve route's refusal while a run is going stands behind every button.
 
-- Signal: Needs you in the cockpit (`readWaiting`); upheld when no plan without a written impl (or with an unaccepted earlier document) shows Approve; broken reports the plan name and what it was missing.
-
-| ID | Assertion (user-visible behavior) | Level |
-|----|-----------------------------------|-------|
-| A1 | A plan whose impl is still absent, or whose brief, test plan or ADR is not yet accepted, is not under Needs you for approval, whatever else is true of it. | unit |
-
-### `no-session-writing` — no session's turn is open on the plan
-
-- Signal: Needs you in the cockpit; upheld when a plan with a session mid-turn on it shows no Approve; broken reports the plan and the session.
+**The rule, from its inputs** (the package's `planWaiting`, fed facts):
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A2 | A finished plan with a session whose turn is open on it shows no Approve; once that turn ends and nothing else is running, it shows Approve. | unit |
+| A1 | A plan whose impl is a draft and whose other documents are accepted, with no session writing it and no planning run going, but with no `plan-review.md`, is not offered for approval; it is listed once as needing its plan review, at its Impl step, with a decision that says so. | unit |
+| A2 | The same plan with a `plan-review.md` that leaves a finding unanswered, a finding without its "breaks when" line, or a question without its section is listed as needing its plan review, never for approval. | unit |
+| A3 | While a planning run for the plan is still going, with no session turn open (between steps, or a step's session over), nothing is listed for the plan — neither approval nor its plan review — whether or not its review is answered. | unit |
+| A4 | When the admin's planning run for the plan stopped without reaching approval, with a reason, and the plan review is not answered, the plan is listed as needing its plan review and the decision says why the run stopped. | unit |
+| A5 | After the admin restarts mid-run (no planning state passed in at all), a plan with a draft impl and no answered plan review is listed as needing its plan review with the plain decision, never for approval. | unit |
+| A6 | A plan written by hand, that no planning run ever touched, needs its plan review the same way, and is offered for approval once the review is answered. | unit |
+| A7 | A session whose turn is open on the plan withholds both approval and the plan-review listing, whatever the review says; once the turn ends, the plan is listed by its review's state. | unit |
+| A8 | A planning run going for another plan does not affect this plan's listing. | unit |
 
-### `run-stopped-ready` — any planning run for the plan has stopped ready for approval
-
-- Signal: Needs you in the cockpit; upheld when a plan with a planning run that has not stopped shows no Approve and one whose run stopped ready for approval shows it; broken reports the plan and the run's last step.
+**The reading of the file** (where the rule's input comes from):
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A3 | A plan whose impl reads as written, with a planning run still going and no session turn open (between steps, or a step's session over), shows no Approve and is not under Needs you. | unit |
-| A4 | The same plan, once its planning run has stopped ready for approval, shows Approve under Needs you with the approval decision. | unit |
-| A5 | A plan whose planning run is on its plan-review step, with `plan-review.md` not yet written, shows no Approve; after the run stops, it does. | contract |
-| A6 | A planning run that has ended any other way (an error, a killed admin) does not hide approval of a finished plan indefinitely. | unit |
-| A7 | In a live planning run of a bugfix plan, Needs you shows no Approve at any moment until the run stops, including the gap between one step's session ending and the next starting; at the stop it shows Approve. | live check |
+| A9 | The package reads a plan folder's `plan-review.md` the one way the planning run reads it: absent reads missing, a file with an open finding reads unanswered, a file with every question's section and every finding answered reads answered. | unit |
+| A10 | The admin's plan reader, on a real plan folder on disk, hands the rule the plan review's state as the package read it, for each of the three states. | unit |
+| A11 | The plan review is read by the package alone: the package exports its reader, and neither the admin nor the editor defines one of its own. | unit |
+
+**The admin's planning state, and the reader that passes it on:**
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A12 | The admin's planning state for a run stays "going" through the gap after one step ends and before the next begins, and once the run ends on a failure it reads stopped, keeping the reason. | unit |
+| A13 | Through the admin's reader, with the real planning state of a run the admin started: while the run is between steps, a plan with a draft impl is not listed at all; once the run stops on a failure, the plan is listed as needing its plan review, with the run's reason. | unit |
+
+**Every Approve button asks the same answer:**
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A14 | What a plan's page offers says Approve only when the package lists the plan as waiting on approval; a draft impl waiting on its plan review, on a question, or on nothing offers no Approve. | unit |
+| A15 | The plan page and the brief page both pass the package's waiting answer for the plan into what the page offers, so neither page draws Approve on a rule of its own. | unit |
+
+**The live story:**
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A16 | On the installed admin, after a brief is accepted: through the whole planning run, Needs you and the plan page show no Approve until `plan-review.md` is written with every finding answered; then Approve appears once, on the decision card. | live check |
 
 ### Must not break: `decisions-wait-in-one-place`
 
-A plan that is ready still appears under Needs you with its decision.
+A plan that is ready still appears under Needs you with its decision; a plan needing its cold read appears there too.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A8 | A planning run stopped ready for approval, with the draft impl complete, lists the plan under Needs you exactly once, as approval, with Approve and "Not yet — keep planning". | unit |
-| A9 | A question asked by the planning run's session still shows as the plan's one decision, and outranks approval, whether or not the run has stopped. | unit |
-| A10 | A plan at review or with an amendment waiting is listed as before; a planning run does not hide either. | unit |
+| A17 | A plan whose impl is a draft, with no session writing it, no run going and its plan review answered, is listed under Needs you exactly once, as approval, with Approve and "Not yet — keep planning". | unit |
+| A18 | A question the plan's agent asked still outranks everything; an amendment and a stopped review are listed as before; a plan needing its plan review is outranked by each of them. | unit |
+| A19 | Answering a plan-review decision never approves the plan and never starts a release: accepting it, or the alternative, goes to the plan's agent as words. | unit |
+| A20 | The decision card draws a plan waiting on its plan review in its existing ask state, headed as needing its plan review at the step, with the decision's words. | unit |
 
 ### Must not break: `an-accepted-brief-is-planned-unasked`
 
-An accepted brief is planned without asking; the run still stops for approval.
+The run still stops for approval; only the offer waits for its cold read.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A11 | An accepted brief's planning run still writes the remaining documents without asking and still ends stopped at ready for approval; waiting does not stop or restart it. | contract |
-| A12 | After that stop the person's Approve is offered once (A8), so the run's stop is the only change in when the offer appears. | live check |
-
-### Not for a promise
-
-| ID | Assertion (user-visible behavior) | Level | Why |
-|----|-----------------------------------|-------|-----|
-| A13 | A plan that no planning run has ever touched (written by hand, or a run from an earlier admin) with a finished draft impl and no open session still shows Approve. | unit | A regression guard: the new condition must be absent-safe, not "no run found means wait". |
-| A14 | A plan with a planning run for a different plan going does not have its approval hidden. | unit | A regression guard against matching a run by anything but the plan name. |
+| A21 | The planning run still reads the plan review — absent, open, then answered with its dismissals — and still stops for approval only once it is answered; it reads the file through the same reader the offer uses. | unit |
 
 ## Untestable Assertions
 
-None. See decision 5.
+None. A16 is a live check: it needs the installed admin and a real planning run, so it is a manual procedure run after landing and recorded in the impl.
 
 ## Notes
 
-- **Open, for the ADR:** where "the run has stopped" is read from (the run's recorded stop step versus no active run), and what a crashed run should show (A6 only requires approval not be hidden forever).
-- **Open, for the impl:** A7 and A12 need a daemon and a `claude` binary; they belong in the slow tier (`pnpm e2e`) and never block landing.
-- A5 may be merged into A3 if the reader's contract test and the unit row turn out to prove the same fact; keep both until the ADR chooses the shape.
+- Restarting a planning run that stopped is out of scope (the brief's "Not promised"): the person reruns it, or the planning agent writes the plan review by hand. A19 only makes sure that answering the card can neither approve nor release.
+- `indusk plans approve` on the command line gets no new gate; only the admin's offer changes. No row asserts a refusal there.
