@@ -1,7 +1,7 @@
 ---
 title: "A plan says how long it took"
 date: 2026-10-19
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -64,6 +64,11 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 | A17 | A record file that is corrupt, half-written or from an older shape is skipped by the view and by every writer, never thrown from | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
 | A18 | Recording a test run runs exactly the same files for the same plan, phase and landing as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the brief lists a-plan-runs-its-tests-and-what-must-not-break under Must not break, so the existing selection is pinned before any recorder touches it | apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts |
 | A19 | A duration is read from timestamps the same way across time zones and daylight-saving changes | Build Phase 1 | Build Phase 4 | passing | unit | durations come from timestamps; a zone-dependent reading would make the data the later per-phase test decision rests on wrong | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A20 | For a landed plan, a phase with no close ends at the landing, so its duration stops growing after landing and "between" is never negative or printed as 0s to hide a negative | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A21 | A version-1 record of a known kind with a missing or wrongly typed field (a test run with no scope or files, a step with no id, an unparseable `at`) is skipped by the view, never thrown from and never printed as NaN | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
+| A22 | For a workbench plan, the landing time is read from the code repo's trunk, where `plans land` writes the landing merge, not the workbench root's | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A23 | Run from the trunk while the plan is built in its worktree, the command reads the phase openings from the plan's worktree, where they are written, and does not report "no record of: phase openings" | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A24 | The command refuses, exit 1, a name that is no plan in the planning folder or its archive, instead of printing an empty view and exiting 0 | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
 
 ## Checklist
 
@@ -192,7 +197,7 @@ This phase creates the place every timed record goes, one append-only log per pl
   `lib/timing/phase-close.ts`: `recordPhaseClose(root, { plan, phase, kind?, sha, now })`. Reads the opening from `readBoundaries` inside a try (a throw there means unreadable, so warn and write nothing); no opening or an existing `phase-close` for that phase (earliest wins) writes nothing and warns; a close earlier than its opening is clamped away by refusing to write and warning. `recordPhaseStart` and `.indusk/phase-boundary.jsonl` are not changed.
 
   </details>
-- [x] Find the one place a phase is closed and call the phase-close recorder there. (Result: no single code site exists; see Notes — the view derives a close from the next phase's opening. `recordPhaseClose` is built and tested but not called by production code.)
+- [x] Find the one place a phase is closed and call the phase-close recorder there. (Result: no single code site exists; see Notes — the view derives a close from the next phase's opening. the phase-close recorder is built and tested but not called by production code.)
   <details><summary>Technical</summary>
 
   The ADR's open decision. `recordPhaseStart` has no production caller in `src/` or `hooks/` (only the definition and tests), so find where phase starts and closes are actually written first: read `check-gates.js`, `lib/trajectory/state-ops.ts` and `bin/commands/run.ts`. Call `recordPhaseClose` through `recordSafely` at the gate every close passes through; if there are two sites, both call the same function. If a site cannot be found without changing a gate's behaviour, write nothing there and record the decision in Notes: the view derives a phase's close from the next phase's opening in Build Phase 4, and a person amends `phases-are-timed`.
@@ -207,7 +212,7 @@ This phase creates the place every timed record goes, one append-only log per pl
   A1, A2, A3, A14, A17 pass (goes green): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing/phase-close.test.ts src/lib/timing/log.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/timing/log.ts src/lib/timing/phase-close.ts src/lib/shape/boundary.ts`. A19 flips to `written` (its view half waits for Build Phase 4).
 
   </details>
-- [x] The package type-checks and passes the project's lint. (tsc exits 0; biome is clean on every file this plan touched; repo-wide `pnpm check` exits 1 on files this plan did not touch — see Notes.)
+- [x] The package type-checks and passes the project's lint. (tsc exits 0; biome is clean on every file this plan touched; the repo-wide lint exits 1 on files this plan did not touch — see Notes.)
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` exits 0; `pnpm check` exits 0.
@@ -271,7 +276,7 @@ This phase makes every unattended planning and build step leave a start, an end 
 
 #### Build Phase 2 Verification
 
-- [x] The step tests pass, and an unwritable step record changes nothing about a step's result. (Also fixed: three admin test files mock the build module and needed a pass-through `timedStep`; the admin's browser-project nav tests fail identically on the trunk, so they are not this plan's.)
+- [x] The step tests pass, and an unwritable step record changes nothing about a step's result. (Also fixed: three admin test files mock the build module and needed a pass-through step wrapper; the admin's browser-project nav tests fail identically on the trunk, so they are not this plan's.)
   <details><summary>Technical</summary>
 
   A4, A5, A15 pass (goes green): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing/timed-step.test.ts src/lib/build/runner.test.ts src/lib/build/planning-runner.test.ts`. A6 flips to `written` (its view half waits for Build Phase 4).
@@ -344,7 +349,7 @@ This phase makes each run of a plan's tests leave one record: which plan, which 
 
 #### Build Phase 3 Context
 
-- [x] Record that recording a test run is read-only over the test set. (The `// promise:` token is already in the selection test's header; no prose added, as the item says.)
+- [x] Record that recording a test run is read-only over the test set. (The promise token is already in the selection test's header; no prose added, as the item says.)
   <details><summary>Technical</summary>
 
   `guard: lib/plans/plan-tests-selection.test.ts carries promise: a-plan-runs-its-tests-and-what-must-not-break` (add the `// promise:` token to the file's header); no prose rule is added, as the guard delivers it.
@@ -436,6 +441,80 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 
   </details>
 
+### Build Phase 5: Falsification — the view after landing, in a workbench, from the trunk, and over a record of the wrong shape
+
+**Tier**: med — the work step's default
+
+This phase tests the time view in the places the live check could not reach: a plan that has already landed, a plan built in a workbench, the command run from the trunk while the plan is still in its worktree, a record line that parses but is missing its fields, and a plan name that does not exist. Each hypothesis is that the view prints a wrong or empty answer, or throws, where it should print an honest one. Once it closes, the view gives the same answer wherever it is run and whatever the log holds.
+
+- [ ] End a landed plan's last open phase at the landing, so its time stops growing once the plan has landed.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `phasesOf` in `lib/timing/view.ts` gives a phase with no recorded close and no next opening `durationMs = now - opened`, even when `landedAt` is set. Since no production code calls `recordPhaseClose` (Build Phase 1's Notes), every plan's last phase is in this state, so a week after landing that phase reads a week long, and `between` (`total.ms` minus the phases) goes negative, which `formatDuration` clamps to `0s`, hiding it. Fix: `planTime` reads `landedAt` before building phases and passes the landing instant as the end of an open phase (marked derived, not open); `between` is printed signed (a leading `-`) rather than clamped, so any remaining overlap shows.
+
+  </details>
+- [ ] Make the log reader check each record's fields for its kind, and skip a record missing them.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `isTimingRecord` in `lib/timing/log.ts` checks only `v`, `kind` and `at`'s type. A line `{"v":1,"kind":"test-run","plan":"p","at":"2026-10-19T00:00:00Z"}` passes, and `testRunsOf` reads `r.scope.phase` on `undefined` and throws out of `planTime`, against the rule that the view never throws on a record. A `step-start` with `at: "yesterday"` passes and prints `NaNs`. Fix: per-kind checks — `phase-close`: numeric `phase`; `step-start`/`step-end`: string `id` and `step`, `step-end` an outcome from the four; `test-run`: `scope` is `"landing"` or `{ phase: string }`, `files` with three numbers, numeric `durationMs`, string `startedAt` that parses, boolean `passed`; every kind: `at` that `Date.parse` reads as finite.
+
+  </details>
+- [ ] For a plan built in a workbench, look for the landing in the code repository that the plan lands into.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `landingTime` in `lib/timing/view.ts` runs `git log --grep=^Merge .*: <plan> landed$` in `mainCheckoutOf(root)`. For a workbench plan, `landWorkbenchPlan` in `lib/plans/land.ts` writes that merge in `repoTrunk`, the code repo, never in the workbench root, so the view says "not yet landed" for ever and the total keeps running. Fix: resolve the code root through `resolveExecutionRoots(root, plan)` (`lib/worktree/roots.ts`, the one resolver) and search the code repo's main checkout; a refusal from the resolver falls back to today's root. The search is behind the `landedAt` read seam, so the test drives it with a fixture workbench from `helpers/versioned-workbench.ts` or with an injected git runner.
+
+  </details>
+- [ ] Read a plan's phase openings from its worktree when the plan is being built in one, wherever the command is run from.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `defaultReads` reads `readBoundaries(root)`, where `root` is the checkout the command runs in. Phase openings are written in the plan's worktree on `plan/<name>` and reach the trunk only at landing (checked: `main:.indusk/phase-boundary.jsonl` has no line for this plan, the worktree has two). A person running `indusk plans time <plan>` from the trunk while the plan is built sees no phases and "no record of: phase openings". Fix: resolve the plan's live copy through `lib/worktree/plan-worktrees.ts` (the one resolver for a plan's worktree, as `plans.ts` already uses via `resolvePlanCopies`) and read the boundary file there when a worktree is recorded; otherwise read `root`'s. Prefer the live copy's brief too, for the same reason.
+
+  </details>
+- [ ] Refuse a plan name that matches no plan, rather than printing an empty view.
+  <details><summary>Technical</summary>
+
+  Hypothesis: `plansTime` in `bin/commands/plans.ts` calls `planTime` for any name; a typo prints only `no record of: phase openings, steps, test runs, acceptance time` and exits 0, indistinguishable from a real plan with no records. Fix: when `findPlanFolder(root, name)` is null and no plan worktree is recorded for the name, throw `PlanCommandRefusal` naming the plan, so `planVerb` prints it on stderr and exits 1. A plan recorded before this change (an existing folder with no records) still prints what exists, as before.
+
+  </details>
+
+#### Build Phase 5 Verification
+
+- [ ] The hypotheses about the landed plan, the wrongly shaped record, the workbench landing, the run from the trunk and the unknown plan name each have a test that failed before the fixes and passes after them.
+  <details><summary>Technical</summary>
+
+  A20: a landed plan's open last phase ends at `landedAt`; with `now` a week after landing its duration is unchanged and `between` equals total minus phases, never clamped. A21: `readTimings` over the malformed-but-v1 lines returns only the good ones; `planTime` over them resolves. A22: a workbench fixture whose code repo holds the landing merge gives `total.landed === true`. A23: run with `root` the trunk and a recorded worktree holding the boundary lines, `phases` is non-empty and `missing` has no "phase openings". A24: `plansTime` for an unknown name rejects with `PlanCommandRefusal`. `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing` (goes green), and `indusk plans tests a-plan-says-how-long-it-took --phase "Build Phase 5"` exits 0.
+
+  </details>
+- [ ] The package type-checks and the files this phase touched pass lint.
+  <details><summary>Technical</summary>
+
+  `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` exits 0; `pnpm exec biome check` on the touched files exits 0 (repo-wide `pnpm check` was red before this plan, per Build Phase 1's Notes).
+
+  </details>
+
+#### Build Phase 5 Context
+
+- [ ] Add to the timing rule that the view reads a plan where it is written: its worktree for the phase openings and its code repository for the landing.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the timing entry: one sentence — the view reads boundaries from the plan's live copy and the landing from the code repo (`resolveExecutionRoots`), and the reader validates each kind's fields. `guard: lib/timing/view.test.ts carries clause: a-plan-says-how-long-it-took/one-view`.
+
+  </details>
+
+#### Build Phase 5 Document
+
+- [ ] Update the command's reference page to say where it reads from, that a landed plan's last phase ends at landing, and that an unknown plan is refused.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/cli/plans-time.md`: the phase openings come from the plan's worktree while it is built; an open last phase of a landed plan ends at the landing; "between" can be negative and is printed so; an unknown name exits 1.
+
+  </details>
+
+#### Build Phase 5 Falsification Summary
+
+Looked at and held: `recordSafely` (catches sync and async throws, resolves); `timedStep`'s pass-through of a result and a throw, and its end write in `finally`; the path built at wrap time (`bookkeepingRoots` swallows a missing config and a missing path, so it does not throw in practice); `recordTestRun`'s counts against `planTestSet`'s reason strings (`row …`, `must not break: …`); the `--list` path, which returns before any timing; `recordPhaseClose`'s refusals; the landing merge's subject, which matches `land.ts` in both modes and is always a real merge (`--no-ff`); the trimmed `git` output parsed by `Date.parse`; the brief's quoted `accepted_at`. Not hunted: the admin's `classifierFor` mapping a failed step to blocked when a blocker exists (no runner starts a step on a plan already blocked, so a blocker after the step is the step's own), concurrent appends (single short lines under `O_APPEND`), and a plan name reused after archiving (no plan reuses a name today).
+
 ## Files Affected
 
 | File | Change |
@@ -485,3 +564,4 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
   It reads: durations per phase and a total "so far". Only two phases show because phase openings are written by the executing agent following the work skill and this unattended run opened only Build Phases 1 and 4; Test Phase 1, Build Phases 2 and 3 have no opening, and no step or test run was recorded (this run was one `/work` session, not the admin's runner, and `plans tests` was not run through the real home). That is what the view names under "no record of". Marked passing because the table is readable and honest about its gaps; a person should re-run it after an admin-started build.
 - **Shape (Build Phase 4)**: reviewed `view.ts`; the reads and the clock are injected, formatting is pure and separate from gathering; nothing found.
 - **Open (superseded): the landing time source.** Build Phase 4 confirms whether the archive records one; the fallback is the landing merge commit's time.
+- **Decision (falsification, unattended): five hypotheses authored as Build Phase 5, all in scope.** Each targets the view's answer in a place the live check did not reach (after landing, a workbench, the trunk, a wrongly shaped record, an unknown name); none changes what is recorded or when. The impl's status goes back to in-progress because the phase is open. Four earlier task lines carried inline code that the summary check now refuses on any edit adding a phase header; the code was reworded in place, the meaning unchanged.
