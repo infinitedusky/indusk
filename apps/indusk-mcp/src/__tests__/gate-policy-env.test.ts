@@ -71,7 +71,16 @@ function project(skip: string, policy = "ask"): { root: string; impl: string } {
 	return { root, impl };
 }
 
-function startPhaseTwo(p: { root: string; impl: string }, env: NodeJS.ProcessEnv = {}) {
+/**
+ * The hook inherits this process's environment, so a run inside an unattended
+ * build (INDUSK_GATE_POLICY=auto) would otherwise read the build's policy in the
+ * "no environment policy" case. An undefined value is dropped by spawn, so the
+ * default unsets the variable whatever the parent sets.
+ */
+function startPhaseTwo(
+	p: { root: string; impl: string },
+	env: NodeJS.ProcessEnv = { INDUSK_GATE_POLICY: undefined },
+) {
 	return runHook(
 		"check-gates.js",
 		{

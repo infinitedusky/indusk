@@ -117,6 +117,7 @@ describe("an archived plan's amendments are read against the registry at the pro
 
 describe("Build Phase 8 — the scope is part of what was approved", () => {
 	// promise: a-change-to-what-was-agreed-needs-the-person
+	// promise: an-audit-concern-gets-a-solution
 	// clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person — A36
 	const brief = (notPromised: string[]) =>
 		`# Brief\n\n## Promises\n\n### This plan makes\n\nNone — nothing new.\n\n### Not promised\n\n${notPromised.map((n) => `- ${n}`).join("\n")}\n`;
