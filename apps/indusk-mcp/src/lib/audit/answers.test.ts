@@ -77,6 +77,40 @@ describe("readAuditAnswers", () => {
 	});
 });
 
+describe("readAuditAnswers — what a real reader writes", () => {
+	it("A24 — a fenced diff under a finding is not read as findings or headings", () => {
+		const r = readAuditAnswers(
+			audit(
+				"- `a.ts:3` — x\n  - breaks when: y\n  - answer: nothing — fine\n\n```diff\n- old\n## Heading\n```",
+			),
+		);
+		expect(r.findings).toHaveLength(1);
+		expect(r.unanswered).toEqual([]);
+		expect(r.missingQuestions).toHaveLength(3);
+	});
+	it("A25 — an answer with nothing after its kind is no answer", () => {
+		const r = readAuditAnswers(audit("- `a.ts:3` — x\n  - breaks when: y\n  - answer: nothing"));
+		expect(r.unanswered).toHaveLength(1);
+		expect(r.dismissals).toEqual([]);
+	});
+	it("A26 — a signal's clause must be one the registry holds, when it is handed in", () => {
+		const body = (c: string) =>
+			audit(
+				`- \`a.ts:3\` — x\n  - breaks when: y\n  - answer: signal — inv; here; daily; clause: ${c}`,
+			);
+		const clauses = new Set(["a-x/holds"]);
+		expect(readAuditAnswers(body("a-x/holds"), { clauses }).noClause).toEqual([]);
+		expect(readAuditAnswers(body("a-x/nope"), { clauses }).noClause).toHaveLength(1);
+		expect(readAuditAnswers(body("<promise>/<clause>"), { clauses }).noClause).toHaveLength(1);
+		expect(readAuditAnswers(body("a-x/nope")).noClause).toEqual([]);
+	});
+	it("A27 — Nothing, None and a trailing full stop all mark a question empty", () => {
+		for (const w of ["Nothing.", "None", "none.", "NOTHING"]) {
+			expect(readAuditAnswers(audit(`- ${w}`)).findings).toEqual([]);
+		}
+	});
+});
+
 describe("describeAnswers", () => {
 	it("names what is open, and lists dismissals and amendments for the person", () => {
 		const r = readAuditAnswers(

@@ -130,7 +130,7 @@ What the plan review's reader is handed before approval, as JSON, read from the 
 
 ### `plans audit-answers <name> [--plan-review]`
 
-Reads `audit.md` in the plan folder (with `--plan-review`, `plan-review.md`, the read before approval) from the plan's worktree and prints every dismissal (`<question> — <finding> — nothing: <reason>`) and every amendment answer (`… — amendment: <part of the brief>`), so the person sees each concern the plan's agent waved away or sent back to them. It writes nothing. A finding with no `breaks when:` line, no answer, or a signal answer naming no `clause: <promise>/<clause>`, a missing question, or findings with no `What let these through?` section (the audit's, not the plan review's) exit it with code 2, naming each; the plan's agent answers them and runs it again.
+Reads `audit.md` in the plan folder (with `--plan-review`, `plan-review.md`, the read before approval) from the plan's worktree and prints every dismissal (`<question> — <finding> — nothing: <reason>`) and every amendment answer (`… — amendment: <part of the brief>`), so the person sees each concern the plan's agent waved away or sent back to them. It writes nothing. Fenced code blocks quoted in the file are not read as findings or headings. A finding with no `breaks when:` line, no answer, an answer with no text after its kind, or a signal answer naming no `clause: <promise>/<clause>` the promises registry declares (an unreadable registry refuses the command with code 1), a missing question, or findings with no `What let these through?` section (the audit's, not the plan review's) exit it with code 2, naming each; the plan's agent answers them and runs it again.
 
 ### `plans next-session <name>`
 

@@ -1,7 +1,7 @@
 ---
 title: "A plan is read cold before approval, and every audit concern is answered"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -85,10 +85,10 @@ amendment. Every concern waved away is shown to the person.
 | A21 | Once the impl and the contract pass, the planning run's next step is the plan review; while it is missing, incomplete or unanswered it stays next; once answered, the run is ready for approval | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | A22 | The plan review is a planning step, so approving is refused from inside it | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/step-env.test.ts |
 | A23 | The next unattended planning run after landing writes an answered plan review before it stops for approval | Build Phase 4 | Build Phase 4 | skipped | live check | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | manual: after landing, `pnpm install:local` and `indusk ui restart`, accept a brief in the admin; read the run's steps for a plan-review step after plan-impl, `plan-review.md` in the plan folder with every finding answered, and the ready-for-approval stop listing its dismissals |
-| A24 | A finding that quotes a diff or markdown in a fenced block is one finding: a `- ` or `## ` line inside the fence is neither a finding nor a heading, so the file still reads as answered | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A25 | An answer line with no text after its kind (`- answer: nothing`, `- answer: nothing — `, `- answer: fix`, `- answer: amendment`) is unanswered, naming the finding; no dismissal is listed with an empty reason | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A26 | A signal answer naming a clause the registry does not hold — the skill's own placeholder `<promise>/<clause>` included — is refused as naming no clause when the reader is handed the registry's clauses | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A27 | A question the reader marks empty as `- Nothing.`, `- none` or `- nothing.` is not a finding, the same as `- nothing` | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A24 | A finding that quotes a diff or markdown in a fenced block is one finding: a `- ` or `## ` line inside the fence is neither a finding nor a heading, so the file still reads as answered | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A25 | An answer line with no text after its kind (`- answer: nothing`, `- answer: nothing — `, `- answer: fix`, `- answer: amendment`) is unanswered, naming the finding; no dismissal is listed with an empty reason | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A26 | A signal answer naming a clause the registry does not hold — the skill's own placeholder `<promise>/<clause>` included — is refused as naming no clause when the reader is handed the registry's clauses | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A27 | A question the reader marks empty as `- Nothing.`, `- none` or `- nothing.` is not a finding, the same as `- nothing` | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 
 ### Deferred Verification
 
@@ -541,25 +541,25 @@ plan review, syncs the project's copies and writes the docs.
 
 This phase tests the one reader of the audit and plan-review files against what a real reader and a real agent write, not the tidy fixtures it was built on. A finding that quotes a diff turns every removed line into a new unanswered finding, so the planning run can never reach approval; an answer with no reason is accepted and the person is shown a blank dismissal; a telemetry answer naming a clause that does not exist, even the skill's own placeholder, is accepted as naming one; and an empty question written in a slightly different way becomes a finding. Once it closes, each of these is read the way the person would read it.
 
-- [ ] Make the reader ignore every line inside a fenced code block when it looks for headings, findings and answers.
+- [x] Make the reader ignore every line inside a fenced code block when it looks for headings, findings and answers.
   <details><summary>Technical</summary>
 
   `readAuditAnswers` in `apps/indusk-mcp/src/lib/audit/answers.ts` splits on lines and matches `^##\s+` and `^- ` with no fence mask. A reader answering "What does the diff change that no row touches?" naturally quotes a ```` ```diff ```` hunk under a finding; each removed line (`- const x = 1;`) is a column-zero `- ` line and becomes a finding with no `breaks when:` and no answer. `indusk plans audit-answers` then exits 2 naming lines that are not findings, and in the planning run `readReview` keeps `complete: false`, so `nextPlanningStep` keeps returning `plan-review` until two runs make no progress and the run ends "cannot continue" — the plan never reaches the person. A `## ` line inside a quoted markdown fence likewise changes the section. Fix: compute `fencedLineMask(lines)` (`lib/impl-headings.ts`, the project's one fence rule) once and `continue` on every masked line. Answers A24 (fixture: a finding whose answer is followed by a fenced diff holding `- old` and `## Heading` lines; expect one finding, `isAnswered` true, no missing question).
 
   </details>
-- [ ] Count an answer with nothing written after its kind as no answer, so no blank dismissal reaches the person.
+- [x] Count an answer with nothing written after its kind as no answer, so no blank dismissal reaches the person.
   <details><summary>Technical</summary>
 
   `ANSWER` is `/^\s+- answer:\s*(fix|signal|amendment|nothing)\b\s*(?:[—–-]+\s*)?(.*)$/`; `(.*)` accepts the empty string, so `  - answer: nothing` is an answer and `dismissals` gets `{ reason: "" }`, printed as `… — nothing: ` — exactly the waved-away concern with no reason the goal says the person must see. Fix: in `readAuditAnswers`, set `current.answer` only when the captured text is non-empty after trim; an empty one leaves the finding in `unanswered` (the command already names it "has no answer"). Answers A25.
 
   </details>
-- [ ] Let the reader be handed the registry's clauses, refuse a telemetry answer naming one that does not exist, and have the answers command hand them in.
+- [x] Let the reader be handed the registry's clauses, refuse a telemetry answer naming one that does not exist, and have the answers command hand them in.
   <details><summary>Technical</summary>
 
   `CLAUSE` is `/clause:\s*[^\s/;]+\/[^\s;]+/`: any `x/y` passes, including the skill's own template text `clause: <promise>/<clause>` (copied unedited, `<promise>` matches `[^\s/;]+`) and a misspelt or never-declared clause. Fix: `ReadOptions` gains `clauses?: ReadonlySet<string>` (`<promise>/<clause>` pairs); when given, a signal answer whose named pair is not in the set goes to `noClause`. The reader stays pure. `plansAuditAnswers` (`apps/indusk-mcp/src/bin/commands/plans.ts`) builds the set from the registry (`readPromises` in `lib/promises/registry.ts`, each promise's `clauses[].name`) for the post-build audit only; an unreadable registry refuses the command by name (exit 1), never reads as an empty set that would refuse every signal. `describeAnswers`'s wording becomes "answers with a signal naming no clause the registry holds". Answers A26 (pure test: a set holding `a-x/holds`; `clause: a-x/holds` passes, `clause: a-x/nope` and `clause: <promise>/<clause>` are refused; with no set given, today's shape check is unchanged).
 
   </details>
-- [ ] Read a question marked empty in any ordinary spelling of "nothing" as having no findings.
+- [x] Read a question marked empty in any ordinary spelling of "nothing" as having no findings.
   <details><summary>Technical</summary>
 
   The skip is `item[1].trim() === "nothing"`. A cold reader on the audit tier writing `- Nothing.` or `- None` under a question creates a finding with no `breaks when:`; the plan's agent must then answer a non-finding, and in the planning run the review stays incomplete for a session. Fix: skip when `/^(nothing|none)\.?$/i` matches the trimmed text. Answers A27.
@@ -568,7 +568,7 @@ This phase tests the one reader of the audit and plan-review files against what 
 
 #### Build Phase 5 Verification
 
-- [ ] The reader counts a fenced diff, a reasonless answer, an invented clause and a capitalised "nothing" the way the person would, failing today and passing after the fixes, and every earlier reader test still passes.
+- [x] The reader counts a fenced diff, a reasonless answer, an invented clause and a capitalised "nothing" the way the person would, failing today and passing after the fixes, and every earlier reader test still passes.
   <details><summary>Technical</summary>
 
   A24, A25, A26, A27 in `apps/indusk-mcp/src/lib/audit/answers.test.ts`, written red first; then `indusk plans tests audit-concerns-are-answered --phase "Build Phase 5"` (or `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/audit src/lib/build/next-planning-step src/lib/build/read-planning`), A2, A4, A5, A10, A13, A17, A20, A21 still green; the package's type check clean.
@@ -577,7 +577,7 @@ This phase tests the one reader of the audit and plan-review files against what 
 
 #### Build Phase 5 Context
 
-- [ ] Add to the package's rules that the audit reader skips fenced blocks and checks a telemetry answer's clause against the registry.
+- [x] Add to the package's rules that the audit reader skips fenced blocks and checks a telemetry answer's clause against the registry.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the `lib/audit/` entry: `readAuditAnswers` masks fences with `fencedLineMask` (never a second fence rule), an answer with no text is no answer, and `plans audit-answers` checks a signal's clause against the registry, an unreadable registry refusing by name.
@@ -586,12 +586,15 @@ This phase tests the one reader of the audit and plan-review files against what 
 
 #### Build Phase 5 Document
 
-- [ ] Say in the plans reference that the answers command refuses a reasonless answer and a clause the registry does not hold.
+- [x] Say in the plans reference that the answers command refuses a reasonless answer and a clause the registry does not hold.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`, `plans audit-answers`: exit 2 also names an answer with no text and a signal whose clause is not declared; fenced blocks are not read as findings.
 
   </details>
+
+- [x] Shape: reviewed `lib/audit/answers.ts` and the `plansAuditAnswers` change — nothing found; `namesClause` is the one new named unit and the registry read stays in the command so the reader stays pure.
+- Decisions (unattended): the clause set is built only for the post-build audit, from `readPromises(cwd)`; the plan-review has no clauses to check. Phase tests: 14 of 17 files pass; the three failures (`build-host.test.ts`, `plans/approve/route.test.ts` — unresolved `@infinitedusky/indusk-mcp/plans` because this worktree has no built `dist/`; `gate-policy-env.test.ts` passes when run alone) are must-not-break files this phase does not touch.
 
 #### Build Phase 5 Hunt record
 

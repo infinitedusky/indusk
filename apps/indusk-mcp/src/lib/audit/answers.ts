@@ -1,3 +1,5 @@
+import { fencedLineMask } from "../impl-headings.js";
+
 /**
  * The one reader of `audit.md` and `plan-review.md` (audit-concerns-are-answered,
  * ADR D2, D6, D8, D9): what each finding says would show it breaking, what the plan's
@@ -71,11 +73,17 @@ export interface ReadOptions {
 	questions?: readonly string[];
 	/** Whether the closing causes section is required; the post-build audit's alone. */
 	causes?: boolean;
+	/**
+	 * The `<promise>/<clause>` pairs the registry holds. When given, a signal answer
+	 * naming a pair outside it names no clause; absent, only the shape is checked.
+	 */
+	clauses?: ReadonlySet<string>;
 }
 
 const ANSWER = /^\s+- answer:\s*(fix|signal|amendment|nothing)\b\s*(?:[—–-]+\s*)?(.*)$/;
 const BREAKS_WHEN = /^\s+- breaks when:\s*(.*)$/;
-const CLAUSE = /clause:\s*[^\s/;]+\/[^\s;]+/;
+const CLAUSE = /clause:\s*([^\s/;]+\/[^\s;]+)/;
+const EMPTY_QUESTION = /^(nothing|none)\.?$/i;
 
 export function readAuditAnswers(text: string, options: ReadOptions = {}): AuditAnswers {
 	const questions = options.questions ?? AUDIT_QUESTIONS;
@@ -86,7 +94,11 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 	let current: Finding | null = null;
 	let causes = false;
 
-	for (const [i, raw] of text.split("\n").entries()) {
+	const lines = text.split("\n");
+	const fenced = fencedLineMask(lines);
+
+	for (const [i, raw] of lines.entries()) {
+		if (fenced[i]) continue;
 		const heading = /^##\s+(.+?)\s*$/.exec(raw);
 		if (heading) {
 			section = heading[1];
@@ -99,7 +111,7 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 		const item = /^- (.+)$/.exec(raw);
 		if (item) {
 			current = null;
-			if (item[1].trim() === "nothing") continue;
+			if (EMPTY_QUESTION.test(item[1].trim())) continue;
 			current = {
 				question: section,
 				finding: item[1].trim(),
@@ -117,8 +129,9 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 			continue;
 		}
 		const answer = ANSWER.exec(raw);
-		if (answer && current.answer === null) {
-			current.answer = { kind: answer[1] as AnswerKind, text: answer[2].trim() };
+		const answerText = answer?.[2].trim();
+		if (answer && answerText && current.answer === null) {
+			current.answer = { kind: answer[1] as AnswerKind, text: answerText };
 		}
 	}
 
@@ -126,7 +139,9 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 		findings,
 		incomplete: findings.filter((f) => !f.breaksWhen),
 		unanswered: findings.filter((f) => !f.answer),
-		noClause: findings.filter((f) => f.answer?.kind === "signal" && !CLAUSE.test(f.answer.text)),
+		noClause: findings.filter(
+			(f) => f.answer?.kind === "signal" && !namesClause(f.answer.text, options.clauses),
+		),
 		dismissals: findings
 			.filter((f) => f.answer?.kind === "nothing")
 			.map((f) => ({ question: f.question, finding: f.finding, reason: f.answer?.text ?? "" })),
@@ -136,6 +151,11 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 		missingQuestions: questions.filter((q) => !headings.has(q)),
 		missingCauses: wantCauses && findings.length > 0 && !causes,
 	};
+}
+
+function namesClause(text: string, held: ReadonlySet<string> | undefined): boolean {
+	const named = CLAUSE.exec(text)?.[1];
+	return named !== undefined && (held === undefined || held.has(named));
 }
 
 /** Whether a read leaves nothing for the plan's agent to do: no open finding, no missing question or section. */
@@ -161,7 +181,8 @@ export function describeAnswers(
 		...read.incomplete.map((f) => `${file}:${f.line} has no "breaks when:" line — ${f.finding}`),
 		...read.unanswered.map((f) => `${file}:${f.line} has no answer — ${f.finding}`),
 		...read.noClause.map(
-			(f) => `${file}:${f.line} answers with a signal naming no clause — ${f.finding}`,
+			(f) =>
+				`${file}:${f.line} answers with a signal naming no clause the registry holds — ${f.finding}`,
 		),
 		...read.missingQuestions.map((q) => `${file} has no section for: ${q}`),
 		...(read.missingCauses ? [`${file} has findings and no "${CAUSES_HEADING}" section`] : []),

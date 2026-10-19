@@ -36,6 +36,7 @@ import {
 	startPlan,
 } from "../../lib/plans/index.js";
 import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
+import { readPromises } from "../../lib/promises/registry.js";
 import { planTimeText } from "../../lib/timing/view.js";
 import { livePlanCopy, resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
@@ -174,9 +175,25 @@ export async function plansAuditAnswers(
 		console.error(`Refused: ${name} has no ${file} in ${live.copy.dir}`);
 		process.exit(1);
 	}
+	let clauses: Set<string> | undefined;
+	if (!planReview) {
+		const registry = readPromises(cwd);
+		if (!registry.ok) {
+			const why =
+				"missing" in registry ? `${registry.missing} is missing` : "an entry is malformed";
+			console.error(`Refused: the promises registry cannot be read to check clauses: ${why}`);
+			process.exit(1);
+		}
+		clauses = new Set(
+			registry.registry.promises.flatMap((p) =>
+				(p.clauses ?? []).map((c) => `${p.name}/${c.name}`),
+			),
+		);
+	}
 	const read = readAuditAnswers(readFileSync(path, "utf-8"), {
 		questions: planReview ? PLAN_REVIEW_QUESTIONS : AUDIT_QUESTIONS,
 		causes: !planReview,
+		clauses,
 	});
 	const { open, shown } = describeAnswers(read, file);
 	if (open.length > 0) {
