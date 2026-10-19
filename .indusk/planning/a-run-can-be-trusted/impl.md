@@ -1,7 +1,7 @@
 ---
 title: "A run can be trusted — Impl"
 date: 2026-10-19
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -1194,7 +1194,7 @@ This phase tests the finished plan against the cases where what it shows or repo
 - [x] Every test this phase wrote failed before its fix and passes after it, and the plan's earlier tests still pass.
   <details><summary>Technical</summary>
 
-  Run 2026-10-19 (`INDUSK_BUILD_STEP` and `INDUSK_GATE_POLICY` unset; `pnpm build` in the package, then `pnpm --filter indusk-admin build` and `node scripts/bundle-admin.js` so the recorder test sees `instrumentation.ts`'s `outcomeOf`). `node apps/indusk-mcp/dist/bin/cli.js plans tests a-run-can-be-trusted --phase 7`: 30 of 30 files passed (the ten row files and the twenty Must-not-break files, `admin-recorder.test.ts` among them). System tier, the command below: 24 of 24. `skill-sync-parity.test.ts`, `hook-registration.test.ts` and `hook-shared-modules.test.ts` pass with the witness's `Edit|Write` registration in `.claude/settings.json` and both hooks copied byte-equal to `.claude/hooks/`; the package's `lib/plans`, `lib/run-record`, `lib/admin` and `lib/promises` folders 549 of 549. `tsc --noEmit` clean in both packages; biome clean on every file this phase changed (`pnpm check` at the root fails on files this phase did not touch, as before it). A91–A103 are `passing`. The admin's page-level browser tests (`workflows.test.tsx`, the plan page's T11, the project page's T13) fail with the pre-phase sources too (checked by restoring both packages' `src` to this phase's start and rebuilding): the page renders after the assertion reads it, and with a 500 ms wait `workflows.test.tsx` A9 passes in the new order. Not this phase's; not chased.
+  Run 2026-10-19 (`INDUSK_BUILD_STEP` and `INDUSK_GATE_POLICY` unset; `pnpm build` in the package, then `pnpm --filter indusk-admin build` and `node scripts/bundle-admin.js` so the recorder test sees `instrumentation.ts`'s `outcomeOf`). `node apps/indusk-mcp/dist/bin/cli.js plans tests a-run-can-be-trusted --phase 7`: 30 of 30 files passed (the ten row files and the twenty Must-not-break files, `admin-recorder.test.ts` among them). System tier, the command below: 24 of 24. `skill-sync-parity.test.ts`, `hook-registration.test.ts` and `hook-shared-modules.test.ts` pass with the witness's `Edit|Write` registration in `.claude/settings.json` and both hooks copied byte-equal to `.claude/hooks/`; the package's `lib/plans`, `lib/run-record`, `lib/admin` and `lib/promises` folders 549 of 549. `tsc --noEmit` clean in both packages; biome clean on every file this phase changed (`pnpm check` at the root fails on files this phase did not touch, as before it). A91–A103 are `passing`. The admin's page-level browser tests (`workflows.test.tsx`, the plan page's and the project page's browser tests) fail with the pre-phase sources too (checked by restoring both packages' `src` to this phase's start and rebuilding): the page renders after the assertion reads it, and with a 500 ms wait `workflows.test.tsx` A9 passes in the new order. Not this phase's; not chased.
 
   A91–A103 pass; each was seen red first. `indusk plans tests a-run-can-be-trusted --phase 7` passes, and the files of Build Phases 1–6 it names stay green (the guard, situation, landed, build-host record and recorder-loop files are shared). In the system tier: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/plan-write-guard.contract.test.ts src/lib/run-record/landed.test.ts`. `skill-sync-parity.test.ts` and `hook-registration.test.ts` pass after the witness's new registration is synced.
 
@@ -1248,9 +1248,67 @@ This phase tests the finished plan against the cases where what it shows or repo
 - **Decision**: A97 and A98 share functions (`writesFile`, `judgeGit`; the drain's `writesFileText`), so their code landed in one commit and A98's checkbox in the next.
 - **Watch out**: the installed guard now reads a here-document as an interpreter's script: a `python3 - <<'PY'` that edits a test file and merely mentions a plan path with a write call is refused, by design (A97). Edit such files with the Edit tool, or run a script file from the scratchpad.
 - **Watch out**: `pnpm exec biome check --write` run from `apps/indusk-mcp` reformatted `apps/indusk-admin/src/instrumentation.ts` to the package's style (and touched an unrelated test); run biome from the repository root. `pnpm check` at the root fails on files this plan did not touch (`.claude/hooks/eval-trigger.js`, `.indusk/mockups/admin/components/*`, `.indusk/config.json`).
-- **Watch out**: the admin's page-level browser tests (`workflows.test.tsx`, the plan page's T11, the project page's T13) fail on this phase's starting sources too: the page renders after the assertion reads the container (A9 passes with a 500 ms wait, in the new step order). Found after Build Phase 2's browser run passed; for `/cleanup` or the retrospective.
+- **Watch out**: the admin's page-level browser tests (`workflows.test.tsx`, the plan page's and the project page's browser tests) fail on this phase's starting sources too: the page renders after the assertion reads the container (A9 passes with a 500 ms wait, in the new step order). Found after Build Phase 2's browser run passed; for `/cleanup` or the retrospective.
 - **Decision**: the plan-reader item (added by hand while this phase ran) was done after Verification was checked, so it was verified after: its unit test in `impl-parser.test.ts` red, then green; the package's everyday suite 2799 passed with only the four known reds; `plans tests --phase 7` once 29 of 30 (the failing file not printed, likely the `admin-recorder.test.ts` flake Build Phase 6 recorded) and 30 of 30 on the next run. The hooks' port `_impl-phases.js` already ends notes at a phase heading, so `check-gates.js` was never blind to the tasks.
 - **Assumption**: the witness finds the guard's pending file under the home of the checkout the command ends in, so a command that ends outside every checkout of the project leaves its decision unpaired (dropped after ten minutes, reporting nothing).
+
+### Build Phase 8: Cleanup — separate the drain's reading of shell commands from its decision log
+
+**Tier**: med — the work step's default
+
+The plan grew one file that has two jobs: the library that records the shell guard's decisions and judges them against the disk also carries a whole second reader of shell commands. Moving that reader into its own file gives each file one reason to change (the log's shape, or the shell syntax it reads). When the phase closes, behaviour is unchanged and every existing test passes without edits to what it asserts. Every other changed file over the size threshold was reviewed and is left as it is, for the reasons below.
+
+- [x] Move the drain's reading of shell commands out of the decision-log library into a file of its own.
+  <details><summary>Technical</summary>
+
+  Extract `splitHeredocs`, `simpleCommands`, `verbOf`, `holdsPlanFolders`, `valuesOf`, `patchHeaderPaths`, `isPlanPath`, `movesThroughChecks` and the exported `parserReadsWrite` (lines ~146–460 of `apps/indusk-mcp/src/lib/promises/clause-verdicts.ts`, of its 635) into `apps/indusk-mcp/src/lib/promises/shell-write-reading.ts`; `clause-verdicts.ts` imports `parserReadsWrite` and keeps `appendDecision`, `toolUseKey`, the snapshot functions, `judgeDecision`, `toolWrittenDuring`, `rewriteDecisionFile` and `drainPlanWriteDecisions`. Basis: single responsibility — shell syntax versus the decision log — and one reason to change per file; the move is mechanical (no signature changes). Re-export `parserReadsWrite` from `clause-verdicts.ts` only if a test or caller imports it from there today (grep first); otherwise update the importer. Check `hook-shared-modules.test.ts`: the hook port `_clause-verdicts.js` mirrors only the writing half (`DECISIONS_FILE`, `toolUseKey`, `appendDecision`, snapshots), so it should not move; if the test pins function names across the split, update the pin, not the port.
+
+  </details>
+- [ ] Review the build host and leave it as it is.
+  <details><summary>Technical</summary>
+
+  Reviewed `apps/indusk-admin/src/lib/build-host.ts` (956 lines, +581 this plan) — left as-is. The record readers (`recordsOf`, `statusOfRecord`, `buildStateFromRecord`, `deadRun`, `runOfPlan`) and the starters (`startBuild`, `startPlanning`, `restartFor`) share the module-private `builds()` and `plannings()` maps and the same `key(project, plan)`; a split would export that state or pass it through every call and make the "entry held before the first await" ordering (Build Phase 7, A96) harder to read across two files. The two 15-second throttles (`throttled`/`signalledAt` and `checkInProgress`/`idleCheckedAt`) are two copies, not three, and key different things; the rule of three is not met and a shared helper would be a four-line wrapper over a `Map`. This is the cross-file question Build Phase 2's Shape review passed to `/cleanup`.
+
+  </details>
+- [ ] Review the shell guard and its drain-side twin and leave them as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed `apps/indusk-mcp/hooks/plan-write-guard.js` (1058 lines) — left as-is. Its tokenizer (`lex`, `segmentsOf`, ~200 lines) is a clean unit, but a hook cannot import the TS library and `apps/indusk-mcp/hooks/CLAUDE.md` pins each `_`-prefixed module to exactly one `src/lib` module by count; a new `_shell-lex.js` would have no TS mirror (the drain reads commands with `shell-quote`, not this lexer) and would break that rule for a 200-line gain. The verb rules in `judgeVerb` stay one table read top to bottom against the refused-forms list in the file's header (Build Phase 7's Shape review). The guard's refused-forms list and the drain's `parserReadsWrite` are the same list written twice on purpose: the drain is the independent reading that proves the guard's `shell-write-refused` clause, and sharing the code would make them agree by construction and prove nothing.
+
+  </details>
+- [ ] Review the large test files and the remaining changed files and leave them as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed `build-host.record.test.ts` (481), `plan-write-guard.test.ts` (411) and the other changed files over the 400-line cap by count; the tests are one file per behaviour group named by trajectory row, each case independent, so length is case count, not tangled responsibility. The `run-record/*` files (`situation.ts` 284, `situation-signals.ts` 276, `landed.ts` 184, `signals.ts` 164, `record.ts` 130) and `clause-signal-rules.ts` (154) are under the cap and were each read for duplication: no helper appears in three places. Not examined: `validate-impl-structure.js` (1022) and `check-gates.js` (596) — they were changed by a few lines, not grown by this plan. The list of changed files came from `git diff --stat` against the merge base because `tsx` is not installed in this worktree, so `listOversizedChangedFiles` was not run itself.
+
+  </details>
+
+#### Build Phase 8 Verification
+
+- [ ] Behaviour is unchanged: the drain, the guard and the hook-port tests pass with the same assertions as before the move.
+  <details><summary>Technical</summary>
+
+  (no tests flip at this phase — reason: purely structure-preserving, covered by existing rows.) Run `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/clause-verdicts.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/plan-write-guard.test.ts`, then the system tier's `plan-write-guard.contract.test.ts`; all pass with no edit to an assertion. `tsc --noEmit` clean in the package, and biome clean on the two files from the repository root. The new file is exercised through `parserReadsWrite`'s existing cases in `clause-verdicts.test.ts` (A97, A98), so no new trajectory row is added.
+
+  </details>
+
+#### Build Phase 8 Context
+
+- [ ] (none needed — internal decomposition)
+  <details><summary>Technical</summary>
+
+  The hooks' rules name `_clause-verdicts.js` ← `clause-verdicts.ts` as the one-to-one mirror, and that still holds because the port mirrors the writing half that stays in `clause-verdicts.ts`. No rule about the parser's file location exists in any `CLAUDE.md` to update.
+
+  </details>
+
+#### Build Phase 8 Document
+
+- [ ] (none needed — internal decomposition)
+  <details><summary>Technical</summary>
+
+  No public surface, command, hook registration or page changes; the docs name `parserReadsWrite` nowhere (grep `apps/docs/src` to confirm before closing).
+
+  </details>
 
 ## Files Affected
 
