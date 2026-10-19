@@ -193,17 +193,16 @@ export function writtenAsClauses(folder: PlanFolder): boolean {
 /**
  * The promises a plan written as clauses holds with a split or limit clause,
  * each with the rows that name it — what landing runs the tests of. Null for
- * a plan not written as clauses (it lands as before); a refusal when the
- * plan, its registry or its impl cannot be read, never an empty set.
+ * a plan not written as clauses, or with no plan folder (it lands as before);
+ * a refusal when its registry or its impl cannot be read, never an empty set.
  */
 export function clauseTestPlan(
 	planRoot: string,
 	plan: string,
 ): { held: HeldPromise[] } | { refusal: string } | null {
+	// No plan folder: nothing is written as clauses, and landing's own checks say what is missing.
 	const status = planFolderStatus(planRoot, plan);
-	if (status !== "active" && status !== "archived") {
-		return { refusal: `"${plan}" is not a plan folder under .indusk/planning/` };
-	}
+	if (status !== "active" && status !== "archived") return null;
 	const folder: PlanFolder = {
 		plan,
 		archived: status === "archived",

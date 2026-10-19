@@ -65,28 +65,28 @@ clause it broke.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | Closing a plan is refused when a test that proves one of its clauses fails at close, though its row says passing; the refusal names the clause and the file | Build Phase 4 | Build Phase 4 | written | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-tests-run.test.ts |
-| A2 | Landing a plan is refused when a test that proves one of its clauses fails, naming the clause | Build Phase 4 | Build Phase 4 | written | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/plans/land-clause-tests.test.ts |
-| A3 | A failing test is reported against the clause its file names | Build Phase 4 | Build Phase 4 | written | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-tests-run.test.ts |
+| A1 | Closing a plan is refused when a test that proves one of its clauses fails at close, though its row says passing; the refusal names the clause and the file | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-tests-run.test.ts |
+| A2 | Landing a plan is refused when a test that proves one of its clauses fails, naming the clause | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/plans/land-clause-tests.test.ts |
+| A3 | A failing test is reported against the clause its file names | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-tests-run.test.ts |
 | A4 | A clause whose signal reported upheld in a real run reads upheld on the promise page and in `promises status` | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A5 | A clause with passing tests and no report from its signal does not read upheld | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A6 | A signal whose only source is a test run is not the clause's signal: the clause reads no signal however often the test passes | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/signal-test-run.test.ts |
 | A7 | A clause whose signal reports broken reads broken, its promise reads broken, and an incident opens naming the clause and its symptom | Build Phase 3 | Build Phase 5 | written | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-break.test.ts |
 | A8 | A split is broken by missing its budget at its point; a limit by one report over its bound, however many were inside | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
-| A9 | A plan written as clauses cannot close while a clause has a failing test or no signal that reported upheld; the refusal says which is missing | Build Phase 4 | Build Phase 4 | written | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
-| A10 | When such a plan closes, its promise is enforced | Build Phase 4 | Build Phase 4 | written | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
+| A9 | A plan written as clauses cannot close while a clause has a failing test or no signal that reported upheld; the refusal says which is missing | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
+| A10 | When such a plan closes, its promise is enforced | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
 | A11 | A clause's signal run against the real system through the local daemon reports upheld and the clause then reads upheld end to end | Build Phase 6 | Build Phase 6 | planned | live check | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/__tests__/clause-signal.live.test.ts |
 | A12 | A clause whose signal never reported reads no signal on the promise page, in `promises status` and in the admin, never drawn as holding | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A13 | A clause that last reported upheld, whose watcher has gone silent past its heartbeat, reads no signal | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A14 | A promise with one clause upheld and another reading no signal is not holding: the worst clause decides | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
-| A15 | A promise made only of resting clauses has the standing of those promises and closes when they are in force, with no row of its own | Build Phase 3 | Build Phase 4 | written | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts, apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
+| A15 | A promise made only of resting clauses has the standing of those promises and closes when they are in force, with no row of its own | Build Phase 3 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts, apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
 | A16 | When a clause's signal reports broken, the event it emits carries the promise and the clause | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/clause-break-event.test.ts |
 | A17 | The incident a broken clause opens names the promise and the clause and, when recorded, the plan and phase that added the signal, as a pointer | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-names-clause.test.ts |
 | A18 | From an incident a person reaches the clause's tests and the place that emits its signal, with no search by file name | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-names-clause.test.ts |
 | A25 | A plan written before clause plans still closes on passing tests that name its promises, with no signal asked of it | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over a-closed-plan-kept-its-promises for every plan closed before clauses | apps/indusk-mcp/src/lib/promises/confirm-legacy-plan.test.ts |
 | A26 | `markPromise` writes `broken` where it wrote `violated`, and every reader still reads both | Test Phase 1 | Build Phase 1 | passing | unit | the switch carried from one-promise-language; a rename no promise of this plan states | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts |
 | A27 | A promise with no clauses still opens an incident that names the tests that proved it | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over an-incident-names-its-tests for every promise written before clauses | apps/indusk-mcp/src/lib/promises/incident-no-clause.test.ts |
-| A29 | A test file carrying a clause token is refused at close when it asserts nothing about the clause | Build Phase 4 | Build Phase 4 | written | unit | tightens verified-before-release; droppable if it makes false refusals (decision D-3 below) | apps/indusk-mcp/src/lib/promises/clause-test-asserts.test.ts |
+| A29 | A test file carrying a clause token is refused at close when it asserts nothing about the clause | Build Phase 4 | Build Phase 4 | passing | unit | tightens verified-before-release; droppable if it makes false refusals (decision D-3 below) | apps/indusk-mcp/src/lib/promises/clause-test-asserts.test.ts |
 | A30 | No skill, tool description or doc page calls a promise's telemetry a mark; each says signal (exempt: the Day 4b entry in the root `CLAUDE.md`, archived plans and decisions, this plan's name) | Test Phase 1 | Build Phase 6 | written | unit | the word cleanup carried from one-promise-language; no promise of this plan states it | apps/indusk-mcp/src/__tests__/signal-word.test.ts |
 | A31 | The suite-speed script and the demo app write `broken` where they wrote `violated`, and every reader still reads both | Test Phase 1 | Build Phase 1 | passing | unit | the writers outside `markPromise`, carried from one-promise-language's falsification | apps/indusk-mcp/src/__tests__/suite-speed.test.ts, examples/seat-holds/src/telemetry.test.ts |
 
@@ -487,27 +487,30 @@ written before clauses on the old rule.
 
   </details>
 Ran verbatim: the registry entry now reads the new sentence, owned by mark-first, with the old one kept in its History. `promises check` then refused a Build Phase 3 comment in `clause-standing.ts` ("…read for a promise: a behaviour promise…" parsed as a token for a promise named `a`); reworded with a dash, and the check passes (165 promises).
-- [ ] Review the closing and landing changes against the TypeScript extension's rules.
+- [x] Review the closing and landing changes against the TypeScript extension's rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
 
   </details>
+Shape (after Verification was green; `prepareShapeReview` gave 19 changed files, no unreadable extension): one finding, fixed in this item's commit — `clauseTestPlan` refused landing for a plan with no plan folder before asking whether it was written as clauses, so a plan written before clause plans could have been stopped by a clause rule; it now returns null there (lands as before). Left as is: `clauseTestsHalf` collects files, runs them once and blames each failure in one function (about 60 lines) — one reason to change, the tests half's verdict, and splitting the blame step would only move its two maps apart; `confirm.ts` is 472 lines, with the clause halves in their own function (`clauseHalves`) and module — whether the closing rule should be decomposed further across files is `/cleanup`'s.
 
 #### Build Phase 4 Verification
 
-- [ ] Closing and landing refuse and accept as the tests say.
+- [x] Closing and landing refuse and accept as the tests say.
   <details><summary>Technical</summary>
 
   A1, A2, A3, A9, A10, A15, A29 pass; A25 still passes: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/clause-tests-run.test.ts src/lib/plans/land-clause-tests.test.ts src/lib/promises/confirm-signal.test.ts src/lib/promises/clause-test-asserts.test.ts src/lib/promises/confirm-legacy-plan.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/confirm.ts src/lib/plans/land.ts`.
 
   </details>
-- [ ] This plan's brief and registry still agree.
+The five files: 19 passed (A1, A2, A3, A9, A10, A15's closing half, A29, and A25 still green); `vitest related` on `confirm.ts` and `land.ts`: 39 passed; on the other files this phase changed, 303 of 304, the one red being A7's incident half (Build Phase 5, by design); `tsc --noEmit` clean. With `dist/` built, the system tier over the same files: 261 of 264, the three red being environmental — `land-own-worktree.test.ts` and `detail-is-only-read.test.ts` run `plans accept`/`land` and an `ask` gate, which this unattended build step's environment (`INDUSK_GATE_POLICY=auto`, a build step) refuses by design. `indusk plans tests mark-first --phase "Build Phase 4"`: 13 of 14 files, the red being `admin-recorder.test.ts`, which needs the admin bundle this worktree has not built.
+- [x] This plan's brief and registry still agree.
   <details><summary>Technical</summary>
 
   `indusk promises contract mark-first` and `indusk promises check`.
 
   </details>
+Run with this worktree's build: the contract agrees (1 made, 3 kept, 2 changed, 0 replaced; 3 expectations); the check passes (165 promises).
 
 #### Build Phase 4 Context
 
