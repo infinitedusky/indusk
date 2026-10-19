@@ -21,6 +21,7 @@ import {
 } from "@infinitedusky/indusk-mcp/build";
 import {
   acceptPlan,
+  type BringTrunkOptions,
   bringTrunkIntoPlan,
 } from "@infinitedusky/indusk-mcp/plans";
 import {
@@ -788,6 +789,8 @@ const declined = (stop: PlanningStop): PlanningRunState => ({
 export async function startPlanning(
   project: string,
   plan: string,
+  /** The tracer the three clauses of a-brief-is-accepted-on-current-main report through; absent, the commands' one. */
+  bring: BringTrunkOptions = {},
 ): Promise<PlanningRunState> {
   const inPlanning = planningStepRefusal("starting a planning run");
   if (inPlanning) throw new Error(inPlanning);
@@ -846,11 +849,17 @@ export async function startPlanning(
     free = sessionManager().admitBuild(project, plan);
     where = await planLocation(project, plan);
     if ("error" in where) throw new Error(where.error);
-    await bringTrunkIntoPlan(root, plan, {
-      refused: "its planning run did not start",
-      again: "start its planning again",
-      when: "its planning run",
-    });
+    await bringTrunkIntoPlan(
+      root,
+      plan,
+      {
+        refused: "its planning run did not start",
+        again: "start its planning again",
+        when: "its planning run",
+      },
+      undefined,
+      bring,
+    );
   } catch (err) {
     release();
     free?.();
