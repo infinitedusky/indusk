@@ -1,5 +1,6 @@
+import { readsSignal } from "./clause-standing.js";
 import type { Registry } from "./registry.js";
-import { healthWindowMs, resolveMarkSources, type SourceName } from "./sources.js";
+import { resolveMarkSources, type SourceName } from "./sources.js";
 import type { MarkedSpan, MarkedSpansResult, PromiseMarks } from "./telemetry.js";
 import { type FullSlice, readTimeline, type TimelineMark } from "./timeline.js";
 
@@ -8,7 +9,7 @@ import { type FullSlice, readTimeline, type TimelineMark } from "./timeline.js";
  * into the package by vscode-extension, so every window reads through one
  * store). Originally: what the admin has read, kept.
  *
- * A week of one promise's marks is megabytes, because Jaeger returns whole
+ * A week of one promise's signals is megabytes, because Jaeger returns whole
  * traces (research.md). The page refreshes every few seconds, and its chips
  * and its timeline both need the window. So the admin holds, per project and
  * source, every mark it has read and the range those marks cover, and a
@@ -92,12 +93,12 @@ export type WindowRead =
 	  };
 
 function markKey(m: TimelineMark): string {
-	return `${m.traceId}|${m.at}|${m.outcome}`;
+	return `${m.traceId}|${m.at}|${m.outcome}|${m.clause ?? ""}`;
 }
 
 function behaviourNames(registry: Registry): string {
 	return registry.promises
-		.filter((p) => p.kind === "behaviour" && p.state !== "retired")
+		.filter(readsSignal)
 		.map((p) => p.name)
 		.sort()
 		.join(",");

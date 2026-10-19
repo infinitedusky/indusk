@@ -17,6 +17,7 @@ let finishRelease: () => void = () => {};
 vi.mock("@infinitedusky/indusk-mcp/build", () => ({
   autoAccepts: () => false,
   buildStepModel: async () => null,
+  timedStep: <T,>(run: T) => run,
   planningStepRefusal: () => null,
   readBuildPlan: async () => ({}),
   runStepSession: async () => ({}),

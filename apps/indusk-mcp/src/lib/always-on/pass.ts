@@ -123,7 +123,7 @@ export function writeAnnounced(
 const BROKEN_WORDS = ["broken", "violated"] as const;
 
 /**
- * Every span marked broken since `since`, newest first.
+ * Every span signalling broken since `since`, newest first.
  *
  * Asked of every service the server knows, by the outcome tag rather than by
  * promise name — the server has no registry to enumerate.

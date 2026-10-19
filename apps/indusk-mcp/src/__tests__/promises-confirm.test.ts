@@ -85,7 +85,7 @@ function project(opts: {
 
 /** A test file carrying the promise token and a `clause:` token for each clause named. */
 const provingClauses = (name: string, ...clauseNames: string[]) =>
-	`${testFile(name)}${clauseNames.map((c) => `// clause: ${name}/${c}\n`).join("")}`;
+	`${testFile(name)}${clauseNames.map((c) => `// clause: ${name}/${c}\n`).join("")}it("checks it", () => expect(1).toBe(1));\n`; // a clause test asserts something (mark-first A29)
 
 const promise = (p: PromiseProject) =>
 	matter(readFileSync(join(p.planRoot, ".indusk", "promises", `${NAME}.md`), "utf-8"));

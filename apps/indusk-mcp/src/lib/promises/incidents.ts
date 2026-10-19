@@ -1,9 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import matter from "gray-matter";
+import { isUsableRelPath } from "../path-segment.js";
+import { clauseTokenPattern } from "../tokens.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import type { IncidentEntry, PromiseEntry, Registry } from "./registry.js";
-import { rowsNaming } from "./rows.js";
+import { rowsNaming, rowsProvingClause } from "./rows.js";
 import type { MarkedSpan } from "./telemetry.js";
 import {
 	INCIDENTS_SUBDIR,
@@ -16,9 +18,9 @@ import {
  * Opening and extending incidents from observed violations (day-monitor,
  * ADR D6).
  *
- * An open incident of the violated promise is extended — new trace ids
- * appended, `last_seen` moved forward only; otherwise one is opened as
- * `incidents/i-<date>-<promise>.md`, a suffix on collision. A trace already
+ * An open incident of the violated promise and clause is extended — new
+ * trace ids appended, `last_seen` moved forward only; otherwise one is opened
+ * as `incidents/i-<date>-<promise>.md`, a suffix on collision. A trace already
  * recorded in any incident of the promise, open or fixed, is never counted
  * again, so a fixed incident is not reopened by the violations that caused it
  * and a second pass over the same window writes nothing.
@@ -32,6 +34,8 @@ export interface IncidentChange {
 	id: string;
 	kind: "opened" | "extended";
 	traces: string[];
+	/** The clause the incident is keyed by, when its break named one. */
+	clause?: string;
 }
 
 export function iso(d: Date): string {
@@ -96,17 +100,24 @@ export function oneLine(value: string): string {
  * whether it passes. A fix starts from the tests that were vouching: a
  * passing row here is a test that did not catch this break.
  *
+
+ * With a clause (a break that named one), only the rows that name that clause
+ * are listed, with the files that emit its signal (A18).
+ *
  * Written once, when the incident opens. It is a record of what was vouching
  * at the time, not a live view; the rows themselves move on.
  *
  * promise: an-incident-names-its-tests
  */
-export function provenBy(planRoot: string, promise: PromiseEntry): string {
-	const { rows, unreadable } = rowsNaming(planRoot, promise);
+export function provenBy(planRoot: string, promise: PromiseEntry, clause?: string): string {
+	const { rows: all, unreadable } = rowsNaming(planRoot, promise);
+	// A broken clause is vouched for by the rows that name that clause; the
+	// promise's other rows are not the ones that failed to catch it (A18).
+	const rows = clause ? rowsProvingClause(all, clause) : all;
 	const lines =
 		rows.length === 0
 			? [
-					`No test row names this promise, so no plan says which test proves it. ${
+					`No test row names this ${clause ? "clause" : "promise"}, so no plan says which test proves it. ${
 						promise.tests.length > 0
 							? `Its registry entry lists as tests: ${promise.tests.join(", ")}.`
 							: "Its registry entry lists no test either."
@@ -116,6 +127,12 @@ export function provenBy(planRoot: string, promise: PromiseEntry): string {
 					(r) =>
 						`- \`${r.plan}\` row ${r.id} — ${r.state}${r.tests.length > 0 ? ` (${r.tests.join(", ")})` : ""}`,
 				);
+	if (clause) {
+		const emits = signalEmitters(planRoot, promise, clause);
+		if (emits.length > 0) {
+			lines.push("", `The signal is emitted at: ${emits.map((f) => `\`${f}\``).join(", ")}.`);
+		}
+	}
 	if (unreadable.length > 0) {
 		lines.push(
 			"",
@@ -123,6 +140,35 @@ export function provenBy(planRoot: string, promise: PromiseEntry): string {
 		);
 	}
 	return lines.join("\n");
+}
+
+/**
+ * The files that emit a clause's signal: the promise's declared `sites` that
+ * carry the clause's token, or all of its sites when none does (a site that
+ * emits one signal for the promise's every clause names none). A site that
+ * cannot be read is left out, never guessed.
+ */
+function signalEmitters(planRoot: string, promise: PromiseEntry, clause: string): string[] {
+	const readable = promise.sites.filter((rel) => {
+		if (!isUsableRelPath(rel)) return false;
+		const abs = join(planRoot, rel);
+		return existsSync(abs) && statSync(abs).isFile();
+	});
+	const names = [promise.name, ...promise.aliases];
+	const naming = readable.filter((rel) => {
+		const text = readFileSync(join(planRoot, rel), "utf-8");
+		return names.some((n) => clauseTokenPattern(n, clause).test(text));
+	});
+	return naming.length > 0 ? naming : readable;
+}
+
+/**
+ * A clause name as a frontmatter value. It arrived on a span, so it is
+ * written plain only when it is a name the registry could hold; anything else
+ * is quoted on one line, never able to add a key.
+ */
+function clauseScalar(clause: string): string {
+	return /^[a-z0-9][a-z0-9-]*$/.test(clause) ? clause : JSON.stringify(oneLine(clause));
 }
 
 /** The section of a release's incident that names what may have caused it (ADR D9). */
@@ -146,10 +192,15 @@ export function incidentText(o: {
 	suspects?: string;
 	/** The rows that were proving the promise, as `provenBy` writes them. */
 	provenBy: string;
+	/** The clause that broke, when the break named one; the incident is keyed by `promise/clause`. */
+	clause?: string;
+	/** The plan and phase that added the clause's signal, when the break named them: a pointer, second to the clause. */
+	pointer?: { plan: string; phase: string };
 }): string {
 	const frontmatter = [
 		`id: ${o.id}`,
 		`promise: ${o.promise}`,
+		...(o.clause ? [`clause: ${clauseScalar(o.clause)}`] : []),
 		`source: ${o.source}`,
 		...(o.environment ? [`environment: ${JSON.stringify(oneLine(o.environment))}`] : []),
 		"status: open",
@@ -159,12 +210,24 @@ export function incidentText(o: {
 		...o.evidence,
 	];
 	const suspects = o.suspects ? `## ${SUSPECTS}\n\n${o.suspects}\n\n` : "";
-	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${oneLine(o.symptom)}\n\n${suspects}## Proven by\n\n${o.provenBy}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
+	const signal = o.clause
+		? `Signal: \`${o.promise}/${oneLine(o.clause)}\`${
+				o.pointer
+					? ` — added by plan \`${oneLine(o.pointer.plan)}\`, ${oneLine(o.pointer.phase)}`
+					: ""
+			}\n\n`
+		: "";
+	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${signal}${oneLine(o.symptom)}\n\n${suspects}## Proven by\n\n${o.provenBy}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
 }
 
 /**
- * Record `violations` of `promise` in the registry at `registry.dir`. Returns
- * what changed, or null when every trace was already recorded.
+ * Record `violations` of `promise` in the registry at `registry.dir`. An
+ * incident is keyed by `promise/clause` (mark-first ADR D1): the fresh
+ * violations are grouped by the clause they name — a violation naming none is
+ * a group of its own, the incident a promise has always had — and each group
+ * extends the open incident of its own clause or opens one. A second clause's
+ * break therefore never lands in the first clause's incident. Returns what
+ * changed, one entry per group; empty when every trace was already recorded.
  */
 export function recordViolations(
 	registry: Registry,
@@ -174,31 +237,69 @@ export function recordViolations(
 	now: Date,
 	/** Ids an opened incident must not take: those the owner's Maintenance phases name. */
 	avoid: ReadonlySet<string> = new Set(),
-): IncidentChange | null {
-	const dir = join(registry.dir, INCIDENTS_SUBDIR);
+): IncidentChange[] {
 	const mine = registry.incidents.filter((i) => i.promise === promise.name);
 	const known = new Set(mine.flatMap((i) => recorded(join(registry.dir, i.file)).traces));
 	const fresh = violations.filter((v) => !known.has(v.traceId));
-	if (fresh.length === 0) return null;
-	const freshIds = [...new Set(fresh.map((v) => v.traceId))];
-	const newest = fresh.reduce((a, b) => (b.at > a.at ? b : a));
-
-	const open: IncidentEntry | undefined = mine.find((i) => i.status === "open");
-	if (open) {
-		const path = join(registry.dir, open.file);
-		const before = recorded(path);
-		const lastSeen =
-			before.lastSeen && before.lastSeen > iso(newest.at) ? before.lastSeen : iso(newest.at);
-		let text = readFileSync(path, "utf-8");
-		text = setList(text, "traces", [...before.traces, ...freshIds]);
-		text = setScalar(text, "last_seen", lastSeen);
-		writeFileSync(path, text);
-		ensurePromiseCarries(registry, promise, open.id);
-		return { id: open.id, kind: "extended", traces: freshIds };
+	const changes: IncidentChange[] = [];
+	for (const [clause, group] of byClauseNamed(fresh)) {
+		const open = mine.find((i) => i.status === "open" && i.clause === clause);
+		changes.push(
+			open
+				? extendIncident(registry, promise, open, group)
+				: openIncident(registry, promise, group, source, now, avoid),
+		);
 	}
+	return changes;
+}
 
+/** Violations grouped by the clause they name, in first-seen order; `undefined` holds those naming none. */
+function byClauseNamed(violations: MarkedSpan[]): Map<string | undefined, MarkedSpan[]> {
+	const groups = new Map<string | undefined, MarkedSpan[]>();
+	for (const v of violations) groups.set(v.clause, [...(groups.get(v.clause) ?? []), v]);
+	return groups;
+}
+
+const newestOf = (spans: MarkedSpan[]) => spans.reduce((a, b) => (b.at > a.at ? b : a));
+const traceIds = (spans: MarkedSpan[]) => [...new Set(spans.map((v) => v.traceId))];
+
+/** Append a group's new traces to an open incident of its clause, moving `last_seen` forward only. */
+function extendIncident(
+	registry: Registry,
+	promise: PromiseEntry,
+	open: IncidentEntry,
+	group: MarkedSpan[],
+): IncidentChange {
+	const path = join(registry.dir, open.file);
+	const before = recorded(path);
+	const newest = iso(newestOf(group).at);
+	const ids = traceIds(group);
+	let text = readFileSync(path, "utf-8");
+	text = setList(text, "traces", [...before.traces, ...ids]);
+	text = setScalar(
+		text,
+		"last_seen",
+		before.lastSeen && before.lastSeen > newest ? before.lastSeen : newest,
+	);
+	writeFileSync(path, text);
+	ensurePromiseCarries(registry, promise, open.id);
+	return { id: open.id, kind: "extended", traces: ids, ...clauseOf(open.clause) };
+}
+
+/** Open an incident for a group of one clause's violations (or of those naming none). */
+function openIncident(
+	registry: Registry,
+	promise: PromiseEntry,
+	group: MarkedSpan[],
+	source: IncidentSource,
+	now: Date,
+	avoid: ReadonlySet<string>,
+): IncidentChange {
+	const dir = join(registry.dir, INCIDENTS_SUBDIR);
 	mkdirSync(dir, { recursive: true });
-	const oldest = fresh.reduce((a, b) => (b.at < a.at ? b : a));
+	const newest = newestOf(group);
+	const oldest = group.reduce((a, b) => (b.at < a.at ? b : a));
+	const ids = traceIds(group);
 	const id = newIncidentId(dir, promise.name, iso(now).slice(0, 10), avoid);
 	writeFileSync(
 		join(dir, `${id}.md`),
@@ -208,27 +309,36 @@ export function recordViolations(
 			source,
 			opened: iso(oldest.at),
 			lastSeen: iso(newest.at),
-			evidence: ["traces:", ...freshIds.map((t) => `  - '${t}'`)],
+			evidence: ["traces:", ...ids.map((t) => `  - '${t}'`)],
 			symptom: newest.symptom ?? "The signal reported the promise broken and carried no symptom.",
 			// The newest violation's environment, and no guess when it has
 			// none: one server holds staging and production, and an incident
 			// that names the wrong one sends a person to the wrong logs.
 			environment: newest.environment,
 			// The registry directory is `<plan root>/.indusk/promises`.
-			provenBy: provenBy(resolve(registry.dir, "..", ".."), promise),
+			provenBy: provenBy(resolve(registry.dir, "..", ".."), promise, newest.clause),
+			...(newest.clause ? { clause: newest.clause } : {}),
+			...(newest.clause && newest.signal ? { pointer: newest.signal } : {}),
 		}),
 	);
 	ensurePromiseCarries(registry, promise, id);
-	return { id, kind: "opened", traces: freshIds };
+	return { id, kind: "opened", traces: ids, ...clauseOf(newest.clause) };
 }
 
-/** An enforced promise with an open incident moves to known-broken, and lists it. */
+const clauseOf = (clause: string | undefined) => (clause ? { clause } : {});
+
+/**
+ * An enforced promise with an open incident moves to known-broken, and lists
+ * it. The list is read from the file, not from `promise`: one pass may open
+ * several incidents of one promise (one per clause), and the entry read before
+ * the pass knows none of them.
+ */
 export function ensurePromiseCarries(registry: Registry, promise: PromiseEntry, id: string): void {
 	const path = join(registry.dir, promise.file);
 	const before = readFileSync(path, "utf-8");
+	const listed = stringList((matter(before).data as Record<string, unknown>).incidents);
 	let text = before;
-	if (!promise.incidents.includes(id))
-		text = setList(text, "incidents", [...promise.incidents, id]);
+	if (!listed.includes(id)) text = setList(text, "incidents", [...listed, id]);
 	if (promise.state === "enforced") text = setScalar(text, "state", "known-broken");
 	if (text !== before) writeFileSync(path, text);
 }

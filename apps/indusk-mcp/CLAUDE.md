@@ -180,6 +180,19 @@ pointer; the pointer holds the story.
   phase below it from all three parsers. Falsification log fields are
   single-line; frontmatter regexes for value-bearing keys are line-anchored.
 
+- **Timing never stops the work it records** (`lib/timing/`): every timing write goes through
+  `recordSafely`, which warns once and resolves; the reader skips what it cannot read. The
+  phase-boundary reader's throw is not tolerated by the timing view but caught beside it.
+  Guarded by `timing/phase-close.test.ts` (`clause: a-plan-says-how-long-it-took/a-record-never-blocks`).
+  A new unattended step kind is timed by being run through `timedStep` (`lib/timing/timed-step.ts`), which
+  wraps the runner's `run` function at the admin's call sites; the runners are not edited. Guarded by
+  `timing/timed-step.test.ts` (`clause: a-plan-says-how-long-it-took/steps-are-timed`).
+  `plans time` (`timing/view.ts`) never throws on a record or a plan with none: it prints what exists and
+  names what has no record. Guarded by `timing/view.test.ts` (`clause: a-plan-says-how-long-it-took/one-view`).
+  The view reads a plan where it is written: phase openings from the plan's live worktree, the landing from the
+  code repo (`resolveExecutionRoots`); the log reader checks each kind's fields and skips a record missing them.
+  — see `/decisions/plan-timing`
+
 ## Promises and telemetry
 
 - A daemon process is InDusk's by `daemonProcessOf` (`daemon-process.ts`: binary +
@@ -210,6 +223,7 @@ pointer; the pointer holds the story.
   and `symptom`; a credential with a line separator is refused by name. The
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
+- **A command's own spans come from `commandTracer()`** (`lib/telemetry/command-tracer.ts`): a lazy provider exporting to the daemon found at its stored address, the API's no-op tracer when none runs, never registered globally; a short-lived command calls `flushCommandTracer()` before it exits. The evaluator keeps `initEvalOtel`. — see `/decisions/mark-first`
 - Find a promise with `findPromise` (`lib/promises/registry.ts`; name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `lib/promises/clause-rules.ts`.
 - **`.mcp.json` is per machine and untracked**: only `ensureMcpJson` creates it (naming
   `indusk`), and `update` only when none exists; `register` writes only its own

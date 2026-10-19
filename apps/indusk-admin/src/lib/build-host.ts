@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
 import {
   autoAccepts,
   type BuildStepName,
   buildStepModel,
+  nextBuildStep,
   nextPlanningStep,
   type PlanningStep,
   type PlanningStop,
@@ -14,6 +16,7 @@ import {
   runRelease,
   runStepSession,
   type ShortenReason,
+  timedStep,
 } from "@infinitedusky/indusk-mcp/build";
 import { acceptPlan } from "@infinitedusky/indusk-mcp/plans";
 import { getProjectPath } from "./registry-client";
@@ -74,6 +77,26 @@ async function stepModelOption(
   }
 }
 
+/**
+ * How a step that returned ended, beyond finished or failed (plan-timing ADR):
+ * `stopped` when its session was ended by a signal, `blocked` when the plan now
+ * carries a blocker. Anything it cannot tell leaves the step's default.
+ */
+function classifierFor(root: string, plan: string, planning: boolean) {
+  return async (result: { error: string | null } | undefined) => {
+    if (result?.error && /on a signal/.test(result.error))
+      return "stopped" as const;
+    if (planning) {
+      const state = await readPlanningState(root, plan);
+      return state.blocker ? ("blocked" as const) : undefined;
+    }
+    const next = nextBuildStep(await readBuildPlan(root, plan));
+    return next.step === "cannot-continue" && /has a blocker/.test(next.why)
+      ? ("blocked" as const)
+      : undefined;
+  };
+}
+
 async function depsFor(project: string, plan: string, state: BuildState) {
   const root = getProjectPath(project);
   if (!root) throw new Error(`no project named ${project}`);
@@ -83,29 +106,33 @@ async function depsFor(project: string, plan: string, state: BuildState) {
     root,
     deps: {
       read: () => readBuildPlan(root, plan),
-      run: async (
-        step: BuildStepName,
-        phase?: string,
-        reason?: ShortenReason,
-      ) => {
-        // A shortened reason is one line rewritten: it runs on the work step's default tier.
-        const chosen = await stepModelOption(
+      run: timedStep(
+        async (step: BuildStepName, phase?: string, reason?: ShortenReason) => {
+          // A shortened reason is one line rewritten: it runs on the work step's default tier.
+          const chosen = await stepModelOption(
+            root,
+            plan,
+            step === "shorten-reason" ? "work" : step,
+            phase,
+          );
+          if ("error" in chosen) return { error: chosen.error };
+          return runStepSession(step, {
+            manager: sessionManager(),
+            worktree: where.cwd,
+            ...(where.addDirs ? { addDirs: where.addDirs } : {}),
+            project,
+            plan,
+            ...(reason ? { reason } : {}),
+            ...chosen,
+          });
+        },
+        {
           root,
           plan,
-          step === "shorten-reason" ? "work" : step,
-          phase,
-        );
-        if ("error" in chosen) return { error: chosen.error };
-        return runStepSession(step, {
-          manager: sessionManager(),
-          worktree: where.cwd,
-          ...(where.addDirs ? { addDirs: where.addDirs } : {}),
-          project,
-          plan,
-          ...(reason ? { reason } : {}),
-          ...chosen,
-        });
-      },
+          newId: randomUUID,
+          classify: classifierFor(root, plan, false),
+        },
+      ),
       accept: async (by: "person" | "auto") => {
         await acceptPlan(root, plan, by);
       },
@@ -371,19 +398,27 @@ export async function startPlanning(
   const location = where;
   void runPlanning({
     read: () => readPlanningState(root, plan),
-    run: async (step) => {
-      // A planning step runs on the work step's default tier.
-      const chosen = await stepModelOption(root, plan, "work", undefined);
-      if ("error" in chosen) return { error: chosen.error };
-      return runStepSession(step, {
-        manager: sessionManager(),
-        worktree: location.cwd,
-        ...(location.addDirs ? { addDirs: location.addDirs } : {}),
-        project,
+    run: timedStep(
+      async (step: PlanningStep) => {
+        // A planning step runs on the work step's default tier.
+        const chosen = await stepModelOption(root, plan, "work", undefined);
+        if ("error" in chosen) return { error: chosen.error };
+        return runStepSession(step, {
+          manager: sessionManager(),
+          worktree: location.cwd,
+          ...(location.addDirs ? { addDirs: location.addDirs } : {}),
+          project,
+          plan,
+          ...chosen,
+        });
+      },
+      {
+        root,
         plan,
-        ...chosen,
-      });
-    },
+        newId: randomUUID,
+        classify: classifierFor(root, plan, true),
+      },
+    ),
     onStep: (step) => {
       state.step = step;
     },

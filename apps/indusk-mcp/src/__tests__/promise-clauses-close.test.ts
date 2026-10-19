@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
 import { confirmPlan } from "../lib/promises/confirm.js";
 import { checkPlanContract } from "../lib/promises/contract.js";
+import { passingRun, upheldSignals } from "./helpers/clause-plan-fixture.js";
 import { briefText, implText } from "./helpers/plan-fixture.js";
 import {
 	type PromiseProject,
@@ -127,7 +128,8 @@ function project(): PromiseProject {
 				[siteOf(name), siteFile(name)],
 				[
 					testOf(name),
-					`${testFile(name)}// ${clauses.map((c) => `clause: ${name}/${c.name}`).join("\n// ")}\n`,
+					// A clause test asserts something (mark-first A29).
+					`${testFile(name)}// ${clauses.map((c) => `clause: ${name}/${c.name}`).join("\n// ")}\nit("checks it", () => expect(1).toBe(1));\n`,
 				],
 			]),
 		),
@@ -138,7 +140,15 @@ function project(): PromiseProject {
 describe("plans-are-promises A21 — a plan with two promises as clauses, start to close", () => {
 	it("passes the contract, is refused at close while a clause's row is planned, and closes once it passes", async () => {
 		const p = project();
-		const input = { planRoot: p.planRoot, codeRoot: p.codeRoot, plan: PLAN };
+		// Closing a plan written as clauses runs its clause tests and reads its
+		// signals (mark-first); both are handed in, here passing and upheld.
+		const input = {
+			planRoot: p.planRoot,
+			codeRoot: p.codeRoot,
+			plan: PLAN,
+			runTests: passingRun(),
+			readSignals: upheldSignals(),
+		};
 
 		const contract = checkPlanContract(p.planRoot, PLAN);
 		expect(contract.ok ? [] : contract.refusals.map((r) => r.message)).toEqual([]);

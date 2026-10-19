@@ -8,6 +8,7 @@ import {
 	type ResolveDeps,
 	resolveLocalDaemonViaHere,
 } from "../telemetry/status.js";
+import { readsSignal } from "./clause-standing.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import { probeWatcher, WatcherBlind } from "./probe.js";
 import type { PromiseEntry, Registry } from "./registry.js";
@@ -315,7 +316,7 @@ export function healthWindowMs(root: string, registry: Registry): number {
 }
 
 function behaviourOf(registry: Registry): PromiseEntry[] {
-	return registry.promises.filter((p) => p.kind === "behaviour" && p.state !== "retired");
+	return registry.promises.filter(readsSignal);
 }
 
 /**
@@ -369,7 +370,7 @@ export async function probeSources(
 
 /**
  * One source's marks, as every reader asks for them: the registry's
- * behaviour promises that are not retired, with their aliases, filtered to
+ * promises whose telemetry is read (`readsSignal`), with their aliases, filtered to
  * this project's id, over the health window unless `sinceMs` says otherwise.
  * An explicit `sinceMs` is the window a person asked for and is shown: it is
  * never widened, or `--since 90m` would count a day under "the last 90m" (A9).

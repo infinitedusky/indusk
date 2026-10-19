@@ -95,8 +95,8 @@ export interface SpanEvent {
 /**
  * One span as an OTLP/JSON export body — the probe's and the server
  * heartbeat's shape (service `indusk-watcher` unless `service` says otherwise),
- * so both travel the path a promise mark does. `events` are the span's events,
- * which is where a broken mark carries what was seen.
+ * so both travel the path a promise signal does. `events` are the span's events,
+ * which is where a broken signal carries what was seen.
  */
 export function watcherSpanBody(
 	name: string,

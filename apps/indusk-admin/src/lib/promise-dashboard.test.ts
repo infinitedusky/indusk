@@ -1,7 +1,14 @@
 // promise: a-plan-reads-by-its-title
+// promise: a-clause-is-proved-twice
+// clause: a-clause-is-proved-twice/no-signal-is-not-holding
 import type { StandingRow } from "@infinitedusky/indusk-mcp/promises/standing";
 import { describe, expect, it } from "vitest";
-import { buildRows, groupRows, type RowContext } from "@/lib/promise-dashboard";
+import {
+  buildRows,
+  groupRows,
+  type RowContext,
+  readsNoSignal,
+} from "@/lib/promise-dashboard";
 
 /**
  * plan-stories A26: the Promises page names each plan by its title, a Path
@@ -71,5 +78,36 @@ describe("the Promises page names a plan by its title", () => {
     expect(headings.sort()).toEqual(
       ["Indusk v5 dawn", "InDusk v4: Day"].sort(),
     );
+  });
+});
+
+/**
+ * mark-first A38 (Build Phase 7, falsification): an enforced promise whose
+ * package signal reads no signal (one clause holding and another silent, or a
+ * blind watcher) gets the grey no-signal dot, never the green enforced one,
+ * however many past days were held.
+ */
+describe("a promise with a silent clause is drawn as no signal", () => {
+  const enforced = (signal: string | null): StandingRow =>
+    ({
+      ...standingRow("seats-held", "seat-holds"),
+      standing: "enforced",
+      thirtyDays: { held: 12, broke: 0 },
+      signal,
+    }) as unknown as StandingRow;
+
+  it("A38 an enforced promise with held days whose signal reads no signal gets the grey dot", () => {
+    const [row] = buildRows([enforced("no-signal")], context({}));
+    expect(row && readsNoSignal(row)).toBe(true);
+  });
+
+  it("A38 an enforced promise whose every clause holds keeps the enforced dot", () => {
+    const [row] = buildRows([enforced("holding")], context({}));
+    expect(row && readsNoSignal(row)).toBe(false);
+  });
+
+  it("A38 a promise stated before clauses keeps today's reading", () => {
+    const [row] = buildRows([enforced(null)], context({}));
+    expect(row && readsNoSignal(row)).toBe(false);
   });
 });

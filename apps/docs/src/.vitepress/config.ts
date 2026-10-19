@@ -136,6 +136,7 @@ const config = defineConfig({
 						{ text: "agent", link: "/reference/cli/agent" },
 						{ text: "demo", link: "/reference/cli/demo" },
 						{ text: "plans", link: "/reference/cli/plans" },
+						{ text: "plans time", link: "/reference/cli/plans-time" },
 						{ text: "context", link: "/reference/cli/context" },
 						{ text: "papers", link: "/reference/cli/papers" },
 						{ text: "promises", link: "/reference/cli/promises" },
@@ -218,6 +219,7 @@ const config = defineConfig({
 					text: "Decisions",
 					items: [
 						{ text: "Overview", link: "/decisions/" },
+						{ text: "Tests and Telemetry Linked to Clauses — a clause proved twice", link: "/decisions/mark-first" },
 						{ text: "Init Sets Up Telemetry — the scaffold where the app runs, named, sent to the daemon", link: "/decisions/init-sets-up-telemetry" },
 						{ text: "The Daemon Is Found, Not Guessed — one address, one daemon, a record that is rebuilt", link: "/decisions/daemon-found-not-guessed" },
 						{ text: "Display Names — promises in words, plans by title, with their dates", link: "/decisions/display-names" },
@@ -281,6 +283,7 @@ const config = defineConfig({
 							text: "Tests Never Make Us Wait",
 							link: "/decisions/tests-never-make-us-wait",
 						},
+						{ text: "Plan Timing", link: "/decisions/plan-timing" },
 						{ text: "Planner Promises", link: "/decisions/planner-promises" },
 						{ text: "Plans Are Promises", link: "/decisions/plans-are-promises" },
 						{ text: "Sessions per Plan", link: "/decisions/sessions-per-plan" },

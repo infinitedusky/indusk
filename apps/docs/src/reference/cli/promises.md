@@ -285,6 +285,43 @@ with nothing written, naming:
 | The brief lists a replacement that was declared without recording what it replaces | both promises, and the `replace` command |
 | A name that is not a plan folder | the name |
 
+### A plan written as clauses
+
+When the plan's brief says `clauses: required`, a row's `passing` is not
+enough: closing reads the system. After the checks above pass, for each
+promise with a split or limit clause it
+
+1. **runs the tests** the clause's rows name, now, with the project's own
+   test command (`verify.testRunner` or `verify.testCommand`), each file once;
+2. **asks the local daemon** — through the read `promises status` makes —
+   whether each clause's signal has reported it upheld in a run of the real
+   system. A span written under a test runner carries `indusk.run=test` and is
+   not counted.
+
+A clause is refused when either half is missing, and the refusal names
+`promise/clause` and the half:
+
+| Situation | Refusal |
+|---|---|
+| A clause's test fails when run now, whatever its row says | `a-promise/a-clause: tests — src/a.test.ts fails when run now (row A1 says passing)` |
+| The run did not report a file | `… tests — src/a.test.ts was not reported by the test run` |
+| No signal has reported the clause upheld, or the watcher is blind | `a-promise/a-clause: signal — no signal has reported it upheld in a run of the real system` |
+| The clause's signal reports broken | `a-promise/a-clause: signal — its signal reports broken` |
+| The daemon is not running | `a-promise: signal — the daemon is not running or cannot be read …` naming `indusk telemetry start`; never a pass |
+| A clause's test file ran no test — every test in it was skipped (`describe.skipIf`, `it.skip`, `it.todo`) | `a-promise/a-clause: tests — src/a.test.ts ran no test (skipped) …` |
+| A clause's test file carries the clause's token and asserts nothing (no `expect(` or `assert(` call outside comments and import statements) | the promise, the clause and the file |
+
+A failing file is reported against the clause whose `clause: <promise>/<clause>`
+token it carries. Only when both halves hold for every clause is the promise
+`enforced`. A promise made only of clauses resting on other promises closes
+when those are in force, with no row, test or code site of its own. A real
+close also writes its own signal, for `a-clause-is-proved-twice`'s
+`verified-before-release` and `upheld-by-its-signal`, to the local daemon.
+
+A plan without `clauses: required` closes on its rows, as above, and is asked
+no signal. `indusk plans land` runs the same clause tests before its land
+checks and refuses by clause the same way; landing asks no signal.
+
 A plan with nothing to change says so and exits **0**, so running it twice is
 safe; a run that stopped partway is finished by the next. A plan archived
 without confirming (a bugfix that skipped its retrospective) is confirmed from
@@ -457,6 +494,13 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   incidents otherwise; the production section by its incidents.
 - **Not seen** means no run marked it in the window. It is never reported as
   upheld or as zero breaks.
+- A promise stated as **clauses** gets one line per clause, from its own
+  signal: `clause <name> (<kind>): holding`, `no signal` or `broken`; a
+  resting clause names the promise it rests on.
+- Each run writes one signal of its own, for `a-clause-is-proved-twice`'s
+  clause `no-signal-is-not-holding`, to the local daemon: upheld when every
+  clause it shows as holding has a report, broken naming any clause shown
+  holding without one. A run that shows no clause writes nothing.
 - **State** and **structure** promises are listed as watched by the suite:
   their health is the last run of their test or check at head, not telemetry.
 - A **retired** promise is listed and not watched.
@@ -675,10 +719,10 @@ committed in the repo.
 It commits on a **trunk branch only** (`worktree.trunk_guard.branches`,
 default `main` and `master`). Run from a plan worktree, or from a trunk
 checkout left on another branch, it writes the incident and commits nothing,
-says which branch it is on, and the pass is marked broken. A commit that
+says which branch it is on, and the pass reports broken. A commit that
 cannot be made — another git command holding the index — is not lost: the
 paths wait in the project's home (`pending-commit.json`), and every later pass,
-by any caller, commits them first and is marked broken until it does. The
+by any caller, commits them first and reports broken until it does. The
 inbox entry for the agent is written before the commit, so it does not wait
 on it.
 

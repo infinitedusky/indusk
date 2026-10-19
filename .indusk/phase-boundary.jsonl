@@ -440,3 +440,12 @@
 {"plan":"a-brief-is-planned-unasked","phase":8,"kind":"build","sha":"18c751d69","timestamp":"2026-10-19T02:25:16.475Z"}
 {"plan":"admin-builds-with-the-planning-reader","phase":1,"kind":"test","sha":"b9762fab278dad90517f0b7ef57a85f2a28519eb","timestamp":"2026-10-19T02:42:19.283Z"}
 {"plan":"the-admin-knows-the-package-root","phase":1,"kind":"test","sha":"f65b1d000a64a25bd420bdda2acc6260b68f6c58","timestamp":"2026-10-19T13:15:54.360Z"}
+{"plan":"mark-first","phase":1,"kind":"test","sha":"dae89ebfd07c3b2b5b656e71c87261680cc6edab","timestamp":"2026-10-19T03:14:42.761Z"}
+{"plan":"mark-first","phase":1,"kind":"build","sha":"3e5fd9c24a962880cf4625ff275aef06ef81af4e","timestamp":"2026-10-19T03:16:59.825Z"}
+{"plan":"mark-first","phase":4,"kind":"build","sha":"ec51cf28b22970969223f3b5f5729290691c4e8e","timestamp":"2026-10-19T03:29:27.873Z"}
+{"plan":"mark-first","phase":5,"kind":"build","sha":"4beacd120913a0d1ffd9f1fd115cc8e68e7792cf","timestamp":"2026-10-19T03:47:26.018Z"}
+{"plan":"mark-first","phase":6,"kind":"build","sha":"e56940b4f5ffbdc7d885efa1cb15775bbdc91bad","timestamp":"2026-10-19T03:53:59.642Z"}
+{"plan":"mark-first","phase":7,"kind":"build","sha":"5f6df4bc4cdd604168296df011a6fb48a81a453a","timestamp":"2026-10-19T04:09:40.103Z"}
+{"plan":"a-plan-says-how-long-it-took","phase":1,"kind":"build","sha":"312f963dff93bcbaed07fd2a3c66388cfc082386","timestamp":"2026-10-19T03:09:39.355Z"}
+{"plan":"a-plan-says-how-long-it-took","phase":4,"kind":"build","sha":"216a7d0733d6a22bd5907eb554801ac7c0a1f006","timestamp":"2026-10-19T03:15:09.442Z"}
+{"plan":"a-plan-says-how-long-it-took","phase":5,"kind":"build","sha":"ea563f0785e8d30ef11da57936caeea6a54278c8","timestamp":"2026-10-19T03:20:31.203Z"}
