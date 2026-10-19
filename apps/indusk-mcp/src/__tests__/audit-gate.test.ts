@@ -90,9 +90,14 @@ describe("plan-review-subagent A2 — audit.md, or a skip with its reason, satis
 		expect(checkRetrospectiveReadiness(p.planRoot, p.impl()).missing).toEqual(["audit"]);
 	});
 
-	it.skipIf(SHOULD_SKIP)("audit.md present: `plans next` answers `review`", () => {
-		expect(next(finished({ auditMd: "- nothing\n" }).root)).toBe("review");
-	});
+	// Build Phase 8 of audit-concerns-are-answered: the build counts the audit done only when its
+	// answers read complete, so a file that is not an answered audit sends it back to the audit step.
+	it.skipIf(SHOULD_SKIP)(
+		"audit.md present but not an answered audit: `plans next` answers `audit`",
+		() => {
+			expect(next(finished({ auditMd: "- nothing\n" }).root)).toBe("audit");
+		},
+	);
 
 	it.skipIf(SHOULD_SKIP)("the skip pair: `plans next` answers `review`", () => {
 		expect(next(finished({ keys: skip }).root)).toBe("review");
@@ -127,8 +132,9 @@ describe("plan-review-subagent A10 — what audit.md says changes no gate", () =
 			expect(r.missing).toEqual([]);
 		});
 
-		it.skipIf(SHOULD_SKIP)(`${name}: \`plans next\` answers \`review\``, () => {
-			expect(next(finished({ auditMd }).root)).toBe("review");
+		// The retrospective's gate reads existence only; the build reads whether it is answered.
+		it.skipIf(SHOULD_SKIP)(`${name}: \`plans next\` answers \`audit\` until it is answered`, () => {
+			expect(next(finished({ auditMd }).root)).toBe("audit");
 		});
 	}
 });

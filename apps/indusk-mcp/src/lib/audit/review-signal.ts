@@ -19,7 +19,7 @@ import type { PlanReviewInputs } from "./inputs.js";
 const PROMISE = "a-plan-is-read-cold-before-approval";
 const SIGNAL = { plan: "audit-concerns-are-answered", phase: "Build Phase 7" };
 
-const INPUT_KEYS = ["documents", "plan", "tree"];
+const INPUT_KEYS = ["documents", "plan", "read", "tree"];
 const DOCUMENT_KEYS = ["adr", "brief", "impl", "testPlan"];
 
 const verdict = (clause: string, seen: string | undefined): ClauseVerdict => ({

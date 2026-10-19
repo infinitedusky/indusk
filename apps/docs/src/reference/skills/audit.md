@@ -41,7 +41,7 @@ A short frontmatter (`plan`, `audited`, `model`), then one `##` per question in 
 
 ## Before Approval
 
-`/audit <plan> --before-approval` runs the same reader over [`plans review-inputs`](/reference/cli/plans#plans-review-inputs-name) — the brief, test plan, ADR and impl as they stand and the tracked files, never `research.md` — with four questions: do the planned tests prove each promise's sentence, or something narrower; does the impl build what each promise claims, and nothing it does not; which skip reason would you not accept; what else would have to change for each promise to hold. It writes `plan-review.md`; the planning agent answers with `fix — <document changed>`, `amendment —` or `nothing —`. An unattended planning run does it as its last step, and the planner skill runs it before presenting a plan written by hand.
+`/audit <plan> --before-approval` runs the same reader over [`plans review-inputs`](/reference/cli/plans#plans-review-inputs-name) — the brief, test plan, ADR and impl as they stand and the tracked files, never `research.md` — with four questions: do the planned tests prove each promise's sentence, or something narrower; does the impl build what each promise claims, and nothing it does not; which skip reason would you not accept; what else would have to change for each promise to hold. It writes `plan-review.md`; the planning agent answers with `fix — <document changed>`, `amendment —` or `nothing —`. `plan-review.md` opens with `read: <hash>` (printed by `plans review-inputs`); the review is out of date as soon as the brief, test plan, ADR or impl changes, and the planning run reads the plan cold again. A `signal` answer is refused before approval. At the `ready-for-approval` stop the person also sees what the brief says now that it did not say when accepted. An unattended planning run does it as its last step, and the planner skill runs it before presenting a plan written by hand.
 
 ## Skipping
 
@@ -51,6 +51,10 @@ audit_reason: "a one-line copy change; a fresh reader would find nothing to ques
 ```
 
 Both fields; a bare `audit: skipped` does not pass, and neither does a reason over 120 characters or of more than one sentence: the Step 0 readiness check refuses it and names the length and sentence count. The reason is one sentence; the detail goes in the impl body. [`/retrospective`](/reference/skills/retrospective) Step 0 refuses to start without `audit.md` or the pair.
+
+## What the reader holds
+
+Findings may be `-`, `*` or numbered items. A cause under `What let these through?` must name its findings and its highlight (`- <cause> — findings: <refs> — highlight: <id>`), or be `- no process gap — <reason>`. A clause named in a `signal` answer is read without trailing punctuation and checked against the registry of the plan's own copy. The build counts the audit done only when its answers read complete, and an edit to the brief's Not promised list after approval is an amendment that waits for the person.
 
 ## Signals
 

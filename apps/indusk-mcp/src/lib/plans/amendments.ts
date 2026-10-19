@@ -19,7 +19,8 @@ import { briefStandingOf } from "./approved-brief.js";
  * a promise the plan owns whose statement in the registry has moved from the
  * one approved to one the approved brief did not state. The test plan, the
  * ADR, the impl, notes and Shape findings are never compared: the person
- * approved the brief, and the rest is the agent's to change.
+ * approved the brief, and the rest is the agent's to change. The scope is the brief's
+ * `### Not promised` list: moving something out of it widens what the plan promises.
  *
  * What was approved is read from git, at the approval commit — the commit
  * `plans approve` (`plan(<plan>): impl approved`, or `plan(<plan>): approved`
@@ -31,7 +32,7 @@ import { briefStandingOf } from "./approved-brief.js";
  * promise: a-change-to-what-was-agreed-needs-the-person
  */
 
-export type AmendmentPart = "expectation" | "promise" | "look";
+export type AmendmentPart = "expectation" | "promise" | "look" | "scope";
 
 export interface Amendment {
 	part: AmendmentPart;
@@ -75,6 +76,7 @@ export function amendmentsBetween(approved: Agreed, now: Agreed): Amendment[] {
 		...differences("expectation", expectationsOf(was), expectationsOf(is)),
 		...differences("promise", promisesOf(was), promisesOf(is)),
 		...differences("look", looksOf(was), looksOf(is)),
+		...differences("scope", scopeOf(was), scopeOf(is)),
 		...statementChanges(was, approved.statements, now.statements),
 	];
 	const seen = new Set<string>();
@@ -172,7 +174,7 @@ export function amendmentDecision(a: Amendment): string {
 }
 
 const DECISION =
-	/^amendment to the (expectation|promise|look) (.+?): was (null|"(?:[^"\\]|\\.)*"), now (null|"(?:[^"\\]|\\.)*")$/;
+	/^amendment to the (expectation|promise|look|scope) (.+?): was (null|"(?:[^"\\]|\\.)*"), now (null|"(?:[^"\\]|\\.)*")$/;
 
 /** The amendment a history line's decision names, or null when it names none. */
 export function amendmentOfDecision(decision: string): Amendment | null {
@@ -298,6 +300,14 @@ function looksOf(b: ParsedBrief): Said {
 	return said;
 }
 
+/** The Not promised list, one entry per line of it: the scope the person approved by what it leaves out. */
+function scopeOf(b: ParsedBrief): Said {
+	const said: Said = new Map();
+	if (b.shape !== "contract") return said;
+	for (const entry of b.notPromised) said.set(entry, entry);
+	return said;
+}
+
 function differences(part: AmendmentPart, was: Said, now: Said): Amendment[] {
 	const out: Amendment[] = [];
 	for (const name of new Set([...was.keys(), ...now.keys()])) {
@@ -336,4 +346,38 @@ function statementChanges(
 		out.push({ part: "promise", name, was: a, now: b });
 	}
 	return out;
+}
+
+/**
+ * What the brief says now that it did not say when it was accepted (`plan(<plan>): brief
+ * accepted`, `acceptBrief`'s commit): the difference the person is shown before approving,
+ * whatever the plan review called the change. The brief is read at the newest such commit;
+ * where there is none, or no git, nothing can be compared and the answer is none.
+ */
+export async function briefChangesSinceAcceptance(planDir: string): Promise<Amendment[]> {
+	const briefFile = join(planDir, "brief.md");
+	if (!existsSync(briefFile)) return [];
+	try {
+		const real = realpathSync(planDir);
+		const top = await git(real, "rev-parse", "--show-toplevel");
+		const plan = basename(real);
+		const subject = `plan(${plan}): brief accepted`;
+		const log = await git(
+			top,
+			"log",
+			"--format=%H",
+			"--fixed-strings",
+			`--grep=${subject}`,
+			"HEAD",
+		);
+		const sha = log.split("\n")[0]?.trim();
+		if (!sha) return [];
+		const accepted = await fileAtRevision(top, sha, relative(top, join(real, "brief.md")));
+		return amendmentsBetween(
+			{ brief: accepted, statements: new Map() },
+			{ brief: readFileSync(briefFile, "utf-8"), statements: new Map() },
+		);
+	} catch {
+		return [];
+	}
 }

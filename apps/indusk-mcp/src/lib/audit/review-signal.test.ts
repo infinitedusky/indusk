@@ -15,6 +15,7 @@ import { markPlanningStop, markPlanReview, markReviewInputs } from "./review-sig
 const inputs = (): PlanReviewInputs => ({
 	plan: "p",
 	documents: { brief: null, testPlan: null, adr: null, impl: null },
+	read: "h",
 	tree: "",
 });
 

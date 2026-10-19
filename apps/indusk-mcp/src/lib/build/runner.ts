@@ -123,5 +123,5 @@ function fingerprint(plan: BuildPlan): string {
 		p.gates.map((g) => g.items.map((i) => (i.checked ? 1 : 0)).join("")).join("|"),
 	);
 	const rows = plan.trajectory.rows.map((r) => `${r.id}:${r.state}`);
-	return JSON.stringify([items, rows, plan.readiness.missing]);
+	return JSON.stringify([items, rows, plan.readiness.missing, plan.auditOpen === true]);
 }

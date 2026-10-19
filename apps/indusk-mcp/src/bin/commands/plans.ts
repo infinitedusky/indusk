@@ -7,6 +7,7 @@ import {
 	readAuditAnswers,
 } from "../../lib/audit/answers.js";
 import { markAuditAnswers } from "../../lib/audit/answers-signal.js";
+import { registryClauses } from "../../lib/audit/clauses.js";
 import { auditInputs, planReviewInputs } from "../../lib/audit/inputs.js";
 import { markPlanReview, markReviewInputs } from "../../lib/audit/review-signal.js";
 import { markAmendmentStop } from "../../lib/build/amendment-signal.js";
@@ -39,7 +40,6 @@ import {
 	startPlan,
 } from "../../lib/plans/index.js";
 import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
-import { readPromises } from "../../lib/promises/registry.js";
 import { planTimeText } from "../../lib/timing/view.js";
 import { livePlanCopy, resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
@@ -184,18 +184,12 @@ export async function plansAuditAnswers(
 	}
 	let clauses: Set<string> | undefined;
 	if (!planReview) {
-		const registry = readPromises(cwd);
-		if (!registry.ok) {
-			const why =
-				"missing" in registry ? `${registry.missing} is missing` : "an entry is malformed";
-			console.error(`Refused: the promises registry cannot be read to check clauses: ${why}`);
+		const held = registryClauses(live.copy.root);
+		if (!held.ok) {
+			console.error(`Refused: the promises registry cannot be read to check clauses: ${held.why}`);
 			process.exit(1);
 		}
-		clauses = new Set(
-			registry.registry.promises.flatMap((p) =>
-				(p.clauses ?? []).map((c) => `${p.name}/${c.name}`),
-			),
-		);
+		clauses = held.clauses;
 	}
 	const read = readAuditAnswers(readFileSync(path, "utf-8"), {
 		questions: planReview ? PLAN_REVIEW_QUESTIONS : AUDIT_QUESTIONS,

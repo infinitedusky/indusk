@@ -1,5 +1,6 @@
 import type { Amendment, Dismissal } from "../audit/answers.js";
 import type { DocumentPosition } from "../lifecycle.js";
+import type { Amendment as BriefChange } from "../plans/amendments.js";
 import type { StepOutcome } from "./next-step.js";
 import type { PlanningStep } from "./step-env.js";
 
@@ -30,6 +31,10 @@ export interface PlanningReview {
 	complete: boolean;
 	dismissals: readonly Dismissal[];
 	amendments: readonly Amendment[];
+	/** The review was written about other documents than stand now: it is read again. */
+	stale?: boolean;
+	/** What the brief says now that it did not say when it was accepted; absent or empty when nothing changed. */
+	briefChanges?: readonly BriefChange[];
 }
 
 export interface PlanningState {
@@ -51,6 +56,8 @@ export type PlanningDecision =
 			dismissals?: readonly Dismissal[];
 			/** The plan review's answers that changed the brief, absent when none. */
 			amendments?: readonly Amendment[];
+			/** What the brief says now that it did not say when accepted, whatever the review called it; absent when none. */
+			briefChanges?: readonly BriefChange[];
 	  }
 	| { step: "cannot-continue"; why: string };
 
@@ -94,11 +101,13 @@ export function nextPlanningStep(
 	if (!state.contractOk) return { step: "plan-impl" };
 	// A plan is read cold before it is presented: the review is the run's last step, and stays
 	// next while it is missing, incomplete or unanswered.
-	if (!state.review.complete) return { step: "plan-review" };
-	const { dismissals, amendments } = state.review;
+	// A review written about other documents than stand now was not a read of this plan.
+	if (!state.review.complete || state.review.stale) return { step: "plan-review" };
+	const { dismissals, amendments, briefChanges } = state.review;
 	return {
 		step: "ready-for-approval",
 		...(dismissals.length > 0 ? { dismissals } : {}),
 		...(amendments.length > 0 ? { amendments } : {}),
+		...(briefChanges && briefChanges.length > 0 ? { briefChanges } : {}),
 	};
 }

@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { AUDIT_QUESTIONS } from "../lib/audit/answers.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { initRepoWithCommit } from "./helpers/test-git.js";
 
@@ -76,7 +77,11 @@ function project(
 			...phases.map(phaseText),
 		].join("\n"),
 	);
-	if (audited) writeFileSync(join(root, ".indusk", "planning", PLAN, "audit.md"), "- nothing\n");
+	// An answered audit: every question put, nothing found (the build reads its answers, not just that it exists).
+	if (audited) {
+		const answered = AUDIT_QUESTIONS.map((q) => `## ${q}\n- nothing\n`).join("\n");
+		writeFileSync(join(root, ".indusk", "planning", PLAN, "audit.md"), answered);
+	}
 	return root;
 }
 

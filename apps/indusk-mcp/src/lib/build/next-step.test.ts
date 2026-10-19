@@ -164,3 +164,27 @@ describe("A14 — the audit runs when the build phases close, before falsificati
 		expect(nextBuildStep(closed(["falsification", "cleanup"]))).toEqual({ step: "falsify" });
 	});
 });
+
+// promise: an-audit-concern-gets-a-solution
+// clause: an-audit-concern-gets-a-solution/the-plan-answers — A33
+// promise: a-build-runs-to-review-unasked — A38
+describe("Build Phase 8 — the build waits for a complete audit and an approval it can read", () => {
+	it("A33 — an audit file that reads incomplete sends the build back to the audit step", () => {
+		const plan = { ...fixturePlan({ open: false }), auditOpen: true };
+		expect(nextBuildStep(plan)).toEqual({ step: "audit" });
+		expect(nextBuildStep({ ...plan, auditOpen: false }).step).toBe("review");
+	});
+
+	it("A38 — an approval record that cannot be read stops the build saying so and what to do", () => {
+		const plan = {
+			...fixturePlan({ open: false }),
+			approvalUnreadable: "no commit is its approval",
+		};
+		const step = nextBuildStep(plan);
+		expect(step.step).toBe("cannot-continue");
+		expect(step).toMatchObject({
+			why: expect.stringContaining("the approval record cannot be read: no commit is its approval"),
+		});
+		expect(step).toMatchObject({ why: expect.stringContaining("re-approve the plan") });
+	});
+});

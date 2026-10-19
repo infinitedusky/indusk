@@ -1,7 +1,7 @@
 ---
 title: "A plan is read cold before approval, and every audit concern is answered"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -96,16 +96,16 @@ amendment. Every concern waved away is shown to the person.
 | A30 | Printing the plan review's inputs reports the documents-only clause upheld when they hold only the four documents and the file list, and broken naming any other field | Build Phase 7 | Build Phase 7 | passing | unit | the signal writer for the documents-only clause | apps/indusk-mcp/src/lib/audit/review-signal.test.ts |
 | A31 | Reading a plan review reports the four-questions clause; a planning run reaching ready for approval reports the answered-before-approval and reads-it-cold clauses, broken when no plan review ran before it | Build Phase 7 | Build Phase 7 | passing | unit | the signal writers for the plan review's clauses | apps/indusk-mcp/src/lib/audit/review-signal.test.ts |
 | A32 | Closing the plan reads every one of its nine clauses upheld by a signal from a real run | Build Phase 7 | Build Phase 7 | skipped | live check | the close itself: `indusk promises confirm` refuses a clause no real run reported | manual: run `indusk plans audit-answers audit-concerns-are-answered` on this plan's audit, one unattended planning run (its plan review and `plans audit-answers <plan> --plan-review`), and one build stopped on an amendment, with the local daemon up; then `indusk promises confirm audit-concerns-are-answered` |
-| A33 | The build counts the audit done only when its answers read complete; an audit file with an unanswered finding sends the build back to the audit step | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/build/next-step.test.ts |
-| A34 | A causes section line that names no findings or no highlight, and is not a no-gap line with a reason, is incomplete | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A35 | A finding written as a star or numbered list item counts as a finding, so an unanswered one is refused | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A36 | An edit to the brief's Not promised section after approval is an amendment that waits for the person | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
-| A37 | A plan review written before a plan document last changed is out of date, and the planning run reads the plan cold again | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
-| A38 | A build whose approval record cannot be read stops saying so and what to do, instead of failing the read with nothing waiting | Build Phase 8 | Build Phase 8 | planned | unit | a regression guard over a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/next-step.test.ts |
-| A39 | The answers command checks a signal answer's clause against the plan's own registry, not the one where the command was run | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/__tests__/plans-audit-answers.test.ts |
-| A40 | A clause named with trailing punctuation in a signal answer is read without it | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A41 | A signal answer in a plan review is refused, naming the finding | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A42 | Before approval, a brief changed since it was accepted is listed with the plan review's dismissals at the ready-for-approval stop | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
+| A33 | The build counts the audit done only when its answers read complete; an audit file with an unanswered finding sends the build back to the audit step | Build Phase 8 | Build Phase 8 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/build/next-step.test.ts |
+| A34 | A causes section line that names no findings or no highlight, and is not a no-gap line with a reason, is incomplete | Build Phase 8 | Build Phase 8 | passing | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A35 | A finding written as a star or numbered list item counts as a finding, so an unanswered one is refused | Build Phase 8 | Build Phase 8 | passing | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A36 | An edit to the brief's Not promised section after approval is an amendment that waits for the person | Build Phase 8 | Build Phase 8 | passing | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
+| A37 | A plan review written before a plan document last changed is out of date, and the planning run reads the plan cold again | Build Phase 8 | Build Phase 8 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
+| A38 | A build whose approval record cannot be read stops saying so and what to do, instead of failing the read with nothing waiting | Build Phase 8 | Build Phase 8 | passing | unit | a regression guard over a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/next-step.test.ts |
+| A39 | The answers command checks a signal answer's clause against the plan's own registry, not the one where the command was run | Build Phase 8 | Build Phase 8 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/__tests__/plans-audit-answers.test.ts |
+| A40 | A clause named with trailing punctuation in a signal answer is read without it | Build Phase 8 | Build Phase 8 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A41 | A signal answer in a plan review is refused, naming the finding | Build Phase 8 | Build Phase 8 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A42 | Before approval, a brief changed since it was accepted is listed with the plan review's dismissals at the ready-for-approval stop | Build Phase 8 | Build Phase 8 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 
 ### Deferred Verification
 
@@ -755,67 +755,67 @@ Added after landing (Sandy, 2026-10-19). Since the plan that links clauses to th
 
 The audit of this plan ran under the old instruction not to act on findings, so it answered all fifteen concerns "nothing", ten of them named real. This phase fixes those ten: the build waits for a complete audit, the reader stops letting other list shapes and bare causes through, an edit to what was not promised waits for the person, a stale plan review is redone, an unreadable approval stops plainly, the clause check reads the plan's own registry and forgives trailing punctuation, a plan review refuses signal answers, and a brief changed before approval is shown with the dismissals.
 
-- [ ] Make the build count the audit done only when its answers read complete.
+- [x] Make the build count the audit done only when its answers read complete.
   <details><summary>Technical</summary>
 
   `readBuildPlan` reads `audit.md` through `readAuditAnswers`; while it exists but is incomplete or unanswered, `nextBuildStep` returns `audit` again. The retrospective's gate is unchanged (`an-audit-blocks-nothing`: it still reads existence). A33.
 
   </details>
-- [ ] Make a cause that names no findings or no highlight incomplete.
+- [x] Make a cause that names no findings or no highlight incomplete.
   <details><summary>Technical</summary>
 
   `readAuditAnswers`: each line under `## What let these through?` matches `- <cause> — findings: <refs> — highlight: <id>` or `- no process gap — <reason>`; anything else sets `missingCauses`. A34.
 
   </details>
-- [ ] Make star and numbered list items count as findings.
+- [x] Make star and numbered list items count as findings.
   <details><summary>Technical</summary>
 
   `readAuditAnswers`: a top-level `* ` or `1. ` line under a question heading is a finding like `- `. A35.
 
   </details>
-- [ ] Make an edit to the brief's Not promised section an amendment.
+- [x] Make an edit to the brief's Not promised section an amendment.
   <details><summary>Technical</summary>
 
   `amendmentsBetween` (`lib/plans/amendments.ts`): a `scope` part comparing the Not promised list; the gate hook and the build's amendment stop pick it up unchanged. A36.
 
   </details>
-- [ ] Make a plan review written before the documents last changed count as out of date.
+- [x] Make a plan review written before the documents last changed count as out of date.
   <details><summary>Technical</summary>
 
   The plan review records the hash of the four documents it read in its frontmatter (`read:`); `readPlanningState` marks the review incomplete when the documents' hash differs, so `nextPlanningStep` returns `plan-review` again. The audit skill's before-approval section writes the field from `plans review-inputs` (which prints it). A37.
 
   </details>
-- [ ] Make an unreadable approval record stop the build with a plain reason.
+- [x] Make an unreadable approval record stop the build with a plain reason.
   <details><summary>Technical</summary>
 
   `readBuildPlan`: an `AmendmentsUnreadable` becomes `cannot-continue` with "the approval record cannot be read: … — re-approve the plan", rather than a thrown read. A38.
 
   </details>
-- [ ] Make the answers command check signal clauses against the plan's own registry.
+- [x] Make the answers command check signal clauses against the plan's own registry.
   <details><summary>Technical</summary>
 
   `plansAuditAnswers` reads `.indusk/promises/` from the plan's live copy (`livePlanCopy`), not `process.cwd()`. A39.
 
   </details>
-- [ ] Make a clause name read without trailing punctuation.
+- [x] Make a clause name read without trailing punctuation.
   <details><summary>Technical</summary>
 
   `readAuditAnswers`: strip trailing `.,;:)` from the `clause:` value before comparing. A40.
 
   </details>
-- [ ] Make a plan review refuse a signal answer.
+- [x] Make a plan review refuse a signal answer.
   <details><summary>Technical</summary>
 
   `readAuditAnswers(text, { questions: PLAN_REVIEW_QUESTIONS })`: a `signal` answer is listed as refused, naming the finding. A41.
 
   </details>
-- [ ] Show a brief changed since acceptance with the dismissals when the plan is ready for approval.
+- [x] Show a brief changed since acceptance with the dismissals when the plan is ready for approval.
   <details><summary>Technical</summary>
 
   `readPlanningState` compares the brief with its accepted version (the `accept-brief` commit, as `amendmentsBetween` compares with approval) and puts the differences on the `ready-for-approval` stop beside `dismissals`. A42.
 
   </details>
-- [ ] Review the changed reader and loops against the extensions' rules.
+- [x] Review the changed reader and loops against the extensions' rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
@@ -824,7 +824,7 @@ The audit of this plan ran under the old instruction not to act on findings, so 
 
 #### Build Phase 8 Verification
 
-- [ ] Each of the ten fixes holds, and the earlier rows stay green.
+- [x] Each of the ten fixes holds, and the earlier rows stay green.
   <details><summary>Technical</summary>
 
   A33–A42: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 8"` (with the Must-not-break promises' tests); type check clean.
@@ -833,7 +833,7 @@ The audit of this plan ran under the old instruction not to act on findings, so 
 
 #### Build Phase 8 Context
 
-- [ ] Add to the package's rules that the build waits for a complete audit and a plan review goes stale with its documents.
+- [x] Add to the package's rules that the build waits for a complete audit and a plan review goes stale with its documents.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the build-loop and `lib/audit/` entries.
@@ -842,12 +842,14 @@ The audit of this plan ran under the old instruction not to act on findings, so 
 
 #### Build Phase 8 Document
 
-- [ ] Update the audit skill's reference page for the stale plan review and the scope amendment.
+- [x] Update the audit skill's reference page for the stale plan review and the scope amendment.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/audit.md`; `apps/docs/src/changelog.md` unreleased line.
 
   </details>
+
+  Build Phase 8 notes (unattended): Shape: reviewed, nothing found. Decisions: (1) the build reads the audit through `BuildPlan.auditOpen` (set by `readBuildPlan`, shape plus the plan's own registry) and an unreadable approval through `approvalUnreadable`; `nextBuildStep` reads both, so the retrospective gate stays an existence check. (2) `audit-gate.test.ts` and `plans-next.test.ts` expected `plans next` to answer `review` for any `audit.md`; they now expect `audit` for one that is not answered (A33's behaviour) and the walk's fixture writes an answered audit; the retrospective readiness assertions are unchanged. (3) A review with no `read:` hash counts as out of date (a cold read must be tied to its documents); `plans review-inputs` now prints `read`, so the documents-only clause's allowed keys and A18's assertion include it. (4) A fix to a document after a review makes that review stale, so the planning run reads the plan cold again; the loop ends at a pass that needs no fix. (5) `briefChanges` is compared with the brief at the newest `plan(<plan>): brief accepted` commit and is empty when no such commit or no git; the admin's rendering of the new `ready-for-approval` field is not part of this phase. (6) The audit skill and its synced copy now tell the planning agent to write `read:`.
 
 ## Files Affected
 
