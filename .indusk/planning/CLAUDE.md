@@ -41,10 +41,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   — see `/guide/new-project`
 - **A plan document says a promise or clause is upheld or broken** (live:
   holding or broken; past: held or broke; unknown: no signal), and its
-  telemetry its signal — failed and passed are for tests only, and the old word
-  for a broken promise is not used. — guarded by `promise-words.test.ts`
-  (`promise: a-promise-is-upheld-or-broken`) — see
-  `/decisions/one-promise-language`
+  telemetry its signal, and the old word for it is not used — failed and passed
+  are for tests only, and the old word for a broken promise is not used. — guarded by
+  `promise-words.test.ts` (`promise: a-promise-is-upheld-or-broken`) and, for
+  the word signal, `signal-word.test.ts` — see `/decisions/one-promise-language`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
@@ -198,9 +198,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   has a passing row, each such row's test file carries `clause: <promise>/<clause>`,
   and each promise it rests on is in force. A clause may
   rest on a promise the same plan makes; it counts once that promise is proved
-  in the same close, and a cycle between them is refused. — see
+  in the same close, and a cycle between them is refused. A plan with
+  `clauses: required` closes only when each clause's tests pass when run at
+  close and its signal has reported it upheld in a real run (a stopped daemon
+  refuses); landing runs the same tests. — see
   `/decisions/falsification-ritual`, `/reference/skills/retrospective`,
-  `/decisions/plans-are-promises`
+  `/decisions/plans-are-promises`, `/decisions/mark-first`
 - **The retrospective's compaction step**: plan close demotes the plan's
   narrative to one line + archive link, compresses any context entries it
   authored to rule + pointer, and collapses one old root entry per close. — see

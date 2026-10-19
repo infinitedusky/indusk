@@ -218,7 +218,7 @@ export interface GitWorktree {
 	branch: string | null;
 	/** The first entry git lists: the repository's main working tree. */
 	main: boolean;
-	/** Git's own mark that the directory is gone but the entry was never pruned. */
+	/** Git's own flag that the directory is gone but the entry was never pruned. */
 	prunable: boolean;
 }
 

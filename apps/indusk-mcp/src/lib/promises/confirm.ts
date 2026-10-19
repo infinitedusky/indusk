@@ -1,19 +1,22 @@
-import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { isUsableRelPath } from "../path-segment.js";
-import { clauseTokenPattern } from "../tokens.js";
 import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
+import {
+	type ClauseTestRunner,
+	clauseSignalHalf,
+	clauseTestsHalf,
+	type HalfResult,
+	provableClauses,
+	type SignalReader,
+	writtenAsClauses,
+} from "./clause-proof.js";
+import { restsOnly } from "./clause-standing.js";
+import { assertsSomething, carriesToken, namesClause } from "./clause-test-file.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import { type PlanFolder, planFileRel, planFolderPath, planFolderStatus } from "./plan-folder.js";
-import {
-	contractDir,
-	type PromiseEntry,
-	promiseTokenPattern,
-	type Registry,
-	readPromises,
-} from "./registry.js";
+import { contractDir, type PromiseEntry, type Registry, readPromises } from "./registry.js";
 import {
 	type NamingRow,
 	type RowProof,
@@ -38,31 +41,16 @@ import { appendHistory } from "./write.js";
  * refused confirm leaves the registry as it was.
  */
 
-function carriesToken(
-	codeRoot: string,
-	rel: string,
-	p: PromiseEntry,
-): "missing" | "unnamed" | "ok" {
-	const abs = join(codeRoot, rel);
-	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return "missing";
-	const text = readFileSync(abs, "utf-8");
-	return [p.name, ...p.aliases].some((n) => promiseTokenPattern(n).test(text)) ? "ok" : "unnamed";
-}
-
-/** Whether the test file `rel` names one clause of `p`, by the promise's name or an earlier one. */
-function namesClause(codeRoot: string, rel: string, p: PromiseEntry, clause: string): boolean {
-	const abs = join(codeRoot, rel);
-	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return true; // missing: the token check's refusal
-	const text = readFileSync(abs, "utf-8");
-	return [p.name, ...p.aliases].some((n) => clauseTokenPattern(n, clause).test(text));
-}
-
 export interface ConfirmInput {
 	planRoot: string;
 	/** Where the plan's code and tests are. In a workbench before landing: the plan's own worktree. */
 	codeRoot: string;
 	plan: string;
 	now?: Date;
+	/** Runs the tests a clause's rows name, now (mark-first ADR D2). */
+	runTests?: ClauseTestRunner;
+	/** Asks the local daemon what each clause's signal reported (mark-first ADR D2). */
+	readSignals?: SignalReader;
 }
 
 export interface Confirmed {
@@ -75,13 +63,20 @@ export interface Confirmed {
 	retired?: string;
 }
 
+/** What each half of a clause's proof judged, for a plan written as clauses; what the close's own signal reports. */
+export interface ClauseHalves {
+	tests: HalfResult;
+	signal: HalfResult;
+}
+
 export type ConfirmResult =
-	| { ok: true; confirmed: Confirmed[] }
+	| { ok: true; confirmed: Confirmed[]; halves?: ClauseHalves }
 	| {
 			ok: false;
 			refusals: CheckRefusal[];
 			/** True when the registry was written before the refusal. */
 			written: boolean;
+			halves?: ClauseHalves;
 	  };
 
 const registryFile = (p: PromiseEntry) => `.indusk/promises/${p.file}`;
@@ -154,6 +149,10 @@ function clauseTokenRefusals(
 				out.push(
 					`${promise.name}: clause ${clause.name}: its row names the test ${rel}, which does not carry "clause: ${promise.name}/${clause.name}" — a test that proves a clause names it`,
 				);
+			} else if (!assertsSomething(codeRoot, rel)) {
+				out.push(
+					`${promise.name}: clause ${clause.name}: the test ${rel} carries the clause's token and asserts nothing (no \`expect(\` or \`assert(\` call outside comments and imports) — a test that proves a clause checks it`,
+				);
 			}
 		}
 	}
@@ -204,7 +203,7 @@ function judge(
 	const sites = citing(promise)
 		.filter((f) => !tests.includes(f) && !rowTests.has(f))
 		.sort();
-	if (promise.kind !== "structure" && sites.length === 0) {
+	if (promise.kind !== "structure" && sites.length === 0 && !restsOnly(promise)) {
 		refusals.push(
 			`${promise.name}: no code under ${codeRoot} carries its token — a ${promise.kind} promise names the code that keeps it (a comment saying "promise: ${promise.name}" at the site); a test is not that code`,
 		);
@@ -220,6 +219,13 @@ function judge(
 		}
 	}
 	return refusals.length > 0 ? { refusals } : { proof, tests, sites, retires };
+}
+
+/** What proved a promise, for its history: its rows, or the promises a promise made only of resting clauses rests on. */
+function provenBy(proof: RowProof): string {
+	if (proof.rows.length > 0) return proof.rows.map((r) => `row ${r.id}`).join(", ");
+	const on = (proof.promise.clauses ?? []).flatMap((c) => (c.restsOn ? [c.restsOn] : []));
+	return `the promises it rests on, in force: ${on.join(", ")}`;
 }
 
 const same = (a: readonly string[], b: readonly string[]) =>
@@ -258,7 +264,7 @@ function enforce(registry: Registry, plan: string, ready: Ready, day: string): C
 		text,
 		inForce
 			? `- ${day} — links updated, confirmed for ${plan}: tests ${tests.join(", ")}; sites ${sites.join(", ") || "none"}.`
-			: `- ${day} — enforced, confirmed for ${plan}: proven by ${proof.rows.map((r) => `row ${r.id}`).join(", ")}.`,
+			: `- ${day} — enforced, confirmed for ${plan}: proven by ${provenBy(proof)}.`,
 	);
 	writeFileSync(path, text);
 	return {
@@ -357,6 +363,19 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 	}
 	if (refusals.length > 0) return refuse(refusals);
 
+	// A plan written as clauses closes on what the system says now, not on its
+	// rows' State cells (mark-first ADR D2); a plan written before keeps the rule above.
+	const byClause = writtenAsClauses(folder)
+		? await clauseHalves(folder, ready, codeRoot, input)
+		: null;
+	if (byClause && byClause.refusals.length > 0) {
+		return {
+			...refuse(byClause.refusals),
+			...(byClause.halves ? { halves: byClause.halves } : {}),
+		};
+	}
+	const halves = byClause?.halves ? { halves: byClause.halves } : {};
+
 	const day = (input.now ?? new Date()).toISOString().slice(0, 10);
 	const confirmed = ready
 		.map((r) => enforce(registry, plan, r, day))
@@ -364,6 +383,52 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 
 	// ADR D5: the registry these writes leave has to pass its own check.
 	const check = await checkPromises(planRoot, { codeRoot });
-	if (!check.ok) return { ok: false, refusals: check.refusals, written: confirmed.length > 0 };
-	return { ok: true, confirmed };
+	if (!check.ok) {
+		return { ok: false, refusals: check.refusals, written: confirmed.length > 0, ...halves };
+	}
+	return { ok: true, confirmed, ...halves };
+}
+
+/**
+ * The two halves of a clause's proof for a plan written as clauses: its tests
+ * run now, then its signal read from the daemon, over every promise of the
+ * close with a split or limit clause. Refused outright when the caller handed
+ * in no runner or no reader: a plan written as clauses never closes on its
+ * State cells alone.
+ */
+async function clauseHalves(
+	folder: PlanFolder,
+	ready: readonly Ready[],
+	codeRoot: string,
+	input: ConfirmInput,
+): Promise<{ refusals: CheckRefusal[]; halves?: ClauseHalves }> {
+	const file = planFileRel(folder, "impl.md");
+	const proving = ready
+		.map((r) => ({ promise: r.proof.promise, rows: r.proof.rows }))
+		.filter((h) => provableClauses(h.promise).length > 0);
+	if (proving.length === 0) return { refusals: [] };
+	const { runTests, readSignals } = input;
+	if (!runTests || !readSignals) {
+		const missing = [
+			...(runTests ? [] : ["no test runner"]),
+			...(readSignals ? [] : ["no signal reader"]),
+		];
+		return {
+			refusals: [
+				{
+					file,
+					message: `${folder.plan} is written as clauses (\`clauses: required\`), so closing runs each clause's tests now and asks the daemon for its signal — this close was given ${missing.join(" and ")}; close it with \`indusk promises confirm ${folder.plan}\``,
+				},
+			],
+		};
+	}
+	const halves: ClauseHalves = {
+		tests: await clauseTestsHalf(proving, codeRoot, runTests),
+		signal: await clauseSignalHalf(proving, readSignals),
+	};
+	const refusals = [...halves.tests.refusals, ...halves.signal.refusals].map((message) => ({
+		file,
+		message,
+	}));
+	return { refusals, halves };
 }

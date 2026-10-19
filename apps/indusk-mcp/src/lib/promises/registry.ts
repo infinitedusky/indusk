@@ -118,6 +118,11 @@ export interface IncidentEntry {
 	 */
 	tests?: string[];
 	release?: string[];
+	/**
+	 * The clause whose break opened it (`clause:` in its frontmatter), when
+	 * the break named one: an incident is keyed by `promise/clause`.
+	 */
+	clause?: string;
 	/** Registry-relative file path, e.g. `incidents/i-2026-….md`. */
 	file: string;
 }
@@ -485,6 +490,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			source: IncidentSource;
 			status: IncidentStatus;
 			environment?: unknown;
+			clause?: unknown;
 		};
 		incidents.push({
 			id: d.id,
@@ -499,6 +505,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			traces: Array.isArray(d.traces) ? d.traces.map(String) : [],
 			...(Array.isArray(d.tests) ? { tests: d.tests.map(String) } : {}),
 			...(Array.isArray(d.release) ? { release: d.release.map(String) } : {}),
+			...(typeof d.clause === "string" && d.clause ? { clause: d.clause } : {}),
 			file: rel,
 		});
 	}

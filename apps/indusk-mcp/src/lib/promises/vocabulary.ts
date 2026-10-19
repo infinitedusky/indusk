@@ -121,7 +121,7 @@ export function anyPromiseTokenPattern(): RegExp {
 export const PROMISE_MARK = {
 	/** Span attribute: the promise's registry name. */
 	promise: "indusk.promise",
-	/** Span attribute: `upheld` or `violated`. */
+	/** Span attribute: `upheld` or `broken` (the older `violated` is still read). */
 	outcome: "indusk.promise.outcome",
 	/** Span event, present on a violation. */
 	violatedEvent: "indusk.promise.violated",
@@ -208,7 +208,7 @@ export const TEST_RUN_VALUE = "test";
 /** OpenTelemetry's own resource attribute for the deployment environment. */
 export const ENVIRONMENT_ATTRIBUTE = APP_RESOURCE_KEYS.environment;
 
-/** A signal's verdict as the code holds it. The wire still carries `violated` this release (see `readOutcome`). */
+/** A signal's verdict as the code holds it. The wire carries `broken`; `violated` from older writers is still read (see `readOutcome`). */
 export const PROMISE_OUTCOMES = ["upheld", "broken"] as const;
 export type PromiseOutcome = (typeof PROMISE_OUTCOMES)[number];
 

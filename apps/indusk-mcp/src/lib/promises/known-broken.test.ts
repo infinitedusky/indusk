@@ -144,7 +144,7 @@ describe("A5 — incidents move a promise in and out of known-broken", () => {
 		const registry = registryOf(fx.planRoot);
 		const promise = registry.promises[0];
 		if (!promise) throw new Error("no promise");
-		const change = recordViolations(
+		const [change] = recordViolations(
 			registry,
 			promise,
 			[violation()],

@@ -19,6 +19,7 @@ const SRC_LIB = join(REPO_ROOT, "apps/indusk-mcp/src/lib");
 const CONSUMERS = [
 	"apps/indusk-mcp/src/lib/plans/plan-tests.ts",
 	"apps/indusk-mcp/src/lib/verify/red-tests.ts",
+	"apps/indusk-mcp/src/lib/promises/closing-inputs.ts",
 ];
 
 describe("T20 — one way to run a test file", () => {

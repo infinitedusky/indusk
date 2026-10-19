@@ -223,6 +223,7 @@ pointer; the pointer holds the story.
   and `symptom`; a credential with a line separator is refused by name. The
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
+- **A command's own spans come from `commandTracer()`** (`lib/telemetry/command-tracer.ts`): a lazy provider exporting to the daemon found at its stored address, the API's no-op tracer when none runs, never registered globally; a short-lived command calls `flushCommandTracer()` before it exits. The evaluator keeps `initEvalOtel`. — see `/decisions/mark-first`
 - Find a promise with `findPromise` (`lib/promises/registry.ts`; name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `lib/promises/clause-rules.ts`.
 - **`.mcp.json` is per machine and untracked**: only `ensureMcpJson` creates it (naming
   `indusk`), and `update` only when none exists; `register` writes only its own

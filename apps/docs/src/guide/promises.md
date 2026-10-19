@@ -236,7 +236,7 @@ expectPromiseUpheld(spans, "promise: seat-never-double-booked", {
 The helper takes the promise as its token, so the assertion is also the
 promise's test link — `indusk promises check` counts it with no other comment.
 It checks containment, not a snapshot: added attributes and extra child spans
-never fail it; the marked span going missing does. `expectPromiseViolated`
+never fail it; the signalling span going missing does. `expectPromiseViolated`
 asserts a break and returns its symptom.
 
 This repository's own example is `every-commit-evaluated`: every evaluator run

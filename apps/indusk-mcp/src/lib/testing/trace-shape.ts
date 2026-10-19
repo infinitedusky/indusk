@@ -11,14 +11,14 @@ import { PROMISE_MARK, parsePromiseToken, readOutcome } from "../promises/vocabu
 /**
  * Asserting a behaviour promise in a test (day-monitor, ADR D3).
  *
- * An application marks a promise with plain OpenTelemetry — two attributes
+ * An application signals a promise with plain OpenTelemetry — two attributes
  * and, on a violation, an event (`PROMISE_MARK`). A test runs the call under
  * `captureSpans`, which owns the global tracer for the call's duration, and
- * asserts the mark with `expectPromiseUpheld` / `expectPromiseViolated`.
+ * asserts the signal with `expectPromiseUpheld` / `expectPromiseViolated`.
  *
  * The assertions are containment, not snapshots: other attributes, other
  * spans and extra children never fail them, and the one thing that does is
- * the marked span being gone (A5). They take the promise as its token,
+ * the signalling span being gone (A5). They take the promise as its token,
  * `"promise: <name>"` — the same string `indusk promises check` counts, so
  * the assertion is also the promise's test link with no other citation (A6).
  *
@@ -103,7 +103,7 @@ function describeMarks(spans: CapturedSpan[]): string {
 	const marked = spans.filter((s) => s.attributes[PROMISE_MARK.promise] !== undefined);
 	if (marked.length === 0)
 		return `no span carried ${PROMISE_MARK.promise} (${spans.length} captured)`;
-	return `marked spans: ${marked
+	return `signalling spans: ${marked
 		.map(
 			(s) =>
 				`${s.name} [${String(s.attributes[PROMISE_MARK.promise])}: ${String(s.attributes[PROMISE_MARK.outcome])}]`,
