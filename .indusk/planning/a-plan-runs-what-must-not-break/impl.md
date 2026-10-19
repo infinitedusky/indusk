@@ -1,7 +1,7 @@
 ---
 title: "A plan runs what must not break"
 date: 2026-10-18
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
