@@ -168,7 +168,7 @@ This phase writes the one test whose subject exists today: that the tests a plan
 
 This phase creates the place every timed record goes, one append-only log per plan in machine state, with a writer that can never raise and a reader that skips anything it cannot read. It then records when a phase closes, next to the existing record of when it opened. Later phases write steps and test runs into the same log and the last phase reads it.
 
-- [ ] Write the tests for the log, the safe writer and the phase close, so they fail first.
+- [x] Write the tests for the log, the safe writer and the phase close, so they fail first.
   <details><summary>Technical</summary>
 
   A1, A2, A3, A14, A17 and A19's first half in `lib/timing/phase-close.test.ts` and `lib/timing/log.test.ts`, per the deferral bodies above; commit red (`(write red)` against the missing module).
