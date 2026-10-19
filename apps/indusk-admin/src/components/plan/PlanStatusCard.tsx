@@ -52,7 +52,9 @@ export function PlanStatusCard({
             ))}
           </ul>
         ) : (
-          <p>Everything it promised is confirmed.</p>
+          <p>
+            {said.confirmationNote ?? "Everything it promised is confirmed."}
+          </p>
         )}
       </DecisionCard>
     );

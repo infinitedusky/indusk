@@ -145,25 +145,35 @@ async function situatedPlan(input: {
   return { ...withLive, situation: { situation: reading, next } };
 }
 
-/** The confirmation list of a plan on main: its promises' clause signals and its live checks. */
+/**
+ * The confirmation list of a plan on main: its promises' clause signals and its live checks.
+ * A registry that cannot be read is said so, never read as a plan with nothing to confirm (A92).
+ */
 async function confirmationsFor(
   projectPath: string,
   plan: Plan,
   promises: readonly string[],
-): Promise<Confirmation[]> {
-  const rows = await readStanding(projectPath).catch(() => []);
+): Promise<Confirmation[] | { unreadable: string }> {
+  let rows: Awaited<ReturnType<typeof readStanding>>;
+  try {
+    rows = await readStanding(projectPath);
+  } catch (err) {
+    return { unreadable: (err as Error).message };
+  }
   const content = plan.impl?.content ?? "";
   return confirmationsOf({
-    promises: promises.map((name) => ({
-      name,
-      clauses: (rows.find((r) => r.entry.name === name)?.clauses ?? []).map(
-        (c) => ({
+    promises: promises.map((name) => {
+      const row = rows.find((r) => r.entry.name === name);
+      return {
+        name,
+        inForce: row?.entry.state === "enforced",
+        clauses: (row?.clauses ?? []).map((c) => ({
           clause: c.clause,
           kind: c.kind,
           standing: c.standing,
-        }),
-      ),
-    })),
+        })),
+      };
+    }),
     liveChecks: (plan.impl?.trajectory?.rows ?? [])
       .filter((r) => r.levelText === "live check")
       .map((r) => ({ id: r.id, recorded: liveCheckRecorded(content, r.id) })),
