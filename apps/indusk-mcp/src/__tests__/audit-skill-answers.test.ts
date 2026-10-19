@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest";
  * clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person — A11
  * clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan — A16
  * clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval — A19
+ * clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold — A43
  */
 
 const PKG = resolve(__dirname, "../..");
