@@ -149,7 +149,7 @@ This phase changes what a plan runs: the Must-not-break promises' tests move fro
 
 #### Build Phase 1 Context
 
-- [ ] Correct the package context line about a plan's tests to the new rule.
+- [x] Correct the package context line about a plan's tests to the new rule.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, Run, verify, Shape, cleanup: the `planTestSet` line — rows and Must-not-break at each phase and landing, no reached search.
@@ -158,7 +158,7 @@ This phase changes what a plan runs: the Must-not-break promises' tests move fro
 
 #### Build Phase 1 Document
 
-- [ ] Update the plans reference and the tests-never-make-us-wait decision page to the new rule, and add a changelog line.
+- [x] Update the plans reference and the tests-never-make-us-wait decision page to the new rule, and add a changelog line.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md` (`plans tests`), `decisions/tests-never-make-us-wait.md` (a dated note: reached tests dropped, Must-not-break every phase), `reference/cli/promises.md` (`change --clause`); changelog.
