@@ -39,9 +39,13 @@ live state.
    released; the offer of approval also checks the plan review's `read:` hash.
 5. **`decisions-as-questions`**: approved; main merged into its branch 2026-10-19; builds after 3 lands (both touch the admin's build host).
 
+## Next after this list
+
+`run-the-graph` — brief accepted 2026-10-19 (stories gone through with Sandy); planning now, builds right after `decisions-as-questions`.
+
 ## Parked until done
 
-`run-the-graph`, `activity-and-graph` (including an Up next view),
+`activity-and-graph` (including an Up next view),
 `the-sampler`, `a-promise-can-be-retired` and the tier retire,
 `a-promise-claims-what-the-plan-builds`, the `fix-http-*` drafts, and the
 hardening list in `.indusk/current.md`.
