@@ -749,12 +749,13 @@ This phase tests the finished plan against signals and breaks shaped differently
 
   </details>
   Done as written: `DashboardRow` gains an optional `signal` (optional so the component fixtures built without it still type-check), `buildRows` copies the package's, and `readsNoSignal` is also true for an enforced row whose signal is `no-signal`; a promise stated before clauses (`signal` null) reads as before. The admin's typecheck is clean. Its component tests (`src/components`) fail in this worktree with and without the change (checked by reverting `promise-dashboard.ts`: `Promises.test.tsx` red the same way) — they need the browser run this environment does not have, so they are not this item's.
-- [ ] Make the promise status command write the signal for the clause that says no signal is never holding.
+- [x] Make the promise status command write the signal for the clause that says no signal is never holding.
   <details><summary>Technical</summary>
 
   Hypothesis (A39): nothing in `src/` writes the signal of `a-clause-is-proved-twice/no-signal-is-not-holding` (the impl's Notes, "Open at impl close"), so `indusk promises confirm mark-first` refuses that clause as "no signal" forever. Fix (decision D-28): after `promises status` (`status.ts`) has built its clause lines from `readStanding`, it judges what it is about to show: broken naming a clause shown holding with no report (`lastReport === null`) or while the watcher is blind, else upheld; one span through `commandTracer()` + `markPromise` with the Build Phase 7 pointer, flushed before exit, written only when at least one clause was shown, best-effort and never failing the command. The judgement is a pure function over the clause rows so the test hands it rows; the admin does not write it (it would write once per refresh).
 
   </details>
+  Done. `promises status` builds its clause lines from the daemon's read, not from `readStanding`, so the rows judged are the ones it prints: `shownClauses` (status.ts) gives each split and limit clause it shows with its standing and newest report, and `clauseLines` now prints from the same function. `statusVerdict(shown, heartbeatOk)` is the pure judge; `markStatusSignal` writes one span (`promises.status`) with the project, flushed, best-effort. `promisesStatus` judges the clauses of every source that answered; a source that did not answer (unreachable or blind) shows no clause, so it is judged with a live heartbeat. The A39 test was authored against the status module's namespace (the functions did not exist, so it failed on an assertion rather than on loading) and now imports them directly.
 - [ ] Before the plan closes, produce one real report for each of the four clauses of this plan's promise.
   <details><summary>Technical</summary>
 

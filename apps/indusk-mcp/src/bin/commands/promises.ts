@@ -24,7 +24,13 @@ import {
 	type SourceRead,
 	sourceAdvice,
 } from "../../lib/promises/sources.js";
-import { formatStatus, parseDuration } from "../../lib/promises/status.js";
+import {
+	formatStatus,
+	markStatusSignal,
+	parseDuration,
+	shownClauses,
+	statusVerdict,
+} from "../../lib/promises/status.js";
 import { watchReport } from "../../lib/promises/watch.js";
 import {
 	changePromise,
@@ -101,6 +107,13 @@ export async function promisesStatus(
 	const promises = read.registry.promises;
 	const reads = await readSources(projectRoot, read.registry, { sinceMs });
 	const alarm = alarmSource(reads.map((r) => r.name));
+	// The signal of no-signal-is-not-holding, judged from the clauses this run
+	// shows (mark-first D-28): every source that answered, its watcher probed.
+	const verdict = statusVerdict(
+		reads.flatMap((r) => (r.ok ? shownClauses(promises, r.marks) : [])),
+		true,
+	);
+	if (verdict) await markStatusSignal(projectRoot, verdict);
 	if (reads.length === 1) {
 		// One source: today's output, with no section header (A7).
 		const [only] = reads;

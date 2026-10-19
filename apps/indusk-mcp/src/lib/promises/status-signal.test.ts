@@ -1,7 +1,7 @@
 import type { Tracer } from "@opentelemetry/api";
 import { describe, expect, it } from "vitest";
 import type { PromiseEntry } from "./registry.js";
-import * as status from "./status.js";
+import { markStatusSignal, type ShownClause, shownClauses, statusVerdict } from "./status.js";
 import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
 
 // promise: a-clause-is-proved-twice
@@ -14,24 +14,6 @@ import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
  * shows as holding has a report and a live watcher; broken, naming the
  * clause, when one is shown holding without. Nothing shown, nothing written.
  */
-
-interface ShownClause {
-	promise: string;
-	clause: string;
-	standing: "broken" | "no-signal" | "holding";
-	lastReport: string | null;
-}
-type Verdict = { outcome: "upheld" | "broken"; symptom?: string } | null;
-
-/** The status module's judge and writer, looked up so a missing one fails as an assertion. */
-const api = status as unknown as Record<string, unknown>;
-const statusVerdict = (rows: ShownClause[], heartbeatOk: boolean): Verdict =>
-	(api.statusVerdict as (r: ShownClause[], h: boolean) => Verdict)(rows, heartbeatOk);
-const shownClauses = (promises: PromiseEntry[], marks: MarkedSpansResult): ShownClause[] =>
-	(api.shownClauses as (p: PromiseEntry[], m: MarkedSpansResult) => ShownClause[])(
-		promises,
-		marks,
-	);
 
 interface Captured {
 	attrs: Record<string, unknown>;
@@ -70,12 +52,6 @@ const holding = (clause: string, lastReport: string | null = AT): ShownClause =>
 });
 
 describe("A39 — promises status writes the signal of no-signal-is-not-holding", () => {
-	it("the status module has a judge, a writer and the clauses it shows", () => {
-		expect(typeof api.statusVerdict).toBe("function");
-		expect(typeof api.markStatusSignal).toBe("function");
-		expect(typeof api.shownClauses).toBe("function");
-	});
-
 	it("is upheld when every clause shown holding has a report and the watcher is live", () => {
 		const noSignal: ShownClause = {
 			promise: "p",
@@ -144,12 +120,11 @@ describe("A39 — promises status writes the signal of no-signal-is-not-holding"
 
 	it("writes one span through the tracer, naming the promise and the clause", async () => {
 		const { tracer, spans } = capture();
-		const write = api.markStatusSignal as (
-			root: string,
-			v: NonNullable<Verdict>,
-			t?: Tracer,
-		) => Promise<void>;
-		await write("/nowhere", { outcome: "broken", symptom: "p/b shown holding with no report" }, tracer);
+		await markStatusSignal(
+			"/nowhere",
+			{ outcome: "broken", symptom: "p/b shown holding with no report" },
+			tracer,
+		);
 		expect(spans).toHaveLength(1);
 		expect(spans[0]?.attrs["indusk.promise"]).toBe("a-clause-is-proved-twice");
 		expect(spans[0]?.attrs["indusk.clause"]).toBe("no-signal-is-not-holding");
