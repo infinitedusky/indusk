@@ -556,18 +556,10 @@ export async function startBuild(
     throw new Error(`${plan} is being planned: its planning run has not ended`);
   assertNoBuildSession(project, plan);
   reportBuildPressed(project, plan);
-  const dead = deadRun(project, plan);
-  if (dead !== null) {
-    const root = getProjectPath(project);
-    if (!root) throw new Error(`no project named ${project}`);
-    const restart = await restartFor(root, plan, dead);
-    if (restart.run === "planning")
-      return startPlanningFromBuild(project, plan);
-    if (restart.run === "release") return startRelease(project, plan);
-  }
-  // Admitted once, here, and holding its place under the cap until it ends —
-  // between its steps too, so another plan's start cannot take it.
-  const free = sessionManager().admitBuild(project, plan);
+  // Held before the first await, as startRelease and startPlanning are: from the press on the
+  // plan reads running and a second press is refused, so one plan never has two builds (A96).
+  const k = key(project, plan);
+  const before = builds().get(k);
   const state: BuildState = {
     running: true,
     step: null,
@@ -575,20 +567,56 @@ export async function startBuild(
     stop: null,
     release: null,
   };
+  builds().set(k, state);
+  const letGo = () => {
+    if (builds().get(k) !== state) return;
+    if (before) builds().set(k, before);
+    else builds().delete(k);
+  };
+  const dead = deadRun(project, plan);
+  if (dead !== null) {
+    let restart: Awaited<ReturnType<typeof restartFor>>;
+    try {
+      const root = getProjectPath(project);
+      if (!root) throw new Error(`no project named ${project}`);
+      restart = await restartFor(root, plan, dead);
+    } catch (err) {
+      letGo();
+      throw err;
+    }
+    if (restart.run === "planning") {
+      letGo();
+      return startPlanningFromBuild(project, plan);
+    }
+    if (restart.run === "release") {
+      letGo();
+      return startRelease(project, plan);
+    }
+  }
+  // Admitted once, here, and holding its place under the cap until it ends —
+  // between its steps too, so another plan's start cannot take it.
+  let free: () => void;
+  try {
+    free = sessionManager().admitBuild(project, plan);
+  } catch (err) {
+    letGo();
+    throw err;
+  }
   const handle = openRecord(project, plan, "build");
   let root: string;
   let deps: Awaited<ReturnType<typeof depsFor>>["deps"];
   try {
     ({ root, deps } = await depsFor(project, plan, state, handle));
   } catch (err) {
+    state.running = false;
+    state.stop = { step: "cannot-continue", why: (err as Error).message };
     handle.update({
-      stop: { step: "cannot-continue", why: (err as Error).message },
+      stop: state.stop,
       stopReason: (err as Error).message,
     });
     free();
     throw err;
   }
-  builds().set(key(project, plan), state);
   void runBuild({ ...deps, autoAccept: autoAccepts(root) })
     .then((stop) => {
       // An auto-accepted release is judged from the trunk too, never from its step's word.
