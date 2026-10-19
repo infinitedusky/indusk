@@ -58,7 +58,7 @@ by discipline.
 
 ## 3. Hooks enforce what discipline won't
 
-Ten hooks ship. Six are PreToolUse gates that run before a write or a
+Eleven hooks ship. Seven are PreToolUse gates that run before a write or a
 command and refuse; three are PostToolUse and act after the fact; one runs on
 every prompt:
 
@@ -70,6 +70,7 @@ every prompt:
 | `trunk-guard` | code edited or committed on `main` — an Edit/Write, or a `git commit` whose paths (staged, `-a`/`-am`, or named as pathspecs), fall outside `.indusk/`, `.claude/lessons/`, the installed `.claude/skills/` and `.claude/hooks/`, settings, `CLAUDE.md` and `AGENTS.md` while the repository is on a protected branch. The commit gate reads `git -C … commit`, a preceding `cd`, `bash -c "…"`, `$(…)` and backticks; a script that commits inside itself is out of its sight |
 | `stash-guard` | in a repository with more than one worktree, which all share one stash stack: a `git stash` with no message, any `pop`, an `apply`, `drop` or `branch` with no stash named, and `clear`. It names the safe ways: a temporary commit, or a tagged push applied by its sha. See [Worktrees share one stash](/guide/multi-agent#worktrees-share-one-stash) |
 | `looks-approval-guard` | an agent's Write or Edit to an app's `.indusk/mockups/<app>/approved.json` — the record of which mockups a person approved — and, on Bash, a command that writes it (a redirect, `tee`, `cp`/`mv`, `sed -i`, an interpreter, `git checkout … --`) or calls the approve route. A mockup becomes the reference only through the cockpit's Approve; the refusal says so. A tripwire for an agent's ordinary attempt, not a boundary against a process running as the person. See [`indusk looks`](/reference/cli/looks) |
+| `plan-write-guard` | *(Bash only)* a shell command that writes, moves or deletes a file in a plan's folder (`.indusk/planning/<plan>/`, archived plans too): a redirect, `tee`, `sed -i`, `perl -i`, `mv`/`cp`/`rm`, `git mv`/`rm`/`restore`/`checkout --`/`apply`, `find … -delete`, an inline interpreter writing a plan path. Reads, a path named only as text, and `indusk` commands pass. A plan document changes through the Edit tool, where the gates above run, or its `indusk` command; a `mv` of a plan folder is told to use `indusk plans archive` |
 | `eval-trigger` | *(PostToolUse)* — nothing; on every `git commit` it spawns the evaluator that scores the diff, and in a multi-repo workbench it refuses to guess which repo the commit belongs to |
 | `workbench-sync` | *(PostToolUse)* — nothing; commits workbench context after edits |
 | `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
