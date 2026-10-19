@@ -192,7 +192,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
-  sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
+  sent, never failed; an answer carries the kind of decision the card showed
+  (`on`), and one the plan no longer waits on is refused before anything runs
+  — a plan-review card can become an approval without the person (guarded by
+  A22 in `decisions.test.ts`). Guarded by `src/lib/build-host.release.test.ts` and
   `src/lib/decisions.test.ts`. **A decision's card shows everything the agent
   asked, never the first of it**: an ask of several questions is shown whole and
   answered under each question's text (`choice: "answers"`), and an answer

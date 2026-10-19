@@ -126,7 +126,7 @@ describe("A14 — one decision, with accept, the alternative and a reply", () =>
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({
       url: "/api/plans/asking/decision",
-      body: { project: PROJECT, choice: "alternative" },
+      body: { project: PROJECT, choice: "alternative", on: "question" },
     });
   });
 
@@ -177,7 +177,7 @@ describe("A35 — a review shows its evidence with its decision, and accepting i
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({
       url: "/api/plans/at-review/decision",
-      body: { project: PROJECT, choice: "accept" },
+      body: { project: PROJECT, choice: "accept", on: "review" },
     });
   });
 });
@@ -290,5 +290,34 @@ describe("approval-waits-for-the-planning-run A20 — a plan-review wait is draw
     expect(card.getAttribute("data-on")).toBe("plan-review");
     expect(card.textContent).toContain("Needs its plan review at Impl");
     expect(card.textContent).toContain("The plan needs its plan review");
+  });
+});
+
+// promise: decisions-wait-in-one-place
+describe("approval-waits-for-the-planning-run A23 — an answer names the decision the card showed", () => {
+  it("A23 a plan-review card posts on: plan-review with its answer", async () => {
+    const screen = await render(
+      <DecisionCard
+        project={PROJECT}
+        waiting={{
+          plan: "written",
+          on: "plan-review",
+          step: "Impl",
+          decision: "The plan needs its plan review.",
+          accept: "Ask the agent to write it",
+          alternative: "Not yet",
+        }}
+      />,
+    );
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("decision-card").element()).toBeTruthy(),
+    );
+    (screen.getByTestId("decision-accept").element() as HTMLElement).click();
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]?.body).toEqual({
+      project: PROJECT,
+      choice: "accept",
+      on: "plan-review",
+    });
   });
 });

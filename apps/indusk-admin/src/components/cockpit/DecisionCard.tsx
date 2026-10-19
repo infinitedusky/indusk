@@ -80,6 +80,7 @@ export function DecisionCard({
       {
         project,
         choice,
+        on: waiting.on,
         ...(choice === "reply" ? { text } : {}),
         ...(choice === "answers"
           ? {

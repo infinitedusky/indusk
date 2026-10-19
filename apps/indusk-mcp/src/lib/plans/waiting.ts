@@ -248,7 +248,7 @@ function planReview(plan: string, plannings: ReadonlyArray<WaitingPlanning>): Wa
 	const stop = plannings.find((p) => p.plan === plan)?.stop;
 	const why =
 		stop?.step === "cannot-continue"
-			? stop.why
+			? stop.why.replace(/\.$/, "")
 			: stop?.step === "wait-for-looks"
 				? `it waits for its looks: ${stop.looks.join("; ")}`
 				: null;

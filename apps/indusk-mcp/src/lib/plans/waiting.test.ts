@@ -277,6 +277,25 @@ describe("approval-waits-for-the-planning-run — a plan waits on its plan revie
 		expect(w?.decision).toContain("the last step's session failed: exit 1");
 	});
 
+	it("A25 a run stopped waiting for its looks names them, and a reason ending in a full stop gets no second", () => {
+		const looks: WaitingPlanning = {
+			plan: approval.name,
+			running: false,
+			stop: { step: "wait-for-looks", looks: ["plan.working", "plan.needs-you"] },
+		};
+		const [l] = wait({ plans: [unread], plannings: [looks] });
+		expect(l?.decision).toContain("plan.working");
+		expect(l?.decision).toContain("plan.needs-you");
+		const dotted: WaitingPlanning = {
+			plan: approval.name,
+			running: false,
+			stop: { step: "cannot-continue", why: "the impl check said: no." },
+		};
+		const [d] = wait({ plans: [unread], plannings: [dotted] });
+		expect(d?.decision).toContain("the impl check said: no.");
+		expect(d?.decision).not.toContain("..");
+	});
+
 	it("A5 after an admin restart (no planning state) the plain decision is listed, never approval", () => {
 		const [w] = wait({ plans: [unread] });
 		expect(w?.on).toBe("plan-review");

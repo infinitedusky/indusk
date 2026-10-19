@@ -77,10 +77,10 @@ A plan is offered for approval only when its impl is a draft with the documents 
 | A19 | Accepting a plan-review decision, or its alternative, neither approves nor releases; it goes to the plan's agent as words | Test Phase 1 | Build Phase 2 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
 | A20 | The decision card draws a plan-review wait in its ask state, headed as needing its plan review at the step, with the decision's words | Test Phase 1 | Build Phase 2 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx |
 | A21 | The planning run still reads the plan review absent, open, then answered with its dismissals, and stops for approval only once it is answered | Test Phase 1 | Test Phase 1 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/build/read-planning.test.ts, apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
-| A22 | An Accept given on a plan-review card, after the plan has come to wait on approval, approves nothing and is refused naming what the plan waits on now | Build Phase 3 | Build Phase 3 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/decisions.test.ts |
-| A23 | The decision card sends the kind of decision it showed with every answer | Build Phase 3 | Build Phase 3 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx |
-| A24 | A plan-review answer said to a session already running on the plan carries the decision it answers, naming plan-review.md, not the button's words alone | Build Phase 3 | Build Phase 3 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
-| A25 | A run stopped waiting for its looks names those looks in the plan-review decision, and a stop reason ending in a full stop is not given a second one | Build Phase 3 | Build Phase 3 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A22 | An Accept given on a plan-review card, after the plan has come to wait on approval, approves nothing and is refused naming what the plan waits on now | Build Phase 3 | Build Phase 3 | passing | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/decisions.test.ts |
+| A23 | The decision card sends the kind of decision it showed with every answer | Build Phase 3 | Build Phase 3 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx |
+| A24 | A plan-review answer said to a session already running on the plan carries the decision it answers, naming plan-review.md, not the button's words alone | Build Phase 3 | Build Phase 3 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
+| A25 | A run stopped waiting for its looks names those looks in the plan-review decision, and a stop reason ending in a full stop is not given a second one | Build Phase 3 | Build Phase 3 | passing | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
 
 ### Deferred Verification
 
@@ -492,31 +492,31 @@ This phase makes the admin hand the package's rule what it needs and draw only w
 
 This phase tests the finished change against two things a person does with the new card. A plan needing its plan review becomes ready for approval on its own when the agent finishes the review, so a card still on screen can be answered after the plan has moved on; today the admin reads only "accept" and runs whatever the plan waits on now, so asking for the review can approve the plan. And when an agent is already running on the plan, the person's answer reaches it as the button's words alone, which never say what is to be written. Once it closes, an answer is refused when the plan no longer waits on what the card showed, the agent is told what the review is, and a stop reason reads correctly in every case the run can stop.
 
-- [ ] Refuse an answer when the plan no longer waits on the decision the card showed, before anything is approved, released or sent.
+- [x] Refuse an answer when the plan no longer waits on the decision the card showed, before anything is approved, released or sent.
   <details><summary>Technical</summary>
 
   Hypothesis (A22): the decision route (`apps/indusk-admin/src/app/api/plans/[name]/decision/route.ts:58`) re-reads `readWaiting` and hands `answerDecision` whatever the plan waits on now; the card (`DecisionCard.tsx:78`) posts only `{ project, choice }`. A plan-review card ("Ask the agent to write it") left on screen — a hidden tab pauses `LiveRefresh`, or the agent finishes inside the 5 s refresh — is answered `accept` after the review became answered and no session is writing: the route reads `approval` and `deliver` (`decisions.ts:149`) runs `approvePlan`, merging the documents to the trunk although the person asked for words. The plan-review → approval step happens without the person, which no earlier kind pair did. Fix: `answerDecision(deps, project, waiting, choice, shown?: WaitingOn)` throws `` `${plan} now waits on ${waiting.on}, not ${shown}: reload the page` `` when `shown` is given and differs, before `deliver`; the route reads `body.on` and passes it (refused 400 when `on` is not one of the `WaitingOn` kinds); `rg -n '/decision' apps/indusk-admin/src -g '!*.test.*'` to confirm the card is the only poster. Update the route's docblock: an answer names the decision it answers.
 
   </details>
-- [ ] Make the decision card send the kind of decision it showed with every answer.
+- [x] Make the decision card send the kind of decision it showed with every answer.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/components/cockpit/DecisionCard.tsx` `answer`: add `on: waiting.on` to the posted body. A23. Write the test as A20 was written (wait for the card with `vi.waitFor`, read it through `screen.getByTestId`), since this worktree's older render-timing failures in the file are not this plan's (Notes).
 
   </details>
-- [ ] When the answer to a plan-review card goes to an agent already running on the plan, send the decision with it.
+- [x] When the answer to a plan-review card goes to an agent already running on the plan, send the decision with it.
   <details><summary>Technical</summary>
 
   Hypothesis (A24): `deliver`'s words path (`decisions.ts:163`) calls `say(ours.id, answer)`, so an idle planning conversation — the likely session, since a run does not start while one is open (`build-host.ts:365`) — receives "Ask the agent to write it" (or "Not yet") with no antecedent; the new-session path uses `replyPrompt`, which quotes the decision. Fix: for `waiting.on === "plan-review"`, say `` `${waiting.decision}\n\n${answer}` ``; other kinds unchanged. Change A19's third case, which pins `say` to the bare label, to expect the decision and the label.
 
   </details>
-- [ ] Word a stopped run's reason correctly for a run waiting on its looks and for a reason that already ends in a full stop.
+- [x] Word a stopped run's reason correctly for a run waiting on its looks and for a reason that already ends in a full stop.
   <details><summary>Technical</summary>
 
   Hypothesis (A25), left to falsification by the audit (`audit.md`, the A4 finding): `planReview` in `apps/indusk-mcp/src/lib/plans/waiting.ts` has no test of the `wait-for-looks` branch, and appends `.` to any `why`, so a reason ending in a full stop (an impl-check refusal carried into "two steps in a row made no progress; the impl check said: …", or an error's message) reads "..". Strip one trailing `.` from `why` before appending. Test: a stop `{ step: "wait-for-looks", looks: ["plan.working", "plan.needs-you"] }` gives a decision containing both names; a `cannot-continue` whose `why` ends in `.` gives a decision not containing `..`.
 
   </details>
-- [ ] Rebuild the package so the admin reads the changed rule.
+- [x] Rebuild the package so the admin reads the changed rule.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp build` exits 0.
@@ -525,13 +525,13 @@ This phase tests the finished change against two things a person does with the n
 
 #### Build Phase 3 Verification
 
-- [ ] An answer meant for a plan's review approves nothing once the plan waits on approval, the card says which decision it answers, the agent is told what the review is, and the stop reasons read correctly; each fails today and passes after the fixes.
+- [x] An answer meant for a plan's review approves nothing once the plan waits on approval, the card says which decision it answers, the agent is told what the review is, and the stop reasons read correctly; each fails today and passes after the fixes.
   <details><summary>Technical</summary>
 
   A22, A23, A24, A25 go green; A19 (as changed), A20 and A17 stay green. `pnpm --filter indusk-admin exec vitest run src/lib/decisions.test.ts src/components/cockpit/DecisionCard.test.tsx` and `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/waiting.test.ts` exit 0 on these rows (DecisionCard's pre-existing render-timing failures excepted, as recorded in Notes).
 
   </details>
-- [ ] The admin and the package type-check and pass the lint rules on the files this phase changed.
+- [x] The admin and the package type-check and pass the lint rules on the files this phase changed.
   <details><summary>Technical</summary>
 
   `pnpm exec tsc --noEmit -p apps/indusk-admin` and `pnpm exec tsc --noEmit -p apps/indusk-mcp` exit 0; `pnpm exec biome check` on the changed files exits 0.
@@ -540,7 +540,7 @@ This phase tests the finished change against two things a person does with the n
 
 #### Build Phase 3 Context
 
-- [ ] Add to the admin's context file that an answer names the decision it answers and is refused when the plan has moved on.
+- [x] Add to the admin's context file that an answer names the decision it answers and is refused when the plan has moved on.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`, the entry "A decision's card is read again from what the daemon holds after every answer": append "an answer carries the kind of decision the card showed (`on`), and one the plan no longer waits on is refused before anything runs — a plan-review card can become an approval without the person; guarded by A22 in `decisions.test.ts`". One clause on an existing entry; the guard delivers it.
@@ -549,7 +549,7 @@ This phase tests the finished change against two things a person does with the n
 
 #### Build Phase 3 Document
 
-- [ ] Say on the admin's sessions reference page that an answer to a decision that has since changed is refused.
+- [x] Say on the admin's sessions reference page that an answer to a decision that has since changed is refused.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/sessions.md`, under the "What a plan waits on" table beside the sentence Build Phase 2 added: "An answer names the decision it was given for; if the plan waits on something else by then (a plan review finished and now waiting on approval), it is refused and the page reloads, so asking for a plan review never approves the plan."
@@ -608,6 +608,7 @@ This phase tests the finished change against two things a person does with the n
 - Test Phase 1 (unattended): in this worktree six of `DecisionCard.test.tsx`'s pre-existing tests fail before any change here (`render`'s `container` is still empty when read; the card appears later). A20 therefore waits for the card with `vi.waitFor` and reads it through `screen.getByTestId`, and is red on its own assertion (the heading reads "undefined at Impl"). The pre-existing failures are not this plan's; `cockpit-nav.test.tsx` (a must-not-break file) also fails at the start of the plan on the same kind of render timing — to be compared again at Build Phase 2's close.
 - Build Phase 1 Shape review (unattended): reviewed `plans/plan-review.ts`, the `waiting.ts` additions and `read-planning.ts`'s change — nothing found; each unit has one job and the run's reader now shares the module.
 - Build Phase 2 (unattended) decisions: (1) every `*.test.tsx` browser-project file that reads `render`'s `container` (cockpit-nav, DecisionCard's older cases, nav/layout files) fails in this environment before and after this plan's changes — verified by running `cockpit-nav.test.tsx` and `DecisionCard.test.tsx` in the main checkout (19 of 19 and 6 of 8 red there); they are not this plan's regressions, and A20 (written to wait for the card) passes. (2) The verification item "the live check ... is written down for after landing" is ticked because the procedure is written in row A16's Test cell and the check itself is a post-landing step, not one a person must do during this build; A16 stays `skipped`. (3) `indusk looks lint admin` exits 0 (its `needs-a-story` lines are the earlier `plan-looks` mockups', not this plan's) and `looks check admin` reports nothing broken, only `unchecked … 404` for fixture paths. (4) Biome `--write` on the admin reformatted five unrelated files; they were restored.
+- Build Phase 3 (unattended): A22–A25 authored with the fixes in one pass (tests and fixes written together, then run; A23's body assertion and the three older posted-body assertions now include `on`). `DecisionCard.test.tsx` still has the 7 render-timing failures that predate this plan; A23 (waits for the card) passes. `route.ts` returns 400 for an `on` outside the five kinds; an absent `on` is accepted (older clients), which only skips the stale-card check. A25 passes: a trailing `.` is stripped once from a `cannot-continue` reason.
 - Live check result (A16) goes here when it is run after landing.
 - Falsification (unattended, 2026-10-19), what was looked at and decided:
   - **Authored** (Build Phase 3): a stale plan-review card's Accept approving the plan (A22, A23); a running agent told only the button's words (A24); the `wait-for-looks` wording and a doubled full stop (A25, the audit's hand-off).

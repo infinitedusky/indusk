@@ -74,6 +74,8 @@ A plan that waits on you waits in one place. Introduced by plan-cockpit; the dec
 
 Every Approve button — the decision card, the plan page and the brief page — asks this answer; while a planning run is going, nothing is listed.
 
+An answer names the decision it was given for; if the plan waits on something else by then (a plan review finished and now waiting on approval), it is refused and the page reloads, so asking for a plan review never approves the plan.
+
 A question outranks the rest: an agent blocked on an answer is the most urgent thing a plan can wait on. A question asked in a terminal session is not seen here; the cockpit shows what the admin runs.
 
 **Needs you**, in the nav under Promises, lists each waiting plan by title with the step it waits at, and links to its page.
