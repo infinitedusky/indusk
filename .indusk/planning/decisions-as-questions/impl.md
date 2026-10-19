@@ -1,7 +1,7 @@
 ---
 title: "Decisions as questions"
 date: 2026-10-19
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "7bbffa5c97ca5ecae3307a5d6b584f6f9cc69179d56ba311e043d56d4525af1c"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T15:42:29.978Z"
 ---
 
 # Decisions as questions
