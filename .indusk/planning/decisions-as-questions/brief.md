@@ -1,10 +1,11 @@
 ---
 title: "Decisions as questions"
 date: 2026-10-19
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "An unattended session puts each choice to the person as a question with its recommendation and a cost: cheap and moderate ones go ahead on a timer, expensive ones stop and wait. A late answer that disagrees opens a follow-on plan, and a release waits for it; landing never does."
+accepted_at: "2026-10-19T14:47:29.932Z"
 ---
 
 # Decisions as questions — Brief
@@ -36,6 +37,7 @@ description: "An unattended session puts each choice to the person as a question
    - **`expensive-waits`** (split). An expensive question stops its session, frees its slot, and the run resumes when the person answers.
 
 3. **`what-was-agreed-is-never-cheap`** (state). A question whose answer would change the brief, a promise or a look, or skip a gate, is expensive whatever cost the agent gave it.
+   - **`never-timed-out`** (limit). A question whose answer would change the brief, a promise or a look, or skip a gate, never goes ahead on a timer.
 
 4. **`a-late-answer-opens-a-follow-on`** (state). An answer given after its question went ahead, choosing other than the recommendation, opens a follow-on plan to make the work match it; every question stays readable with its recommendation, its answer and what was done.
    - **`disagreement-opens-a-plan`** (split). A late answer that differs from what was done opens one draft follow-on plan naming the question, the choice made and the one wanted.
