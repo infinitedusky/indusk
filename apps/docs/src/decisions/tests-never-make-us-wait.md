@@ -10,6 +10,8 @@ Full ADR: `.indusk/planning/archive/tests-never-make-us-wait/adr.md`.
 
 ## What was decided
 
+> **2026-10-18, `a-plan-runs-what-must-not-break`:** the tests a change reaches are no longer run or searched for. A phase overloaded the machine with about 100 reached files, most imported for something unrelated, and the Must-not-break tests waited until landing. Now every phase runs its rows' tests and the Must-not-break promises' tests, and a landing runs every row's tests and those same tests. Choosing tests by what each executes is the sampler's. The rows below on reached tests describe the first version.
+
 **A plan runs its own tests, the tests its changes reach and the tests of what
 it must not break, and a visual test opens only the looks a change touched.**
 

@@ -145,10 +145,11 @@ pointer; the pointer holds the story.
 - **A plan's tests come from one command, never a hand-picked list**:
   `indusk plans tests <plan> --phase N | --landing` over `planTestSet`
   (`lib/plans/test-set.ts`), the one definition — a phase gets its rows' files
-  and what its changes reach, a landing adds the brief's Must-not-break
-  promises' `tests:`, nothing else. Reached tests are found by running
-  `vitest related`, which cannot list them. Guarded by `test-set.test.ts` (a
-  later phase's row stays out, landing holds nothing extra) and
+  and the brief's Must-not-break promises' `tests:`, a landing every row's
+  files and those same tests, nothing else; no search for tests a change
+  imports is made (choosing by what a test executes is the sampler's).
+  Guarded by `test-set.test.ts` (a later phase's row stays out, nothing
+  reached is added) and
   `skills-run-the-plan-test-set.test.ts` (no skill says `pnpm test`).
   — see `/decisions/tests-never-make-us-wait`
 - **The phase-boundary record** (`.indusk/phase-boundary.jsonl`) is generic

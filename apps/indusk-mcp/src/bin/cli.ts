@@ -1401,6 +1401,11 @@ promisesCmd
 	.requiredOption("--plan <plan>", "the plan changing it")
 	.requiredOption("--statement <sentence>", "the promise as it now reads")
 	.requiredOption("--reason <reason>", "why it changed")
+	.option(
+		"--clause <spec>",
+		"a clause of the promise, repeatable, replacing its clauses: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`; without it the clauses stay",
+		(spec: string, all: string[] = []) => [...all, spec],
+	)
 	.action(async function (this: Command, name: string) {
 		const { promisesChange } = await import("./commands/promises.js");
 		promisesChange(rootOrExit(), name, this.opts());

@@ -7,6 +7,11 @@ import { describe, expect, it } from "vitest";
  * clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs
  * promise: a-plan-runs-its-tests-and-what-must-not-break
  *
+ * T4 of a-plan-runs-what-must-not-break: the same skills say a phase runs its
+ * rows and its brief's Must-not-break tests, and never mention tests a change
+ * reaches (those are no longer searched for). The sampler will choose by what
+ * each test executes; until then the set is the certain one.
+ *
  * T7 of tests-never-make-us-wait. The skills that drive a phase and a landing
  * tell a plan to run its test set (`indusk plans tests`), never the whole
  * suite or the slow tier. A skill that still says "run `pnpm test`" at landing
@@ -34,6 +39,31 @@ const FORBIDS = /\b(never|do not|don't)\b/i;
 function sentenceBefore(text: string, index: number): string {
 	const before = text.slice(0, index);
 	return before.slice(Math.max(before.lastIndexOf(". "), before.lastIndexOf("| ")) + 1);
+}
+
+/** Ways a skill can tell a plan to run the tests a change imports. Data: a new wording is one row. */
+const REACHED: RegExp[] = [
+	/tests? (?:whose imports|that import)/i,
+	/\b(?:changes?|changed files?|branch|plan) (?:\w+ )?reach(?:es)?\b/i,
+	/\breach(?:es)? the files/i,
+	/vitest related/i,
+	/search for importers/i,
+];
+
+/** The lines of `source` that name tests a change reaches. */
+export function reachedLines(source: string): number[] {
+	const found: number[] = [];
+	source.split("\n").forEach((text, i) => {
+		if (REACHED.some((re) => re.test(text))) found.push(i + 1);
+	});
+	return found;
+}
+
+/** Whether some sentence says a phase runs its rows and the Must-not-break tests. */
+export function saysWhatAPhaseRuns(source: string): boolean {
+	return source
+		.split(/(?<=[.!?:])\s+|\n/)
+		.some((s) => /\bphase\b/i.test(s) && /\brows?\b/i.test(s) && /must[- ]not[- ]break/i.test(s));
 }
 
 /** Every line of `source` that tells the reader to run a command beyond the plan's set. */
@@ -75,6 +105,43 @@ describe("skills run the plan's test set (T7)", () => {
 			).toEqual([]);
 		});
 	}
+
+	for (const name of NAMES) {
+		const source = readFileSync(resolve(SKILLS, `${name}.md`), "utf-8");
+
+		it(`${name}.md says a phase runs its rows and its Must-not-break tests`, () => {
+			expect(
+				saysWhatAPhaseRuns(source),
+				`skills/${name}.md must say a phase runs its rows' tests and the brief's Must-not-break promises' tests`,
+			).toBe(true);
+		});
+
+		it(`${name}.md never mentions tests a change reaches`, () => {
+			const lines = source.split("\n");
+			const report = reachedLines(source)
+				.map((n) => `  skills/${name}.md:${n}: ${lines[n - 1].trim().slice(0, 100)}`)
+				.join("\n");
+			expect(
+				reachedLines(source),
+				`A plan no longer runs tests a change reaches; these lines say it does:\n${report}`,
+			).toEqual([]);
+		});
+	}
+
+	it("the reached-tests check flags a telling and passes unrelated uses of reach", () => {
+		expect(
+			reachedLines(
+				[
+					"It runs the tests whose imports reach the files.",
+					"A test that reaches its subject over HTTP.",
+				].join("\n"),
+			),
+		).toEqual([1]);
+		expect(saysWhatAPhaseRuns("A phase runs its rows and the Must not break tests.")).toBe(true);
+		expect(saysWhatAPhaseRuns("A landing runs every row and the Must not break tests.")).toBe(
+			false,
+		);
+	});
 
 	it("the forbidden-phrase check flags a telling and passes a prohibition", () => {
 		const source = [

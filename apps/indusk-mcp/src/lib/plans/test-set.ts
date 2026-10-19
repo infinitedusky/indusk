@@ -6,14 +6,14 @@ import type { TrajectoryRow } from "../trajectory/parser.js";
 /**
  * The tests a plan runs, computed in one place (tests-never-make-us-wait ADR D1).
  *
- * A phase runs the tests of the rows it writes or makes pass, plus the tests
- * its changes reach. A landing runs every row's tests, the tests the plan's
- * changes reach, and the tests of each promise the brief lists as Must not
- * break. Nothing else: a test no row names, no change reaches and no
- * protected promise lists does not run while a plan is built.
+ * A phase runs the tests of the rows it writes or makes pass and the tests of
+ * each promise the brief lists as Must not break. A landing runs every row's
+ * tests and those same promises' tests. Nothing else: a test no row names and
+ * no protected promise lists does not run while a plan is built, however many
+ * files it imports from the ones the plan changed.
  *
  * Pure. What the reads came from (the trajectory parser, `parseBriefContract`,
- * the registry, `vitest related`) is the caller's, so this can be asserted
+ * the registry) is the caller's, so this can be asserted
  * with plain values and its clock-and-reads stay out of it.
  *
  * promise: a-plan-runs-its-tests-and-what-must-not-break
@@ -34,15 +34,13 @@ export interface TestSetReads {
 	/** The promise names the brief lists under Must not break. */
 	mustNotBreak: readonly string[];
 	registry: readonly TestSetPromise[];
-	/** The test files whose imports reach the files the plan changed. */
-	reached?: readonly string[];
 }
 
 export type TestSetScope = { phase: PhaseRef } | { landing: true };
 
 export interface TestSetFile {
 	path: string;
-	/** Why it is in the set: `row T1`, `reached`, `must not break: <promise>`. */
+	/** Why it is in the set: `row T1`, `must not break: <promise>`. */
 	reason: string;
 }
 
@@ -85,19 +83,15 @@ export function planTestSet(reads: TestSetReads, scope: TestSetScope): TestSet {
 		}
 	}
 
-	for (const path of reads.reached ?? []) add(path, "reached");
-
 	const withoutTests: string[] = [];
-	if (!phase) {
-		const registry = reads.registry.map((p) => ({ ...p, aliases: p.aliases ?? [] }));
-		for (const name of reads.mustNotBreak) {
-			const promise = findPromise(registry, name);
-			if (!promise || promise.tests.length === 0) {
-				withoutTests.push(name);
-				continue;
-			}
-			for (const path of promise.tests) add(path, `must not break: ${name}`);
+	const registry = reads.registry.map((p) => ({ ...p, aliases: p.aliases ?? [] }));
+	for (const name of reads.mustNotBreak) {
+		const promise = findPromise(registry, name);
+		if (!promise || promise.tests.length === 0) {
+			withoutTests.push(name);
+			continue;
 		}
+		for (const path of promise.tests) add(path, `must not break: ${name}`);
 	}
 
 	return { files, withoutTests, manual };

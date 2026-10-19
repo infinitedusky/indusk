@@ -156,7 +156,7 @@ clause, and nothing is written. The MCP `declare_promise` tool takes the same
 specs as `clauses`.
 
 ```
-indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>"
+indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>" [--clause "<spec>" ...]
 ```
 
 Improves a promise in place, when a later plan partly changes what it commits
@@ -164,7 +164,10 @@ to. The sentence is replaced, the plan takes the promise over, and its History
 gains a line with the old sentence, the reason and the plan that owned it
 before. Its name, state, incidents and aliases are untouched, so the signals
 that name it and its incidents stay attached. If it breaks later, the plan
-that changed it is the one reopened.
+that changed it is the one reopened. A repeatable `--clause` (the same specs
+`declare` takes; the MCP `change_promise` tool takes `clauses`) replaces the
+promise's clauses, and the History line names the ones it replaced; without it
+the clauses stay.
 
 ```
 indusk promises replace <old> --by <new> --plan <plan> --kind <kind> --domain <domain> --statement "<sentence>"
