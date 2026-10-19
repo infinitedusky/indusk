@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { Tracer } from "@opentelemetry/api";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { git } from "../../__tests__/helpers/test-git.js";
 import { markEvaluation } from "../eval/otel.js";
 import { type LookResult, reportLooks } from "../looks/report.js";
@@ -23,6 +23,12 @@ import { trunkCommitMarks } from "./trunk-commit.js";
  * Each caller is driven through its own path against a recording span; what
  * it wrote is then handed to the span parser as Jaeger would return it.
  */
+
+// A writer under a test runner marks its span as a test run and the readers skip it
+// (A6). These tests round-trip a writer through the reader, so they write as a
+// running system would: outside a test runner.
+beforeEach(() => vi.stubEnv("VITEST", ""));
+afterEach(() => vi.unstubAllEnvs());
 
 interface Recorded {
 	attributes: Record<string, string>;

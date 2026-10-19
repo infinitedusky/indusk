@@ -2,11 +2,13 @@ import { sanitizeGroupId } from "../config.js";
 import { daemonMetaPath, resolveLocalDaemonHere } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
 import {
+	APP_RESOURCE_KEYS,
 	ENVIRONMENT_ATTRIBUTE,
 	LOOK_MARK,
 	PROMISE_MARK,
 	type PromiseOutcome,
 	readOutcome,
+	TEST_RUN_VALUE,
 } from "./vocabulary.js";
 
 /**
@@ -229,6 +231,8 @@ export function parseMarkedSpan(
 	 */
 	processTags?: JaegerTag[],
 ): MarkedSpan | null {
+	// A span a test run produced is not a clause's signal (mark-first ADR D3).
+	if (tag(span.tags, APP_RESOURCE_KEYS.run) === TEST_RUN_VALUE) return null;
 	const promise = tag(span.tags, PROMISE_MARK.promise);
 	const outcome = readOutcome(tag(span.tags, PROMISE_MARK.outcome));
 	if (typeof promise !== "string") return null;

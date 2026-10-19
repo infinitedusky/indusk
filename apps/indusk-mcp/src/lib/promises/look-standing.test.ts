@@ -148,7 +148,8 @@ describe("a story's check run is told from a screen's", () => {
 					startTime: 1_000_000,
 					duration: 0,
 					processID: "p1",
-					tags,
+					// Read as a running system's span, without the test-run marker (mark-first A6).
+					tags: tags.filter((t) => t.key !== "indusk.run"),
 				},
 				"svc",
 			);
