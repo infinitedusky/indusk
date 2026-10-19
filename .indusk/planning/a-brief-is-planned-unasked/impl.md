@@ -1,7 +1,7 @@
 ---
 title: "A brief is planned unasked"
 date: 2026-10-18
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
