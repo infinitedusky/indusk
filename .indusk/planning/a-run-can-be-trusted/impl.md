@@ -421,7 +421,7 @@ This phase writes the tests the plan commits to before anything changes, so each
 
 This phase makes the admin's builds, planning runs and releases leave a record on disk and read it back, which is what every later promise in this plan stands on. A run writes its step, phase, process and stop as they change; a reader returns what the record says, or "unknown" when the file is cut off; a run whose process is gone, or is now another program, reads stopped saying it died; and Build on such a run starts the step the plan's own documents say is next. The next phase uses the same record to name the phase and to judge a release.
 
-- [ ] Add the run record: a file per plan and kind in machine state, written whole and read safely.
+- [x] Add the run record: a file per plan and kind in machine state, written whole and read safely.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/src/lib/run-record/record.ts`: `writeRunRecord(home, record)` (temporary file in the same directory then `renameSync`), `readRunRecord(home, plan, kind)` returning `RunRecord | "unknown" | null` (null: no file), `RunRecord = { plan, kind: "build" | "planning" | "release", step, phase, process: { pid, bin, startedAt } | null, startedAt, stop, stopReason, updatedAt }` — `process` is the current step session's `claude` child (Decision 4), `startedAt` is when the run began. The home is the machine-state directory `indusk eval home` prints (`lib/bookkeeping/home`); a path join under `runs/`. Never throws on a bad file. Header `// clause: a-run-is-read-from-its-record/kept-on-disk`.
