@@ -75,3 +75,5 @@ reviewed), 0 judged wrong by a human.
 - Phases: a test phase and eight build phases (falsification 5, conversation start 6,
   cleanup 7, audit fix 8)
 - Each phase's own test set: 9–11 files, about 12 s
+
+Landed on main at d8cd4eafc, 2026-10-19. Installed with `pnpm install:local`; nothing published. Accepted with the plan's own build, since the installed one did not yet read the admin's exclude list.
