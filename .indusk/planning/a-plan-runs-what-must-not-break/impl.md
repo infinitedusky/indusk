@@ -118,7 +118,7 @@ This phase changes what a plan runs: the Must-not-break promises' tests move fro
   `lib/plans/plan-tests.ts`: drop `findReached`, the changed-files computation it needed and `collectResults`' reached half; keep `runFiles` from `lib/tests/run-files.ts`. Delete `findReached` and its now-unused helpers from `lib/plans/test-set-run.ts` (grep callers first; `describeTestSet` stays). T3.
 
   </details>
-- [ ] Make the work, verify and retrospective skills say a phase runs its rows and its Must-not-break tests, and resync their installed copies.
+- [x] Make the work, verify and retrospective skills say a phase runs its rows and its Must-not-break tests, and resync their installed copies.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/{work,verify,retrospective}.md` where they describe `indusk plans tests`; copy to `.claude/skills/`; run `skill-sync-parity.test.ts`. T4.
