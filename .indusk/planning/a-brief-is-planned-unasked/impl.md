@@ -454,7 +454,7 @@ This phase tests the finished planning run against the ways it could start twice
 
 The falsification fix that keeps a planning run from starting while the person's own planning conversation is open also means the run rarely starts at all: the brief is normally accepted from inside that conversation, the admin declines because the conversation is open, and nothing asks again. This phase makes the end of a planning conversation ask the admin to start the run, and has the planner skill end the conversation after accepting the brief instead of writing the documents itself. Once it closes, accepting a brief in a conversation leads to the unattended run as soon as the conversation ends.
 
-- [ ] Make the end of a planning conversation ask the admin to start that plan's planning run.
+- [x] Make the end of a planning conversation ask the admin to start that plan's planning run.
   <details><summary>Technical</summary>
 
   Found by the Build Phase 5 builder (2026-10-18): `startPlanning` declines while a planning session is open for the plan (T12's fix), and `accept-brief` is usually run from that session, so nothing starts the run. In the admin's session host, when a session of `kind: "planning"` for a plan ends, call `startPlanning(project, plan)` and ignore a decline (it starts nothing unless the brief is accepted and looks approved). T19.
