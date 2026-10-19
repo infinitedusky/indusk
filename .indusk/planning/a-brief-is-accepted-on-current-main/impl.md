@@ -1,7 +1,7 @@
 ---
 title: "A brief is accepted on current main — Impl"
 date: 2026-10-19
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
