@@ -9,6 +9,8 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "Reviewed changed files; small and cohesive, two env-stripping spots are below the rule of three."
 approved_brief: "39098b5e39510b2e3e1d2680ff5c09bf659cce5f193d622480c0df92a5ea6988"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T13:15:24.800Z"
@@ -349,3 +351,13 @@ Not investigated, with reasons:
 
 - Open, decided: whether A2 can run without a full admin build was left to this impl; it cannot read the bundle's behaviour from source, so T6 reads the running daemon's environment and log instead and needs the build installed.
 - The variable is inherited by anything the daemon spawns (the planning session's `claude`, hooks); that is intended — they run from the same install — and the trust check means a stale value is ignored.
+
+## Cleanup review
+
+Decided unattended (`INDUSK_GATE_POLICY=auto`): no Cleanup Phase, `cleanup: skipped`.
+
+- `package-root.ts` (the `holdsThisPackage` helper already lifted out of the walk-up loop), `daemon.ts` (`daemonEnv`), `start.ts` (`sessionEnv`): each a few lines, one responsibility, under the cleanup cap; all three changed sources are small edits to existing files.
+- Cross-file duplication: `daemonEnv` and `sessionEnv` both destructure `PACKAGE_ROOT_ENV` out of an environment. Two copies of a one-line destructure with different follow-ups; a shared helper would be the wrong abstraction and the rule of three is not met. Left as-is.
+- The three test files (`package-root.test.ts`, `daemon-env.test.ts`, `start-env.test.ts`) are each one subject, 18–46 lines; nothing to merge.
+- Not reviewed: docs and CLAUDE.md edits (prose, one clause each).
+
