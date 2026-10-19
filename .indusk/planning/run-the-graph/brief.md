@@ -53,6 +53,12 @@ one of these.
    conflict becomes a question naming the files, and only that plan's affected
    phases go on hold.
 
+5. **A phase cannot go on without you.** With `decisions-as-questions` built,
+   a phase that asks a question that holds (by default every question holds)
+   goes on hold: it is set aside and frees its files. Only the phases that need
+   its output wait; everything else keeps building while you are away. When you
+   answer, the held phase catches up and carries on.
+
 **The rule under all of them: nothing stops, and a hold is cheap.** A running
 phase always finishes. A phase can be put on hold (an expensive question, an
 amendment); it is set aside and gives up its turn on its files, so phases
