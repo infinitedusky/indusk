@@ -56,27 +56,27 @@ A plan is offered for approval only when its impl is a draft with the documents 
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A draft impl with the documents before it accepted, no session writing it and no run going, but no plan-review.md, is listed once as needing its plan review at Impl, never for approval | Test Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A2 | The same plan whose plan review leaves a finding unanswered, a finding without its breaks-when line, or a question without its section is listed as needing its plan review, never for approval | Test Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A3 | While a planning run for the plan is going and no session turn is open, nothing is listed for it, whether or not its plan review is answered | Test Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A4 | A run that stopped short of approval with a reason, on a plan whose review is not answered, lists the plan as needing its plan review with the reason in the decision | Test Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A5 | With no planning state passed in (an admin restart), a draft impl without an answered review is listed as needing its plan review with the plain decision, never for approval | Test Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A6 | A hand-written plan no run touched needs its plan review the same way, and is offered for approval once the review is answered | Test Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A7 | A session whose turn is open withholds both approval and the plan-review listing; once the turn ends the plan is listed by its review's state | Test Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A8 | A planning run going for another plan does not affect this plan's listing | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: runs are matched to a plan by its name alone | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A1 | A draft impl with the documents before it accepted, no session writing it and no run going, but no plan-review.md, is listed once as needing its plan review at Impl, never for approval | Test Phase 1 | Build Phase 1 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A2 | The same plan whose plan review leaves a finding unanswered, a finding without its breaks-when line, or a question without its section is listed as needing its plan review, never for approval | Test Phase 1 | Build Phase 1 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A3 | While a planning run for the plan is going and no session turn is open, nothing is listed for it, whether or not its plan review is answered | Test Phase 1 | Build Phase 1 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A4 | A run that stopped short of approval with a reason, on a plan whose review is not answered, lists the plan as needing its plan review with the reason in the decision | Test Phase 1 | Build Phase 1 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A5 | With no planning state passed in (an admin restart), a draft impl without an answered review is listed as needing its plan review with the plain decision, never for approval | Test Phase 1 | Build Phase 1 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A6 | A hand-written plan no run touched needs its plan review the same way, and is offered for approval once the review is answered | Test Phase 1 | Build Phase 1 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A7 | A session whose turn is open withholds both approval and the plan-review listing; once the turn ends the plan is listed by its review's state | Test Phase 1 | Build Phase 1 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A8 | A planning run going for another plan does not affect this plan's listing | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: runs are matched to a plan by its name alone | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
 | A9 | The package reads a plan folder's plan-review.md as missing, unanswered or answered, through the reader with the plan review's questions | Build Phase 1 | Build Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/plan-review.test.ts |
-| A10 | The admin's plan reader, on a real plan folder, hands the snapshot the plan review's state for each of the three states | Test Phase 1 | Build Phase 2 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/planning-reader.plan-review.test.ts |
-| A11 | The package exports the plan-review reader and neither the admin nor the editor defines one of its own | Test Phase 1 | Build Phase 1 | planned | unit | lesson: structural-single-definition-test-for-must-agree-invariants | apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts |
-| A12 | The admin's planning state stays going through the gap between one step and the next, and reads stopped with its reason once the run ends on a failure | Test Phase 1 | Test Phase 1 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/build-host.test.ts |
-| A13 | Through the admin's reader and the real planning state of a run the admin started, a draft impl is listed nowhere while the run is between steps, and as needing its plan review with the reason once it stops on a failure | Test Phase 1 | Build Phase 2 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/decisions-reader.planning.test.ts |
-| A14 | What a plan's page offers says Approve only when the package lists the plan as waiting on approval; waiting on its plan review, a question or nothing offers none | Test Phase 1 | Build Phase 2 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/plan-actions.test.ts |
-| A15 | The plan page and the brief page both pass the package's waiting answer for the plan into what the page offers | Test Phase 1 | Build Phase 2 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/plan-actions-pages.test.ts |
+| A10 | The admin's plan reader, on a real plan folder, hands the snapshot the plan review's state for each of the three states | Test Phase 1 | Build Phase 2 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/planning-reader.plan-review.test.ts |
+| A11 | The package exports the plan-review reader and neither the admin nor the editor defines one of its own | Test Phase 1 | Build Phase 1 | written | unit | lesson: structural-single-definition-test-for-must-agree-invariants | apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts |
+| A12 | The admin's planning state stays going through the gap between one step and the next, and reads stopped with its reason once the run ends on a failure | Test Phase 1 | Test Phase 1 | passing | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/build-host.test.ts |
+| A13 | Through the admin's reader and the real planning state of a run the admin started, a draft impl is listed nowhere while the run is between steps, and as needing its plan review with the reason once it stops on a failure | Test Phase 1 | Build Phase 2 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/decisions-reader.planning.test.ts |
+| A14 | What a plan's page offers says Approve only when the package lists the plan as waiting on approval; waiting on its plan review, a question or nothing offers none | Test Phase 1 | Build Phase 2 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/plan-actions.test.ts |
+| A15 | The plan page and the brief page both pass the package's waiting answer for the plan into what the page offers | Test Phase 1 | Build Phase 2 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/plan-actions-pages.test.ts |
 | A16 | On the installed admin, through a whole planning run after a brief is accepted, Needs you and the plan page show no Approve until plan-review.md is answered, then Approve once on the decision card | Build Phase 2 | Build Phase 2 | skipped | live check | promise: approval-waits-for-a-finished-plan | manual: after landing run `pnpm install:local` and `indusk ui restart`; accept a draft brief of a throwaway bugfix plan in the admin; while its planning run writes the test plan, the impl and the plan review, reload Needs you and the plan's page and brief page every few seconds and note that none shows Approve; once plan-review.md has every finding answered and the run stops, note one Approve, on the decision card; record the result with the date in this impl's Notes |
-| A17 | A draft impl with no session writing it, no run going and its plan review answered is listed once, as approval, with Approve and Not yet — keep planning | Test Phase 1 | Test Phase 1 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A18 | A question still outranks everything, an amendment and a stopped review are listed as before, and each outranks a plan needing its plan review | Test Phase 1 | Test Phase 1 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A19 | Accepting a plan-review decision, or its alternative, neither approves nor releases; it goes to the plan's agent as words | Test Phase 1 | Build Phase 2 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
-| A20 | The decision card draws a plan-review wait in its ask state, headed as needing its plan review at the step, with the decision's words | Test Phase 1 | Build Phase 2 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx |
-| A21 | The planning run still reads the plan review absent, open, then answered with its dismissals, and stops for approval only once it is answered | Test Phase 1 | Test Phase 1 | planned | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/build/read-planning.test.ts, apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
+| A17 | A draft impl with no session writing it, no run going and its plan review answered is listed once, as approval, with Approve and Not yet — keep planning | Test Phase 1 | Test Phase 1 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A18 | A question still outranks everything, an amendment and a stopped review are listed as before, and each outranks a plan needing its plan review | Test Phase 1 | Test Phase 1 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A19 | Accepting a plan-review decision, or its alternative, neither approves nor releases; it goes to the plan's agent as words | Test Phase 1 | Build Phase 2 | written | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
+| A20 | The decision card draws a plan-review wait in its ask state, headed as needing its plan review at the step, with the decision's words | Test Phase 1 | Build Phase 2 | written | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx |
+| A21 | The planning run still reads the plan review absent, open, then answered with its dismissals, and stops for approval only once it is answered | Test Phase 1 | Test Phase 1 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/build/read-planning.test.ts, apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 
 ### Deferred Verification
 
@@ -93,13 +93,13 @@ A plan is offered for approval only when its impl is a draft with the documents 
 
 This phase writes the plan's tests before any fix, so the build phases have a fixed target. The tests of the waiting rule, of what each page offers, of the admin's readers, of the decision route and of the decision card all exist after it, and each that describes the new behaviour fails today on its own assertion: today a plan with no answered plan review is offered for approval, and both Approve buttons ignore the rule. The tests that describe what must stay true pass from the start and are recorded as guards. Only the package reader's test waits, because the module it tests does not exist yet; its body is recorded here.
 
-- [ ] Confirm this plan's own worktree and branch before any edit.
+- [x] Confirm this plan's own worktree and branch before any edit.
   <details><summary>Technical</summary>
 
   The worktree exists (`indusk plans start` made it): confirm with `git -C /Users/the_dusky/code/sandbox/dusk-worktrees/approval-waits-for-the-planning-run rev-parse --abbrev-ref HEAD` (expect `plan/approval-waits-for-the-planning-run`) and that `indusk worktree` records it for this plan; if not recorded, `indusk worktree assign approval-waits-for-the-planning-run /Users/the_dusky/code/sandbox/dusk-worktrees/approval-waits-for-the-planning-run`. Use absolute paths in every command.
 
   </details>
-- [ ] Add the tests of the waiting rule for plans whose plan review is missing, unanswered or answered, with and without a planning run.
+- [x] Add the tests of the waiting rule for plans whose plan review is missing, unanswered or answered, with and without a planning run.
   <details><summary>Technical</summary>
 
   In `apps/indusk-mcp/src/lib/plans/waiting.test.ts`: widen the file's local type to `type Plan = PlanSnapshot & { name: string; planReview?: "missing" | "unanswered" | "answered" }` (compiles today, before the field exists) and give the existing `approval` fixture `planReview: "answered"` so the existing approval tests keep their meaning. Add a `describe("approval-waits-for-the-planning-run")` carrying `// promise: approval-waits-for-a-finished-plan`, with A1–A8, A17 and A18. Pass the new input as `planWaiting({ sessions, plans, builds: [], plannings } as Parameters<typeof planWaiting>[0])`, the file's existing cast for an input not yet in the type. The new kind is asserted as `on: "plan-review"`, `step: "Impl"`, and a decision matching `/plan review/`. Sketches:
@@ -132,49 +132,49 @@ This phase writes the plan's tests before any fix, so the build phases have a fi
   A2 runs over `"unanswered"`. A5 passes no `plannings` and asserts the decision has no "stopped" sentence. A6 is a plan with no run: missing gives `plan-review`, answered gives `approval`. A7: an open session (`writing: true`) gives `[]` for both review states; with `writing: false` and a missing review, `plan-review`. A8: a running run named for another plan leaves `approval` (answered review) — green today. A17: answered review, no session, no run, gives one `approval` entry with `accept: "Approve"` and `alternative: "Not yet — keep planning"` — green today. A18: a question, an amendment, and a review stop each outrank a missing review — green today because the plan-review kind does not exist and the higher kinds win already.
 
   </details>
-- [ ] Add a test of the admin's plan reader that reads a plan review from a real plan folder on disk.
+- [x] Add a test of the admin's plan reader that reads a plan review from a real plan folder on disk.
   <details><summary>Technical</summary>
 
   New `apps/indusk-admin/src/lib/planning-reader.plan-review.test.ts`, carrying `// promise: approval-waits-for-a-finished-plan`, modelled on `planning-reader.rituals.test.ts`: a temp project with `.indusk/planning/p/` holding a bugfix brief (accepted), a test plan (accepted) and a draft impl; read through `readActivePlans(project)` and `snapshotOf`. A10: with no `plan-review.md`, `snapshotOf(plan).planReview` is `"missing"`; with one whose first finding has no `answer:` line, `"unanswered"`; with the four `PLAN_REVIEW_QUESTIONS` sections and every finding answered, `"answered"`. Read the field through `(snapshot as { planReview?: string }).planReview` until Build Phase 2 adds it. Red today: the field is `undefined`.
 
   </details>
-- [ ] Add the plan-review reader to the test that keeps each cockpit fact defined once in the package.
+- [x] Add the plan-review reader to the test that keeps each cockpit fact defined once in the package.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts`: add `["./plans/plan-review", "src/lib/plans/plan-review.ts", "readPlanReview"]` to `MODULES` and `readPlanReview`, `planReviewState` to `PACKAGE_ONLY` (A11). Red today on the missing export.
 
   </details>
-- [ ] Add a test that the admin's planning state stays going between steps and keeps a failed run's reason.
+- [x] Add a test that the admin's planning state stays going between steps and keeps a failed run's reason.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/build-host.test.ts`: add `// promise: approval-waits-for-a-finished-plan` beside the existing token. Let the fake runner keep what it was handed and how to end it — `runPlanning: (deps) => { runs += 1; handed = deps; return new Promise((resolve) => { finishRun = () => resolve({ step: "ready-for-approval" }); failRun = (why) => resolve({ step: "cannot-continue", why }); }); }` — so the existing cases are unchanged. A12: `await startPlanning(PROJECT, PLAN)`; `handed.onStep("plan-test-plan")` → `planningState(PROJECT, PLAN)` is `running: true`, `step: "plan-test-plan"`; with no further call (the gap between steps) it is still `running: true`; `failRun("the last step's session failed: exit 1")`, then `await vi.waitFor(() => expect(planningState(PROJECT, PLAN)?.running).toBe(false))` and `stop` equals `{ step: "cannot-continue", why: "the last step's session failed: exit 1" }`. The host's own state is read through `planningState`, never mocked. Green today.
 
   </details>
-- [ ] Add a test of the admin's waiting reader driven by a real planning run started through the admin's host.
+- [x] Add a test of the admin's waiting reader driven by a real planning run started through the admin's host.
   <details><summary>Technical</summary>
 
   New `apps/indusk-admin/src/lib/decisions-reader.planning.test.ts`, carrying `// promise: approval-waits-for-a-finished-plan`. Mock only what the host stands on, as `build-host.test.ts` does: `@infinitedusky/indusk-mcp/build` (`readPlanningState` answering an accepted brief with a document still to write; `runPlanning` keeping `deps` and an end function), `./session-host` (`planLocation`, and a `sessionManager` with `forPlan` → `undefined`, `admitBuild` → a release, `running` → `[]`, `pendingQuestion` → `null`, `isWriting` → `false`) and `./registry-client` (`getProjectPath` → the temp project). Leave `./build-host` real. Write the plan folder as in the reader test above (no `plan-review.md`) and read it with `readActivePlans`. A13: `await startPlanning("proj", "p")`, `deps.onStep("plan-impl")`, then `readWaiting("proj", project, plans)` is `[]` (red today: approval is listed); end the run with `cannot-continue` and a reason, wait for the state to read stopped, and `readWaiting` gives one entry with `on: "plan-review"` whose decision contains the reason.
 
   </details>
-- [ ] Add tests that what a plan's page offers follows the package's waiting answer, on both pages.
+- [x] Add tests that what a plan's page offers follows the package's waiting answer, on both pages.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/plan-actions.test.ts`: add `// promise: approval-waits-for-a-finished-plan`; call through a local `const offered = (input: PlanActionInput & { waitingOn?: string }) => planActions(input)` so the new field compiles today. Change the existing A10 case "Approve once its impl exists" to pass `waitingOn: "approval"` (still green today). A14: with `implStatus: "draft"`, `canApprove` is true for `waitingOn: "approval"` and false for `"plan-review"`, `"question"` and `undefined` (red today on the last three). New `apps/indusk-admin/src/lib/plan-actions-pages.test.ts`, carrying the same token, A15: read `src/app/p/[project]/plan/[name]/page.tsx` and `src/app/p/[project]/plan/[name]/brief/page.tsx` as text; each calls `readWaiting(` and its `planActions({ … })` call passes `waitingOn: waiting?.on` (red today on the brief page, which reads no waiting, and on the plan page, which passes none). Both files live in `src/lib`, so they run in the node project.
 
   </details>
-- [ ] Add the tests that answering a plan-review decision never approves or releases, and that the decision card draws it.
+- [x] Add the tests that answering a plan-review decision never approves or releases, and that the decision card draws it.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/decisions.test.ts` (A19): a waiting `{ plan: PLAN, on: "plan-review", step: "Impl", decision: "The plan needs its plan review …", accept: "Ask the agent to write it", alternative: "Not yet" } as unknown as Waiting`; `answerDecision` with `accept`, then with `alternative`: `approve` and `release` are never called, and the words reach the plan's running session through `say` (or a new planning session when none runs). Red today: accept runs `release`. `apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx` (A20): render the card for the same waiting; the heading reads "Needs its plan review at Impl", the decision's words are shown, and the card's `data-on` is `plan-review`. Red today: the heading map has no entry. Keep the casts until Build Phase 1 adds the kind; the admin's `typecheck.test.ts` must stay green.
 
   </details>
-- [ ] Confirm the planning run's own tests already hold how it reads the plan review and when it stops for approval.
+- [x] Confirm the planning run's own tests already hold how it reads the plan review and when it stops for approval.
   <details><summary>Technical</summary>
 
   A21: `read-planning.test.ts` ("reads the plan review: absent, open, then answered with its dismissals") and `next-planning-step.test.ts` (the plan review is the run's last step) exist and pass; both carry `promise: an-accepted-brief-is-planned-unasked`. Change nothing; run them.
 
   </details>
-- [ ] Run every test this phase wrote and check that each new-behaviour test fails on its own assertion and every guard passes.
+- [x] Run every test this phase wrote and check that each new-behaviour test fails on its own assertion and every guard passes.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/waiting.test.ts src/__tests__/cockpit-single-definition.test.ts src/lib/build/read-planning.test.ts src/lib/build/next-planning-step.test.ts` and `pnpm --filter indusk-admin exec vitest run src/lib/planning-reader.plan-review.test.ts src/lib/build-host.test.ts src/lib/decisions-reader.planning.test.ts src/lib/plan-actions.test.ts src/lib/plan-actions-pages.test.ts src/lib/decisions.test.ts src/components/cockpit/DecisionCard.test.tsx src/__tests__/typecheck.test.ts`. Commit the red state on the plan's branch.
@@ -248,13 +248,13 @@ This phase writes the plan's tests before any fix, so the build phases have a fi
 
 #### Test Phase 1 Verification
 
-- [ ] Every test of new behaviour exists and fails today on its own assertion, never on a missing import.
+- [x] Every test of new behaviour exists and fails today on its own assertion, never on a missing import.
   <details><summary>Technical</summary>
 
   Red on an assertion: A1, A2, A3, A4, A5, A6, A7 (`waiting.test.ts` offers approval), A10 (`planReview` undefined), A11 (no `./plans/plan-review` export), A13 (approval listed mid-run), A14, A15, A19 (`release` called), A20 (no heading). A9 and A16 are deferred above.
 
   </details>
-- [ ] Every guard passes today, and the deferred test body has been read for whether it will load and asserts what it claims.
+- [x] Every guard passes today, and the deferred test body has been read for whether it will load and asserts what it claims.
   <details><summary>Technical</summary>
 
   Green: A8, A12, A17, A18, A21, plus the existing approval, amendment and A10 cases kept green by the fixture changes. The A9 body loads once `readPlanReview` exists, and its three cases match `missing`, `unanswered`, `answered`. The admin's `typecheck.test.ts` is green.
@@ -263,7 +263,7 @@ This phase writes the plan's tests before any fix, so the build phases have a fi
 
 #### Test Phase 1 Context
 
-- [ ] Record nothing new yet.
+- [x] Record nothing new yet.
   <details><summary>Technical</summary>
 
   The rules this plan adds are written in the build phases, beside the code that enforces them.
@@ -272,7 +272,7 @@ This phase writes the plan's tests before any fix, so the build phases have a fi
 
 #### Test Phase 1 Document
 
-- [ ] Write nothing in the docs yet.
+- [x] Write nothing in the docs yet.
   <details><summary>Technical</summary>
 
   The reference pages and the changelog are Build Phase 2's, written with the admin change they describe.
@@ -527,4 +527,5 @@ This phase makes the admin hand the package's rule what it needs and draw only w
 ## Notes
 
 - A run that never settles keeps the plan unlisted until `indusk ui restart`; then the file rule lists it as needing its plan review (decision 3).
+- Test Phase 1 (unattended): in this worktree six of `DecisionCard.test.tsx`'s pre-existing tests fail before any change here (`render`'s `container` is still empty when read; the card appears later). A20 therefore waits for the card with `vi.waitFor` and reads it through `screen.getByTestId`, and is red on its own assertion (the heading reads "undefined at Impl"). The pre-existing failures are not this plan's; `cockpit-nav.test.tsx` (a must-not-break file) also fails at the start of the plan on the same kind of render timing — to be compared again at Build Phase 2's close.
 - Live check result (A16) goes here when it is run after landing.

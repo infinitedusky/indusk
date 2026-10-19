@@ -383,3 +383,54 @@ describe("A16 (plan-stories) — an amendment is answered on its own card", () =
     expect(release).not.toHaveBeenCalled();
   });
 });
+
+// promise: decisions-wait-in-one-place
+describe("approval-waits-for-the-planning-run A19 — a plan-review answer is words to the agent", () => {
+  const planReviewWaiting = {
+    plan: PLAN,
+    on: "plan-review",
+    step: "Impl",
+    decision: "The plan needs its plan review: plan-review.md, answered.",
+    accept: "Ask the agent to write it",
+    alternative: "Not yet",
+  } as unknown as Waiting;
+
+  it("A19 accepting it neither approves nor releases; the words go to the plan's agent", async () => {
+    const d = deps();
+    const r = await answerDecision(d, PROJECT, planReviewWaiting, {
+      choice: "accept",
+    });
+    expect(d.approve).not.toHaveBeenCalled();
+    expect(d.release).not.toHaveBeenCalled();
+    expect(r.via).toBe("session");
+    expect(launched[0]?.prompt).toContain("Ask the agent to write it");
+  });
+
+  it("A19 its alternative neither approves nor releases either", async () => {
+    const d = deps();
+    await answerDecision(d, PROJECT, planReviewWaiting, {
+      choice: "alternative",
+    });
+    expect(d.approve).not.toHaveBeenCalled();
+    expect(d.release).not.toHaveBeenCalled();
+    expect(recorded[0]?.answer).toBe("Not yet");
+  });
+
+  it("A19 with a session running, accepting says the words to it", async () => {
+    manager.start({
+      project: PROJECT,
+      plan: PLAN,
+      cwd: WORKTREE,
+      kind: "planning",
+      prompt: `/planner ${PLAN}`,
+      onEvent: () => {},
+    });
+    const d = deps();
+    const r = await answerDecision(d, PROJECT, planReviewWaiting, {
+      choice: "accept",
+    });
+    expect(d.release).not.toHaveBeenCalled();
+    expect(fake.say).toHaveBeenCalledWith("Ask the agent to write it");
+    expect(r.via).toBe("say");
+  });
+});
