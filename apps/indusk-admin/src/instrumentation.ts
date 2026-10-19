@@ -24,6 +24,7 @@ export async function register(): Promise<void> {
     { sourceNames },
     { readRegistryProjects },
     { readAdminRefreshMs },
+    { writeScanRecord },
   ] = await Promise.all([
     import("@infinitedusky/indusk-mcp/admin/recorder-loop"),
     import("@infinitedusky/indusk-mcp/promises/record"),
@@ -31,12 +32,16 @@ export async function register(): Promise<void> {
     import("@infinitedusky/indusk-mcp/promises/sources"),
     import("./lib/registry-client"),
     import("./lib/project-reader"),
+    import("@infinitedusky/indusk-mcp/admin/scan-record"),
   ]);
 
   startRecorderLoops({
     projects: () => readRegistryProjects().map((p) => p.path),
     hasProduction: (root) => sourceNames(root).includes("production"),
     intervalFor: readAdminRefreshMs,
+    // Each pass's start, end and outcome, in machine state: the patient recorder
+    // landing test reads it to know the admin has scanned since a break was loaded.
+    scanRecord: writeScanRecord,
     // Each tick also judges the shell guard's recorded decisions
     // (a-run-can-be-trusted, Decision 8); best-effort, it never fails a pass.
     record: async (root) => {
