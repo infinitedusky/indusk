@@ -524,12 +524,13 @@ Area: one entry in `src/lib/promises/CLAUDE.md` (the two inputs, the stopped dae
 
 #### Build Phase 4 Document
 
-- [ ] Describe what closing reads in the promises command reference.
+- [x] Describe what closing reads in the promises command reference.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/promises.md`: `confirm` runs the clause's tests, asks the daemon, and refuses by clause; the refusal texts.
 
   </details>
+A new "A plan written as clauses" subsection under `promises confirm`: the two halves, a table of the refusal texts (tests, signal, stopped daemon, a clause test that asserts nothing), the resting-only close, the close's own signal, and that `plans land` runs the same tests half.
 
 ### Build Phase 5: A break names its clause
 

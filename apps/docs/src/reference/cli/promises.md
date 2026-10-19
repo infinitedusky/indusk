@@ -285,6 +285,42 @@ with nothing written, naming:
 | The brief lists a replacement that was declared without recording what it replaces | both promises, and the `replace` command |
 | A name that is not a plan folder | the name |
 
+### A plan written as clauses
+
+When the plan's brief says `clauses: required`, a row's `passing` is not
+enough: closing reads the system. After the checks above pass, for each
+promise with a split or limit clause it
+
+1. **runs the tests** the clause's rows name, now, with the project's own
+   test command (`verify.testRunner` or `verify.testCommand`), each file once;
+2. **asks the local daemon** — through the read `promises status` makes —
+   whether each clause's signal has reported it upheld in a run of the real
+   system. A span written under a test runner carries `indusk.run=test` and is
+   not counted.
+
+A clause is refused when either half is missing, and the refusal names
+`promise/clause` and the half:
+
+| Situation | Refusal |
+|---|---|
+| A clause's test fails when run now, whatever its row says | `a-promise/a-clause: tests — src/a.test.ts fails when run now (row A1 says passing)` |
+| The run did not report a file | `… tests — src/a.test.ts was not reported by the test run` |
+| No signal has reported the clause upheld, or the watcher is blind | `a-promise/a-clause: signal — no signal has reported it upheld in a run of the real system` |
+| The clause's signal reports broken | `a-promise/a-clause: signal — its signal reports broken` |
+| The daemon is not running | `a-promise: signal — the daemon is not running or cannot be read …` naming `indusk telemetry start`; never a pass |
+| A clause's test file carries the clause's token and asserts nothing (no `expect(` or `assert`) | the promise, the clause and the file |
+
+A failing file is reported against the clause whose `clause: <promise>/<clause>`
+token it carries. Only when both halves hold for every clause is the promise
+`enforced`. A promise made only of clauses resting on other promises closes
+when those are in force, with no row, test or code site of its own. A real
+close also writes its own signal, for `a-clause-is-proved-twice`'s
+`verified-before-release` and `upheld-by-its-signal`, to the local daemon.
+
+A plan without `clauses: required` closes on its rows, as above, and is asked
+no signal. `indusk plans land` runs the same clause tests before its land
+checks and refuses by clause the same way; landing asks no signal.
+
 A plan with nothing to change says so and exits **0**, so running it twice is
 safe; a run that stopped partway is finished by the next. A plan archived
 without confirming (a bugfix that skipped its retrospective) is confirmed from
