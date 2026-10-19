@@ -1,9 +1,10 @@
 ---
 title: "The admin knows the package root"
 date: 2026-10-19
-status: draft
+status: accepted
 workflow: bugfix
 description: "Inside the admin daemon, code that finds the package's shipped files gets the package root the indusk command that started it handed down, so the planning run's last check works there."
+accepted_at: "2026-10-19T03:15:36.110Z"
 ---
 
 # The admin knows the package root — Brief
