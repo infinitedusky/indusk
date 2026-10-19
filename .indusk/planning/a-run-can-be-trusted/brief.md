@@ -1,10 +1,11 @@
 ---
 title: "A run can be trusted"
 date: 2026-10-19
-status: draft
+status: accepted
 workflow: bugfix
 clauses: required
 description: "What an unattended run says is true: its state is kept on disk and shown as it is, a dead run reads stopped and restarts from Build, a release reads released only once landed, plan documents are written only through their checks, a plan with clauses carries its signals, and approval waits for a review of the plan as it stands."
+accepted_at: "2026-10-19T18:01:54.034Z"
 ---
 
 # A run can be trusted — Brief
