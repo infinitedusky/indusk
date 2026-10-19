@@ -1,5 +1,6 @@
 import { appendHistoryLine, readHistoryLines } from "../plans/history.js";
 import type { Question } from "./record.js";
+import { reportClause } from "./signals.js";
 
 /**
  * Every question stays in the plan's history in all four states (ADR decision 9),
@@ -21,6 +22,18 @@ const LINE = /^- (\S+) — question (\S+) (waiting|answered|went-ahead|answered-
 export function recordQuestion(anyCheckout: string, q: Question, at = new Date()): void {
 	const line = `- ${at.toISOString()} — question ${q.id} ${q.state} — ${JSON.stringify(q)}`;
 	appendHistoryLine(anyCheckout, q.plan, line, `question ${q.id} ${q.state}`);
+	// Read back: the question must now be in the history in the state just written (clause every-decision-stays).
+	const kept = readQuestions(anyCheckout, q.plan).find((x) => x.id === q.id);
+	void reportClause(
+		anyCheckout,
+		"every-decision-stays",
+		kept?.state === q.state
+			? { outcome: "upheld" }
+			: {
+					outcome: "broken",
+					symptom: `${q.plan}/${q.id} written as ${q.state} but read back ${kept?.state ?? "missing"}`,
+				},
+	);
 }
 
 /** Every question of `plan`, each in the state last recorded, oldest first. */

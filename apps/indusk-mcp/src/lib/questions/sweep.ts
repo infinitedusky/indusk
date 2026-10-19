@@ -1,6 +1,7 @@
 import { isDue, type QuestionWait, readQuestionWait } from "./deadline.js";
 import { readQuestions, recordQuestion } from "./history.js";
 import type { Question } from "./record.js";
+import { reportClause } from "./signals.js";
 
 /**
  * The sweep (ADR decisions 4 and 5): a question still waiting whose stored time has
@@ -55,7 +56,10 @@ export function sweepHistory(
 	}
 	const after = sweep(before, now, wait, send);
 	after.forEach((q, i) => {
-		if (q !== before[i]) recordQuestion(anyCheckout, q);
+		if (q === before[i]) return;
+		recordQuestion(anyCheckout, q);
+		// A due question was sent ahead as its cost's setting said (clause the-setting-decides).
+		void reportClause(anyCheckout, "the-setting-decides", { outcome: "upheld" });
 	});
 	return after;
 }

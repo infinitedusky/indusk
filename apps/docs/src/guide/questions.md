@@ -63,4 +63,19 @@ A plan document an unattended run saves that says "decided unattended" for a cho
 
 ## Signals
 
-Each place that decides one of the plan's clauses reports it as upheld or broken: asking a question, the save check, the sweep, the stop and the answer that resumes, a late answer, the question record, the release's follow-on step, and landing. The close reads those reports. See [the decision](/decisions/decisions-as-questions).
+Each place that decides one of the plan's clauses reports it as **upheld** or **broken**, and the close reads those reports from a real run:
+
+| Event | Clause |
+|---|---|
+| A question is asked complete, or sent back before you see it | `asked-with-a-recommendation` |
+| A step ends and its saved documents are read | `never-decided-silently` |
+| A question is left to wait with nothing set | `holds-by-default` |
+| A due question is sent ahead | `the-setting-decides` |
+| A waiting question ends its session | `a-hold-frees-the-slot` |
+| A question that changes what was agreed is left to wait | `never-timed-out` |
+| A late, differing answer arrives | `disagreement-opens-a-plan` |
+| A question is written to the history and read back | `every-decision-stays` |
+| `indusk release` is refused for an open follow-on | `release-refuses` |
+| A plan lands with a follow-on open | `landing-never-waits` |
+
+A report that cannot be written never fails what reported it. See [the decision](/decisions/decisions-as-questions).

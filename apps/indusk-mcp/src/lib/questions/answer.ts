@@ -1,6 +1,7 @@
 import { differs, openFollowOnOnTrunk } from "./follow-on.js";
 import { readQuestions, recordQuestion } from "./history.js";
 import { isAnswer, type Question } from "./record.js";
+import { reportClause } from "./signals.js";
 
 /**
  * The person's answer applied to a question's record (ADR decisions 7, 8 and 9).
@@ -56,6 +57,16 @@ export function answerQuestionRecord(
 	if (next.state === "answered-late" && differs(next, text)) {
 		const follow = openFollowOnOnTrunk(anyCheckout, next, text);
 		if (follow.plan) next = { ...next, followOn: follow.plan };
+		void reportClause(
+			anyCheckout,
+			"disagreement-opens-a-plan",
+			follow.plan
+				? { outcome: "upheld" }
+				: {
+						outcome: "broken",
+						symptom: `${plan}/${id} was answered late and differently, and no follow-on opened`,
+					},
+		);
 	}
 	recordQuestion(anyCheckout, next);
 	return next;

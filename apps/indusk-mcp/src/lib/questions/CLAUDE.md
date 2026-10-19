@@ -26,3 +26,9 @@ Loaded by Claude Code when a file under `src/lib/questions/` is read
   event marked `decision`, `build-session.ts` records it (`decision-request.ts`)
   and a plain question is refused naming the tool. A conversation session's
   question is unchanged.
+- **Each of this plan's clauses is reported by the place that decides it**,
+  through `signals.ts`'s `reportClause` (best-effort, one span per decision, the
+  commands' one tracer): its header lists which file reports which clause. A new
+  place that decides one reports it there, and never lets a failed report fail
+  the work. `silent.ts` is the TS port of the save-time hook's rule —
+  `silent-parity.test.ts` holds the two equal. — guarded by `signals.test.ts`

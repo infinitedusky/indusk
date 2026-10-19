@@ -18,6 +18,7 @@ import {
 } from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
 import { getPlanningDir, type WorkflowSteps } from "../../lib/config.js";
+import { reportClause } from "../../lib/questions/signals.js";
 import { announceIncidents } from "../../lib/release/announce.js";
 import { followOnRefusal, openFollowOns } from "../../lib/release/follow-on-refusal.js";
 import { recordOf, recordRelease, releaseVersion } from "../../lib/release/record.js";
@@ -54,6 +55,8 @@ export async function releaseCommand(checkout: string): Promise<number> {
 	if (outcome.waitingOn) {
 		const open = openFollowOns(getPlanningDir(root));
 		console.error(followOnRefusal(open));
+		// Refused before any publish step, naming each (clause release-refuses).
+		await reportClause(root, "release-refuses", { outcome: "upheld" });
 		return 1;
 	}
 

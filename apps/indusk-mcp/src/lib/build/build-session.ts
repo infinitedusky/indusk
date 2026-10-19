@@ -1,7 +1,11 @@
+import { join } from "node:path";
 import { answersNote, untold } from "../questions/answer.js";
+import { changesAgreed } from "../questions/cost.js";
 import { readQuestionWait } from "../questions/deadline.js";
 import { nextQuestionId, readQuestions, recordQuestion } from "../questions/history.js";
 import type { Question } from "../questions/record.js";
+import { reportClause } from "../questions/signals.js";
+import { silentDecisions } from "../questions/silent.js";
 import { readQuestionWaitSetting } from "../session/limits.js";
 import type { SessionManager, SessionRecord } from "../session/manager.js";
 import { decideBuildPermission, refuseBuildQuestion } from "../session/permissions.js";
@@ -163,6 +167,35 @@ export interface BuildSessionOptions {
 	now?: () => number;
 }
 
+/** What a question's arrival decided, reported to the clauses it bears on (signals.ts). */
+function reportAsked(worktree: string, reply: ReturnType<typeof receiveDecision>): void {
+	// A question sent back before the person saw it kept the clause: nothing malformed is shown.
+	void reportClause(worktree, "asked-with-a-recommendation", { outcome: "upheld" });
+	if (reply.to !== "hold") return;
+	const q = reply.question;
+	if (changesAgreed(q)) void reportClause(worktree, "never-timed-out", { outcome: "upheld" });
+	else void reportClause(worktree, "holds-by-default", { outcome: "upheld" });
+}
+
+/** After a step: no document it saved records a choice as decided unattended without a question (clause never-decided-silently). */
+function reportSilent(worktree: string, plan: string, step: SessionStepName): void {
+	if (step === "retrospective") return;
+	try {
+		const recorded = new Set(readQuestions(worktree, plan).map((q) => q.id));
+		const found = silentDecisions(join(worktree, ".indusk", "planning", plan), recorded);
+		const first = found[0];
+		void reportClause(
+			worktree,
+			"never-decided-silently",
+			first
+				? { outcome: "broken", symptom: `${plan}/${first.file}:${first.line} ${first.why}` }
+				: { outcome: "upheld" },
+		);
+	} catch {
+		// A read that fails reports nothing.
+	}
+}
+
 /** Run `read`; its failure is the fallback, never the step's: the history is an aid to the run. */
 function attempt<T>(read: () => T, fallback: T): T {
 	try {
@@ -263,6 +296,7 @@ async function oneSession(
 							"This question could not be recorded in the plan's history, so it was not asked. Record the choice and its reason in the plan and say plainly that it could not be asked.",
 					};
 				}
+				reportAsked(opts.worktree, reply);
 				if (reply.to === "refuse") {
 					opts.manager.reply(
 						holder.id,
@@ -310,7 +344,22 @@ async function oneSession(
 		if (record) opts.onSession(record);
 	}
 	const code = await session.done;
-	if (waiting) return { error: null, rateLimited: false, waiting };
+	reportSilent(opts.worktree, opts.plan, step);
+	if (waiting) {
+		// The session ended with the question: its place under the cap is free (clause a-hold-frees-the-slot).
+		const freed = opts.manager.forPlan(opts.project, opts.plan, "build") === undefined;
+		void reportClause(
+			opts.worktree,
+			"a-hold-frees-the-slot",
+			freed
+				? { outcome: "upheld" }
+				: {
+						outcome: "broken",
+						symptom: `${opts.plan} still holds a session after asking ${waiting}`,
+					},
+		);
+		return { error: null, rateLimited: false, waiting };
+	}
 	if (result?.ok) return { error: null, rateLimited: false };
 	if (result) {
 		return {
