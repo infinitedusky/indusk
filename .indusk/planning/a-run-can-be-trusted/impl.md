@@ -634,7 +634,7 @@ This phase makes the admin say true things from the record the last phase keeps.
 
 #### Build Phase 2 Context
 
-- [ ] Record in the admin's context file that a plan's situation has one reader.
+- [x] Record in the admin's context file that a plan's situation has one reader.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`: "A plan's situation sentence comes from `situation()` in the package; the page and the nav row never compose their own" — destination: the app's own file, loaded when a file there is read.
