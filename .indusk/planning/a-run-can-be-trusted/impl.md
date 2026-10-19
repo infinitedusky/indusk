@@ -1169,6 +1169,19 @@ This phase tests the finished plan against the cases where what it shows or repo
   Added by hand 2026-10-19 (Sandy; `says-what-is-true`): since `audit-concerns-are-answered` the build runs the audit when the build phases close, before falsification, but the plan page lists the old order. `RELEASE_STEPS` in `apps/indusk-mcp/src/lib/plans/steps.ts` becomes Build, Audit, Falsify, Cleanup, Review, Release; `workflows.test.tsx` A9 expects that order. No mockup draws the release list's order.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] Shape — review a file this phase changed and leave it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/hooks/plan-write-guard.js`: `judgeVerb` (split out of `judgeSegment` this phase, so the segment's redirects, its `xargs` feed and its recorded names stay in one place) is long, but it has one job, judging a simple command by its verb, and each branch is one verb's rule; the new writers named by an option (`curl`, `wget`, `tar`, `unzip`) share `optionValue`, and patch headers have their own named `patchedPlanPath`. Splitting the branches into per-verb functions would scatter a table a reader checks top to bottom against the refused-forms list in the hook's header.
+
+  </details>
+- [x] Shape — review a file this phase changed and leave it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/promises/clause-verdicts.ts`: `parserReadsWrite` is the drain's independent reading of the same refused-forms list, one `if` per verb in the order of the guard's, with its helpers named (`splitHeredocs`, `valuesOf`, `patchHeaderPaths`, `holdsPlanFolders`, `writesFileText`); kept as one readable list for the same reason as the guard's. `toolWrittenDuring` is new and named, and `judgeDecision` takes its set as an input, a seam the A100 test reaches.
+
+  </details>
 - [ ] Make the plan reader end a phase's notes section where the next phase begins, so every phase's to-do list is read.
   <details><summary>Technical</summary>
 
