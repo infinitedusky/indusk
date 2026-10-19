@@ -619,16 +619,16 @@ This phase makes the admin say true things from the record the last phase keeps.
 
 #### Build Phase 2 Verification
 
-blocker: the look check (`plan.working`, `plan.released` by value in Chromium) cannot run: the admin's browser tier fails 90 of 99 tests in every file, the same way at the commit before Build Phase 2, so it proves nothing about these looks. A person must run the look checks or look at the page; Build Phase 3 onward waits on this item.
-
 - [x] The shown phase, the landed check, the situation sentence, the next step, the confirmation list and the Planning audit step are proved, and the existing release and steps tests still pass.
   <details><summary>Technical</summary>
 
   A14–A21, A65–A72, A81, A82, A87 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/run-record src/lib/plans/steps.planning-audit.test.ts src/lib/plans/steps.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/build-host.release.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest related src/lib/build-host.ts`).
 
   </details>
-- [ ] The page matches the two looks the person approved, and the nav look still holds.
+- [x] The page matches the two looks the person approved, and the nav look still holds.
   <details><summary>Technical</summary>
+
+  Checked by hand 2026-10-19: the blocker this item carried ("the browser tier fails 90 of 99 in every file") did not hold — the admin's whole browser project ran 341 of 343 in this worktree, the two failures being `workflows.test.tsx` A9/A10 expecting the planning list without "Planning audit" (updated: six steps); the look contract `cockpit-redraw.contract.test.ts` (plan.working, plan.released by value in Chromium, on the worktree's own build) passes.
 
   `plan.working` and `plan.released` are checked by value in Chromium against the mockups the person approved before this plan's approval (drawn outside this impl); `nav.expanded` is unchanged and still passes. Run the admin's look checks over the changed components (`pnpm --filter @infinitedusky/indusk-admin exec vitest related <the changed components>`); a look that does not match its approved mockup is a defect in this phase, never a reason to redraw the mockup here.
 

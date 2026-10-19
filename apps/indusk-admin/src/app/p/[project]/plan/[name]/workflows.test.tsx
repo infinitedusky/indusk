@@ -130,12 +130,12 @@ const stateOf = (steps: Step[], name: string) =>
 beforeEach(() => resetFixture());
 
 describe("A9 — Planning and Release are two lists, each with its own count of steps done", () => {
-  it("A9 shows both lists for a plan mid-build, Planning five of five and Release none of six", async () => {
+  it("A9 shows both lists for a plan mid-build, Planning six of six and Release none of six", async () => {
     const { root } = await pageFor("mid-build");
     expect(listOf(root, "planning"), "no Planning list").not.toBeNull();
     expect(listOf(root, "release"), "no Release list").not.toBeNull();
     expect(listOf(root, "planning")).not.toBe(listOf(root, "release"));
-    expect(countOf(root, "planning")).toEqual([5, 5]);
+    expect(countOf(root, "planning")).toEqual([6, 6]);
     expect(countOf(root, "release")).toEqual([0, 6]);
     expect(stepsOf(root, "planning").map((s) => s.name)).toEqual([
       "Research",
@@ -143,6 +143,7 @@ describe("A9 — Planning and Release are two lists, each with its own count of 
       "Test plan",
       "Decision",
       "Impl",
+      "Planning audit",
     ]);
     expect(stepsOf(root, "release").map((s) => s.name)).toEqual([
       "Build",
@@ -160,7 +161,7 @@ describe("A10 — a plan's steps follow its type, and a skipped ritual reads as 
     const { root } = await pageFor("fix-double-booking");
     const names = stepsOf(root, "planning").map((s) => s.name);
     expect(names.length, "the bugfix has no Planning list").toBeGreaterThan(0);
-    expect(names).toEqual(["Brief", "Test plan", "Impl"]);
+    expect(names).toEqual(["Brief", "Test plan", "Impl", "Planning audit"]);
     expect(names).not.toContain("Research");
     expect(names).not.toContain("Decision");
   });
