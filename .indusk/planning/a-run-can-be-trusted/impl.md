@@ -1,7 +1,7 @@
 ---
 title: "A run can be trusted — Impl"
 date: 2026-10-19
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -174,6 +174,19 @@ Rows A65–A72 follow the test plan's sections for `says-what-is-true`, `never-i
 | A88 | A plan whose review is stale for the documents shows the Planning audit to do and its Impl step not asking for approval | Build Phase 5 | Build Phase 5 | passing | unit | clause: a-run-is-read-from-its-record/the-planning-audit-is-a-step | apps/indusk-mcp/src/lib/plans/steps.planning-audit.test.ts |
 | A89 | The recorder loop writes each pass's start, end and outcome to its scan record, and a pass that throws is recorded as not finished | Build Phase 6 | Build Phase 6 | passing | unit | clause: landing-tests-hold-under-load/recorder-waits-for-its-break | apps/indusk-mcp/src/lib/admin/recorder-loop.scan.test.ts |
 | A90 | Landing reports `recorder-waits-for-its-break` from its clause-test results: upheld when the recorder test passed, broken naming the landing when it failed | Build Phase 6 | Build Phase 6 | passing | unit | clause: landing-tests-hold-under-load/recorder-waits-for-its-break | apps/indusk-mcp/src/lib/plans/land-recorder-signal.test.ts |
+| A91 | A run that ended on its own at a wait the person has since answered (a planning run stopped `ready-for-approval`, then approved from the command line) never reads "Stopped — ready-for-approval. Build starts the planning again."; it reads the step the plan is at, and its next step is that step's, not "press Build" | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
+| A92 | A plan on main whose confirmation list was not read (the nav row, which loads none) or could not be read (the promise registry unreadable) never says "everything is confirmed" or "Everything it promised is confirmed"; it says the list is on the plan's page, or that it could not be read | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/next-step.test.ts |
+| A93 | A live check whose Notes line holds a date beside a failed result, and a promise the plan makes with no clauses that is still `declared`, are listed as still to confirm, never ticked | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
+| A94 | In a real temporary repository whose root checkout is on a branch other than the trunk, a plan landed on the trunk reads complete and its recorded release reads released, never flipped to "not on main" | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-run-is-read-from-its-record/released-only-when-landed | apps/indusk-mcp/src/lib/run-record/landed.test.ts |
+| A95 | A workbench plan whose landing merge is in its code repository, its documents not yet archived at the workbench root, reads complete | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-run-is-read-from-its-record/released-only-when-landed | apps/indusk-mcp/src/lib/run-record/landed.test.ts |
+| A96 | While a just-pressed build is still finding its worktree (before its first step session spawns), the plan reads running, never "the run died", and a second Build press is refused as already building, so one plan never has two builds | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-run-is-read-from-its-record/dead-reads-stopped | apps/indusk-admin/src/lib/build-host.record.test.ts |
+| A97 | These shell writes to a plan document are refused naming the file: `perl -0pi -e`, `python3 - <<'PY'` (and `node -`, `bash <<EOF`) whose here-document writes a plan path, `node -e "…writeFileSync(process.argv[1])" <plan path>`, `F=<plan path>; echo x >> $F`, `find` over a plan folder piped to `xargs sed -i`, `gsed -i`, `awk -i inplace`, `sponge`, `ed`, `ex`, `vim -c`, `curl -o`, `wget -O`, `tar -C` or `unzip -d` into a plan folder, and `git apply <patch>` whose patch headers name a plan path | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-plan-document-is-written-through-its-checks/shell-write-refused | apps/indusk-mcp/src/__tests__/plan-write-guard.test.ts |
+| A98 | Reads from an inline interpreter (`node -e "process.stdout.write(fs.readFileSync('<plan>/impl.md'))"`, `python3 -c "sys.stdout.write(open('<plan>/impl.md').read())"`) and `git clean -n` or `--dry-run` in a plan folder are allowed | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-plan-document-is-written-through-its-checks/reads-pass | apps/indusk-mcp/src/__tests__/plan-write-guard.test.ts |
+| A99 | A shell command that starts with `cd` into another checkout of the same project and only reads (the guard run with the first checkout's working directory, the witness with the other's) reports nothing changed and no `shell-write-refused` break | Build Phase 7 | Build Phase 7 | planned | contract | clause: a-plan-document-is-written-through-its-checks/shell-write-refused | apps/indusk-mcp/src/__tests__/plan-write-guard.contract.test.ts |
+| A100 | A plan document written by the Edit or Write tool while a shell command runs (two tool calls in one turn) is not blamed on that command; a change no tool write accounts for still reports `shell-write-refused` broken | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-plan-document-is-written-through-its-checks/shell-write-refused | apps/indusk-mcp/src/lib/promises/clause-verdicts.test.ts |
+| A101 | The contract check refusing a draft impl on the two clause-signal rules sends no upheld report of `refused-without-signals` or `a-live-check-proves-no-clause`: the rule never reports its own verdict (Decisions 8 and 17) | Build Phase 7 | Build Phase 7 | planned | unit | clause: a-plan-with-clauses-carries-its-signals/refused-without-signals | apps/indusk-mcp/src/lib/promises/confirm-signal-rules.test.ts |
+| A102 | A recorder pass whose production read failed (`recordBreaks` resolving with `error` set, as a Jaeger timeout under load does) is written to the scan record as not finished, so the patient test goes on waiting instead of failing "finished a scan … found no incident" | Build Phase 7 | Build Phase 7 | planned | unit | clause: landing-tests-hold-under-load/recorder-waits-for-its-break | apps/indusk-mcp/src/lib/admin/recorder-loop.scan.test.ts |
+| A103 | A landing whose clause-test results carry the recorder clause only in unit files (`wait-for-incident.test.ts`, `recorder-loop.scan.test.ts`), the recorder landing test not among them, reports nothing for `recorder-waits-for-its-break`, never upheld | Build Phase 7 | Build Phase 7 | planned | unit | clause: landing-tests-hold-under-load/recorder-waits-for-its-break | apps/indusk-mcp/src/lib/plans/land-recorder-signal.test.ts |
 | L1 | After landing, on the installed admin, a build on a scratch plan killed by hand reads stopped with its reason within a page load, and Build starts it again from the phase the plan is on | Build Phase 6 | Build Phase 6 | skipped | live check | a live check of the whole story on the installed admin, recorded in the retrospective; liveness against a real process and real start times is proved at landing by A73, so this proves no clause | manual: after landing run `pnpm install:local` and `indusk ui restart`; start a build on a scratch plan, `kill` its step session's `claude` process by hand, reload the plan page and read the stop sentence, press Build and read the phase it names; record date and result in Notes |
 | L2 | After landing, one real conflicting acceptance on a scratch plan, then `indusk promises confirm a-brief-is-accepted-on-current-main` succeeds and that plan closes | Build Phase 6 | Build Phase 6 | skipped | live check | a live check after landing for another plan's close; span delivery from a real process is proved at landing by A86, so this proves no clause | manual: after landing, make a scratch plan whose brief conflicts with main and run `indusk plans accept-brief <scratch>` (expect the refusal, the brief still a draft), accept one scratch brief behind main with no conflict, then run `indusk promises confirm a-brief-is-accepted-on-current-main` and its retrospective close; delete the scratch plans; record the result in Notes |
 | L3 | After landing, in a real session, a shell command that tries to tick a box in a plan's impl is refused with the file and the tool named | Build Phase 6 | Build Phase 6 | skipped | live check | a live check against the installed hook; the clause shell-write-refused is proved by A22–A30 | manual: after landing, in a new session run `sed -i 's/- \[ \]/- [x]/' .indusk/planning/<scratch>/impl.md` and read the refusal; record in Notes |
@@ -356,6 +369,10 @@ This phase writes the tests the plan commits to before anything changes, so each
   ```
 
 - **L1–L3** — each runs only after landing against the installed admin and hook, so it cannot be authored as an everyday or landing test; each is a `manual:` row and, by Decision 14, proves no clause.
+
+#### Deferred to Build Phase 7
+
+- **A91–A103** — falsification hypotheses formed by `/falsify` on 2026-10-19, after this phase had closed, so they could not be written here; Build Phase 7 (the Falsification phase) writes each red against the code as it stands before its fixes. Their subjects all exist today except the tool-write record A100 reads, which Build Phase 7 adds.
 
 #### Regression Guards
 
@@ -1065,6 +1082,131 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
 - **Watch out**: four everyday-suite reds that are earlier phases', not this one's: `everyday-tests-never-wait` (names `accept-brief-conflict.test.ts` and `build-host.trunk.test.ts` as starting git), `promise-marks-one-query` (`lib/promises/mark.ts` builds a tag query), `contract-resolver-single-definition` (`incident-signal.ts` builds a path to the promises folder), `steps-name-project-commands` (the work.md step is not found). They go to `/falsify` and `/cleanup`; the six `run/` loop files fail only with `INDUSK_BUILD_STEP` set.
 - **Decision (checked after the phase closed)**: of those four, only one was this plan's: `everyday-tests-never-wait` also named `run-record/landed.test.ts` (Build Phase 2; A21 and A87 run a real landing with git). It is now in `vitest.tiers.ts` `SYSTEM` (passes 11 of 11 there), as Decision 19 requires of a test that starts a process; its rows' level and assertions are unchanged. The other three, and the remaining files `everyday-tests-never-wait` names, predate this plan: `mark.ts`, `incident-signal.ts` and `skills/work.md` are unchanged since the branch left main, and the accept-brief and `timing/test-run` files were listed as pre-existing in Test Phase 1's Forward Intelligence.
 - **Assumption**: L1–L3 and the first real report of `recorder-waits-for-its-break` come after landing; between landings that include the recorder test, the clause reads no signal.
+
+### Build Phase 7: Falsification — what a run, the shell guard and the signals say, against the inputs that make them say it wrongly
+
+**Tier**: strong — this phase changes the shell guard every command passes through and the build host's start of a run, the same reason Build Phases 3 and 5 are strong (Decision 13)
+
+This phase tests the finished plan against the cases where what it shows or reports is false: a stopped run whose wait was already answered, a merged plan claiming everything is confirmed when nothing was read, a landing looked for on the wrong branch, a build pressed twice, shell writes the guard lets through and reads it refuses, a witness that blames a command for changes it did not make, a rule that reports its own success, and a recorder test that still fails under load. Each case was checked against the code before it was written down, and three were seen on this machine on 2026-10-19. When the phase closes, each case has a test that failed before its fix and passes after, and the page, the guard and the signals say only what is true in each of them.
+
+- [ ] Write each of this phase's tests first, and see each one fail for the reason it names before any fix below.
+  <details><summary>Technical</summary>
+
+  Rows A91–A103 (registered under Test Phase 1's `#### Deferred to Build Phase 7`). Each is authored red against today's code, apart from A100, whose tool-write record is added below (it is red on the missing exclusion). A99 is a contract row in the already-system-tier `plan-write-guard.contract.test.ts`; A94 and A95 go in `landed.test.ts`, already in `vitest.tiers.ts` `SYSTEM`. Everything else is a unit row.
+
+  </details>
+- [ ] Make a run that stopped at a wait the person has since answered read the step the plan is at, not "stopped".
+  <details><summary>Technical</summary>
+
+  Hypothesis A91. `situation()` (`apps/indusk-mcp/src/lib/run-record/situation.ts`) reads any `run.status.state === "stopped"` as `kind: "stopped"`, and `runStatus` (`liveness.ts:36`) words a clean stop by its step (`record.stopReason ?? record.stop.step`). A planning run that stopped at `ready-for-approval` and was then approved by `indusk plans approve` (so no build record is newer and `waitingOn` is null) reads "Stopped — ready-for-approval. Build starts the planning again." Fix: a stop whose step is one of the runners' clean ends (planning `ready-for-approval`, `wait-for-looks`; build `review`, `released`) is not a stopped run once `waitingOn` is null: fall through to the `idle` branch (`At <step>; nothing is running`), so `nextStepFor` gives that step. A death (`PROCESS_GONE`), `cannot-continue`, `amendment`, `judgement`, a rate limit and `release-failed` still read stopped. Raised by the audit (`situation.ts:156`).
+
+  </details>
+- [ ] Stop a merged plan from claiming everything is confirmed when its confirmation list was never read or could not be read, and stop a failed live check or an unconfirmed plain promise from being ticked.
+  <details><summary>Technical</summary>
+
+  Hypotheses A92, A93. `plan-situation.ts:132` loads confirmations only for the plan's own page, and `readStanding(...).catch(() => [])` (line 154) turns an unreadable registry into an empty list; `situation()` and `nextStepFor` (`next-step.ts:59`) read an absent or empty list as "everything is confirmed; the retrospective closes it", and `PlanStatusCard.tsx:55` as "Everything it promised is confirmed." Fix: `SituationInput.confirmations` distinguishes not read (`undefined`) and unreadable (a `{ unreadable: reason }` value) from an empty list; the complete branch and `nextStepFor` say "see the plan's page for what is left to confirm" (nav) or "the promise registry could not be read: <reason>" (page), never "everything is confirmed"; `PlanStatusCard` renders the same words through its existing text slot (no new markup, so `plan.released` holds). In `confirmationsOf` (`situation.ts`), a promise with no split or limit clause is one confirmation of kind `clause signal` named by the promise, confirmed only when the registry has it in force; in `liveCheckRecorded`, a Notes line counts as confirmed only when it holds the row's id, a date, and none of `fail`, `failed`, `red`, `broken`, `refused` (case-insensitive). Raised by the audit (`next-step.ts:59`, `PlanStatusCard.tsx:55`).
+
+  </details>
+- [ ] Read whether a plan landed from the project's trunk, and from the code repository for a workbench plan, never from whatever branch the checkout is on.
+  <details><summary>Technical</summary>
+
+  Hypotheses A94, A95. `planLandedOnMain` (`landed.ts:91`) asks `git branch --show-current` of the root checkout, and the admin's `landedAsker` (`plan-situation.ts:78`) asks `"HEAD"`. With the root checkout on any other branch every landed plan reads not complete, and `buildStateFromRecord` (`build-host.ts:201`) re-judges a recorded `released` on every poll and flips it to `release-failed: … not on main`. A workbench plan merges its code in the code repository (`land.ts` `landWorkbenchPlan`), which neither reader asks, so it reads stopped until its documents are archived at the root. Fix: both callers name the trunk through the package's one trunk reader (`src/lib/trunk-branch.ts`), never `HEAD` or the current branch; for a workbench plan the merge subjects are read from the code repository its `code.json` names (`resolveExecutionRoots`), the archive folder from the root. Raised by the audit (`landed.ts:91`).
+
+  </details>
+- [ ] Hold a just-pressed build as running from the moment it is pressed, so the page never calls it dead and a second press cannot start a second build.
+  <details><summary>Technical</summary>
+
+  Hypothesis A96. `startBuild` (`apps/indusk-admin/src/lib/build-host.ts:570`) writes the build record with no process and no stop, then awaits `depsFor` (which resolves `planLocation`), and only then sets `builds()` (line 583). In that window `buildState` and `runOfPlan` read the record through liveness as dead ("Stopped: the run died"), and a second press passes the "already building" check, finds the record dead, and starts a second build; `admitBuild` adds to a `Set`, so it does not refuse the second admission, and the first build's `free()` releases the place the second still holds. Fix: set the `builds()` entry (running) before the first await, as `startRelease` and `startPlanning` already do ("held before the first await"), delete it if `depsFor` throws, and open the record after it is set. Raised by the audit (`build-host.ts:570`).
+
+  </details>
+- [ ] Make the shell guard refuse the common ways of writing a plan document it lets through today, including the one an audit session used on this plan.
+  <details><summary>Technical</summary>
+
+  Hypothesis A97, observed: the machine's decision file (`~/.indusk/projects/dusk-2f1b1d2f/plan-write-decisions.jsonl`, 2026-10-19T21:40:12Z) shows `python3 -I - <<'PY'` writing this plan's `audit.md`, allowed. Each form in A97 was run through `judgeCommand` on 2026-10-19 and allowed. In `apps/indusk-mcp/hooks/plan-write-guard.js`: the in-place flag test accepts bundled flags with digits (`-0pi`, `-i.bak` for `perl`); an interpreter (`INTERPRETERS`, and `SHELLS`) given `-` or no script argument reads its here-document or here-string body as inline text, judged as `-e`/`-c` text is; an interpreter whose inline text has a write call and whose arguments include a plan path is refused; simple `NAME=value` assignments earlier in the command are substituted into `$NAME` and `${NAME}` words; `xargs` running an in-place editor or remover is refused when an earlier segment of the pipeline names a plan path or folder; `gsed`, `awk -i inplace`/`gawk -i inplace`, `sponge`, `ed`, `ex`, `vim`/`vi`/`nvim` with `-c` or `+`, `curl -o`/`--output`, `wget -O`/`--output-document`, `tar` with `-C`/`--directory` and `unzip -d` naming a plan path are writers; `git apply` and `patch` read the patch file named (when it exists and is under 1 MB) and are refused when a `---`/`+++`/`diff --git` header names a plan path. Mirror each in the drain's independent reading, `parserReadsWrite` (`src/lib/promises/clause-verdicts.ts`), so a refusal of each still reports `shell-write-refused` upheld. Raised by the audit (`plan-write-guard.js:486`), whose answer was detection only.
+
+  </details>
+- [ ] Stop the shell guard refusing reads that an inline interpreter or a dry run makes.
+  <details><summary>Technical</summary>
+
+  Hypothesis A98, each refused by `judgeCommand` on 2026-10-19. `WRITE_CALL` (`plan-write-guard.js:63`) counts any `.write(`, so `process.stdout.write(`, `process.stderr.write(`, `sys.stdout.write(` and `sys.stderr.write(` refuse a read; and `git clean` in a plan folder is refused whatever its flags. Fix: strip standard-stream writes from the text before `WRITE_CALL` is tested; allow `git clean` with `-n` or `--dry-run`. Keep the drain's `parserReadsWrite` reading the same, so these allowed reads report `reads-pass` upheld. Raised by the audit (`plan-write-guard.js:68`).
+
+  </details>
+- [ ] Make the witness compare the plan folders of the checkout the guard looked at, not of wherever the command left the shell.
+  <details><summary>Technical</summary>
+
+  Hypothesis A99, observed: on 2026-10-19T21:44:02Z the decision file paired a read-only `cd /Users/the_dusky/code/sandbox/dusk && find .indusk/planning …` run from this worktree with an after snapshot of the main checkout, so all 55 active plan files read changed; the drain will report `shell-write-refused` broken for a `find`. `plan-write-witness.js` takes `planRootOf(event.cwd)`, and a PostToolUse payload's `cwd` is the shell's working directory after the command. Fix: the guard's pending file records `root`; the witness snapshots that root (and the home it was found under), never one derived from the after payload. Not raised by the audit.
+
+  </details>
+- [ ] Keep a plan document that the Edit or Write tool changed during a shell command from being blamed on that command.
+  <details><summary>Technical</summary>
+
+  Hypothesis A100. The drain (`judgeDecision`, `src/lib/promises/clause-verdicts.ts`) blames every change between the guard's before snapshot and the witness's after on the shell command; Claude Code runs tool calls of one turn concurrently, so an Edit to `impl.md` beside a long `pnpm test` reads `shell-write-refused` broken naming the test run. Fix: register `plan-write-witness.js` also as PostToolUse on `Edit|Write|MultiEdit|NotebookEdit` (the `HOOK_REGISTRATIONS` entry in `src/lib/hook-command.ts`, and its byte-equal `.claude/hooks/` sync); for such a payload whose file is under a plan folder it appends `{ kind: "tool-write", at, file, stat }` to the decision file; the drain leaves out of `changed` each file whose after `stat` equals a tool write recorded between the decision's `at` and its after line. A change no tool write accounts for is still broken (U1 stays detected). Raised by the audit (`clause-verdicts.ts:320`).
+
+  </details>
+- [ ] Remove the report that the clause-signal rules give of their own refusals.
+  <details><summary>Technical</summary>
+
+  Hypothesis A101. `reportRefusedSignalRules` (`apps/indusk-mcp/src/bin/commands/promises.ts:230`) reports `refused-without-signals` and `a-live-check-proves-no-clause` upheld whenever the contract check refuses a draft: the verdict a check gives itself, which Decisions 8 and 17 rule out because it can never read broken. Fix: delete it and its call; the clauses' signals stay `promises confirm`'s independent reports (`confirm.ts`). The test drives `promisesContract` on a refused draft with the package's capture tracer (`lib/promises/capture-tracer.ts`) as the commands' tracer and asserts no span for either clause. Raised by the audit (`promises.ts:230`), left there for this ritual.
+
+  </details>
+- [ ] Count a recorder pass whose production read failed as not finished, so the patient landing test keeps waiting under load.
+  <details><summary>Technical</summary>
+
+  Hypothesis A102. `recordBreaks` (`src/lib/promises/record.ts:140`) never throws when the production read fails: `pass` returns `failed(...)`, a result with `error` set and `mark.outcome` broken. The admin's loop (`apps/indusk-admin/src/instrumentation.ts`) returns that result, and `startRecorderLoops`'s `tick` (`src/lib/admin/recorder-loop.ts`) records `ok: true` for any pass that resolves. So a Jaeger query that timed out under load writes a finished scan, and `waitForIncident` fails "the admin finished a scan after it was loaded and found no incident": the failure under load this clause exists to end, and what Decision 12 says cannot happen ("a pass that threw … is not a finished scan"). Fix: `RecorderLoopOptions` takes `outcomeOf?(result) → { ok, error? }`; the admin passes one that reads `result.error` (and a `refused` result as not ok); `tick` records it. Not raised by the audit.
+
+  </details>
+- [ ] Report the recorder clause at a landing only from the recorder landing test's own result.
+  <details><summary>Technical</summary>
+
+  Hypothesis A103. `markRecorderClause` (`src/lib/plans/land-recorder-signal.ts:41`) takes any result whose file carries the clause token; `wait-for-incident.test.ts` and `recorder-loop.scan.test.ts` carry it too, so a landing that ran only those reports `recorder-waits-for-its-break` upheld although the test that waits under load never ran. Fix: count only the result for `src/__tests__/admin-recorder.test.ts` (the file `vitest.tiers.ts` `SYSTEM` lists for this clause; one exported constant beside the clause name); with no such result, report nothing. Raised by the audit (`land-recorder-signal.ts:41`), left for cleanup there; it is a false upheld signal, so it is fixed here.
+
+  </details>
+
+#### Build Phase 7 Verification
+
+- [ ] Every test this phase wrote failed before its fix and passes after it, and the plan's earlier tests still pass.
+  <details><summary>Technical</summary>
+
+  A91–A103 pass; each was seen red first. `indusk plans tests a-run-can-be-trusted --phase 7` passes, and the files of Build Phases 1–6 it names stay green (the guard, situation, landed, build-host record and recorder-loop files are shared). In the system tier: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/plan-write-guard.contract.test.ts src/lib/run-record/landed.test.ts`. `skill-sync-parity.test.ts` and `hook-registration.test.ts` pass after the witness's new registration is synced.
+
+  </details>
+- [ ] The guard refuses every write form listed for it and allows every read form, judged by running the guard itself.
+  <details><summary>Technical</summary>
+
+  Re-run the probe this ritual used (each A97 form refused, each A98 form allowed, through `judgeCommand` from `apps/indusk-mcp/hooks/plan-write-guard.js`), and the existing A22–A35 and A75–A77 rows unchanged.
+
+  </details>
+
+#### Build Phase 7 Context
+
+- [ ] Add to the hooks' rules that the witness compares the checkout the guard recorded, and that edits by the editing tools are recorded so they are not blamed on a shell command.
+  <details><summary>Technical</summary>
+
+  Destination: `apps/indusk-mcp/hooks/CLAUDE.md`, the `plan-write-guard.js` entry — "the witness snapshots the root the guard recorded, never one read from the after payload's `cwd`; it also records Edit and Write tool writes under plan folders, and the drain leaves those out of a shell command's changes". Guard: `plan-write-guard.contract.test.ts` (A99) and `clause-verdicts.test.ts` (A100).
+
+  </details>
+- [ ] Add to the package's rules that a recorder pass counts as finished only when its read succeeded.
+  <details><summary>Technical</summary>
+
+  Destination: `apps/indusk-mcp/CLAUDE.md`, Tests section, beside the `waitForIncident` line — "a scan is finished only when its pass read production: `recordBreaks` resolves with `error` on a failed read, so the loop's `outcomeOf` reads it". Guard: `recorder-loop.scan.test.ts` (A102).
+
+  </details>
+
+#### Build Phase 7 Document
+
+- [ ] Update the shell guard's reference and hook table with the forms it now refuses and the reads it now allows.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/tools/indusk-mcp.md` ("A plan document is written through its checks"): the here-document, argument and variable forms, `xargs`, the extra editors and downloaders, `git apply` reading its patch; standard-stream writes and dry runs allowed; "the honest gap" keeps script files and paths built at run time, and says the witness compares the checkout the guard looked at and leaves out editing-tool writes. `apps/docs/src/guide/index.md` hook table: the same list in its `plan-write-guard` row; the `plan-write-witness` row gains its Edit/Write matcher.
+
+  </details>
+
+#### Build Phase 7 Forward Intelligence
+
+- **Decision (falsify, unattended, 2026-10-19)**: the audit's guard bypass finding was answered "signal" (the witness reports it). It is fixed here as well, because the clause says a shell write is refused, not reported, and one of the forms (a `python3 -` here-document) was used on this plan by the audit session the same day. Script files and paths built at run time stay U1, detected and not prevented.
+- **Decision**: the audit findings answered "nothing — left for /falsify" are each either a hypothesis above or recorded here as not taken: the interactive-admin-session reading of Falsify, Cleanup and Audit (`steps.ts:205`) is outside the brief's "run" (a build, a planning run, a release), as the audit answered; the hook-side brief reader (`validate-impl-structure.js:164`) and the plan attribution of later plans' spans (`promises.ts:241`, `land-recorder-signal.ts:23`) are `/cleanup`'s, since no case was found where either gives a false verdict today; the drain's latency at the start of an `indusk` command was not measured (no specific failing input formed without a stalled daemon to time against).
+- **Searched, no hypothesis formed**: the run record's writer and reader (`record.ts`: whole-file rename, `unknown` on a cut-off file, plan-name sanitising), `restartStep` (a release restarts only for an accepted plan; anything short of approved restarts planning), `shownPhase` (reads the plan's live copy through `readBuildPlan`'s `livePlanCopy`, not the root checkout), `isLandingOf` (the `: <plan> landed` suffix cannot match another plan's name), the plan-review reader and the waiting list (stale reads `stale`; an approved impl reads the Planning audit done), `waitForIncident`'s order of reads, and the clause-signal rule's task matching (fences masked, a clause matched on word boundaries).
+- **Not investigated**: the four everyday-suite reds Build Phase 6 traced to earlier plans; the admin's page components beyond the confirmation card's words (layout is the looks' and was approved).
 
 ## Files Affected
 
