@@ -27,6 +27,7 @@ const HEADING: Record<Waiting["on"], string> = {
   question: "Claude needs you",
   approval: "Waiting for your approval",
   review: "Waiting for your review",
+  "plan-review": "Needs its plan review",
   // Never drawn here: an amendment is answered on its own card.
   amendment: "The brief changed",
 };
@@ -79,6 +80,7 @@ export function DecisionCard({
       {
         project,
         choice,
+        on: waiting.on,
         ...(choice === "reply" ? { text } : {}),
         ...(choice === "answers"
           ? {

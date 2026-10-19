@@ -1,0 +1,7 @@
+# Before planning a behaviour change, list every path that reaches it (admin conversation, hand edit, held run, workbench), not only the CLI verb
+
+**Why:** In a-brief-is-accepted-on-current-main the unattended planning run wrote its test plan and impl from the command-line `accept-brief` path alone. The plan review found eight gaps that came from that one omission. Rows A7 and A8 scanned admin source text, but the admin's acceptance is a conversation agent following the planner skill (planner.md:104). Rows A21 and A22 drove only the CLI. Decision 7 wrongly left workbench plans unmerged, although start.ts:131 creates the code branch at start. A hand edit of `status: accepted` bypassed the merge. A planning run held for looks started later on a stale branch.
+
+**How to apply:** Before writing the test plan for a change to an existing behaviour, list every way the behaviour is reached: the CLI verb, the admin route or conversation, a hand edit of the underlying file, a deferred or held start, and workbench or multi-repo variants. Give each its own row, or state why it cannot occur. Prefer enforcing the rule at the point all paths converge (here, the planning start) over scanning source text for a call.
+
+Pointer: .indusk/planning/a-brief-is-accepted-on-current-main/plan-review.md (last section, "What let these through"); highlight h-20261019-025. Related: guard-added-at-one-call-site-does-not-protect-a-second-call-site-that-bypasses-it.

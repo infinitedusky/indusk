@@ -158,6 +158,8 @@ interface PlanSpec {
     Record<"research" | "brief" | "testPlan" | "adr" | "impl", DocSpec>
   >;
   skipped?: NonNullable<Plan["skippedRituals"]>;
+  /** Its plan-review.md state; a plan waiting on approval has it answered. */
+  planReview?: Plan["planReview"];
 }
 
 function doc(status: string | undefined, title?: string) {
@@ -179,6 +181,7 @@ function build(spec: PlanSpec): Plan {
     workflow: spec.workflow ?? "feature",
     ...(spec.at ? { position: position(spec.at) } : {}),
     ...(spec.skipped ? { skippedRituals: spec.skipped } : {}),
+    ...(spec.planReview ? { planReview: spec.planReview } : {}),
   };
   if (docs.research) plan.research = doc(docs.research.status);
   plan.brief = doc(docs.brief?.status ?? "accepted", `${title} — brief`);
@@ -248,6 +251,7 @@ const PAGE_PLANS: PlanSpec[] = [
   {
     name: "awaiting-approval",
     at: "impl-approved",
+    planReview: "answered",
     docs: { ...ALL_DOCS, impl: { status: "draft" } },
   },
   {

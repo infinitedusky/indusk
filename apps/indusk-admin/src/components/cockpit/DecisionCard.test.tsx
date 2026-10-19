@@ -126,7 +126,7 @@ describe("A14 — one decision, with accept, the alternative and a reply", () =>
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({
       url: "/api/plans/asking/decision",
-      body: { project: PROJECT, choice: "alternative" },
+      body: { project: PROJECT, choice: "alternative", on: "question" },
     });
   });
 
@@ -143,6 +143,7 @@ describe("A14 — one decision, with accept, the alternative and a reply", () =>
       project: PROJECT,
       choice: "reply",
       text: "Neither — ask the venue first",
+      on: "question",
     });
   });
 });
@@ -177,7 +178,7 @@ describe("A35 — a review shows its evidence with its decision, and accepting i
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({
       url: "/api/plans/at-review/decision",
-      body: { project: PROJECT, choice: "accept" },
+      body: { project: PROJECT, choice: "accept", on: "review" },
     });
   });
 });
@@ -215,6 +216,7 @@ describe("cockpit-audit-fixes A7 — every question the agent asked is on the ca
     expect(posts[0]?.body).toEqual({
       project: PROJECT,
       choice: "answers",
+      on: "question",
       answers: {
         "Which seat map should holds use?": "Our own grid",
         "How long should a hold last?": "Ten minutes",
@@ -260,10 +262,65 @@ describe("cockpit-audit-fixes A14 — a several-question ask takes the person's 
     expect(posts[0]?.body).toEqual({
       project: PROJECT,
       choice: "answers",
+      on: "question",
       answers: {
         "Which seat map should holds use?": "Our own grid",
         "How long should a hold last?": "Until the show starts",
       },
+    });
+  });
+});
+
+describe("approval-waits-for-the-planning-run A20 — a plan-review wait is drawn in the ask state", () => {
+  const needsReview: Waiting = {
+    plan: "written",
+    on: "plan-review",
+    step: "Impl",
+    decision: "The plan needs its plan review: plan-review.md, answered.",
+    accept: "Ask the agent to write it",
+    alternative: "Not yet",
+  };
+
+  it("A20 headed as needing its plan review at the step, with the decision's words", async () => {
+    const screen = await render(
+      <DecisionCard project={PROJECT} waiting={needsReview} />,
+    );
+    // Waits for the card: the first render may not have flushed yet.
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("decision-card").element()).toBeTruthy(),
+    );
+    const card = screen.getByTestId("decision-card").element();
+    expect(card.getAttribute("data-on")).toBe("plan-review");
+    expect(card.textContent).toContain("Needs its plan review at Impl");
+    expect(card.textContent).toContain("The plan needs its plan review");
+  });
+});
+
+// promise: decisions-wait-in-one-place
+describe("approval-waits-for-the-planning-run A23 — an answer names the decision the card showed", () => {
+  it("A23 a plan-review card posts on: plan-review with its answer", async () => {
+    const screen = await render(
+      <DecisionCard
+        project={PROJECT}
+        waiting={{
+          plan: "written",
+          on: "plan-review",
+          step: "Impl",
+          decision: "The plan needs its plan review.",
+          accept: "Ask the agent to write it",
+          alternative: "Not yet",
+        }}
+      />,
+    );
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("decision-card").element()).toBeTruthy(),
+    );
+    (screen.getByTestId("decision-accept").element() as HTMLElement).click();
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]?.body).toEqual({
+      project: PROJECT,
+      choice: "accept",
+      on: "plan-review",
     });
   });
 });

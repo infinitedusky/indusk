@@ -2,7 +2,10 @@ import type {
   appendDecision,
   DecisionEntry,
 } from "@infinitedusky/indusk-mcp/plans/history";
-import type { Waiting } from "@infinitedusky/indusk-mcp/plans/waiting";
+import type {
+  Waiting,
+  WaitingOn,
+} from "@infinitedusky/indusk-mcp/plans/waiting";
 import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
 
 /**
@@ -16,6 +19,8 @@ import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
  *     under each question's text, or it is refused.
  *   - **approval**: accept is `plans approve`; **review**: accept is
  *     `acceptPlan` and the release, as BuildControls' Accept does.
+ *   - **plan-review**: the plan needs its plan review; both answers are words
+ *     to the plan's agent, never an approval or a release.
  *   - an **amendment** is never answered here: it is approved or sent back on
  *     the plan's amendment card, and an accept here would run a release
  *     (plan-stories, ADR decision 5), so it is refused before anything is
@@ -24,6 +29,10 @@ import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
  *     plan's agent: `say` to the session running for the plan, or a new
  *     session for the plan, in its worktree, with the decision and the words
  *     as its prompt. Never queued: nothing would drain a queue.
+ *
+ * An answer names the decision it was given for (`shown`); one the plan no
+ * longer waits on is refused before anything runs, so a plan-review card
+ * answered after the review was finished never approves the plan.
  *
  * Every answer that reached its target is recorded by `plans/history`; one
  * that failed is not. The session manager, the plan's location and the
@@ -82,7 +91,13 @@ export async function answerDecision(
   project: string,
   waiting: Waiting,
   choice: DecisionChoice,
+  shown?: WaitingOn,
 ): Promise<Answered> {
+  if (shown && shown !== waiting.on) {
+    throw new Error(
+      `${waiting.plan} now waits on ${waiting.on}, not ${shown}: reload the page`,
+    );
+  }
   if (waiting.on === "amendment") {
     throw new Error(
       `${waiting.plan} waits on an amendment, which is answered on the amendment card`,
@@ -148,8 +163,10 @@ async function deliver(
       await deps.approve();
       return { via: "approve" };
     }
-    await deps.release();
-    return { via: "release" };
+    if (waiting.on === "review") {
+      await deps.release();
+      return { via: "release" };
+    }
   }
   // Words go to the plan's agent in conversation: its planning session, else
   // whichever session the plan has.
@@ -157,7 +174,11 @@ async function deliver(
     deps.sessions.forPlan(project, waiting.plan, "planning") ??
     deps.sessions.forPlan(project, waiting.plan);
   if (ours) {
-    deps.sessions.say(ours.id, answer);
+    // A plan-review answer is the button's words, which say nothing alone.
+    deps.sessions.say(
+      ours.id,
+      waiting.on === "plan-review" ? `${waiting.decision}\n\n${answer}` : answer,
+    );
     return { via: "say", sessionId: ours.id };
   }
   const where = await deps.where();

@@ -20,5 +20,6 @@ export function snapshotOf(plan: Plan): PlanSnapshot & { name: string } {
     } as PlanSnapshot["documents"],
     skippedRituals: plan.skippedRituals,
     finishedRituals: plan.finishedRituals,
+    planReview: plan.planReview,
   };
 }

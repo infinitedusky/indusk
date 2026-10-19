@@ -37,6 +37,8 @@ const MODULES = [
 	["./plans/steps", "src/lib/plans/steps.ts", "stepAt"],
 	["./plans/waiting", "src/lib/plans/waiting.ts", "planWaiting"],
 	["./plans/history", "src/lib/plans/history.ts", "appendDecision"],
+	// approval-waits-for-the-planning-run: a plan's review state is the package's.
+	["./plans/plan-review", "src/lib/plans/plan-review.ts", "readPlanReview"],
 	// brief-as-the-contract Build Phase 4: a plan's promises, expectations, looks
 	// and waiting amendments are the package's, drawn by the plan page.
 	["./plans/parts", "src/lib/plans/parts.ts", "readPlanParts"],
@@ -61,6 +63,8 @@ const PACKAGE_ONLY = [
 	"currentStep",
 	"planWaiting",
 	"appendDecision",
+	"readPlanReview",
+	"planReviewState",
 	"readPlanParts",
 	"approvalOf",
 	"coverageOf",

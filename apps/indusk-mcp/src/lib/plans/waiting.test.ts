@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { derivePlanPosition, type PlanPositionState } from "../lifecycle.js";
 import type { PlanSummary } from "../plan-parser.js";
 import type { PlanSnapshot } from "./steps.js";
-import { planWaiting, type WaitingSession } from "./waiting.js";
+import { planWaiting, type WaitingPlanning, type WaitingSession } from "./waiting.js";
 
 // promise: decisions-wait-in-one-place
 
@@ -43,6 +43,7 @@ const asking: Plan = {
 
 const approval: Plan = {
 	name: "awaiting-approval",
+	planReview: "answered",
 	workflow: "feature",
 	position: positionOf("impl", "draft"),
 	documents: {
@@ -213,5 +214,141 @@ describe("A14 — an amendment waits on the person, at the Brief", () => {
 		} as Parameters<typeof planWaiting>[0]);
 		expect(w).toHaveLength(1);
 		expect(w[0]?.on).toBe("question");
+	});
+});
+
+/**
+ * approval-waits-for-the-planning-run: a draft impl is offered for approval only
+ * once its plan review is answered; otherwise it is listed as needing the
+ * review, and nothing is listed while a planning run for it is going.
+ *
+ * promise: approval-waits-for-a-finished-plan
+ */
+describe("approval-waits-for-the-planning-run — a plan waits on its plan review", () => {
+	const wait = (input: {
+		plans: Plan[];
+		sessions?: WaitingSession[];
+		plannings?: WaitingPlanning[];
+		amendments?: { plan: string; count: number }[];
+		builds?: { plan: string; stoppedAt: string | null }[];
+	}) =>
+		planWaiting({
+			sessions: input.sessions ?? [],
+			plans: input.plans,
+			builds: input.builds ?? [],
+			plannings: input.plannings,
+			amendments: input.amendments,
+		});
+
+	const unread: Plan = { ...approval, planReview: "missing" };
+	const unanswered: Plan = { ...approval, planReview: "unanswered" };
+	const running: WaitingPlanning = { plan: approval.name, running: true, stop: null };
+	const failed: WaitingPlanning = {
+		plan: approval.name,
+		running: false,
+		stop: { step: "cannot-continue", why: "the last step's session failed: exit 1" },
+	};
+
+	it("A1 a written plan without its plan review is listed as needing it, not for approval", () => {
+		expect(wait({ plans: [unread] })).toEqual([
+			expect.objectContaining({ plan: approval.name, on: "plan-review", step: "Impl" }),
+		]);
+	});
+
+	it("A1 the plan-review decision speaks of the plan review", () => {
+		const [w] = wait({ plans: [unread] });
+		expect(w?.decision).toMatch(/plan review/);
+	});
+
+	it("A2 a plan review with an unanswered finding is listed as needing it, never for approval", () => {
+		expect(wait({ plans: [unanswered] })).toEqual([
+			expect.objectContaining({ plan: approval.name, on: "plan-review", step: "Impl" }),
+		]);
+	});
+
+	it("A3 a run still going lists nothing, answered or not", () => {
+		expect(wait({ plans: [unread], plannings: [running] })).toEqual([]);
+		expect(wait({ plans: [approval], plannings: [running] })).toEqual([]);
+	});
+
+	it("A4 a stopped run's reason is in the decision", () => {
+		const [w] = wait({ plans: [unread], plannings: [failed] });
+		expect(w?.on).toBe("plan-review");
+		expect(w?.decision).toContain("the last step's session failed: exit 1");
+	});
+
+	it("A25 a run stopped waiting for its looks names them, and a reason ending in a full stop gets no second", () => {
+		const looks: WaitingPlanning = {
+			plan: approval.name,
+			running: false,
+			stop: { step: "wait-for-looks", looks: ["plan.working", "plan.needs-you"] },
+		};
+		const [l] = wait({ plans: [unread], plannings: [looks] });
+		expect(l?.decision).toContain("plan.working");
+		expect(l?.decision).toContain("plan.needs-you");
+		const dotted: WaitingPlanning = {
+			plan: approval.name,
+			running: false,
+			stop: { step: "cannot-continue", why: "the impl check said: no." },
+		};
+		const [d] = wait({ plans: [unread], plannings: [dotted] });
+		expect(d?.decision).toContain("the impl check said: no.");
+		expect(d?.decision).not.toContain("..");
+	});
+
+	it("A5 after an admin restart (no planning state) the plain decision is listed, never approval", () => {
+		const [w] = wait({ plans: [unread] });
+		expect(w?.on).toBe("plan-review");
+		expect(w?.decision).not.toMatch(/stopped/);
+	});
+
+	it("A6 a hand-written plan needs its plan review, and is offered for approval once it is answered", () => {
+		expect(wait({ plans: [unread] })[0]?.on).toBe("plan-review");
+		expect(wait({ plans: [approval] })[0]?.on).toBe("approval");
+	});
+
+	it("A7 an open session withholds both listings; once its turn ends the review's state decides", () => {
+		const open: WaitingSession = {
+			plan: approval.name,
+			kind: "planning",
+			question: null,
+			writing: true,
+		};
+		const idle: WaitingSession = { ...open, writing: false };
+		expect(wait({ plans: [unread], sessions: [open] })).toEqual([]);
+		expect(wait({ plans: [approval], sessions: [open] })).toEqual([]);
+		expect(wait({ plans: [unread], sessions: [idle] })[0]?.on).toBe("plan-review");
+	});
+
+	it("A8 a planning run going for another plan does not affect this plan's listing", () => {
+		const other: WaitingPlanning = { plan: "someone-else", running: true, stop: null };
+		expect(wait({ plans: [approval], plannings: [other] })[0]?.on).toBe("approval");
+	});
+
+	it("A17 an answered review, no session and no run: listed once, as approval, with Approve and Not yet", () => {
+		expect(wait({ plans: [approval] })).toEqual([
+			expect.objectContaining({
+				plan: approval.name,
+				on: "approval",
+				accept: "Approve",
+				alternative: "Not yet — keep planning",
+			}),
+		]);
+	});
+
+	it("A18 a question, an amendment and a stopped review each outrank a plan needing its plan review", () => {
+		const q = wait({
+			plans: [unread],
+			sessions: [{ ...question, plan: approval.name }],
+		});
+		expect(q).toHaveLength(1);
+		expect(q[0]?.on).toBe("question");
+		const am = wait({ plans: [unread], amendments: [{ plan: approval.name, count: 1 }] });
+		expect(am).toHaveLength(1);
+		expect(am[0]?.on).toBe("amendment");
+		const atReview: Plan = { ...review, name: "at-review", planReview: "missing" };
+		const rv = wait({ plans: [atReview], builds: [{ plan: "at-review", stoppedAt: "review" }] });
+		expect(rv).toHaveLength(1);
+		expect(rv[0]?.on).toBe("review");
 	});
 });

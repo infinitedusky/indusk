@@ -264,6 +264,10 @@
 			"types": "./dist/lib/plans/waiting.d.ts",
 			"default": "./dist/lib/plans/waiting.js"
 		},
+		"./plans/plan-review": {
+			"types": "./dist/lib/plans/plan-review.d.ts",
+			"default": "./dist/lib/plans/plan-review.js"
+		},
 		"./plans/history": {
 			"types": "./dist/lib/plans/history.d.ts",
 			"default": "./dist/lib/plans/history.js"

@@ -452,3 +452,6 @@
 {"plan":"audit-concerns-are-answered","phase":5,"kind":"build","sha":"6ddf9457d60f6ac22bd05bbab7802d564b495f3b","timestamp":"2026-10-19T13:50:46.208Z"}
 {"plan":"a-brief-is-accepted-on-current-main","phase":1,"kind":"test","sha":"fd4d8cedb47e8f97c95c3160e798879da3f589c3","timestamp":"2026-10-19T17:35:08.512Z"}
 {"plan":"a-brief-is-accepted-on-current-main","phase":1,"kind":"build","sha":"d189bd8772d8607f92ee5657a357beeec9d16d86","timestamp":"2026-10-19T17:39:36.838Z"}
+{"plan":"approval-waits-for-the-planning-run","phase":1,"kind":"test","sha":"1de8767516b7f9797b76f231bd679226ce637363","timestamp":"2026-10-19T16:44:02.973Z"}
+{"plan":"approval-waits-for-the-planning-run","phase":1,"kind":"build","sha":"624554e17904833101f706a181832c9fe6976c86","timestamp":"2026-10-19T16:48:13.545Z"}
+{"plan":"approval-waits-for-the-planning-run","phase":2,"kind":"build","sha":"d114d7eec92e73886224fe665b6dc21d780ebf21","timestamp":"2026-10-19T16:49:13.826Z"}

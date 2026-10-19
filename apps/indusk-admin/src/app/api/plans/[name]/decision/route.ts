@@ -1,5 +1,9 @@
 import { approvePlan } from "@infinitedusky/indusk-mcp/plans";
 import { appendDecision } from "@infinitedusky/indusk-mcp/plans/history";
+import {
+  WAITING_KINDS,
+  type WaitingOn,
+} from "@infinitedusky/indusk-mcp/plans/waiting";
 import type { NextRequest } from "next/server";
 import { startRelease } from "@/lib/build-host";
 import { answerDecision, type DecisionChoice } from "@/lib/decisions";
@@ -18,7 +22,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * Answer the decision a plan waits on (plan-cockpit, ADR decision 4):
- * `{ project, choice: "accept" | "alternative" | "reply" | "answers", text?, answers? }`. What the
+ * `{ project, choice: "accept" | "alternative" | "reply" | "answers", on?, text?, answers? }`.
+ * `on` is the kind of decision the card showed; an answer to one the plan no
+ * longer waits on is refused. What the
  * plan waits on is read again here, never taken from the page, so an answer
  * meant for a question already answered, or a review already accepted, is
  * refused rather than sent somewhere else. The answer goes where
@@ -40,6 +46,7 @@ export async function POST(
   const body = (await request.json().catch(() => null)) as {
     project?: string;
     choice?: string;
+    on?: string;
     text?: string;
     answers?: unknown;
   } | null;
@@ -51,6 +58,12 @@ export async function POST(
     );
   }
   const { project } = body;
+  if (
+    body.on !== undefined &&
+    !(WAITING_KINDS as readonly string[]).includes(body.on)
+  ) {
+    return refuse(400, `on is one of ${WAITING_KINDS.join(", ")}`);
+  }
   const root = getProjectPath(project);
   if (!root) return refuse(404, `no project named ${project}`);
   const plan = (await readActivePlans(root)).find((p) => p.name === name);
@@ -69,6 +82,7 @@ export async function POST(
       project,
       waiting,
       choice,
+      body.on as WaitingOn | undefined,
     );
     return Response.json(answered);
   } catch (err) {
