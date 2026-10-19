@@ -89,14 +89,14 @@ clause it broke.
 | A29 | A test file carrying a clause token is refused at close when it asserts nothing about the clause | Build Phase 4 | Build Phase 4 | passing | unit | tightens verified-before-release; droppable if it makes false refusals (decision D-3 below) | apps/indusk-mcp/src/lib/promises/clause-test-asserts.test.ts |
 | A30 | No skill, tool description or doc page calls a promise's telemetry a mark; each says signal (exempt: the Day 4b entry in the root `CLAUDE.md`, archived plans and decisions, this plan's name) | Test Phase 1 | Build Phase 6 | passing | unit | the word cleanup carried from one-promise-language; no promise of this plan states it | apps/indusk-mcp/src/__tests__/signal-word.test.ts |
 | A31 | The suite-speed script and the demo app write `broken` where they wrote `violated`, and every reader still reads both | Test Phase 1 | Build Phase 1 | passing | unit | the writers outside `markPromise`, carried from one-promise-language's falsification | apps/indusk-mcp/src/__tests__/suite-speed.test.ts, examples/seat-holds/src/telemetry.test.ts |
-| A32 | When two clauses of one promise break, in one recorder pass or in two, each break is recorded in an incident that names its own clause; a second clause's break never extends the first clause's open incident, and the recorder's verdict is written for each | Build Phase 7 | Build Phase 7 | written | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-per-clause.test.ts |
-| A33 | A break written by an app's own signal helper, which puts `indusk.signal.plan`/`phase` on the span rather than on the break event, opens an incident whose Signal line carries that plan and phase | Build Phase 7 | Build Phase 7 | written | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-names-clause.test.ts |
-| A34 | A span reported `upheld` whose `indusk.signal.value` is over its `indusk.signal.bound` reads broken for a limit clause, through the real readers (`parseMarkedSpan` → `localSignalReader` and `readStanding`), not only when `clauseStanding` is handed the numbers | Build Phase 7 | Build Phase 7 | written | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-measured.test.ts |
-| A35 | A signal span whose resource (process tags) carries `indusk.run=test`, and whose own tags do not, is skipped by `parseMarkedSpan` like one tagged on the span | Build Phase 7 | Build Phase 7 | written | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/signal-test-run.test.ts |
-| A36 | A clause's test file whose every test was skipped (`describe.skipIf`, `it.skip`, `it.todo`) is not passing at close or landing: the tests half refuses it as "ran no test" | Build Phase 7 | Build Phase 7 | written | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-test-runner.test.ts |
-| A37 | A clause test file whose only `assert` is an import name or a word in a comment, with empty tests, is refused as asserting nothing | Build Phase 7 | Build Phase 7 | written | unit | tightens A29's check (decision D-3), found by falsification | apps/indusk-mcp/src/lib/promises/clause-test-asserts.test.ts |
-| A38 | In the admin's promise list, an enforced promise with one clause holding and another reading no signal, or whose watcher is blind, gets the grey no-signal dot, not the green enforced one | Build Phase 7 | Build Phase 7 | written | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-admin/src/lib/promise-dashboard.test.ts |
-| A39 | `indusk promises status` writes the signal of `no-signal-is-not-holding` through the commands' tracer: upheld when every clause it shows as holding has a report and a live watcher, broken naming a clause shown holding without one | Build Phase 7 | Build Phase 7 | written | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/status-signal.test.ts |
+| A32 | When two clauses of one promise break, in one recorder pass or in two, each break is recorded in an incident that names its own clause; a second clause's break never extends the first clause's open incident, and the recorder's verdict is written for each | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-per-clause.test.ts |
+| A33 | A break written by an app's own signal helper, which puts `indusk.signal.plan`/`phase` on the span rather than on the break event, opens an incident whose Signal line carries that plan and phase | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-names-clause.test.ts |
+| A34 | A span reported `upheld` whose `indusk.signal.value` is over its `indusk.signal.bound` reads broken for a limit clause, through the real readers (`parseMarkedSpan` → `localSignalReader` and `readStanding`), not only when `clauseStanding` is handed the numbers | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-measured.test.ts |
+| A35 | A signal span whose resource (process tags) carries `indusk.run=test`, and whose own tags do not, is skipped by `parseMarkedSpan` like one tagged on the span | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/signal-test-run.test.ts |
+| A36 | A clause's test file whose every test was skipped (`describe.skipIf`, `it.skip`, `it.todo`) is not passing at close or landing: the tests half refuses it as "ran no test" | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-test-runner.test.ts |
+| A37 | A clause test file whose only `assert` is an import name or a word in a comment, with empty tests, is refused as asserting nothing | Build Phase 7 | Build Phase 7 | passing | unit | tightens A29's check (decision D-3), found by falsification | apps/indusk-mcp/src/lib/promises/clause-test-asserts.test.ts |
+| A38 | In the admin's promise list, an enforced promise with one clause holding and another reading no signal, or whose watcher is blind, gets the grey no-signal dot, not the green enforced one | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-admin/src/lib/promise-dashboard.test.ts |
+| A39 | `indusk promises status` writes the signal of `no-signal-is-not-holding` through the commands' tracer: upheld when every clause it shows as holding has a report and a live watcher, broken naming a clause shown holding without one | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/status-signal.test.ts |
 
 ### Deferred Verification
 
@@ -767,42 +767,44 @@ blocker: two of the four clauses of `a-clause-is-proved-twice` have no real repo
 
 #### Build Phase 7 Verification
 
-- [ ] Two clauses of one promise breaking produce two incidents, each naming its own clause, and an incident with no clause is unchanged.
+- [x] Two clauses of one promise breaking produce two incidents, each naming its own clause, and an incident with no clause is unchanged.
   <details><summary>Technical</summary>
 
   A32: red today (one incident naming only the newer clause; the second pass extends the first clause's incident). A27 and `record-clause-break.test.ts` stay green. `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/incident-per-clause.test.ts src/lib/promises/incident-no-clause.test.ts src/lib/promises/record-clause-break.test.ts`.
 
   </details>
-- [ ] A break from an application's own helper names the plan and phase that added it.
+- [x] A break from an application's own helper names the plan and phase that added it.
   <details><summary>Technical</summary>
 
   A33: red today (no Signal pointer for a span-attribute pointer). `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/incident-names-clause.test.ts`.
 
   </details>
-- [ ] A measurement over its bound reads broken through the real readers, and a test run marked on its resource is not counted.
+- [x] A measurement over its bound reads broken through the real readers, and a test run marked on its resource is not counted.
   <details><summary>Technical</summary>
 
   A34 and A35: red today. `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/clause-measured.test.ts src/lib/promises/signal-test-run.test.ts`, then `vitest related src/lib/promises/telemetry.ts src/lib/promises/closing-inputs.ts src/lib/promises/standing.ts`.
 
   </details>
-- [ ] A clause test that was skipped, or that asserts nothing behind an imported name, is refused at close.
+- [x] A clause test that was skipped, or that asserts nothing behind an imported name, is refused at close.
   <details><summary>Technical</summary>
 
   A36 and A37: red today; A1, A3, A29 stay green. `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/clause-test-runner.test.ts src/lib/promises/clause-test-asserts.test.ts src/lib/promises/clause-tests-run.test.ts`, then `vitest related src/lib/tests/run-files.ts` (its other callers keep their verdicts).
 
   </details>
-- [ ] The admin draws a promise with a silent clause as no signal, and the status command writes the clause's signal.
+- [x] The admin draws a promise with a silent clause as no signal, and the status command writes the clause's signal.
   <details><summary>Technical</summary>
 
   A38: `pnpm --filter indusk-admin exec vitest run src/lib/promise-dashboard.test.ts`. A39: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/status-signal.test.ts`. Both red today.
 
   </details>
+  Ran 2026-10-19, each command as written: the first five items green (6, 7, 8, 13 and 6+6 tests; A32–A39 passing). `vitest related` on the readers: 716 of 730, the 14 red all in `src/lib/run/*` (independent of this plan, as in earlier phases); on `run-files.ts`: 14 files, 72 passed. Also: `tsc --noEmit` clean for the package and the admin; biome clean on the 28 changed files (formatting of five test files fixed); everyday `vitest related` on every changed promises module and the command, 52 files, 315 passed; system tier over the same with `dist/` built, 270 of 274, the 3 red the Build Phase 4 environmental ones (`land-own-worktree.test.ts`, `detail-is-only-read.test.ts`, refused by this build step's `INDUSK_GATE_POLICY=auto`). `indusk plans tests mark-first --phase "Build Phase 7"` (this worktree's build): 16 of 17, the red `admin-recorder.test.ts` (no admin bundle, the known environmental red).
 - [ ] This plan's close reads all four clauses holding from real runs.
   <details><summary>Technical</summary>
 
   After the reports item: `indusk promises status` shows each of the four clauses of `a-clause-is-proved-twice` as holding with a last report; the confirm itself is the retrospective's.
 
   </details>
+  Not yet: `promises status` (2026-10-19 04:30Z) reads `no-signal-is-not-holding` and `a-break-names-its-clause` holding, `verified-before-release` and `upheld-by-its-signal` no signal — they wait on a real `promises confirm` (the blocker under this phase's heading).
 
 #### Build Phase 7 Context
 
