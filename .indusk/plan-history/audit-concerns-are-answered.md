@@ -9,3 +9,4 @@ Each decision the plan waited on, the answer and who gave it, as the admin recor
 - 2026-10-19T13:23:23.241Z — amendment to the promise a-plan-is-read-cold-before-approval: was null, now "Before a plan is put to the person for approval, a reader that has not seen the planning conversation reads its brief, test plan, ADR and impl against each other, and the planning agent answers each concern it raises." — answered "Approve" by Sandy-Corsillo
 - 2026-10-19T13:23:23.241Z — amendment to the promise the-auditor-sees-the-plan-not-the-session: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
 - 2026-10-19T13:23:23.241Z — amendment to the promise an-accepted-brief-is-planned-unasked: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
+- 2026-10-19T13:23:23.241Z — amendment to the promise a-build-runs-to-review-unasked: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
