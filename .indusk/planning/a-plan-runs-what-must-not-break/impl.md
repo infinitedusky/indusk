@@ -60,7 +60,7 @@ This phase writes the tests that show what changes: a phase's set that should ho
   T1, T2 in `apps/indusk-mcp/src/lib/plans/test-set.test.ts`: `planTestSet` with rows, a Must-not-break promise and a `reached` list: a phase's set includes the promise's tests and excludes the reached file; a landing's set excludes the reached file. Red today (phases omit Must-not-break; both include reached). Update the existing tests that assert today's reached behaviour (T2/T6 of tests-never-make-us-wait in the same file) to the new rule, saying so in the commit; those rows belong to an archived plan whose promise this plan changes.
 
   </details>
-- [ ] Write the test that running a plan's tests starts no search for reached tests, failing today.
+- [x] Write the test that running a plan's tests starts no search for reached tests, failing today.
   <details><summary>Technical</summary>
 
   T3 in `apps/indusk-mcp/src/lib/plans/plan-tests.test.ts` (create if missing): `plansTestsOutcome` with a fake `Runner` that records calls, on a temp plan with one row; assert no call's args include `related`. Red today.
