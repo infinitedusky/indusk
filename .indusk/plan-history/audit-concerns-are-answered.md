@@ -15,3 +15,4 @@ Each decision the plan waited on, the answer and who gave it, as the admin recor
 - 2026-10-19T14:00:23.794Z — The build is done and waits for your review. Accept it, so the release runs? — answered "Accept" by person
 - 2026-10-19T14:00:43.460Z — The build is done and waits for your review. Accept it, so the release runs? — answered "Accept" by person
 - 2026-10-19T14:01:41.824Z — amendment to the look (none): was "None — a dismissal reaches the person in `audit.md`, in the cold read's notes beside the plan and in the step's report in the session; no screen changes.", now "None — " — answered "Approve" by Sandy-Corsillo
+- 2026-10-19T14:01:41.824Z — amendment to the look plan.working: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
