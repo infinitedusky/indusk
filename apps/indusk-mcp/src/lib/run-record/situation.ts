@@ -53,6 +53,8 @@ export interface SituationInput {
 		step?: string | null;
 		/** The phase the plan is on (`shownPhase`), never the run's start. */
 		phase?: string | null;
+		/** The step the record's stop names (`ready-for-approval`, `review`, …), when it stopped on its own. */
+		stopStep?: string | null;
 	} | null;
 	/** The confirmation list of a plan on main. */
 	confirmations?: readonly Confirmation[];
@@ -97,6 +99,23 @@ const WAITING_WORDS: Record<WaitingOn, string> = {
 };
 
 export const waitingWords = (on: WaitingOn): string => WAITING_WORDS[on];
+
+/**
+ * The stops a runner makes when it has done its part and handed the plan to the person
+ * (planning: ready for approval, waiting for looks; build: at review; release: released).
+ * Once nothing waits on the person, the person has answered, so such a run is not a stopped
+ * one: the plan reads the step it is at (A91). A death, a refusal, an amendment, a judgement,
+ * a rate limit and a failed release are not among them.
+ */
+const CLEAN_ENDS: ReadonlySet<string> = new Set([
+	"ready-for-approval",
+	"wait-for-looks",
+	"review",
+	"released",
+]);
+
+const endedCleanly = (run: SituationInput["run"]): boolean =>
+	run?.status.state === "stopped" && typeof run.stopStep === "string" && CLEAN_ENDS.has(run.stopStep);
 
 /** The confirmations still open. */
 export const openConfirmations = (c: readonly Confirmation[] | undefined): Confirmation[] =>
@@ -153,7 +172,7 @@ export function situation(input: SituationInput): Situation {
 		};
 	}
 
-	if (run?.status.state === "stopped") {
+	if (run?.status.state === "stopped" && !endedCleanly(run)) {
 		const reason = run.status.reason ?? "it ended";
 		const again =
 			run.kind === "planning" ? "Build starts the planning again" : "Build starts it again";
