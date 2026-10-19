@@ -1,7 +1,7 @@
 ---
 title: "A run can be trusted — Impl"
 date: 2026-10-19
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -1264,19 +1264,19 @@ The plan grew one file that has two jobs: the library that records the shell gua
   Extract `splitHeredocs`, `simpleCommands`, `verbOf`, `holdsPlanFolders`, `valuesOf`, `patchHeaderPaths`, `isPlanPath`, `movesThroughChecks` and the exported `parserReadsWrite` (lines ~146–460 of `apps/indusk-mcp/src/lib/promises/clause-verdicts.ts`, of its 635) into `apps/indusk-mcp/src/lib/promises/shell-write-reading.ts`; `clause-verdicts.ts` imports `parserReadsWrite` and keeps `appendDecision`, `toolUseKey`, the snapshot functions, `judgeDecision`, `toolWrittenDuring`, `rewriteDecisionFile` and `drainPlanWriteDecisions`. Basis: single responsibility — shell syntax versus the decision log — and one reason to change per file; the move is mechanical (no signature changes). Re-export `parserReadsWrite` from `clause-verdicts.ts` only if a test or caller imports it from there today (grep first); otherwise update the importer. Check `hook-shared-modules.test.ts`: the hook port `_clause-verdicts.js` mirrors only the writing half (`DECISIONS_FILE`, `toolUseKey`, `appendDecision`, snapshots), so it should not move; if the test pins function names across the split, update the pin, not the port.
 
   </details>
-- [ ] Review the build host and leave it as it is.
+- [x] Review the build host and leave it as it is.
   <details><summary>Technical</summary>
 
   Reviewed `apps/indusk-admin/src/lib/build-host.ts` (956 lines, +581 this plan) — left as-is. The record readers (`recordsOf`, `statusOfRecord`, `buildStateFromRecord`, `deadRun`, `runOfPlan`) and the starters (`startBuild`, `startPlanning`, `restartFor`) share the module-private `builds()` and `plannings()` maps and the same `key(project, plan)`; a split would export that state or pass it through every call and make the "entry held before the first await" ordering (Build Phase 7, A96) harder to read across two files. The two 15-second throttles (`throttled`/`signalledAt` and `checkInProgress`/`idleCheckedAt`) are two copies, not three, and key different things; the rule of three is not met and a shared helper would be a four-line wrapper over a `Map`. This is the cross-file question Build Phase 2's Shape review passed to `/cleanup`.
 
   </details>
-- [ ] Review the shell guard and its drain-side twin and leave them as they are.
+- [x] Review the shell guard and its drain-side twin and leave them as they are.
   <details><summary>Technical</summary>
 
   Reviewed `apps/indusk-mcp/hooks/plan-write-guard.js` (1058 lines) — left as-is. Its tokenizer (`lex`, `segmentsOf`, ~200 lines) is a clean unit, but a hook cannot import the TS library and `apps/indusk-mcp/hooks/CLAUDE.md` pins each `_`-prefixed module to exactly one `src/lib` module by count; a new `_shell-lex.js` would have no TS mirror (the drain reads commands with `shell-quote`, not this lexer) and would break that rule for a 200-line gain. The verb rules in `judgeVerb` stay one table read top to bottom against the refused-forms list in the file's header (Build Phase 7's Shape review). The guard's refused-forms list and the drain's `parserReadsWrite` are the same list written twice on purpose: the drain is the independent reading that proves the guard's `shell-write-refused` clause, and sharing the code would make them agree by construction and prove nothing.
 
   </details>
-- [ ] Review the large test files and the remaining changed files and leave them as they are.
+- [x] Review the large test files and the remaining changed files and leave them as they are.
   <details><summary>Technical</summary>
 
   Reviewed `build-host.record.test.ts` (481), `plan-write-guard.test.ts` (411) and the other changed files over the 400-line cap by count; the tests are one file per behaviour group named by trajectory row, each case independent, so length is case count, not tangled responsibility. The `run-record/*` files (`situation.ts` 284, `situation-signals.ts` 276, `landed.ts` 184, `signals.ts` 164, `record.ts` 130) and `clause-signal-rules.ts` (154) are under the cap and were each read for duplication: no helper appears in three places. Not examined: `validate-impl-structure.js` (1022) and `check-gates.js` (596) — they were changed by a few lines, not grown by this plan. The list of changed files came from `git diff --stat` against the merge base because `tsx` is not installed in this worktree, so `listOversizedChangedFiles` was not run itself.
@@ -1285,8 +1285,10 @@ The plan grew one file that has two jobs: the library that records the shell gua
 
 #### Build Phase 8 Verification
 
-- [ ] Behaviour is unchanged: the drain, the guard and the hook-port tests pass with the same assertions as before the move.
+- [x] Behaviour is unchanged: the drain, the guard and the hook-port tests pass with the same assertions as before the move.
   <details><summary>Technical</summary>
+
+  Run 2026-10-19: `clause-verdicts.test.ts`, `hook-shared-modules.test.ts` and `plan-write-guard.test.ts` 174 of 174, no assertion edited; system tier `plan-write-guard.contract.test.ts` 11 of 11; `tsc --noEmit` clean; biome clean on both files. Decisions: `clause-verdicts.ts` re-exports `parserReadsWrite` because `plan-write-guard.test.ts` imports it from there; `movesThroughChecks` became exported (visibility only) because `judgeDecision` calls it. `apps/docs/src` names `parserReadsWrite` nowhere.
 
   (no tests flip at this phase — reason: purely structure-preserving, covered by existing rows.) Run `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/clause-verdicts.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/plan-write-guard.test.ts`, then the system tier's `plan-write-guard.contract.test.ts`; all pass with no edit to an assertion. `tsc --noEmit` clean in the package, and biome clean on the two files from the repository root. The new file is exercised through `parserReadsWrite`'s existing cases in `clause-verdicts.test.ts` (A97, A98), so no new trajectory row is added.
 
@@ -1294,7 +1296,7 @@ The plan grew one file that has two jobs: the library that records the shell gua
 
 #### Build Phase 8 Context
 
-- [ ] (none needed — internal decomposition)
+- [x] (none needed — internal decomposition)
   <details><summary>Technical</summary>
 
   The hooks' rules name `_clause-verdicts.js` ← `clause-verdicts.ts` as the one-to-one mirror, and that still holds because the port mirrors the writing half that stays in `clause-verdicts.ts`. No rule about the parser's file location exists in any `CLAUDE.md` to update.
@@ -1303,7 +1305,7 @@ The plan grew one file that has two jobs: the library that records the shell gua
 
 #### Build Phase 8 Document
 
-- [ ] (none needed — internal decomposition)
+- [x] (none needed — internal decomposition)
   <details><summary>Technical</summary>
 
   No public surface, command, hook registration or page changes; the docs name `parserReadsWrite` nowhere (grep `apps/docs/src` to confirm before closing).
