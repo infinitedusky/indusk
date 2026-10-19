@@ -54,10 +54,9 @@ describe("A78 — shell-write-refused is judged from the parser and the disk", (
 	});
 
 	it("an allowed command after which a plan document changed is broken, naming the file and the command", () => {
-		const v = judgeDecision(
-			decision({ command: "./scripts/tick.sh" }),
-			{ ".indusk/planning/p/impl.md": [104, 2000] },
-		);
+		const v = judgeDecision(decision({ command: "./scripts/tick.sh" }), {
+			".indusk/planning/p/impl.md": [104, 2000],
+		});
 		expect(v?.clause).toBe("shell-write-refused");
 		expect(v?.broken).toMatch(/\.indusk\/planning\/p\/impl\.md/);
 		expect(v?.broken).toMatch(/\.\/scripts\/tick\.sh/);
@@ -121,7 +120,11 @@ describe("A78, A79 — the drain reports each judged decision and removes what i
 		appendDecision(home, { kind: "after", toolUseId: "read", after: BEFORE });
 		appendDecision(
 			home,
-			decision({ toolUseId: "ref", command: "sed -i s/a/b/ .indusk/planning/p/impl.md", decision: "refused" }),
+			decision({
+				toolUseId: "ref",
+				command: "sed -i s/a/b/ .indusk/planning/p/impl.md",
+				decision: "refused",
+			}),
 		);
 		appendDecision(home, decision({ toolUseId: "wait", at: now.toISOString() }));
 		const { tracer, spans } = captureTracer();
@@ -151,7 +154,10 @@ describe("A78, A79 — the drain reports each judged decision and removes what i
 	});
 
 	it("sends nothing and keeps every line when no daemon is there to receive it", async () => {
-		appendDecision(home, decision({ decision: "refused", command: "rm .indusk/planning/p/impl.md" }));
+		appendDecision(
+			home,
+			decision({ decision: "refused", command: "rm .indusk/planning/p/impl.md" }),
+		);
 		const r = await drainPlanWriteDecisions(ROOT, { home, live: () => false });
 		expect(r).toEqual({ sent: 0, kept: 1 });
 		expect(readFileSync(join(home, DECISIONS_FILE), "utf8")).toMatch(/rm \.indusk/);
@@ -176,7 +182,10 @@ describe("A78, A79 — the drain reports each judged decision and removes what i
 			kept: 0,
 		});
 		writeFileSync(join(home, DECISIONS_FILE), "{not json\n");
-		appendDecision(home, decision({ decision: "refused", command: "rm .indusk/planning/p/impl.md" }));
+		appendDecision(
+			home,
+			decision({ decision: "refused", command: "rm .indusk/planning/p/impl.md" }),
+		);
 		const { tracer } = captureTracer();
 		expect(await drainPlanWriteDecisions(ROOT, { home, tracer, live: () => true })).toEqual({
 			sent: 1,

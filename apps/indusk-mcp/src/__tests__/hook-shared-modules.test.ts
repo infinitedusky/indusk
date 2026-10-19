@@ -1,9 +1,13 @@
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
+import * as hookVerdicts from "../../hooks/_clause-verdicts.js";
 import { parsePurpose as hookParsePurpose } from "../../hooks/_trajectory-parser.js";
+import * as libVerdicts from "../lib/promises/clause-verdicts.js";
 import { token } from "../lib/tokens.js";
 import { parsePurpose as libParsePurpose } from "../lib/trajectory/parser.js";
 
@@ -148,6 +152,78 @@ describe("plans-are-promises A14 — one reading of a row's purpose, in both cop
 		for (const read of [libParsePurpose, hookParsePurpose]) {
 			const purpose = read("clause: a/c") as { clauses?: unknown } | null;
 			expect(purpose?.clauses).toEqual([{ promise: "a", clause: "c" }]);
+		}
+	});
+});
+
+/**
+ * a-run-can-be-trusted, Build Phase 3 — the shell guard's decision file has one writer
+ * under `hooks/`, `_clause-verdicts.js`, the port of `lib/promises/clause-verdicts.ts`'s
+ * writing half; the two write the same lines, read the plan folders the same way and pair
+ * a guard's line with its witness's by the same key.
+ */
+describe("a-run-can-be-trusted — one port of the plan-write decisions under hooks/", () => {
+	it("only _clause-verdicts.js names the decision file", async () => {
+		const files = await glob("*.js", { cwd: hooksDir, absolute: true });
+		const hits: string[] = [];
+		for (const file of files) {
+			if ((await readFile(file, "utf8")).includes('"plan-write-decisions.jsonl"')) {
+				hits.push(relative(hooksDir, file));
+			}
+		}
+		expect(hits.sort()).toEqual(["_clause-verdicts.js"]);
+	}, 30_000);
+
+	it("names the same files and folder in both copies", () => {
+		expect(hookVerdicts.DECISIONS_FILE).toBe(libVerdicts.DECISIONS_FILE);
+		expect(hookVerdicts.PENDING_DIR).toBe(libVerdicts.PENDING_DIR);
+	});
+
+	it("appends the same line, snapshots the same folders and pairs by the same key", () => {
+		const root = mkdtempSync(join(tmpdir(), "verdict-port-"));
+		try {
+			for (const dir of ["p", "q/notes", "archive/old", "archive/other"]) {
+				mkdirSync(join(root, ".indusk", "planning", dir), { recursive: true });
+			}
+			writeFileSync(join(root, ".indusk", "planning", "p", "impl.md"), "x");
+			writeFileSync(join(root, ".indusk", "planning", "q", "notes", "one.md"), "yy");
+			writeFileSync(join(root, ".indusk", "planning", "master.md"), "m");
+			writeFileSync(join(root, ".indusk", "planning", "archive", "old", "brief.md"), "b");
+			writeFileSync(join(root, ".indusk", "planning", "archive", "other", "brief.md"), "c");
+			const lib = libVerdicts.planFolderSnapshot(root, ["old"]);
+			expect(hookVerdicts.planFolderSnapshot(root, ["old"])).toEqual(lib);
+			expect(Object.keys(lib).sort()).toEqual([
+				".indusk/planning/archive/old/brief.md",
+				".indusk/planning/p/impl.md",
+				".indusk/planning/q/notes/one.md",
+			]);
+			const after = { ...lib, ".indusk/planning/p/impl.md": [2, 1] as [number, number] };
+			expect(hookVerdicts.changedFiles(lib, after)).toEqual(libVerdicts.changedFiles(lib, after));
+
+			const line = {
+				kind: "decision" as const,
+				toolUseId: "t",
+				at: "2026-10-19T00:00:00.000Z",
+				command: "cat x",
+				cwd: root,
+				decision: "allowed" as const,
+				files: [],
+				before: lib,
+			};
+			hookVerdicts.appendDecision(join(root, "h1"), line);
+			libVerdicts.appendDecision(join(root, "h2"), line);
+			expect(readFileSync(join(root, "h1", hookVerdicts.DECISIONS_FILE), "utf8")).toBe(
+				readFileSync(join(root, "h2", libVerdicts.DECISIONS_FILE), "utf8"),
+			);
+			for (const event of [
+				{ tool_use_id: "toolu_01/abc", tool_input: { command: "ls" } },
+				{ session_id: "s", tool_input: { command: "ls" } },
+				{},
+			]) {
+				expect(hookVerdicts.toolUseKey(event)).toBe(libVerdicts.toolUseKey(event));
+			}
+		} finally {
+			rmSync(root, { recursive: true, force: true });
 		}
 	});
 });

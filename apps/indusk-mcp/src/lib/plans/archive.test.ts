@@ -1,5 +1,13 @@
 // clause: a-plan-document-is-written-through-its-checks/shell-write-refused
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -56,7 +64,9 @@ describe("A80 — indusk plans archive moves a plan into the archive through git
 
 	it("refuses a plan that is not in the planning folder, and the archive folder itself", () => {
 		expect(archivePlan(root, "nope", { git: fakeGit, declaredPromises: () => [] }).ok).toBe(false);
-		expect(archivePlan(root, "archive", { git: fakeGit, declaredPromises: () => [] }).ok).toBe(false);
+		expect(archivePlan(root, "archive", { git: fakeGit, declaredPromises: () => [] }).ok).toBe(
+			false,
+		);
 		expect(calls).toEqual([]);
 	});
 

@@ -43,10 +43,18 @@
  * Exit 0 = allow. Exit 2 = block (stderr reaches the agent).
  */
 
-import { existsSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, isAbsolute, relative, resolve } from "node:path";
+import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import {
+	appendDecision,
+	PENDING_DIR,
+	planFolderSnapshot,
+	planRootOf,
+	toolUseKey,
+} from "./_clause-verdicts.js";
+import { projectHome } from "./_hook-paths.js";
 
 /** A plan path named anywhere in a piece of text: `.indusk/planning/[archive/]<plan>/…`. */
 const PLAN_IN_TEXT = /\.indusk[\\/]planning[\\/](?:archive[\\/])?[\w*-][^\s'"`\\/]*[\\/]/;
@@ -450,6 +458,8 @@ function judgeSegment(seg, ctx) {
 	if (words.length === 0) return {};
 	const verb = basename(words[0]);
 	const args = words.slice(1);
+	// Every plan path the segment names is recorded, read or write, for the package's judgement.
+	for (const a of args) if (!a.startsWith("-")) planAt(a);
 
 	if (verb === "cd" || verb === "pushd") {
 		const target = args.find((a) => !a.startsWith("-"));
@@ -716,6 +726,62 @@ export function refusalFor(command, cwd) {
 	return judgeCommand(command, cwd).refusal;
 }
 
+const PENDING_MAX_AGE_MS = 60 * 60 * 1000;
+
+/**
+ * Write the decision for the package to judge (Decision 8): a refused command,
+ * or one that names a plan path or runs in a plan folder, is a line in the
+ * decision file with the plan folders' state before it; every allowed command
+ * also leaves that state for `plan-write-witness.js`, which adds the state
+ * after and records an unnamed command only when a plan document changed (a
+ * script the guard cannot read, U1). A verdict is never written here.
+ */
+function recordDecision(event, command, cwd, judged) {
+	const root = planRootOf(cwd);
+	if (!root) return;
+	const home = projectHome(root);
+	const archived = judged.files
+		.map((f) => planPathOf(f))
+		.filter((hit) => hit?.archived)
+		.map((hit) => hit.plan);
+	const line = {
+		kind: "decision",
+		toolUseId: toolUseKey(event),
+		at: new Date().toISOString(),
+		command,
+		cwd,
+		decision: judged.refusal ? "refused" : "allowed",
+		files: judged.files.map((f) => relative(root, f)),
+		before: planFolderSnapshot(root, archived),
+	};
+	const named =
+		judged.refusal !== null ||
+		judged.files.length > 0 ||
+		judged.inPlan ||
+		PLAN_IN_TEXT.test(command);
+	if (named) appendDecision(home, line);
+	if (judged.refusal) return; // a refused command never runs: no after
+	const pending = join(home, PENDING_DIR);
+	mkdirSync(pending, { recursive: true });
+	writeFileSync(
+		join(pending, `${line.toolUseId}.json`),
+		JSON.stringify({ ...line, named, archived }),
+	);
+	sweepPending(pending);
+}
+
+/** A command that failed or was refused by another hook leaves its pending file: drop those over an hour old. */
+function sweepPending(dir) {
+	const cutoff = Date.now() - PENDING_MAX_AGE_MS;
+	for (const name of readdirSync(dir)) {
+		try {
+			if (statSync(join(dir, name)).mtimeMs < cutoff) rmSync(join(dir, name), { force: true });
+		} catch {
+			// another hook got there first
+		}
+	}
+}
+
 async function main() {
 	let input = "";
 	for await (const chunk of process.stdin) input += chunk;
@@ -729,7 +795,13 @@ async function main() {
 	const command = event.tool_input?.command;
 	if (typeof command !== "string") process.exit(0);
 	const cwd = typeof event.cwd === "string" && event.cwd !== "" ? event.cwd : process.cwd();
-	const { refusal } = judgeCommand(command, cwd);
+	const judged = judgeCommand(command, cwd);
+	try {
+		recordDecision(event, command, cwd, judged);
+	} catch {
+		// The record is for the signals; failing to write it never blocks a command.
+	}
+	const { refusal } = judged;
 	if (refusal) {
 		process.stderr.write(
 			[

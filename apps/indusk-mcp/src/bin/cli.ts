@@ -1504,4 +1504,20 @@ promisesCmd
 		await promisesContract(rootOrExit(), plan, this.opts());
 	});
 
-program.parse();
+// The shell guard's decisions are judged here, not in the hook that wrote
+// them (a-run-can-be-trusted, Decision 8): at the start of any command, at
+// most once a minute, best-effort and silent. `promises contract` is skipped:
+// the impl hook runs it on every edit and must stay quick.
+program.hook("preAction", async (_program, action) => {
+	if (action.name() === "contract") return;
+	try {
+		const root = resolveProjectRoot(process.cwd());
+		if (root === null) return;
+		const { drainPlanWriteDecisions } = await import("../lib/promises/clause-verdicts.js");
+		await drainPlanWriteDecisions(root, { throttle: true });
+	} catch {
+		// a signal is best-effort: it never fails the command
+	}
+});
+
+await program.parseAsync();
