@@ -221,7 +221,7 @@ This phase gives accepting a brief a command, so it has a moment the planning ru
 
 #### Build Phase 2 Document
 
-- [ ] Document the brief acceptance command.
+- [x] Document the brief acceptance command.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`; `guide/briefs.md` where acceptance is described; changelog.
