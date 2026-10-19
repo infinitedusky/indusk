@@ -72,6 +72,22 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 		expect(JSON.stringify(spans[0])).toMatch(/landing seat-holds/);
 	});
 
+	it("one failing file among several carrying the clause breaks it, in one report", async () => {
+		const p = codeWith({ [RECORDER]: `${TOKEN}\n`, "src/other.test.ts": `${TOKEN}\n` });
+		const { tracer, spans } = captureTracer();
+		await markRecorderClause(
+			p.planRoot,
+			p.codeRoot,
+			PLAN,
+			[
+				{ file: RECORDER, passed: true },
+				{ file: "src/other.test.ts", passed: false },
+			],
+			tracer,
+		);
+		expect(spans.map((s) => s.attrs["indusk.promise.outcome"])).toEqual(["broken"]);
+	});
+
 	it("reports nothing when no result's file carries the clause", async () => {
 		const p = codeWith({ [RECORDER]: "// nothing\n" });
 		const { tracer, spans } = captureTracer();

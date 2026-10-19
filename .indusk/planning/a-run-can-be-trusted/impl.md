@@ -1008,6 +1008,12 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
   signal: `landing-tests-hold-under-load/recorder-waits-for-its-break` — read in the landing's clause-test results, reported from `apps/indusk-mcp/src/lib/plans/land.ts`. No landing-test record exists today, so this is new: after `refuseFailingClauseTests` runs, `plans land` calls `writeClauseSignals` for each result whose file carries `clause: landing-tests-hold-under-load/recorder-waits-for-its-break` — upheld on a pass, `broken` naming the plan being landed and the failure on a fail — before it throws any refusal. `plans land` is a real command run, so its span is not dropped as a test run's. It reports at each landing whose clause tests include the recorder test (this plan's, and any later plan naming it); between them the clause reads no-signal. Row A90 in `src/lib/plans/land-recorder-signal.test.ts`, the runner injected and the spans captured.
 
   </details>
+- [x] Shape: report the recorder clause once per landing, broken when any file carrying it failed.
+  <details><summary>Technical</summary>
+
+  Shape found in `apps/indusk-mcp/src/lib/plans/land-recorder-signal.ts` (rule: one reason to change, name says what it is for): `markRecorderClause` built a verdict per carrying file and then kept only the first, so a later failing file would have been reported upheld. It now picks the first failing result, else the first, and reports that one; the A90 file gained a case for one failing file among several. Reviewed the other changed files and left them as they are: `wait-for-incident.ts` (one rule, all reads injected), `scan-record.ts` (three small functions over one file), `recorder-loop.ts`'s `tick` (the record call is a short `finally` step, and splitting it would hide the order the loop's test pins), the `land.ts` result-collecting wrapper (four lines, one job).
+
+  </details>
 
 #### Build Phase 6 Verification
 

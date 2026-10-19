@@ -36,20 +36,22 @@ export async function markRecorderClause(
 	results: readonly TestFileResult[],
 	tracer?: Tracer,
 ): Promise<void> {
-	const verdicts: ClauseVerdict[] = results
-		.filter((r) => carriesClause(codeRoot, r.file))
-		.map((r) => ({
-			promise: PROMISE,
-			clause: CLAUSE,
-			...(r.passed
-				? {}
-				: {
-						broken: `landing ${plan}: ${r.file} ${r.reason ?? "failed when run at landing"}`.slice(
+	const carrying = results.filter((r) => carriesClause(codeRoot, r.file));
+	// One report per landing: a failure in any file carrying the clause breaks it.
+	const result = carrying.find((r) => !r.passed) ?? carrying[0];
+	if (result === undefined) return;
+	const verdict: ClauseVerdict = {
+		promise: PROMISE,
+		clause: CLAUSE,
+		...(result.passed
+			? {}
+			: {
+					broken:
+						`landing ${plan}: ${result.file} ${result.reason ?? "failed when run at landing"}`.slice(
 							0,
 							500,
 						),
-					}),
-		}));
-	if (verdicts.length === 0) return;
-	await writeClauseSignals(projectRoot, "plans.land", plan, SIGNAL, verdicts.slice(0, 1), tracer);
+				}),
+	};
+	await writeClauseSignals(projectRoot, "plans.land", plan, SIGNAL, [verdict], tracer);
 }
