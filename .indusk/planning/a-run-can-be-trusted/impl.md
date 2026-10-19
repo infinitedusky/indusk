@@ -386,8 +386,10 @@ This phase writes the tests the plan commits to before anything changes, so each
 
 #### Test Phase 1 Context
 
-- [ ] Record in the shared part of the current-work file that this plan's tests are written red and which Stabilize item it is.
+- [x] Record in the shared part of the current-work file that this plan's tests are written red and which Stabilize item it is.
   <details><summary>Technical</summary>
+
+  Done by a direct edit of the `## Project (shared)` region, which any agent may edit: `update_current_section` writes only a per-session section, never the shared one.
 
   `current.md: ## Project (shared)` — one line under the Stabilize list: `a-run-can-be-trusted: tests written red; build in flight` via `mcp__indusk__update_current_section`; committed like any file. Destination tier: current.md (operational state, not a rule).
 
