@@ -1,0 +1,9 @@
+# When a test plan accepts source-text or name-match proxy tests for a UI join because the browser test project is unreliable, make sure at least one rendered check still runs before calling the row done — a page's own rule can slip past every green proxy row
+
+In approval-waits-for-the-planning-run, what the plan page actually draws (whether it offers "Approve") was proved only by source-text and name-match tests (A15, `plan-actions-pages.test.ts`: checks that the right package function is called/wired) while the only test that renders the page and reads what's on it (A16, a live check) was deferred to after landing. The test plan's own rule permits this substitution when the browser test project is unreliable — a reasonable accommodation — but it means every currently-green row could pass while the page itself draws the wrong thing, because nothing between acceptance and landing actually looked at rendered output.
+
+**Why:** a proxy test (source-text grep, name-match, "is this function called") verifies wiring, not behavior. A page can call the right function with the wrong argument, render a stale branch, or have a logic inversion that no source-text check would catch, and still pass every proxy row green.
+
+**How to apply:** when a test plan defers a UI join's only rendered check (a live check, a browser test) past the normal gate because the browser test project is unreliable, treat that as a known gap, not a closed loop — flag it explicitly in the plan's risk notes, and prioritize fixing the browser test project's reliability rather than letting deferred live checks become the permanent norm. Before trusting a page's green trajectory rows, ask whether any of them actually rendered the page, or whether they all just checked that the right names appear in the right files.
+
+Source: highlight h-20261019-018; approval-waits-for-the-planning-run's A15/A16 (impl.md).
