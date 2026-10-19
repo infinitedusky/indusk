@@ -127,6 +127,12 @@ This phase writes the two tests whose subjects exist today: that the admin's ser
 
 This phase narrows what counts as the admin's interface to the files that draw — its pages and components — and leaves out its server code and API routes, so a plan that changes how the admin runs, like this one, is not refused at acceptance for a look it never changed. The look check learns to read routes from the narrowed sources, so no look is touched by the change.
 
+- [x] Move the plan tests command's test, which starts git, into the system tier, so the fast-suite guard passes.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/plans/plan-tests.test.ts` calls `execFileSync("git")`, which `everyday-tests-never-wait.test.ts` refuses in the everyday suite; add it to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`. Discovered at Build Phase 1.
+
+  </details>
 - [ ] Narrow the admin's declared interface to its pages and components, leaving out its API routes.
   <details><summary>Technical</summary>
 
