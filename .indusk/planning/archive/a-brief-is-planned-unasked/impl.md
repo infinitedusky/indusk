@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "53b690d8bf5e5c2a13414285dc38539bd29046a1c0676437c9baf58707902e1b"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T00:31:06.047Z"
+accepted: 2026-10-19T02:37:38.135Z
+accepted_by: person
 ---
 
 # A brief is planned unasked
