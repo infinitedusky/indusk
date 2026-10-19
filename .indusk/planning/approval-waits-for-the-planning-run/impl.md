@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "389b83ccfa63efe02f94267ff646d32e2d06627d1a41382dd24091fba606c3ff"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T16:43:12.193Z"
+accepted: 2026-10-19T17:17:25.778Z
+accepted_by: person
 ---
 
 # Approval waits for the planning run — Impl
