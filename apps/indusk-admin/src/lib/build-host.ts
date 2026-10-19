@@ -325,7 +325,7 @@ export async function startPlanning(
     where = await planLocation(project, plan);
     if ("error" in where) throw new Error(where.error);
   } catch (err) {
-    state.running = false;
+    plannings().delete(key(project, plan));
     free();
     throw err;
   }
