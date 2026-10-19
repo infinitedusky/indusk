@@ -116,7 +116,7 @@ pointer; the pointer holds the story.
   by rule or by person; a decision is never made off the log. Guarded by
   `manager.test.ts`. The planning loop sits beside it: `nextPlanningStep` (pure),
   `runPlanning`, and the `plan-*` step prompts in `build-session.ts`; a planning
-  step approves nothing. Guarded by `next-planning-step.test.ts`. — see `/reference/cli/plans`
+  step approves nothing. Guarded by `next-planning-step.test.ts`. The planning reader runs the impl check under the build's gate policy (`GATE_POLICY_FOR_BUILDS`) and tells a check that could not run (`PlanningUnreadable`) from one that refused, keeping its words for the stop. Guarded by `read-planning.test.ts`. — see `/reference/cli/plans`
 - **`lib/audit/`**: the auditor's inputs. The approved impl is found by the
   approval merge's subject (`plan(<plan>): approved`), never by a line in the
   plan; a rewritten history is named by the refusal and answered with
