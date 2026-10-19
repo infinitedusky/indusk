@@ -711,10 +711,10 @@ committed in the repo.
 It commits on a **trunk branch only** (`worktree.trunk_guard.branches`,
 default `main` and `master`). Run from a plan worktree, or from a trunk
 checkout left on another branch, it writes the incident and commits nothing,
-says which branch it is on, and the pass is marked broken. A commit that
+says which branch it is on, and the pass reports broken. A commit that
 cannot be made — another git command holding the index — is not lost: the
 paths wait in the project's home (`pending-commit.json`), and every later pass,
-by any caller, commits them first and is marked broken until it does. The
+by any caller, commits them first and reports broken until it does. The
 inbox entry for the agent is written before the commit, so it does not wait
 on it.
 

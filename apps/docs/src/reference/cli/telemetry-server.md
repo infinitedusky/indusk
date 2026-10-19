@@ -89,7 +89,7 @@ would cost every break from then on.
 Every pass begins with a heartbeat. It reads the newest `watcher.heartbeat`
 span (service `indusk-watcher`) from the server's own Jaeger. Then it sends
 this pass's beat into the server's own OTLP intake, with the server's
-credential: the same door an application's marks come through. When the
+credential: the same door an application's signals come through. When the
 newest beat is older than `max(3 × interval, 3 minutes)`, or the read fails,
 the watcher is **blind**. Breaks reported now would come from something
 that cannot hear them.
