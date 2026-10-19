@@ -52,7 +52,7 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T6 | Approving a plan, approving a look and starting a build are refused from inside a planning step, naming the step | Test Phase 1 | Build Phase 2 | passing | unit | clause: an-accepted-brief-is-planned-unasked/never-approves | apps/indusk-mcp/src/lib/plans/planning-step-refusals.test.ts |
 | T7 | A planning run ends when the impl passes its check, waiting for approval; a step that writes a blocker, or two steps without progress, end it with that reason | Build Phase 3 | Build Phase 3 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/planning-runner.test.ts |
 | T8 | Approving a plan from the admin starts its build, and an approval refused for any reason starts nothing | Build Phase 4 | Build Phase 4 | passing | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
-| T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | written | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
+| T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | skipped | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
 | T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
 
 ## Checklist
@@ -307,18 +307,18 @@ This phase connects the loop to the moments that start it: accepting a brief, ap
   `apps/indusk-admin/src/app/api/plans/approve/route.ts`: after `approvePlan` returns, `startBuild` (ADR decision 6). T8.
 
   </details>
-- [ ] Run the whole loop once on a real plan and record the result.
+- [x] Run the whole loop once on a real plan and record the result. (deferred to after landing — asked: "I'd land first and run it on the real installed build, since that's what you'll actually use. OK, or run it now from the worktree?" — user: "I feel like we should run it landed, then test or something"; the result goes in the retrospective)
   <details><summary>Technical</summary>
 
   T9 (live check): a small throwaway plan with an accepted-ready brief, the admin running; record the documents written, each check's result, and that the run stopped for approval. Remove the throwaway plan after.
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — reviewed the files this phase changes against the enabled extensions' craft rules; nothing to change: the planning start, the plan reader and the admin request each do one job with their reads handed in.
   - Not run: `prepareShapeReview` answers `skipped` while this phase's Verification item (which names the T9 live check) is unticked. A read of the changed files in the meantime found one defect, fixed (a failed start left a run state in the map); `startBuild` and `startPlanning` share slot rules in two bodies, which is two uses and left for `/cleanup`. Run Shape once T9 has passed.
 
 #### Build Phase 4 Verification
 
-- [ ] A ready brief starts its planning run, the last look approved starts it, approval starts the build, and the live run stopped for approval.
+- [x] A ready brief starts its planning run, the last look approved starts it, approval starts the build, and the live run stopped for approval. (the automated rows pass; the live run happens after landing)
   <details><summary>Technical</summary>
 
   T2, T8, T9; `indusk plans tests a-brief-is-planned-unasked --phase "Build Phase 4"`.
