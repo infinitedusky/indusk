@@ -187,7 +187,7 @@ This phase gives accepting a brief a command, so it has a moment the planning ru
   `lib/plans/accept-brief.ts` `acceptBrief(anyCheckout, plan)` (ADR decision 1): refuse a brief not in `draft`, run the plan's contract check and refuse with its message, set `status: accepted` and commit on the plan's branch (reuse how `accept.ts` and `setImplKeys` find the plan and commit); refused inside any build step. CLI `indusk plans accept-brief <plan>` in `bin/commands/plans.ts`. T1.
 
   </details>
-- [ ] Make approving a plan and approving a look refuse inside a planning step.
+- [x] Make approving a plan and approving a look refuse inside a planning step.
   <details><summary>Technical</summary>
 
   `approvePlan` (`lib/plans/approve.ts`) and `lib/looks/approve.ts`: refuse when `currentBuildStep()` names a planning step (`plan-test-plan`, `plan-adr`, `plan-impl`), naming it. T6.
