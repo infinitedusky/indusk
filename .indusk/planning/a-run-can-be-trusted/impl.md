@@ -1,7 +1,7 @@
 ---
 title: "A run can be trusted — Impl"
 date: 2026-10-19
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -1045,12 +1045,25 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
 
 #### Build Phase 6 Document
 
-- [ ] Document the patient recorder test on the testing page.
+- [x] Document the patient recorder test on the testing page.
   <details><summary>Technical</summary>
 
   Update `apps/docs/src/guide/test-levels.md`: a system-tier test waits on the event it expects and keeps an upper bound only to end a hung process.
 
   </details>
+
+#### Build Phase 6 Forward Intelligence
+
+- **Trajectory**: A59, A60, A62, A89 and A90 are `passing`; L1–L3 stay `skipped` by design. A60, A62, A89 and A90 were authored beside their code in one pass (their subjects did not exist), so no red window was observed; A59 was red from Test Phase 1 by the fixed minute and is green now. Every row of the plan is now `passing` or `skipped`.
+- **Decision**: the scan record is one file, `<INDUSK_HOME>/recorder-scan.json`, a map from project root to the last pass `{ startedAt, endedAt, ok, error? }` (Decision 12 said "per project" and gave one path); written whole through `writeFileDurably` (the existing temp-file-and-fsync-rename writer) by `scanRecord`, an option on `startRecorderLoops`; the admin wires `writeScanRecord` through a new package export `./admin/scan-record`. A write that throws is logged and never fails the pass.
+- **Decision**: `waitForIncident` reads the scan before the incident in each loop turn, so a scan seen finished means an incident, if one was recorded, is already visible; it takes optional `breakName`, `lastScanError` and `pollMs` beyond Decision 12's inputs, so the failure names the break and the last pass's error.
+- **Decision**: the recorder test finds the scan record by the latest `startedAt` in the test's own `INDUSK_HOME`, not by project path, because the registry stores a resolved path (macOS `/private/var`) that need not equal the fixture's path. Its vitest timeout is `INCIDENT_WAIT_UPPER_BOUND_MS` plus 120 s of setup and pause margin. Assertions (one incident, the admin's subject, a clean tree) are unchanged; only the title dropped "within a minute".
+- **Decision**: `refuseFailingClauseTests` takes an optional `tracer` (for A90) and reports through `markRecorderClause` (`lib/plans/land-recorder-signal.ts`) after the tests half and before it throws, from the results the runner returned (collected by a wrapper, so `clauseTestsHalf` is untouched). The report is one span per landing: broken if any carrying file failed, else upheld. Its span `plan` is `a-run-can-be-trusted`, the promise's owner; the broken symptom names the landing plan. It reports only at a landing whose clause rows name the recorder test.
+- **Decision**: Context item was a net-shrinking edit to `apps/indusk-mcp/CLAUDE.md` (29649 to 29645 bytes): tightened four neighbouring Tests lines to make room; the file is still far over its 16 KB nested budget, for the retrospective's compaction.
+- **Watch out**: `indusk plans tests a-run-can-be-trusted --phase 6` failed `admin-recorder.test.ts` twice in a row right after the full everyday suite finished (only the vitest config warning in its output; the runner deletes the JSON report) and passed on the next two runs and in four direct runs, alone and beside the suite. Cause not found; if it recurs at landing, run the file alone and read `test-results/system.junit.xml`.
+- **Watch out**: the admin bundle must be rebuilt (`pnpm --filter indusk-admin build`, then `node scripts/bundle-admin.js` in `apps/indusk-mcp`) for the recorder test to see `instrumentation.ts`'s `scanRecord` wiring; a stale bundle makes the test fail at the upper bound naming no finished scan.
+- **Watch out**: four everyday-suite reds that are earlier phases', not this one's: `everyday-tests-never-wait` (names `accept-brief-conflict.test.ts` and `build-host.trunk.test.ts` as starting git), `promise-marks-one-query` (`lib/promises/mark.ts` builds a tag query), `contract-resolver-single-definition` (`incident-signal.ts` builds a path to the promises folder), `steps-name-project-commands` (the work.md step is not found). They go to `/falsify` and `/cleanup`; the six `run/` loop files fail only with `INDUSK_BUILD_STEP` set.
+- **Assumption**: L1–L3 and the first real report of `recorder-waits-for-its-break` come after landing; between landings that include the recorder test, the clause reads no signal.
 
 ## Files Affected
 
