@@ -68,35 +68,35 @@ The first version was written unattended (`INDUSK_GATE_POLICY=auto`); after its 
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A plan branched before main gained a commit touching an unrelated file holds that file's new content after accepting, and the brief reads accepted | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A2 | In the branch's history the merge of main comes before the commit marking the brief accepted; main's head is an ancestor of the accepting commit | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A1 | A plan branched before main gained a commit touching an unrelated file holds that file's new content after accepting, and the brief reads accepted | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A2 | In the branch's history the merge of main comes before the commit marking the brief accepted; main's head is an ancestor of the accepting commit | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
 | A3 | A branch that already holds main is accepted with no merge commit: the only new commit marks the brief accepted | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A4 | A branch both ahead of and behind main keeps every one of its own commits after the merge; none is rewritten or dropped | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A5 | The brief differs from before only by `status: accepted` and `accepted_at`, while main's commits to other plans' folders arrive in the branch | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A6 | A brief that passes before the merge but fails once main's registry is in is refused and the merge undone, the branch as it was | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A7 | A brief accepted by hand on a branch behind main, started from the admin's planning start, has its first planning step run in a worktree holding main's newest commit | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
-| A8 | A conflicting merge at the admin's planning start stops the run: no planning step begins, the refusal names each conflicting file, and the branch's head and tree are as they were | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
-| A9 | When main and the branch changed the same lines of one file the acceptance is refused naming that path; when a file in the worktree with uncommitted changes is in the merge's way, the acceptance is refused with nothing changed and that file named | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A10 | Two files in conflict are both named, each on its own line; one conflict among several clean merges names only that file | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A11 | After the refusal the brief reads draft with no `accepted_at`, the tree is clean with no conflict markers, unmerged paths or merge in progress, and the branch's head is the commit it was at | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A4 | A branch both ahead of and behind main keeps every one of its own commits after the merge; none is rewritten or dropped | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A5 | The brief differs from before only by `status: accepted` and `accepted_at`, while main's commits to other plans' folders arrive in the branch | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A6 | A brief that passes before the merge but fails once main's registry is in is refused and the merge undone, the branch as it was | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A7 | A brief accepted by hand on a branch behind main, started from the admin's planning start, has its first planning step run in a worktree holding main's newest commit | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
+| A8 | A conflicting merge at the admin's planning start stops the run: no planning step begins, the refusal names each conflicting file, and the branch's head and tree are as they were | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
+| A9 | When main and the branch changed the same lines of one file the acceptance is refused naming that path; when a file in the worktree with uncommitted changes is in the merge's way, the acceptance is refused with nothing changed and that file named | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A10 | Two files in conflict are both named, each on its own line; one conflict among several clean merges names only that file | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A11 | After the refusal the brief reads draft with no `accepted_at`, the tree is clean with no conflict markers, unmerged paths or merge in progress, and the branch's head is the commit it was at | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
 | A12 | After landing, on the installed admin, a planning conversation accepts a draft brief on a branch left behind main on purpose; the planning run starts when it ends and the branch holds main's newest commit | Build Phase 2 | Build Phase 2 | skipped | live check | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | manual: after landing, run `pnpm install:local` and `indusk ui restart`; start a throwaway bugfix plan, commit a new file to main after it was cut, open a planning conversation on it in the admin and ask it to accept the brief; when the conversation ends, note that the planning run starts and that `git merge-base --is-ancestor main <accept commit>` exits 0 in the plan's worktree; record the date and result in this impl's Notes |
-| A13 | After a refusal, accepting again once the conflict is gone succeeds: the refusal left no state that blocks a second attempt | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A14 | The refusal says what the person must do and that nothing was changed, as a refusal of the plan command, never a crash; the admin's planning route, asked to start a conflicting plan, answers 409 with that message, each file in it, as the `error` the page shows | Test Phase 1 | Build Phase 1 | written | contract | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts, apps/indusk-admin/src/lib/build-host.trunk.test.ts |
-| A15 | A conflict in `brief.md` itself (main and the branch both edited it) refuses the same way; the brief is not marked accepted | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A16 | A workbench plan whose code branch is behind its repo's trunk: accepting brings the trunk into the code branch and writes and commits the brief at the workbench root as before; a conflict there refuses naming the files, the brief still a draft and the code branch's head unchanged | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-workbench.test.ts |
-| A17 | A branch behind main with no conflict is accepted in one command that asks nothing: what the command prints holds no instruction to merge, rebase, pull or update the branch, it does not exit non-zero, stdin is not read, and the branch then holds main's newest commit | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-output.test.ts |
+| A13 | After a refusal, accepting again once the conflict is gone succeeds: the refusal left no state that blocks a second attempt | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A14 | The refusal says what the person must do and that nothing was changed, as a refusal of the plan command, never a crash; the admin's planning route, asked to start a conflicting plan, answers 409 with that message, each file in it, as the `error` the page shows | Test Phase 1 | Build Phase 1 | passing | contract | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts, apps/indusk-admin/src/lib/build-host.trunk.test.ts |
+| A15 | A conflict in `brief.md` itself (main and the branch both edited it) refuses the same way; the brief is not marked accepted | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A16 | A workbench plan whose code branch is behind its repo's trunk: accepting brings the trunk into the code branch and writes and commits the brief at the workbench root as before; a conflict there refuses naming the files, the brief still a draft and the code branch's head unchanged | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-workbench.test.ts |
+| A17 | A branch behind main with no conflict is accepted in one command that asks nothing: what the command prints holds no instruction to merge, rebase, pull or update the branch, it does not exit non-zero, stdin is not read, and the branch then holds main's newest commit | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-output.test.ts |
 | A18 | A brief that fails its contract check is refused with the check's own messages and the branch is not merged into first | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A19 | No refusal tells the person to merge main: the conflict refusal names files to resolve, the uncommitted-files refusal names the files and says they belong to whoever made them, and neither quotes git's command line nor says merge, rebase, pull, commit or stash | Test Phase 1 | Build Phase 1 | written | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A19 | No refusal tells the person to merge main: the conflict refusal names files to resolve, the uncommitted-files refusal names the files and says they belong to whoever made them, and neither quotes git's command line nor says merge, rebase, pull, commit or stash | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
 | A20 | A session inside a build step is refused before anything is merged: the branch is untouched | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A21 | Accepting on a branch behind main still hands the plan to the planning run once: from the command line the ask (which posts only the project and plan) is made once, after the acceptance commit, when the plan's worktree already holds main's new file; from the admin, the end of the conversation that accepted the brief starts the run once, its first step in a worktree holding main's new file | Test Phase 1 | Build Phase 1 | written | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/plans/accept-brief-verb.test.ts, apps/indusk-admin/src/lib/build-host.trunk.test.ts |
-| A22 | A refused acceptance (conflict) starts no planning run: the command line makes no ask and exits through its refusal, and in the admin a conflicting plan's conversation end starts no run | Test Phase 1 | Build Phase 1 | written | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/plans/accept-brief-verb.test.ts, apps/indusk-admin/src/lib/build-host.trunk.test.ts |
+| A21 | Accepting on a branch behind main still hands the plan to the planning run once: from the command line the ask (which posts only the project and plan) is made once, after the acceptance commit, when the plan's worktree already holds main's new file; from the admin, the end of the conversation that accepted the brief starts the run once, its first step in a worktree holding main's new file | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/plans/accept-brief-verb.test.ts, apps/indusk-admin/src/lib/build-host.trunk.test.ts |
+| A22 | A refused acceptance (conflict) starts no planning run: the command line makes no ask and exits through its refusal, and in the admin a conflicting plan's conversation end starts no run | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/plans/accept-brief-verb.test.ts, apps/indusk-admin/src/lib/build-host.trunk.test.ts |
 | A23 | The existing accept-brief tests (non-draft refused, failing contract refused with the check's messages, build-step refusal, the commit message `plan(<name>): brief accepted`) stay green unchanged | Test Phase 1 | Test Phase 1 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/plans/accept-brief.test.ts |
 | A24 | After an accepted and after a refused acceptance, main's head is the commit it was at; the merge ran in the plan's worktree | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
 | A25 | Accepting from the main checkout still merges into and commits on the plan's branch, never on main | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A26 | A branch cut before an audit skill change landed on main holds the new skill file after accepting, so the planning run reads the new skill | Test Phase 1 | Build Phase 1 | written | unit | a regression guard over the failure that started this plan (`decisions-as-questions` against `audit-concerns-are-answered`) | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A27 | The merge commit's message names the plan and main: `plan(<name>): main merged before its brief was accepted` | Test Phase 1 | Build Phase 1 | written | unit | a history that explains itself when read without opening it; no promise says so | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
-| A28 | When main holds a non-conflicting change to this plan's own `brief.md`, accepting is refused naming it; the brief still reads draft, the tree is clean and the branch's head is the commit it was at | Test Phase 1 | Build Phase 1 | written | unit | promise: a-brief-is-accepted-on-current-main | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A29 | A workbench plan's planning start brings the repo's trunk into its code branch, through the same package function the admin's start calls | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/bring-trunk.test.ts |
+| A26 | A branch cut before an audit skill change landed on main holds the new skill file after accepting, so the planning run reads the new skill | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard over the failure that started this plan (`decisions-as-questions` against `audit-concerns-are-answered`) | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A27 | The merge commit's message names the plan and main: `plan(<name>): main merged before its brief was accepted` | Test Phase 1 | Build Phase 1 | passing | unit | a history that explains itself when read without opening it; no promise says so | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A28 | When main holds a non-conflicting change to this plan's own `brief.md`, accepting is refused naming it; the brief still reads draft, the tree is clean and the branch's head is the commit it was at | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-brief-is-accepted-on-current-main | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A29 | A workbench plan's planning start brings the repo's trunk into its code branch, through the same package function the admin's start calls | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/bring-trunk.test.ts |
 
 ### Deferred Verification
 
@@ -224,7 +224,7 @@ This phase writes every test the plan commits to before anything changes, so the
 
 This phase adds the one package function that brings the trunk into a plan's branch, and calls it from the two places a plan can begin to be planned: accepting its brief, and the admin starting its planning run. After it, a plan is planned on current main however its brief was accepted, a workbench plan's code branch included; a conflict, main changing the plan's own documents, or uncommitted files in the way are refused in plain words with nothing changed. It hands Build Phase 2 a behaviour to describe and turns every red test from Test Phase 1 green.
 
-- [ ] Write the one function that brings the trunk into a plan's branch and undoes itself on any refusal.
+- [x] Write the one function that brings the trunk into a plan's branch and undoes itself on any refusal.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/src/lib/plans/bring-trunk.ts`, exported from `lib/plans/index.ts`:
@@ -272,7 +272,7 @@ This phase adds the one package function that brings the trunk into a plan's bra
   `whyNotBrought` (decision 7): unmerged paths from `git diff --name-only --diff-filter=U`; abort when `MERGE_HEAD` exists; unmerged paths → the conflict message; else the uncommitted paths (`git status --porcelain`) that `git diff --name-only HEAD...<trunk>` names → the uncommitted-files message; else git's reason with the `Command failed:` and `hint:` lines removed. The three messages are decision 8's, word for word.
 
   </details>
-- [ ] Make accepting a brief bring main in first, with every read and check after the merge inside its undo.
+- [x] Make accepting a brief bring main in first, with every read and check after the merge inside its undo.
   <details><summary>Technical</summary>
 
   In `apps/indusk-mcp/src/lib/plans/accept-brief.ts`, with `ACCEPTING = { refused: "its brief was not accepted", again: "accept the brief again", when: "its brief was accepted" }`. The own-branch path:
@@ -293,7 +293,7 @@ This phase adds the one package function that brings the trunk into a plan's bra
   The workbench path keeps `readDraftBrief(wp.dir, plan)` and `refuseFailingContract(wp.root, plan)`, then calls `bringTrunkIntoPlan(anyCheckout, plan, ACCEPTING)` (the code branch; the registry at the root is not changed by it, so no second check), then writes and commits the brief at the root as today.
 
   </details>
-- [ ] Make the admin's planning start bring main in before its first step, and answer a refusal on its route.
+- [x] Make the admin's planning start bring main in before its first step, and answer a refusal on its route.
   <details><summary>Technical</summary>
 
   In `apps/indusk-admin/src/lib/build-host.ts` `startPlanning`, inside the existing `try`, after `nextPlanningStep(read)` has not declined and before `sessionManager().admitBuild(...)`:
@@ -309,13 +309,13 @@ This phase adds the one package function that brings the trunk into a plan's bra
   imported from `@infinitedusky/indusk-mcp/plans` beside `acceptPlan`. The `catch` already releases the run's state and rethrows, so `POST /api/plans/plan` answers 409 with the message (`refuse(409, …)`), and `planningConversationEnded` returns `null` with no run. No route or interface file changes.
 
   </details>
-- [ ] Write the deferred test of a workbench plan's planning start.
+- [x] Write the deferred test of a workbench plan's planning start.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/bring-trunk.test.ts` from the body in Test Phase 1's register (A29), with the fixture calls taken from `accept-brief-workbench.test.ts`.
 
   </details>
-- [ ] Keep the existing refusals and commit message exactly as they are.
+- [x] Keep the existing refusals and commit message exactly as they are.
   <details><summary>Technical</summary>
 
   `refuseInsideBuildStep` stays first, `readDraftBrief` and the first contract check stay before the merge, and the acceptance commit message stays `plan(<name>): brief accepted` (A18, A20, A23).
@@ -324,13 +324,13 @@ This phase adds the one package function that brings the trunk into a plan's bra
 
 #### Build Phase 1 Verification
 
-- [ ] Bringing main in, every refusal and the planning run's start behave as the tests say, in the package and in the admin.
+- [x] Bringing main in, every refusal and the planning run's start behave as the tests say, in the package and in the admin.
   <details><summary>Technical</summary>
 
   A1, A2, A4–A11, A13–A17, A19, A21, A22, A26–A29 go green: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm exec vitest run apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts apps/indusk-mcp/src/lib/plans/accept-brief-output.test.ts apps/indusk-mcp/src/lib/plans/accept-brief-verb.test.ts apps/indusk-mcp/src/lib/plans/accept-brief-workbench.test.ts apps/indusk-mcp/src/lib/plans/bring-trunk.test.ts apps/indusk-admin/src/lib/build-host.trunk.test.ts apps/indusk-admin/src/lib/build-host.test.ts && pnpm exec vitest related apps/indusk-mcp/src/lib/plans/accept-brief.ts apps/indusk-mcp/src/lib/plans/bring-trunk.ts` — the whole suite runs at landing, not here.
 
   </details>
-- [ ] Every guard still passes, and the changed files type-check and lint clean.
+- [x] Every guard still passes, and the changed files type-check and lint clean.
   <details><summary>Technical</summary>
 
   A3, A18, A20, A23, A24, A25 stay green in the same run; then `pnpm check` (Biome), `pnpm exec tsc --noEmit -p apps/indusk-mcp` and `pnpm exec tsc --noEmit -p apps/indusk-admin` pass.
@@ -339,7 +339,7 @@ This phase adds the one package function that brings the trunk into a plan's bra
 
 #### Build Phase 1 Context
 
-- [ ] Record the rule in the package's area context file.
+- [x] Record the rule in the package's area context file.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, tier: directory (it is loaded when a file there is read), near the existing plans-lifecycle rules: "A plan is brought up to its trunk where its planning can begin — `plans accept-brief` and the admin's planning start — through one function, `bringTrunkIntoPlan` (`plans/bring-trunk`): a conflict, the trunk changing the plan's own documents, or uncommitted files in the way are undone and refused naming the files, never asking the person to merge. 'Current' is the local trunk; nothing fetches." Not the root: it is an area rule. No `lesson:` token; none is created here.
@@ -348,7 +348,7 @@ This phase adds the one package function that brings the trunk into a plan's bra
 
 #### Build Phase 1 Document
 
-- [ ] Update the command's reference page for the new order and the refusals.
+- [x] Update the command's reference page for the new order and the refusals.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`, the `accept-brief` section: the order (contract check, bring main in, check again, accept), that the admin's planning start brings main in too (workbench plans: the code branch, to its repo's trunk), the three refusals and their wording, that nothing is changed on refusal, and that the person never merges by hand.
