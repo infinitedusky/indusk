@@ -1,7 +1,7 @@
 ---
 title: "Approval waits for the planning run — Impl"
 date: 2026-10-19
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "389b83ccfa63efe02f94267ff646d32e2d06627d1a41382dd24091fba606c3ff"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T16:43:12.193Z"
 ---
 
 # Approval waits for the planning run — Impl
