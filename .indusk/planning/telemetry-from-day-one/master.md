@@ -127,6 +127,13 @@ each child is one plan with one landing.
    never declared per phase: phases and clauses are many-to-many. A change to
    the plan page, so its looks are drawn and approved in the cockpit before it
    builds.
+   **Also (Sandy, 2026-10-19):** an amendment holds only what it touches. An
+   amendment to a clause holds the phases whose rows name that clause, plus
+   the phases downstream of them in the boundary map; a promise's sentence
+   holds all its clauses' phases; a look holds the phases that touch its
+   interface files; an expectation holds nothing. Every other phase keeps
+   building, and a held phase resumes on re-approval. Today an amendment
+   holds every build checkbox in the plan.
 
 3c. **`audit-concerns-are-answered`** ("Audit concerns are answered by the
    plan's agent") — blocked by `mark-first`, since a signal answer names the
