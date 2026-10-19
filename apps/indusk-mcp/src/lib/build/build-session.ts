@@ -8,7 +8,7 @@ import {
 import type { StartedEvent } from "../session/start.js";
 import type { ShortenReason } from "./next-step.js";
 import type { BuildStepName } from "./runner.js";
-import { BUILD_STEP_ENV } from "./step-env.js";
+import { BUILD_STEP_ENV, type PlanningStep } from "./step-env.js";
 
 /**
  * One step of a build as a session of the developer's own `claude`
@@ -54,10 +54,47 @@ export function stepPrompt(step: BuildStepName, plan: string, reason?: ShortenRe
 		case "plan-test-plan":
 		case "plan-adr":
 		case "plan-impl":
-			return "";
+			return planningPrompt(step, plan);
 		case "retrospective":
 			return `/retrospective ${plan}\n\nThe plan has been accepted. Run the retrospective to the end; it lands the plan with \`indusk plans land ${plan}\`. ${UNATTENDED}`;
 	}
+}
+
+/** The document each planning step writes, and what its prompt adds to the shared rules. */
+const PLANNING_DOCUMENTS: Record<PlanningStep, { file: string; extra: string }> = {
+	"plan-test-plan": {
+		file: "test-plan.md",
+		extra: "Write one clause plan per promise clause, with a measure for each.",
+	},
+	"plan-adr": {
+		file: "adr.md",
+		extra:
+			"Write the decisions the brief and the test plan need, each with the alternatives rejected.",
+	},
+	"plan-impl": {
+		file: "impl.md",
+		extra:
+			"Write the gates with real items (the impl's `gate_policy` may be `ask`: a gate with no items would stop the build for a person), and set `status: draft` in its frontmatter.",
+	},
+};
+
+/**
+ * A planning step (a-brief-is-planned-unasked, ADR decision 3): one unattended
+ * session that writes one document of the plan. The planner skill is installed
+ * in the session, so the prompt names it rather than repeating it.
+ *
+ * promise: an-accepted-brief-is-planned-unasked
+ */
+function planningPrompt(step: PlanningStep, plan: string): string {
+	const { file, extra } = PLANNING_DOCUMENTS[step];
+	const dir = `.indusk/planning/${plan}`;
+	return `Write the \`${file}\` of plan \`${plan}\` and nothing else.
+
+Read ${dir}/brief.md and ${dir}/research.md, and follow the planner skill's section for ${file}. Write only ${dir}/${file}: no other document, and no code. ${extra}
+
+${UNATTENDED} Record each open decision, with its reason, in the document. When you cannot decide, write a \`blocker: <what you could not decide>\` line in the document and end.
+
+Never approve anything: do not run \`indusk plans approve\`, approve a look, or build. Commit ${file} on the plan's branch and end.`;
 }
 
 export interface BuildSessionOptions {
