@@ -43,7 +43,15 @@
  * Exit 0 = allow. Exit 2 = block (stderr reaches the agent).
  */
 
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -73,6 +81,12 @@ const WRITE_CALL = new RegExp(
 	].join("|"),
 );
 
+/** A write to standard output or standard error: a read printed, never a file written (A98). */
+const STD_STREAM_WRITE = /\b(?:process\.(?:stdout|stderr)|sys\.(?:stdout|stderr))\.write\s*\(/g;
+
+/** Whether interpreter text writes a file: a write call, standard-stream writes left out. */
+const writesFile = (text) => WRITE_CALL.test(text.replace(STD_STREAM_WRITE, ""));
+
 const INTERPRETERS = new Set(["node", "python", "python3", "perl", "ruby", "deno", "bun", "tsx"]);
 const SHELLS = new Set(["bash", "sh", "zsh", "dash", "ksh"]);
 const INDUSK_BINS = new Set(["indusk", "atdawn", "dev-system"]);
@@ -80,6 +94,15 @@ const INDUSK_BINS = new Set(["indusk", "atdawn", "dev-system"]);
 const REMOVERS = new Set(["rm", "rmdir", "unlink", "truncate", "shred", "touch"]);
 /** Commands that write only their destination. */
 const COPIERS = new Set(["cp", "install", "rsync", "ln"]);
+/** Editors that write the files they are given, whatever their flags. */
+const FILE_EDITORS = new Set(["sponge", "ed", "ex"]);
+/** Editors that write the files they are given when told what to run (`-c`, `+cmd`, `-s`, `-e`). */
+const SCREEN_EDITORS = new Set(["vim", "vi", "nvim", "view"]);
+/** A sed in-place flag (`-i`, `-i.bak`, `-Ei`); perl's allows its digit switches (`-0pi`, `-0777pi`), never `-I`. */
+const SED_IN_PLACE = /^-[a-zA-Z]*i/;
+const PERL_IN_PLACE = /^-(?:0[0-7]*|[a-hj-zA-HJ-Z])*i/;
+const inPlaceFlag = (verb, a) =>
+	a.startsWith("--in-place") || (verb === "perl" ? PERL_IN_PLACE : SED_IN_PLACE).test(a);
 /** Words that run the command after them. */
 const WRAPPERS = new Set([
 	"sudo",
@@ -123,10 +146,12 @@ function lex(text, start = 0, inSubst = false) {
 	let expectDelim = null;
 	let i = start;
 
+	let heredocTok = null;
 	const push = (t) => {
 		if (expectDelim && t.t === "w") {
-			heredocs.push({ delim: t.v, strip: expectDelim === "<<-" });
+			heredocs.push({ delim: t.v, strip: expectDelim === "<<-", tok: heredocTok });
 			expectDelim = null;
+			heredocTok = null;
 			tokens.push(t);
 			return;
 		}
@@ -148,13 +173,17 @@ function lex(text, start = 0, inSubst = false) {
 		// `nl` is the newline ending the line the operators were on.
 		let pos = nl + 1;
 		for (const doc of heredocs) {
+			const body = [];
 			for (;;) {
 				if (pos >= text.length) break;
 				const eol = text.indexOf("\n", pos);
 				const line = text.slice(pos, eol === -1 ? text.length : eol);
 				pos = eol === -1 ? text.length : eol + 1;
 				if ((doc.strip ? line.replace(/^\t+/, "") : line) === doc.delim) break;
+				body.push(doc.strip ? line.replace(/^\t+/, "") : line);
 			}
+			// The body is kept on its redirect: an interpreter reading it is judged on it.
+			if (doc.tok) doc.tok.body = body.join("\n");
 		}
 		heredocs.length = 0;
 		return pos - 1; // the loop's i++ lands on the first line after the bodies
@@ -279,8 +308,12 @@ function lex(text, start = 0, inSubst = false) {
 			}
 			endWord();
 			const op = REDIRECT_OPS.find((o) => text.startsWith(o, i));
-			if (op === "<<" || op === "<<-") expectDelim = op;
-			push({ t: "redir", v: op, fd });
+			const tok = { t: "redir", v: op, fd };
+			if (op === "<<" || op === "<<-") {
+				expectDelim = op;
+				heredocTok = tok;
+			}
+			push(tok);
 			i += op.length;
 			continue;
 		}
@@ -292,20 +325,31 @@ function lex(text, start = 0, inSubst = false) {
 	return { tokens, subs, end: i };
 }
 
-/** Tokens → segments: `{ words, redirects: [{ op, fd, target }] }`. */
+/**
+ * Tokens → segments: `{ words, redirects: [{ op, fd, target, body? }], sep }`, where `sep`
+ * is the separator before the segment (`|` joins it to the one before in a pipeline) and a
+ * here-document's redirect carries its `body`.
+ */
 function segmentsOf(tokens) {
 	const out = [];
-	let cur = { words: [], redirects: [] };
+	let sep = null;
+	let cur = { words: [], redirects: [], sep };
 	for (let k = 0; k < tokens.length; k++) {
 		const tok = tokens[k];
 		if (tok.t === "sep") {
 			if (cur.words.length || cur.redirects.length) out.push(cur);
-			cur = { words: [], redirects: [] };
+			sep = tok.v;
+			cur = { words: [], redirects: [], sep };
 		} else if (tok.t === "redir") {
 			const next = tokens[k + 1];
 			const target = next?.t === "w" ? next.v : "";
 			if (next?.t === "w") k++;
-			cur.redirects.push({ op: tok.v, fd: tok.fd, target });
+			cur.redirects.push({
+				op: tok.v,
+				fd: tok.fd,
+				target,
+				...(tok.body === undefined ? {} : { body: tok.body }),
+			});
 		} else {
 			cur.words.push(tok.v);
 		}
@@ -445,6 +489,10 @@ function judgeSegment(seg, ctx) {
 		if (hit) ctx.files.add(p);
 		return hit ? { path: p, ...hit } : null;
 	};
+	const stdinText = seg.redirects
+		.filter((r) => r.body !== undefined || r.op === "<<<")
+		.map((r) => (r.op === "<<<" ? r.target : r.body))
+		.join("\n");
 
 	for (const r of seg.redirects) {
 		const writes = [">", ">>", ">|", "&>", "&>>", "<>"].includes(r.op);
@@ -458,8 +506,35 @@ function judgeSegment(seg, ctx) {
 	if (words.length === 0) return {};
 	const verb = basename(words[0]);
 	const args = words.slice(1);
-	// Every plan path the segment names is recorded, read or write, for the package's judgement.
-	for (const a of args) if (!a.startsWith("-")) planAt(a);
+	// Every plan path the segment names is recorded, read or write, for the package's judgement;
+	// the first one, or a folder that holds plans, is what a later `xargs` in the pipeline gets.
+	let names = null;
+	for (const a of args) {
+		if (a.startsWith("-")) continue;
+		const hit = planAt(a);
+		if (!names && (hit || holdsPlans(abs(a, cwd)))) names = abs(a, cwd);
+	}
+	const viaXargs = seg.words
+		.slice(0, seg.words.length - words.length)
+		.some((w) => basename(w) === "xargs");
+	if (viaXargs && ctx.pipeSource) {
+		const writer =
+			REMOVERS.has(verb) ||
+			COPIERS.has(verb) ||
+			FILE_EDITORS.has(verb) ||
+			verb === "mv" ||
+			verb === "tee" ||
+			((verb === "sed" || verb === "gsed" || verb === "perl") &&
+				args.some((a) => inPlaceFlag(verb, a)));
+		if (writer) return { refusal: documentRefusal(ctx.pipeSource, ctx), names };
+	}
+	const r = judgeVerb(verb, args, seg, ctx, planAt, stdinText);
+	return { ...r, names };
+}
+
+/** Judge one simple command by its verb (`judgeSegment` has read its redirects). */
+function judgeVerb(verb, args, seg, ctx, planAt, stdinText) {
+	const { cwd } = ctx;
 
 	if (verb === "cd" || verb === "pushd") {
 		const target = args.find((a) => !a.startsWith("-"));
@@ -478,17 +553,66 @@ function judgeSegment(seg, ctx) {
 	};
 	const refuse = (hit) => ({ refusal: documentRefusal(hit.path, ctx) });
 
-	if (verb === "tee") {
+	if (verb === "tee" || FILE_EDITORS.has(verb)) {
 		const hit = firstPlan(nonFlags(args));
 		return hit ? refuse(hit) : {};
 	}
-	if (verb === "sed" || verb === "perl") {
-		const inPlace = args.some((a) => /^-[a-zA-Z]*i/.test(a) || a.startsWith("--in-place"));
+	if (SCREEN_EDITORS.has(verb)) {
+		const scripted = args.some(
+			(a) => a.startsWith("+") || ["-c", "--cmd", "-s", "-e", "-es", "-Es"].includes(a),
+		);
+		const hit = scripted ? firstPlan(nonFlags(args)) : null;
+		return hit ? refuse(hit) : {};
+	}
+	if (verb === "sed" || verb === "gsed" || verb === "perl") {
+		const inPlace = args.some((a) => inPlaceFlag(verb, a));
 		if (inPlace) {
-			const hit = firstPlan(editedFiles(verb, args));
+			const hit = firstPlan(editedFiles(verb === "gsed" ? "sed" : verb, args));
 			if (hit) return refuse(hit);
 		}
-		if (verb === "sed") return {};
+		if (verb !== "perl") return {};
+	}
+	if (verb === "awk" || verb === "gawk") {
+		const inPlace = args.some(
+			(a, k) =>
+				a === "-iinplace" ||
+				a === "--include=inplace" ||
+				((a === "-i" || a === "--include") && args[k + 1] === "inplace"),
+		);
+		const hit = inPlace ? firstPlan(nonFlags(args).filter((a) => a !== "inplace")) : null;
+		return hit ? refuse(hit) : {};
+	}
+	if (verb === "curl" || verb === "wget") {
+		const out =
+			verb === "curl"
+				? optionValue(args, (a) => /^-[a-zA-Z]*o$/.test(a) || a === "--output", "--output=")
+				: optionValue(
+						args,
+						(a) =>
+							a === "-O" || a === "--output-document" || a === "-P" || a === "--directory-prefix",
+						"--output-document=",
+						"--directory-prefix=",
+					);
+		const hit = out.map((v) => planAt(v)).find(Boolean);
+		return hit ? refuse(hit) : {};
+	}
+	if (verb === "tar") {
+		const extracting = args.some(
+			(a, k) =>
+				a === "--extract" ||
+				a === "--get" ||
+				/^-[a-zA-Z]*x/.test(a) ||
+				(k === 0 && /^[a-zA-Z]*x[a-zA-Z]*$/.test(a)),
+		);
+		const into = optionValue(args, (a) => a === "-C" || a === "--directory", "--directory=");
+		const hit = extracting ? into.map((v) => planAt(v)).find(Boolean) : null;
+		return hit ? refuse(hit) : {};
+	}
+	if (verb === "unzip") {
+		const hit = optionValue(args, (a) => a === "-d")
+			.map((v) => planAt(v))
+			.find(Boolean);
+		return hit ? refuse(hit) : {};
 	}
 	if (verb === "mv") {
 		const paths = nonFlags(args);
@@ -528,16 +652,74 @@ function judgeSegment(seg, ctx) {
 			const hit = planAt(flagValue(a) ?? a);
 			if (hit) return refuse(hit);
 		}
-		return {};
+		const patches = [
+			...optionValue(args, (a) => a === "-i" || a === "--input", "--input="),
+			...seg.redirects.filter((r) => r.op === "<").map((r) => r.target),
+			...nonFlags(args),
+		];
+		const hit = patchedPlanPath(patches, cwd, planAt);
+		return hit ? refuse(hit) : {};
 	}
 	if (SHELLS.has(verb)) {
 		const c = args.findIndex((a) => /^-[a-z]*c$/.test(a));
 		if (c !== -1 && typeof args[c + 1] === "string") return judgeText(args[c + 1], ctx);
+		// No script named (or `-s`): the shell runs what it reads, a here-document or here-string.
+		const script = args.find((a) => !a.startsWith("-"));
+		if (script === undefined && stdinText !== "") {
+			const saved = ctx.cwd;
+			const r = judgeText(stdinText, ctx);
+			ctx.cwd = saved;
+			return r;
+		}
 		return {};
 	}
 	if (verb === "eval") return judgeText(args.join(" "), ctx);
-	if (INTERPRETERS.has(verb)) return judgeInline(verb, args, ctx, planAt);
+	if (INTERPRETERS.has(verb)) return judgeInline(verb, args, ctx, planAt, stdinText);
 	return {};
+}
+
+/** Every value an option takes: the word after a matching flag, or the text after `prefix=`. */
+function optionValue(args, isFlag, ...prefixes) {
+	const out = [];
+	for (let k = 0; k < args.length; k++) {
+		const a = args[k];
+		const prefixed = prefixes.find((p) => a.startsWith(p));
+		if (prefixed) out.push(a.slice(prefixed.length));
+		else if (isFlag(a) && typeof args[k + 1] === "string") out.push(args[++k]);
+	}
+	return out;
+}
+
+/** The largest patch file read for its headers; a bigger one is not looked into. */
+const PATCH_MAX_BYTES = 1024 * 1024;
+
+/**
+ * The first plan path a patch file's headers name (`diff --git a/… b/…`, `--- …`, `+++ …`, an
+ * `a/` or `b/` prefix taken off), among the files given that exist; null when none does.
+ */
+function patchedPlanPath(files, at, planAt) {
+	for (const f of files) {
+		const path = abs(f, at);
+		let text;
+		try {
+			const st = statSync(path);
+			if (!st.isFile() || st.size > PATCH_MAX_BYTES) continue;
+			text = readFileSync(path, "utf-8");
+		} catch {
+			continue;
+		}
+		for (const line of text.split("\n")) {
+			const git = /^diff --git a\/(\S+) b\/(\S+)/.exec(line);
+			const named = git ? [git[1], git[2]] : [];
+			const unified = /^(?:---|\+\+\+) (\S+)/.exec(line);
+			if (unified && unified[1] !== "/dev/null") named.push(unified[1].replace(/^[ab]\//, ""));
+			for (const n of named) {
+				const hit = planAt(n, at);
+				if (hit) return hit;
+			}
+		}
+	}
+	return null;
 }
 
 function judgeFind(args, ctx, planAt, refuse) {
@@ -617,9 +799,18 @@ function judgeGit(args, ctx, planAt, refuse) {
 		const hit = firstPlanArg(candidates);
 		return hit ? refuse(hit) : {};
 	}
+	if (sub === "clean" && rest.some((a) => a === "--dry-run" || /^-[a-zA-Z]*n/.test(a))) {
+		// A dry run lists what it would remove and removes nothing (A98).
+		for (const a of nonFlags(rest)) planAt(a, at);
+		return {};
+	}
 	if (sub === "apply" || sub === "clean") {
 		const hit = firstPlanArg(rest);
 		if (hit) return refuse(hit);
+		if (sub === "apply") {
+			const patched = patchedPlanPath(nonFlags(rest), at, planAt);
+			if (patched) return refuse(patched);
+		}
 		if (sub === "clean" && nonFlags(rest).length === 0 && planPathOf(at)) {
 			return { refusal: documentRefusal(at, ctx) };
 		}
@@ -631,12 +822,25 @@ function judgeGit(args, ctx, planAt, refuse) {
 	return {};
 }
 
-function judgeInline(verb, args, ctx, planAt) {
+/**
+ * An interpreter's inline text (`-e`, `-c`, `--eval`), and, when it names no script file (none,
+ * or `-`), the here-document or here-string it reads as its script. Text with a write call that
+ * names a plan path, is given one as an argument, or runs in a plan folder, is refused (A97);
+ * standard-stream writes are reads (A98). A script file is not read (U1).
+ */
+function judgeInline(verb, args, ctx, planAt, stdinText) {
 	const texts = [];
+	const positional = [];
+	let stdinScript = false;
 	for (let k = 0; k < args.length; k++) {
 		const a = args[k];
+		if (a === "-") {
+			if (texts.length === 0) stdinScript = true;
+			continue;
+		}
 		if (!a.startsWith("-")) {
-			if (texts.length === 0) break; // a script file: not read (U1)
+			if (texts.length === 0 && !stdinScript) return {}; // a script file: not read (U1)
+			positional.push(a);
 			continue;
 		}
 		const inline =
@@ -648,29 +852,57 @@ function judgeInline(verb, args, ctx, planAt) {
 			k++;
 		}
 	}
+	if (texts.length === 0 && stdinText !== "") texts.push(stdinText);
 	for (const text of texts) {
+		if (!writesFile(text)) continue;
 		const named = PLAN_IN_TEXT.exec(text);
-		const inPlan = planPathOf(ctx.cwd);
-		if (!named && !inPlan) continue;
-		if (!WRITE_CALL.test(text)) continue;
 		if (named) {
 			const word = /^[^\s'"`,)]*/.exec(text.slice(named.index))[0];
 			planAt(word);
 			return { refusal: documentRefusal(abs(word, ctx.cwd), ctx) };
 		}
-		return { refusal: documentRefusal(ctx.cwd, ctx) };
+		const given = positional.map((p) => planAt(p)).find(Boolean);
+		if (given) return { refusal: documentRefusal(given.path, ctx) };
+		if (planPathOf(ctx.cwd)) return { refusal: documentRefusal(ctx.cwd, ctx) };
 	}
 	return {};
+}
+
+/** `$NAME` or `${NAME}`, a shell variable read. */
+const VARIABLE = /\$\{([A-Za-z_]\w*)\}|\$([A-Za-z_]\w*)/g;
+/** Words that only assign: `F=x`, `export F=x`, `local F=x`. */
+const ASSIGNING = new Set(["export", "local", "declare", "readonly", "typeset"]);
+
+/**
+ * The segment with each variable an earlier segment assigned put in its place, so
+ * `F=<plan path>; echo x >> $F` is read as the write it is (A97). A segment that only assigns
+ * records its values for the segments after it.
+ */
+function withVariables(seg, vars) {
+	const put = (w) => w.replace(VARIABLE, (m, a, b) => vars.get(a ?? b) ?? m);
+	const words = seg.words.map(put);
+	const redirects = seg.redirects.map((r) => ({ ...r, target: put(r.target) }));
+	const assigns = words.filter((w) => !ASSIGNING.has(w));
+	if (assigns.length > 0 && assigns.every((w) => /^[A-Za-z_]\w*=/.test(w))) {
+		for (const w of assigns) vars.set(w.slice(0, w.indexOf("=")), w.slice(w.indexOf("=") + 1));
+	}
+	return { ...seg, words, redirects };
 }
 
 /** Judge a piece of shell text (a whole command, a `bash -c` string) in context. */
 function judgeText(text, ctx) {
 	const { tokens, subs } = lex(text);
-	for (const seg of segmentsOf(tokens)) {
+	ctx.vars ??= new Map();
+	let pipeSource = null;
+	for (const raw of segmentsOf(tokens)) {
 		if (planPathOf(ctx.cwd)) ctx.inPlan = true;
+		const seg = withVariables(raw, ctx.vars);
+		if (seg.sep !== "|" && seg.sep !== "|&") pipeSource = null;
+		ctx.pipeSource = pipeSource;
 		const r = judgeSegment(seg, ctx);
 		if (r.refusal) return r;
 		if (r.cwd) ctx.cwd = r.cwd;
+		if (r.names) pipeSource = r.names;
 	}
 	for (const inner of subs) {
 		const saved = ctx.cwd;
