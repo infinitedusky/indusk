@@ -17,7 +17,7 @@ import { runHook } from "./helpers/hook-runner.js";
  * script, so the exit code is not 2 and the first assertion fails on its own.
  */
 
-const HOOK = "validate-decided-unattended.js" as never;
+const HOOK = "validate-decided-unattended.js";
 const unattended = { INDUSK_GATE_POLICY: "auto" };
 
 let root: string;
@@ -54,7 +54,7 @@ describe("T3 — a choice is never recorded as decided unattended without a ques
 		mkdirSync(join(root, ".indusk", "plan-history"), { recursive: true });
 		writeFileSync(
 			join(root, ".indusk", "plan-history", "demo.md"),
-			"## question q-7\n\nstate: answered\n",
+			`- 2026-10-19T10:00:00.000Z — question q-7 waiting — {"id":"q-7"}\n`,
 		);
 		const r = await save("# ADR\n\n1. Use SQLite. Decided unattended (question: q-7).\n");
 		expect(r.exitCode).toBe(0);
@@ -72,5 +72,23 @@ describe("T3 — a choice is never recorded as decided unattended without a ques
 		expect(
 			(await save("Decided unattended: x\n", doc, { INDUSK_GATE_POLICY: "ask" })).exitCode,
 		).toBe(0);
+	});
+
+	it("checks an Edit by what it adds: a new bare line is refused, an old one already in the file is not", async () => {
+		writeFileSync(doc, "# ADR\n\nOld: decided unattended earlier.\n");
+		const edit = (newString: string) =>
+			runHook(
+				HOOK,
+				{
+					tool_name: "Edit",
+					tool_input: { file_path: doc, old_string: "# ADR", new_string: newString },
+					cwd: root,
+				},
+				{ cwd: root, env: unattended },
+			);
+		expect((await edit("# ADR v2")).exitCode).toBe(0);
+		const bad = await edit("# ADR\nNew choice, decided unattended.");
+		expect(bad.exitCode).toBe(2);
+		expect(bad.stderr).toMatch(/:2\b/);
 	});
 });

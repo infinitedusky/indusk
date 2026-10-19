@@ -36,6 +36,9 @@ export const HOOK_REGISTRATIONS: readonly (readonly [
 	["PreToolUse", "Edit|Write", "check-gates.js"],
 	["PreToolUse", "Edit|Write", "validate-impl-structure.js"],
 	["PreToolUse", "Edit|Write", "claude-md-budget.js"],
+	// A choice is never decided silently (decisions-as-questions): an unattended save that
+	// records one with no question reference is refused. Silent unless the gate policy is auto.
+	["PreToolUse", "Edit|Write", "validate-decided-unattended.js"],
 	// No code on trunk: the edit gate here, and its twin on Bash, which judges
 	// `git commit` by what is staged — an edit made through sed or a heredoc
 	// never passes through Edit or Write. One matcher is half a gate.

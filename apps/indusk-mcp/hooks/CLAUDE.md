@@ -116,3 +116,9 @@ are about keeping the two lanes in step.
   it reads two small files in the project's home (`projectHome` from
   `_hook-paths.js`) and exits; it never blocks and never grows a second read.
   Nothing to say is exit 0 with no output.
+- **`validate-decided-unattended.js` matches only unattended runs**
+  (`INDUSK_GATE_POLICY=auto`) and only the lines a save adds to a plan document:
+  a person present is asked, not checked, and the plan review, audit and
+  retrospective record a reader's answer, not a choice. It refuses "decided
+  unattended" with no `question: <id>` the plan's history holds. — guarded by
+  `decided-unattended-hook.test.ts` (`lesson: choices-are-asked-as-questions`)
