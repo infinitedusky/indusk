@@ -40,6 +40,7 @@ None — a bugfix; the measure is Stabilize's bar, three plans in a row from acc
    - **`shows-where-it-is`** (split). The build controls name the phase the plan is on, read from the plan, not the step the session started with.
    - **`released-only-when-landed`** (split). A release reads released only when the plan has landed on main; otherwise it reads stopped with the reason.
    - **`says-what-is-true`** (split). The plan page and its nav row state the plan's situation in words, read from its record and its files: planning and the step, building and the phase, waiting on the person and for what, merged to main and so complete (green, nothing pulsing) with a confirmation step listing what is still to be confirmed (each clause signal and live check by name), each ticked as it is confirmed, or stopped and why.
+   - **`the-planning-audit-is-a-step`** (split). The plan page's planning steps include the planning audit after the impl, in progress while the plan is read cold and done only when its plan review is answered.
    - **`always-a-next-step`** (split). Every plan that is not closed shows its next step and who takes it: what the system is doing now, or what it waits on and whether the person or an event completes it, so no open plan reads as stuck.
    - **`never-in-progress-when-idle`** (limit). Nothing reads as in progress while no process is running for it.
 
@@ -80,7 +81,7 @@ None.
 
 ## Looks
 
-The build controls' existing stop sentence carries a dead run's reason, and the existing Build button restarts it; no component or state is added.
+The build controls' existing stop sentence carries a dead run's reason, and the existing Build button restarts it. Two looks change: the planning steps gain the planning audit, and a plan merged to main reads complete with its confirmation list.
 
 ### This plan makes
 
@@ -90,12 +91,12 @@ None.
 
 **Must not break**
 
-- **`plan.working`**. The plan page while it builds, whose build controls now name the plan's real phase and a dead run's reason.
 - **`nav.expanded`**. The nav, whose plan rows state each plan's real situation in the words they already use.
 
 **Changes**
 
-None.
+- **`plan.working`**. The plan page's planning steps gain a **Planning audit** step after the impl (the cold read and its answers), shown in progress while it runs and done only when the plan review is answered; the build controls name the plan's real phase and a dead run's reason.
+- **`plan.released`**. A plan merged to main reads complete, green and not pulsing, with a confirmation step listing each clause signal and live check still to confirm, ticked as each is confirmed.
 
 **Replaces**
 

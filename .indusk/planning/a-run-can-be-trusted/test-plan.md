@@ -101,6 +101,16 @@ Added 2026-10-19 (Sandy): `a-brief-is-accepted-on-current-main` read "release in
 | A67 | A plan merged to main reads complete (green), with no release indicator pulsing, and a confirmation step listing what is still to be confirmed (each clause signal and each live check by name), each ticked when confirmed; it never reads "landed" or "releasing". | unit |
 | A68 | A plan whose run stopped reads "stopped" with the reason and what starts it again. | unit |
 
+### `the-planning-audit-is-a-step` — the plan page's planning steps include the planning audit after the impl
+
+Added 2026-10-19 (Sandy).
+
+- Signal: the same read. Upheld when a plan with an impl shows a Planning audit step whose state matches its plan review (missing or unanswered: in progress or to do; answered: done); broken reports the plan and the step shown.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-----------|
+| A72 | A plan's planning steps read Research, Brief, Test plan, Decision, Impl, Planning audit; the audit reads in progress while the plan-review step runs, to do when the review is missing or unanswered and nothing runs, and done once it is answered. | unit |
+
 ### `always-a-next-step` — every plan that is not closed shows its next step and who takes it
 
 Added 2026-10-19 (Sandy): "there has to be an understood state and next step if it is not closed, or it looks stuck."
