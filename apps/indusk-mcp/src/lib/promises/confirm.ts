@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import type { Tracer } from "@opentelemetry/api";
 import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
@@ -12,6 +13,8 @@ import {
 	type SignalReader,
 	writtenAsClauses,
 } from "./clause-proof.js";
+import { type ClauseVerdict, writeClauseSignals } from "./clause-signal.js";
+import { afterLandingClauseRows, levelledRows } from "./clause-signal-rules.js";
 import { restsOnly } from "./clause-standing.js";
 import { assertsSomething, carriesToken, namesClause } from "./clause-test-file.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
@@ -431,4 +434,106 @@ async function clauseHalves(
 		message,
 	}));
 	return { refusals, halves };
+}
+
+/** The promise whose clauses the two clause-signal rules and the landed plans' reports are. */
+export const SIGNAL_RULES_PROMISE = "a-plan-with-clauses-carries-its-signals";
+/** The plan whose three clauses `the-two-landed-plans-report` reads. */
+const LANDED_PLAN = "a-brief-is-accepted-on-current-main";
+
+/**
+ * What a close says of the clause-signal rules, from the close's own reads and the impl as
+ * it stands now, never from the contract check that saved the impl (a source independent
+ * of the rule it judges). For a plan written as clauses:
+ *
+ * - `refused-without-signals`: each split or limit clause that has reported nothing is
+ *   broken (the rule let through a task that reports nothing), naming the plan and the
+ *   clause; each that has reported is upheld;
+ * - `a-live-check-proves-no-clause`: broken, naming the row and the clause, for each
+ *   `live check`, `smoke` or `promise` row of the saved impl naming a clause; upheld when
+ *   there is none;
+ * - `the-two-landed-plans-report`: when the plan closing is the one whose three clauses it
+ *   reads, broken for each clause still at no signal, upheld when every one has reported.
+ *
+ * A plan not written as clauses, or a close that never asked the daemon, says nothing.
+ */
+export function signalRuleVerdicts(
+	plan: string,
+	result: ConfirmResult,
+	implText: string | null,
+): ClauseVerdict[] {
+	const signal = result.halves?.signal;
+	if (!signal || signal.checked.length === 0) return [];
+	const none = new Set(signal.noSignal ?? []);
+	const verdicts: ClauseVerdict[] = signal.checked.map((key) => ({
+		promise: SIGNAL_RULES_PROMISE,
+		clause: "refused-without-signals",
+		...(none.has(key)
+			? { broken: `${plan}: ${key} has reported no signal, though its impl passed the rule` }
+			: {}),
+	}));
+	const rows = implText === null ? [] : readImplRows(implText);
+	if (rows.length === 0) {
+		verdicts.push({ promise: SIGNAL_RULES_PROMISE, clause: "a-live-check-proves-no-clause" });
+	}
+	for (const r of rows) {
+		verdicts.push({
+			promise: SIGNAL_RULES_PROMISE,
+			clause: "a-live-check-proves-no-clause",
+			broken: `${plan}: row ${r.row} (runs only after landing) names ${r.clause} as its proof`,
+		});
+	}
+	if (plan === LANDED_PLAN) {
+		const missing = signal.checked.filter((key) => none.has(key));
+		if (missing.length === 0) {
+			verdicts.push({ promise: SIGNAL_RULES_PROMISE, clause: "the-two-landed-plans-report" });
+		}
+		for (const key of missing) {
+			verdicts.push({
+				promise: SIGNAL_RULES_PROMISE,
+				clause: "the-two-landed-plans-report",
+				broken: `${key} has never reported from the code that keeps it`,
+			});
+		}
+	}
+	return verdicts;
+}
+
+/** The after-landing rows of an impl that name a clause; none when the impl cannot be read. */
+function readImplRows(implText: string): ReturnType<typeof afterLandingClauseRows> {
+	const impl = readImpl(implText);
+	return impl.ok ? afterLandingClauseRows(levelledRows(impl.trajectory)) : [];
+}
+
+/**
+ * Report `signalRuleVerdicts` for a close through the commands' one tracer. Best-effort:
+ * a report that cannot be written never fails the close.
+ */
+export async function reportSignalRules(
+	projectRoot: string,
+	plan: string,
+	result: ConfirmResult,
+	tracer?: Tracer,
+): Promise<void> {
+	try {
+		const status = planFolderStatus(projectRoot, plan);
+		const implPath =
+			status === "active" || status === "archived"
+				? join(planFolderPath(projectRoot, plan, status === "archived"), "impl.md")
+				: null;
+		const implText =
+			implPath !== null && existsSync(implPath) ? readFileSync(implPath, "utf-8") : null;
+		const verdicts = signalRuleVerdicts(plan, result, implText);
+		if (verdicts.length === 0) return;
+		await writeClauseSignals(
+			projectRoot,
+			"promises.confirm",
+			plan,
+			{ plan: "a-run-can-be-trusted", phase: "Build Phase 4" },
+			verdicts,
+			tracer,
+		);
+	} catch {
+		// A signal is best-effort: writing it must never fail the close.
+	}
 }

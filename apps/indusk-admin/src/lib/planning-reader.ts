@@ -27,12 +27,14 @@ import {
   type PlanReviewState,
   readPlanReview,
 } from "@infinitedusky/indusk-mcp/plans/plan-review";
+import type { LivePlan } from "@infinitedusky/indusk-mcp/plans/steps";
 import { afterClose } from "@infinitedusky/indusk-mcp/promises/after-close";
 import {
   displayWords,
   planTitle,
   readPlanName,
 } from "@infinitedusky/indusk-mcp/promises/display";
+import type { NextStep, Situation } from "@infinitedusky/indusk-mcp/run-record";
 import type { PhaseBoundaryRecord } from "@infinitedusky/indusk-mcp/shape/boundary";
 import {
   parseTrajectory,
@@ -149,6 +151,10 @@ export interface Plan {
   finishedRituals?: Array<"falsification" | "cleanup" | "audit">;
   /** Its plan-review.md as the package reads it: missing, unanswered or answered. */
   planReview?: PlanReviewState;
+  /** What runs for the plan now (the build host's read); set by `withSituations`, absent from a plain read. */
+  live?: LivePlan;
+  /** What the plan reads as and its next step, from the package's one reader; set by `withSituations`. */
+  situation?: { situation: Situation; next: NextStep | null };
   retrospective?: RetroData;
   /** `audit.md`, when the audit step wrote one. */
   audit?: RetroData;

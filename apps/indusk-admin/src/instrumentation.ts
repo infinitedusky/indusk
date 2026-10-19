@@ -20,21 +20,35 @@ export async function register(): Promise<void> {
   const [
     { startRecorderLoops },
     { recordBreaks },
+    { drainPlanWriteDecisions },
     { sourceNames },
     { readRegistryProjects },
     { readAdminRefreshMs },
+    { writeScanRecord, recordPassOutcome },
   ] = await Promise.all([
     import("@infinitedusky/indusk-mcp/admin/recorder-loop"),
     import("@infinitedusky/indusk-mcp/promises/record"),
+    import("@infinitedusky/indusk-mcp/promises/clause-verdicts"),
     import("@infinitedusky/indusk-mcp/promises/sources"),
     import("./lib/registry-client"),
     import("./lib/project-reader"),
+    import("@infinitedusky/indusk-mcp/admin/scan-record"),
   ]);
 
   startRecorderLoops({
     projects: () => readRegistryProjects().map((p) => p.path),
     hasProduction: (root) => sourceNames(root).includes("production"),
     intervalFor: readAdminRefreshMs,
-    record: (root) => recordBreaks(root, { by: "admin", source: "deployed" }),
+    // Each pass's start, end and outcome, in machine state: the patient recorder
+    // landing test reads it to know the admin has scanned since a break was loaded.
+    scanRecord: writeScanRecord,
+    // A pass whose production read failed resolves with `error`: not a finished scan (A102).
+    outcomeOf: recordPassOutcome,
+    // Each tick also judges the shell guard's recorded decisions
+    // (a-run-can-be-trusted, Decision 8); best-effort, it never fails a pass.
+    record: async (root) => {
+      await drainPlanWriteDecisions(root);
+      return recordBreaks(root, { by: "admin", source: "deployed" });
+    },
   });
 }

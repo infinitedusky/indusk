@@ -118,7 +118,9 @@ pointer; the pointer holds the story.
   `manager.test.ts`. The planning loop sits beside it: `nextPlanningStep` (pure),
   `runPlanning`, and the `plan-*` step prompts in `build-session.ts`; a planning
   step approves nothing. Guarded by `next-planning-step.test.ts`. A waiting amendment stops the build by name (`amendment`), read through `amendmentsOf` in `readBuildPlan`, never a second reader (an unreadable approval is `approvalUnreadable`, a plain stop); an `audit.md` that does not read complete sends the build back to the audit step (`auditOpen`); the audit runs when the build phases close, before falsification. The planning reader runs the impl check under the build's gate policy (`GATE_POLICY_FOR_BUILDS`) and tells a check that could not run (`PlanningUnreadable`) from one that refused, keeping its words for the stop. Guarded by `read-planning.test.ts`. — see `/reference/cli/plans`
-- **`lib/audit/`**: `readAuditAnswers` (`answers.ts`) is the one reader of `audit.md` and `plan-review.md` — findings, their `breaks when:` and `answer:` lines, dismissals and amendments; `AUDIT_QUESTIONS` and `PLAN_REVIEW_QUESTIONS` live beside it. It masks fenced blocks with `fencedLineMask` (never a second fence rule), counts an answer with no text as no answer, and `plans audit-answers` checks a signal's clause against the registry, an unreadable registry refusing by name (the registry is the plan's own copy's, `registryClauses`). A cause line must name its findings and highlight, a clause is read without trailing punctuation, and a plan review refuses a `signal` answer and goes stale when its `read:` hash is not the documents' (`planReviewHash`). A ritual's reader runs in the foreground (`run_in_background: false`): an unattended step that spawns one waits for it, since an ended turn ends the step. `plans/plan-review`'s `readPlanReview` / `planReviewState` is the one reading of a plan's review as missing, unanswered or answered; the planning run's stop and the admin's offer of approval both ask it — guarded by `plan-review.test.ts` and `cockpit-single-definition.test.ts`. The auditor's inputs. The approved impl is found by the
+- **A run's state is `lib/run-record`'s record** (one JSON file per plan and kind in machine state, written whole by rename, read as `unknown` when cut off, never as running): liveness is asked only through `process-identity.ts` of the step session's own process (never the admin daemon's), the restart step is asked of the plan's documents (`restartStep`), and the admin's in-memory map is a cache of the record. The record is its own export (`@infinitedusky/indusk-mcp/run-record`), because admin tests stand the `build` export in for the runner. The admin's tests run in a temporary `INDUSK_HOME`, so no test writes a record into the real home. Guarded by `run-record/*.test.ts` and `build-host.record.test.ts` (`clause: a-run-is-read-from-its-record/kept-on-disk`). — see `.indusk/planning/a-run-can-be-trusted/impl.md`
+- **A plan is brought up to its trunk where its planning can begin** — `plans accept-brief` and the admin's planning start — through one function, `bringTrunkIntoPlan` (`plans/bring-trunk`): a conflict, the trunk changing the plan's own documents, or uncommitted files in the way are undone and refused naming the files, never asking the person to merge. It refuses, touching nothing, a worktree already partway through a merge, rebase, cherry-pick or revert; it merges with `--ff` whatever `merge.ff` says; every write and commit after the merge (the acceptance commit included) runs inside its `after`, so a refusal there leaves no merge behind. "Current" is the local trunk; nothing fetches. Guarded by `accept-brief-conflict.test.ts` (`promise: a-brief-is-accepted-on-current-main`). — see `/reference/cli/plans`
+- **`lib/audit/`**: `readAuditAnswers` (`answers.ts`) is the one reader of `audit.md` and `plan-review.md` — findings, their `breaks when:` and `answer:` lines, dismissals and amendments; `AUDIT_QUESTIONS` and `PLAN_REVIEW_QUESTIONS` live beside it. It masks fenced blocks with `fencedLineMask` (never a second fence rule), counts an answer with no text as no answer, and `plans audit-answers` checks a signal's clause against the registry, an unreadable registry refusing by name (the registry is the plan's own copy's, `registryClauses`). A cause line must name its findings and highlight, a clause is read without trailing punctuation, and a plan review refuses a `signal` answer. A ritual's reader runs in the foreground (`run_in_background: false`): an unattended step that spawns one waits for it, since an ended turn ends the step. `plans/plan-review`'s `readPlanReview` is the one reading of a review: missing, stale (`read:` not `planReviewHash` of the documents now), unanswered or answered; the run's stop, the approval offer, the audit step and `plans approve` all ask it — guarded by `plan-review.test.ts`, `decisions-reader.approval.test.ts`. The auditor's inputs. The approved impl is found by the
   approval merge's subject (`plan(<plan>): approved`), never by a line in the
   plan; a rewritten history is named by the refusal and answered with
   `--approved <sha>`. Nothing under `.indusk/` reaches the diff — the plan's
@@ -323,21 +325,20 @@ pointer; the pointer holds the story.
 
 ## Tests
 
-- commander@13 drops duplicate parent+subcommand options — declare on the
-  parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
-  Node but returns `data: {}` under vitest — detect malformed structurally.
-- The root run builds this package first (`turbo.json`): a test behind `SHOULD_SKIP` skips silently without `dist/`.
-- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes every test calling it a system test: list the file in `vitest.tiers.ts` `SYSTEM`; `everyday-tests-never-wait` reads the helpers and fails the file.
+- commander@13 drops duplicate parent+subcommand options: declare on the
+  parent, read `optsWithGlobals()`. gray-matter throws on malformed YAML in
+  Node, returns `data: {}` under vitest: check structure.
+- The root run builds this package first (`turbo.json`); without `dist/` a `SHOULD_SKIP` test skips.
+- A landing test waits for what it expects (`waitForIncident`), never a fixed minute; a scan whose production read failed is unfinished (`outcomeOf`) — `wait-for-incident.test.ts`, `recorder-loop.scan.test.ts`, `lesson: everyday-tests-never-wait`.
+- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes callers system tests (`vitest.tiers.ts` `SYSTEM`).
 - Fixtures with one home: a versioned workbench —
-  `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
-  where code lives runs over all four); a promise-bearing project —
-  `helpers/promises-fixture.ts` (also watched promises, code files,
-  incidents); a plan in a worktree —
+  `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`); a
+  promise-bearing project — `helpers/promises-fixture.ts`; a plan in a worktree —
   `helpers/plan-worktree-fixture.ts`; trunk-guard —
   `helpers/trunk-guard-fixture.ts`; the throwing git runner —
   `helpers/test-git.ts`; MCP tools — `helpers/tool-call.ts`; the built CLI —
-  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon in a
-  temporary home on ports the test gives it (`helpers/local-jaeger.ts`); a decision about
+  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the daemon in a
+  temp home on test-given ports (`helpers/local-jaeger.ts`); a decision about
   the daemon is a unit test over `helpers/daemon-reads.ts`; the evaluator runs against a fake `claude` +
   `helpers/otlp-capture.ts`; the always-on server via
   `helpers/always-on-server.ts`, a free port via `freeLoopbackPort`; Slack

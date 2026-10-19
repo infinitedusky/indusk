@@ -297,6 +297,10 @@ This is the structural guarantee that deferral is impossible by construction. Th
 
 A `passing` cell is a claim about a run, not a run. For a plan whose brief says `clauses: required`, closing runs the tests the rows prove each clause with, now, and refuses a clause whose test fails whatever its row says, naming the clause and the file; landing runs the same tests. Closing also asks the local daemon whether each clause's signal has reported upheld, which is the second proof. See [Signals](/guide/signals).
 
+#### A task reports each clause's signal
+
+A plan whose brief says `clauses: required` cannot close on a clause that never reports, so its impl is asked, when it is a draft being saved, for two things. Each `split` and `limit` clause has a task that says `signal`, names the clause and names the repo source file that reports it (the task line or its folded detail, never a code fence). And no row at level `live check`, `smoke` or `promise` names a clause in its `For` cell, because those rows run only after landing and a clause is proved by tests that pass when the plan closes; such a row gives a reason instead, and a `unit` or `contract` row proves the clause. The refusal lists each clause as `promise/clause` and each row. An approved impl is never newly refused for either, and `indusk promises confirm` reports whether each rule's own clause holds.
+
 ## State lifecycle
 
 The work skill maintains the `State` column as the implementation progresses.

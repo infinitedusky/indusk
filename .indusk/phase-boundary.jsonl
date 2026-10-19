@@ -450,6 +450,17 @@
 {"plan":"a-plan-says-how-long-it-took","phase":4,"kind":"build","sha":"216a7d0733d6a22bd5907eb554801ac7c0a1f006","timestamp":"2026-10-19T03:15:09.442Z"}
 {"plan":"a-plan-says-how-long-it-took","phase":5,"kind":"build","sha":"ea563f0785e8d30ef11da57936caeea6a54278c8","timestamp":"2026-10-19T03:20:31.203Z"}
 {"plan":"audit-concerns-are-answered","phase":5,"kind":"build","sha":"6ddf9457d60f6ac22bd05bbab7802d564b495f3b","timestamp":"2026-10-19T13:50:46.208Z"}
+{"plan":"a-brief-is-accepted-on-current-main","phase":1,"kind":"test","sha":"fd4d8cedb47e8f97c95c3160e798879da3f589c3","timestamp":"2026-10-19T17:35:08.512Z"}
+{"plan":"a-brief-is-accepted-on-current-main","phase":1,"kind":"build","sha":"d189bd8772d8607f92ee5657a357beeec9d16d86","timestamp":"2026-10-19T17:39:36.838Z"}
 {"plan":"approval-waits-for-the-planning-run","phase":1,"kind":"test","sha":"1de8767516b7f9797b76f231bd679226ce637363","timestamp":"2026-10-19T16:44:02.973Z"}
 {"plan":"approval-waits-for-the-planning-run","phase":1,"kind":"build","sha":"624554e17904833101f706a181832c9fe6976c86","timestamp":"2026-10-19T16:48:13.545Z"}
 {"plan":"approval-waits-for-the-planning-run","phase":2,"kind":"build","sha":"d114d7eec92e73886224fe665b6dc21d780ebf21","timestamp":"2026-10-19T16:49:13.826Z"}
+{"plan":"a-run-can-be-trusted","phase":1,"kind":"test","sha":"4b1be54936e0fdc4026243305d3ab6b8b0c0c26a","timestamp":"2026-10-19T19:00:02.370Z"}
+{"plan":"a-run-can-be-trusted","phase":1,"kind":"build","sha":"7802f846a2d67b0c5ae6488f82df32874428731f","timestamp":"2026-10-19T19:14:29.678Z"}
+{"plan":"a-run-can-be-trusted","phase":2,"kind":"build","sha":"a68f04902d476ce4a7a4d77b1b2642144da6db5f","timestamp":"2026-10-19T19:27:15.121Z"}
+{"plan":"a-run-can-be-trusted","phase":3,"kind":"build","sha":"c545dff3f942438120dae73f011ff7a8c6f2d641","timestamp":"2026-10-19T20:11:04.041Z"}
+{"plan":"a-run-can-be-trusted","phase":4,"kind":"build","sha":"f1145e453e6aa089037ccf7bfb205423cabfa669","timestamp":"2026-10-19T20:38:16.615Z"}
+{"plan":"a-run-can-be-trusted","phase":5,"kind":"build","sha":"ce6d3bfc344b0d946d8ea4f6187601251856139b","timestamp":"2026-10-19T20:52:04.450Z"}
+{"plan":"a-run-can-be-trusted","phase":6,"kind":"build","sha":"a9d2828d5724a96cb65a14d00c9ca3fde6454ca1","timestamp":"2026-10-19T21:05:35.281Z"}
+{"plan":"a-run-can-be-trusted","phase":7,"kind":"build","sha":"9bcc521deb89b28a69a8b3f81d3d957e8dd7235c","timestamp":"2026-10-19T21:51:16.661Z"}
+{"plan":"a-run-can-be-trusted","phase":8,"kind":"build","sha":"c447b5b35c988884498ef079850be0b7a00c17e3","timestamp":"2026-10-19T22:37:35.793Z"}

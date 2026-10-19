@@ -64,6 +64,17 @@ tier**.
   the publish, blocking nothing), and a plan runs a file from it only when one
   of its rows names the file or its changes reach it.
 
+A system-tier test waits on the event it expects, never on a fixed number of
+seconds a busy machine can outlast. The recorder test, which starts the
+admin and a break the admin should commit, waits through one rule
+(`waitForIncident`): it passes when the incident appears, fails naming the
+break when the admin has finished a scan after the break was loaded and found
+none, and keeps an upper bound (four minutes) only to end an admin that hangs.
+The admin writes each scan's start, end and outcome to a scan record in machine
+state, which is what the test reads; a scan that threw does not count as
+finished. Landing reports the result as the signal for
+`landing-tests-hold-under-load/recorder-waits-for-its-break`.
+
 ## What a plan runs
 
 A plan does not run `pnpm test` while it is built or when it lands. One

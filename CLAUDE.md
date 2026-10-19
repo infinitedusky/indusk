@@ -96,6 +96,7 @@ dusk/
 - Init sets up telemetry: the scaffold goes in each declared code repo, sends to the daemon's stored address with project and environment on every span, and offers a newer template beside an edit — see `/decisions/init-sets-up-telemetry`
 - Signals prove a clause beside its tests: a clause is upheld only when its tests pass and its signal has reported in a real run; a break names its clause; no signal reads "no signal" — see `/decisions/mark-first`
 - Plan timing: one per-plan log in machine state, written through one never-raising writer, read by `indusk plans time` — see `/decisions/plan-timing`
+- A run is read from its record on disk, not the admin's memory; a run whose process is gone reads stopped and Build restarts it — see `.indusk/planning/a-run-can-be-trusted/brief.md`
 - A plan is read cold before approval and audited before falsification; the agent answers every concern, one that changes the brief stops as an amendment, the person sees each dismissal — see `/decisions/audit-concerns-are-answered`
 
 ## Known Gotchas

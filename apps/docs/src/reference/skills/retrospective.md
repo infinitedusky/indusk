@@ -217,12 +217,13 @@ fails `indusk promises check`. Every refusal is listed in the
 
 ### Step 9: Archival
 
-Move the planning artifacts to the archive:
+Move the planning artifacts to the archive, through the package:
 
 ```bash
-mkdir -p planning/archive
-mv planning/{plan-name} planning/archive/{plan-name}
+indusk plans archive {plan-name}
 ```
+
+It runs `git mv` of the plan's folder into `.indusk/planning/archive/`, refusing while the plan owns a `declared` promise or the archive already holds the name. A raw `mv` of a plan folder is refused by the shell guard, which names this command (see [`plan-write-guard`](/reference/tools/indusk-mcp#a-plan-document-is-written-through-its-checks-plan-write-guard)).
 
 The docs site now holds the published knowledge. The archive holds the process history. Both are preserved, but the docs are the primary reference going forward.
 

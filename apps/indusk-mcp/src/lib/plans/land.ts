@@ -3,6 +3,7 @@ import { realpathSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import type { Tracer } from "@opentelemetry/api";
 import { releaseBranchBookkeeping } from "../bookkeeping/migrate.js";
 import { readConfig } from "../config.js";
 import { git, headSha } from "../git.js";
@@ -10,10 +11,12 @@ import {
 	type ClauseTestRunner,
 	clauseTestPlan,
 	clauseTestsHalf,
+	type TestFileResult,
 } from "../promises/clause-proof.js";
 import { clauseTestRunner } from "../promises/closing-inputs.js";
 import { releasePlan } from "../worktree/plan-worktree-commands.js";
 import { uncommittedWork } from "./bookkeeping.js";
+import { markRecorderClause } from "./land-recorder-signal.js";
 import {
 	branchChanges,
 	branchFileChanges,
@@ -235,13 +238,22 @@ export async function refuseFailingClauseTests(
 	codeRoot: string,
 	plan: string,
 	runTests: ClauseTestRunner,
+	tracer?: Tracer,
 ): Promise<void> {
 	const found = clauseTestPlan(planRoot, plan);
 	if (found === null) return;
 	if ("refusal" in found) {
 		throw new PlanCommandRefusal(`${plan} does not land: ${found.refusal}`);
 	}
-	const { refusals } = await clauseTestsHalf(found.held, codeRoot, runTests);
+	// Keep what the runner reported: the recorder test's own result is a signal,
+	// written before any refusal below is thrown.
+	const reported: TestFileResult[] = [];
+	const { refusals } = await clauseTestsHalf(found.held, codeRoot, async (files) => {
+		const results = await runTests(files);
+		reported.push(...results);
+		return results;
+	});
+	await markRecorderClause(planRoot, codeRoot, plan, reported, tracer);
 	if (refusals.length > 0) {
 		throw new PlanCommandRefusal(`${plan} does not land:\n${refusals.join("\n")}`);
 	}

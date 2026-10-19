@@ -252,6 +252,13 @@ export function parseImplString(raw: string): ParsedImpl {
 		const phaseMatch = parsePhaseHeading(line);
 		if (phaseMatch) {
 			closePreamble();
+			// The previous phase's notes end here: its Forward Intelligence is its own, and the
+			// lines that follow are the new phase's tasks, never more notes.
+			if (inForwardIntelligence && currentPhase) {
+				currentPhase.forwardIntelligence = forwardIntelligenceLines.join("\n").trim() || null;
+			}
+			inForwardIntelligence = false;
+			forwardIntelligenceLines = [];
 			flushGate();
 			inFold = false;
 			if (currentPhase) phases.push(currentPhase);

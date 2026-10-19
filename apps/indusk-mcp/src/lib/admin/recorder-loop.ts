@@ -19,6 +19,8 @@
  * promise: a-production-break-is-recorded-unasked
  */
 
+import type { ScanRecord } from "./scan-record.js";
+
 export interface RecorderLoopOptions {
 	/** The registered projects' roots. */
 	projects: () => string[];
@@ -28,6 +30,19 @@ export interface RecorderLoopOptions {
 	intervalFor: (root: string) => number;
 	/** One pass for one project. */
 	record: (root: string) => Promise<unknown>;
+	/**
+	 * Called after each pass with its start, end and outcome (a pass that threw is
+	 * `ok: false` with the message). A failing record never fails the loop.
+	 */
+	scanRecord?: (root: string, scan: ScanRecord) => void;
+	/**
+	 * Whether a pass that resolved scanned what it was for: `recordBreaks` never throws on a
+	 * failed production read, it resolves with `error` set, and such a pass did not finish a
+	 * scan (A102). Absent, a pass that resolves is ok.
+	 */
+	outcomeOf?: (result: unknown) => Pick<ScanRecord, "ok" | "error">;
+	/** The clock the scan record reads. */
+	now?: () => number;
 	log?: (line: string) => void;
 	/** How often the registered projects are re-read. */
 	reconcileEveryMs?: number;
@@ -49,12 +64,24 @@ export function startRecorderLoops(opts: RecorderLoopOptions): RecorderLoops {
 	const tick = async (root: string): Promise<void> => {
 		if (running.has(root)) return;
 		running.add(root);
+		const now = opts.now ?? Date.now;
+		const startedAt = now();
+		let outcome: Pick<ScanRecord, "ok" | "error"> = { ok: true };
 		try {
-			await opts.record(root);
+			const result = await opts.record(root);
+			if (opts.outcomeOf) outcome = opts.outcomeOf(result);
 		} catch (err) {
+			outcome = { ok: false, error: (err as Error).message };
 			log(`recorder: a pass for ${root} failed: ${(err as Error).message}`);
 		} finally {
 			running.delete(root);
+			try {
+				opts.scanRecord?.(root, { startedAt, endedAt: now(), ...outcome });
+			} catch (err) {
+				log(
+					`recorder: the scan record for ${root} could not be written: ${(err as Error).message}`,
+				);
+			}
 		}
 	};
 

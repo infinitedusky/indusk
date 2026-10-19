@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
+import { git } from "../git.js";
 import { checkPlanContract } from "../promises/contract.js";
+import { type BringTrunkHow, type BringTrunkOptions, bringTrunkIntoPlan } from "./bring-trunk.js";
 import {
 	PlanCommandRefusal,
 	planBranch,
@@ -26,26 +28,76 @@ import { commitAtRoot, workbenchPlan } from "./workbench-plan.js";
  * promise: an-accepted-brief-is-planned-unasked
  */
 
+const ACCEPTING: BringTrunkHow = {
+	refused: "its brief was not accepted",
+	again: "accept the brief again",
+	when: "its brief was accepted",
+};
+
 export interface AcceptedBrief {
 	plan: string;
 }
 
-export async function acceptBrief(anyCheckout: string, plan: string): Promise<AcceptedBrief> {
+/**
+ * `opts.tracer` is the tracer the three clauses of a-brief-is-accepted-on-current-main report
+ * through (`bring-trunk.ts` does the reporting); absent, the commands' one tracer.
+ */
+export async function acceptBrief(
+	anyCheckout: string,
+	plan: string,
+	opts: BringTrunkOptions = {},
+): Promise<AcceptedBrief> {
 	refuseInsideBuildStep("given an accepted brief", plan);
 	const message = `plan(${plan}): brief accepted`;
 	const wp = await workbenchPlan(anyCheckout, plan);
 	if (wp) {
 		const brief = readDraftBrief(wp.dir, plan);
 		refuseFailingContract(wp.root, plan);
-		writeFileSync(brief.path, setFrontmatterKeys(brief.text, acceptedKeys()));
-		await commitAtRoot(wp.root, [relative(wp.root, brief.path)], message);
+		// The registry at the root is not changed by the code branch's merge: no second check.
+		await bringTrunkIntoPlan(
+			anyCheckout,
+			plan,
+			ACCEPTING,
+			async () => {
+				const rel = relative(wp.root, brief.path);
+				try {
+					writeFileSync(brief.path, setFrontmatterKeys(brief.text, acceptedKeys()));
+					await commitAtRoot(wp.root, [rel], message);
+				} catch (err) {
+					// A refused commit leaves the brief a draft, on disk and in the index.
+					writeFileSync(brief.path, brief.text);
+					await git(wp.root, "reset", "-q", "--", rel).catch(() => undefined);
+					throw err;
+				}
+			},
+			opts,
+		);
 		return { plan };
 	}
 	const pb = await planBranch(anyCheckout, plan);
-	const brief = readDraftBrief(pb.dir, plan);
+	readDraftBrief(pb.dir, plan);
 	refuseFailingContract(pb.worktree, plan);
-	// `setImplKeys` sets frontmatter keys in any plan document and commits that file alone.
-	await setImplKeys(pb, brief.path, acceptedKeys(), message);
+	// Main's registry and the brief itself can change under the merge, so both
+	// are read again inside the undo: no refusal leaves the merge behind.
+	await bringTrunkIntoPlan(
+		anyCheckout,
+		plan,
+		ACCEPTING,
+		async () => {
+			const merged = readDraftBrief(pb.dir, plan);
+			refuseFailingContract(pb.worktree, plan);
+			try {
+				// `setImplKeys` sets frontmatter keys in any plan document and commits that file alone.
+				await setImplKeys(pb, merged.path, acceptedKeys(), message);
+			} catch (err) {
+				// A refused commit leaves the brief a draft, on disk and in the index, before the merge is undone.
+				writeFileSync(merged.path, merged.text);
+				await git(pb.worktree, "reset", "-q", "--", merged.path).catch(() => undefined);
+				throw err;
+			}
+		},
+		opts,
+	);
 	return { plan };
 }
 

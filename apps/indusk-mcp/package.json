@@ -100,6 +100,10 @@
 			"types": "./dist/lib/build/index.d.ts",
 			"default": "./dist/lib/build/index.js"
 		},
+		"./run-record": {
+			"types": "./dist/lib/run-record/index.d.ts",
+			"default": "./dist/lib/run-record/index.js"
+		},
 		"./drafts": {
 			"types": "./dist/lib/drafts/index.d.ts",
 			"default": "./dist/lib/drafts/index.js"
@@ -176,9 +180,17 @@
 			"types": "./dist/lib/promises/record.d.ts",
 			"default": "./dist/lib/promises/record.js"
 		},
+		"./promises/clause-verdicts": {
+			"types": "./dist/lib/promises/clause-verdicts.d.ts",
+			"default": "./dist/lib/promises/clause-verdicts.js"
+		},
 		"./admin/recorder-loop": {
 			"types": "./dist/lib/admin/recorder-loop.d.ts",
 			"default": "./dist/lib/admin/recorder-loop.js"
+		},
+		"./admin/scan-record": {
+			"types": "./dist/lib/admin/scan-record.d.ts",
+			"default": "./dist/lib/admin/scan-record.js"
 		},
 		"./promises/age": {
 			"types": "./dist/lib/promises/age.d.ts",
@@ -342,6 +354,7 @@
 		"react-dom": "19.2.4",
 		"react-markdown": "^10.1.0",
 		"remark-gfm": "^4.0.1",
+		"shell-quote": "1.12.0",
 		"style-dictionary": "5.6.1",
 		"stylelint": "17.16.0",
 		"stylelint-declaration-strict-value": "1.12.1",

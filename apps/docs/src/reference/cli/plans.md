@@ -1,6 +1,6 @@
 # `indusk plans`
 
-A plan's lifecycle from start to landing — `start`, `accept-brief`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
+A plan's lifecycle from start to landing — `start`, `accept-brief`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive` (a-run-can-be-trusted) and `archive-dead` (indusk-makeover).
 
 ## A plan's lifecycle
 
@@ -58,6 +58,7 @@ Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the
 Refuses:
 
 - a brief the check refuses, with the check's message;
+- a plan whose plan review is not ready, naming which: no `plan-review.md`; one written for other documents than stand now (**stale** — its `read:` frontmatter is not the hash of the brief, test plan, ADR and impl as they are); or one that leaves a finding unanswered. Run `/audit <name> --before-approval` and answer every finding. The admin offers Approve on exactly the same reading — the package's `readPlanReview`, the one reader of a plan review — so the button and the command never disagree;
 - a branch that already changes anything outside `.indusk/`, naming the files — it is past approval;
 - uncommitted changes in the worktree;
 - uncommitted changes on the trunk on any path the merge would bring in (never stashed), other than InDusk's bookkeeping.
@@ -80,7 +81,9 @@ Lists the amendments waiting, each as `part name: was "…" — now "…"`, or s
 
 ### `plans accept-brief <name>`
 
-The person says the brief is settled. Refused, with nothing written, when the brief is not a `draft`, or when the plan's contract check (`indusk promises contract`) refuses, with the check's own messages. Otherwise sets the brief's `status: accepted` and commits it on the plan's branch as `plan(<name>): brief accepted`; in a workbench, at the workbench root. The planner skill runs it after declaring the promises instead of editing the status by hand, so acceptance has a moment later steps can start from.
+The person says the brief is settled. In order: the build-step refusal, the brief must be a `draft`, the contract check (`indusk promises contract`) must pass — each refused with nothing written, the check with its own messages — then the project's trunk branch is brought into the plan's branch (`plan(<name>): <trunk> merged before its brief was accepted`; a branch already holding it gains no commit), the draft and the contract check are read again against the merged tree, and the brief's `status: accepted` is committed on the plan's branch as `plan(<name>): brief accepted`; in a workbench, the repo's trunk is brought into the plan's code branch and the brief is committed at the workbench root. "Current" is the local trunk; nothing is fetched. The admin's planning start brings the trunk in the same way before its first step, so a brief accepted by hand, or a run held for looks and started later, is still planned on current code.
+
+Four things refuse the acceptance (or the planning run), each naming the files, with the brief a draft and the branch exactly as it was: the trunk and the branch changing the same lines of a file; the trunk changing this plan's own documents; staged or uncommitted files in the worktree that stop the combining, which belong to whoever made them; and a worktree already partway through a merge, rebase, cherry-pick or revert, whose unresolved files are named and which is left exactly as the person had it. Bringing the trunk in works whatever the repository's own setting for fast-forwards, and a failure after it (the acceptance commit rejected, the admin's place for the run taken) leaves no merge behind. A plan planned on the trunk, with no branch of its own, has nothing to bring in. The person never merges main by hand. The planner skill runs it after declaring the promises instead of editing the status by hand, so acceptance has a moment later steps can start from.
 
 Refused inside a build step, naming the step: a session that plans or builds does not decide the brief is settled. Approving a plan or a look is refused inside a planning step (`plan-test-plan`, `plan-adr`, `plan-impl`) the same way.
 
@@ -220,6 +223,14 @@ Every one of these reads the plan's code from `code.json`. A code file that name
 Every command that acts on a plan finds it in `.indusk/planning/<plan>` or, when it is not there, in `.indusk/planning/archive/<plan>`, through one lookup (`findPlanFolder`, which also refuses names that are not a plan's folder: the archive folder itself, a file such as `master.md`, a name with path separators or `..`). A workbench plan's `code.json` is found there too. A plan the retrospective archived before it lands is accepted, re-approved, tested at landing and landed where it lies, with no moving it out of the archive and back. A plan in both places is read from the planning folder. Re-approval and `plans amendments` read the approved brief from the path it had at the approval commit, archived or not.
 
 ## Housekeeping
+
+### `plans archive`
+
+```bash
+indusk plans archive <plan>
+```
+
+The retrospective's archival step: moves `.indusk/planning/<plan>` to `.indusk/planning/archive/<plan>` with `git mv`, staged for the retrospective's commit. Refused, moving nothing (exit 1), while the plan owns a promise still `declared` (run `indusk promises confirm <plan>` first), when the archive already holds a plan by the name, or when the name is not an active plan's folder. It exists because the shell guard refuses a raw `mv` of a plan folder and names this command instead (a-run-can-be-trusted).
 
 ### `plans archive-dead`
 

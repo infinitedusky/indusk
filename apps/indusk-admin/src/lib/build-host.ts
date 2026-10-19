@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { bookkeepingRoots } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   autoAccepts,
   type BuildStepName,
@@ -18,7 +19,32 @@ import {
   type ShortenReason,
   timedStep,
 } from "@infinitedusky/indusk-mcp/build";
-import { acceptPlan } from "@infinitedusky/indusk-mcp/plans";
+import {
+  acceptPlan,
+  type BringTrunkOptions,
+  bringTrunkIntoPlan,
+} from "@infinitedusky/indusk-mcp/plans";
+import {
+  planLandedOnMain,
+  psAll,
+  type RunKind,
+  type RunRecord,
+  readRunRecord,
+  realProcessReads,
+  releaseOutcome,
+  reportDeadReadsStopped,
+  reportKeptOnDisk,
+  reportNotInProgressWhenIdle,
+  reportReleased,
+  reportShowsWhereItIs,
+  restartStep,
+  runStatus,
+  shownPhase,
+  startRunRecord,
+  stopSentence,
+  writeRunRecord,
+} from "@infinitedusky/indusk-mcp/run-record";
+import matter from "gray-matter";
 import { getProjectPath } from "./registry-client";
 import { planLocation, sessionManager } from "./session-host";
 
@@ -53,8 +79,348 @@ const builds = (): Map<string, BuildState> => {
 
 const key = (project: string, plan: string) => `${project}/${plan}`;
 
+/**
+ * A run's record on disk (a-run-can-be-trusted, Decision 3): the truth, where
+ * the maps below are a cache. A run writes its step, phase, process and stop as
+ * they change, and every ask for its state reads the record when this daemon
+ * holds nothing, as after a restart. Writing is best-effort: a record that
+ * cannot be written never fails the run it describes.
+ */
+interface RunHandle {
+  update(patch: Partial<RunRecord>): void;
+}
+
+function homeOf(project: string): string | null {
+  const root = getProjectPath(project);
+  return root ? bookkeepingRoots(root).home : null;
+}
+
+function openRecord(project: string, plan: string, kind: RunKind): RunHandle {
+  const home = homeOf(project);
+  let current = startRunRecord(plan, kind, new Date().toISOString());
+  const root = getProjectPath(project);
+  const write = () => {
+    if (home === null) return;
+    try {
+      writeRunRecord(home, current);
+    } catch {
+      // the record is a cache of the run for the page; the run goes on without it
+    }
+    // signal: a-run-is-read-from-its-record/kept-on-disk, read back from the file
+    if (root !== null) void reportKeptOnDisk(root, home, current);
+  };
+  write();
+  return {
+    update(patch) {
+      current = {
+        ...current,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      write();
+    },
+  };
+}
+
+/** How a runner's stop is worded when the record keeps it. */
+function whyOf(stop: { step: string }): string | null {
+  const why = (stop as { why?: unknown }).why;
+  return typeof why === "string" ? why : null;
+}
+
+/**
+ * How a release ended, read from the trunk and not from the release step's say-so
+ * (a-run-can-be-trusted, Decision 6): released only when the plan is on main,
+ * otherwise stopped with the reason — `plans land`'s refusal when the step carried
+ * one, else that the plan is not on main.
+ */
+function judgedRelease(
+  project: string,
+  plan: string,
+  step: { released: boolean; error: string | null } | null,
+): {
+  release: { released: boolean; error: string | null };
+  stop: RunnerStop;
+} {
+  const root = getProjectPath(project);
+  const outcome = releaseOutcome({
+    step,
+    landedOnMain: root !== null && planLandedOnMain(root, plan),
+    landError: step?.error ?? null,
+  });
+  // signal: a-run-is-read-from-its-record/released-only-when-landed, from the trunk's own log read again
+  if (outcome.state === "released" && root !== null)
+    void reportReleased(root, plan);
+  return outcome.state === "released"
+    ? { release: { released: true, error: null }, stop: { step: "released" } }
+    : {
+        release: { released: false, error: outcome.reason },
+        stop: { step: "release-failed", why: outcome.reason },
+      };
+}
+
+/** The step session's own process, as the manager recorded it, for the record. */
+function processOf(r: { pid: number; bin: string; startedAt: string }) {
+  return { pid: r.pid, bin: r.bin, startedAt: r.startedAt };
+}
+
+function recordsOf(
+  project: string,
+  plan: string,
+  kinds: RunKind[],
+): RunRecord[] {
+  const home = homeOf(project);
+  if (home === null) return [];
+  return kinds.flatMap((kind) => {
+    const r = readRunRecord(home, plan, kind);
+    return r === null || r === "unknown" ? [] : [r];
+  });
+}
+
+const newest = (records: RunRecord[]): RunRecord | undefined =>
+  [...records].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+
+/** What the record alone says of a run, with no entry held here: judged by its own process. */
+function statusOfRecord(record: RunRecord) {
+  return runStatus(record, realProcessReads, false);
+}
+
+/** The build page's state from a record: nothing held here, so the record decides. */
+function buildStateFromRecord(project: string, record: RunRecord): BuildState {
+  const status = statusOfRecord(record);
+  if (status.state === "running") {
+    return {
+      running: true,
+      step: record.step,
+      detail: record.phase,
+      stop: null,
+      release: null,
+    };
+  }
+  // A release that recorded "released" is read again from the trunk (found after a restart too).
+  const recorded =
+    record.kind === "release" && record.stop?.step === "released"
+      ? judgedRelease(project, record.plan, { released: true, error: null })
+      : null;
+  const stop = recorded?.stop ??
+    (record.stop as RunnerStop | null) ?? {
+      step: "cannot-continue" as const,
+      why: status.reason ?? "the run's process is gone",
+    };
+  return {
+    running: false,
+    step: null,
+    detail: record.phase,
+    stop,
+    release:
+      recorded?.release ??
+      (record.kind === "release" && record.stop
+        ? { released: false, error: whyOf(stop) }
+        : null),
+  };
+}
+
+/**
+ * The kind of the run that died: a record with no stop whose process is gone,
+ * the newest of the plan's. A run that stopped on its own is not dead; one
+ * whose record cannot be read is not known to be.
+ */
+function deadRun(project: string, plan: string): RunKind | null {
+  const dead = recordsOf(project, plan, [
+    "planning",
+    "release",
+    "build",
+  ]).filter((r) => r.stop === null && statusOfRecord(r).state === "stopped");
+  return newest(dead)?.kind ?? null;
+}
+
+/**
+ * signal: a-run-is-read-from-its-record/dead-reads-stopped — when Build is pressed, the run's
+ * recorded step session is looked for in the process table, apart from the rule that decided
+ * what the page showed.
+ */
+function reportBuildPressed(project: string, plan: string): void {
+  const root = getProjectPath(project);
+  if (!root) return;
+  try {
+    const record = newest(
+      recordsOf(project, plan, ["planning", "release", "build"]),
+    );
+    if (!record?.process || record.stop) return;
+    const heldHere =
+      builds().get(key(project, plan))?.running === true ||
+      plannings().get(key(project, plan))?.running === true;
+    void reportDeadReadsStopped(root, {
+      record,
+      shown: heldHere ? "running" : statusOfRecord(record).state,
+      heldHere,
+      table: psAll(),
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+/**
+ * What Build starts for a run that died, asked of the plan's own documents:
+ * the impl's status and acceptance, then the package's decisions.
+ */
+async function restartFor(root: string, plan: string, dead: RunKind) {
+  let content: string | null = null;
+  let buildPlan: Awaited<ReturnType<typeof readBuildPlan>> | null = null;
+  try {
+    buildPlan = await readBuildPlan(root, plan);
+    content = buildPlan.content;
+  } catch {
+    // no impl to read: the plan is not past planning
+  }
+  const planning = await readPlanningState(root, plan).catch(() => null);
+  const data = content === null ? {} : matter(content).data;
+  const status = typeof data.status === "string" ? data.status : null;
+  return restartStep(dead, {
+    implStatus: status,
+    accepted: data.accepted !== undefined && data.accepted !== null,
+    build: () => nextBuildStep(buildPlan as NonNullable<typeof buildPlan>),
+    planning: () => nextPlanningStep(planning as NonNullable<typeof planning>),
+  });
+}
+
+/**
+ * What the plan's build or release is doing. This daemon's own entry when it
+ * holds one; otherwise the newest record of a build or release on disk, judged
+ * by the run's own process, so a restart changes nothing and a run that died
+ * reads stopped with its reason.
+ */
 export function buildState(project: string, plan: string): BuildState | null {
-  return builds().get(key(project, plan)) ?? null;
+  const held = builds().get(key(project, plan));
+  const shown = held ?? buildStateOnDisk(project, plan);
+  if (shown?.running)
+    checkInProgress(project, plan, "build", held?.running === true);
+  return shown;
+}
+
+/**
+ * What the build controls show: the run's state, the phase the plan is on read from
+ * its impl now (never the run's start phase), and the stop sentence naming it.
+ */
+export async function buildView(
+  project: string,
+  plan: string,
+): Promise<{
+  build: BuildState | null;
+  phase: string | null;
+  sentence: string | null;
+}> {
+  const build = buildState(project, plan);
+  const root = getProjectPath(project);
+  const phase = root
+    ? shownPhase(await readBuildPlan(root, plan).catch(() => null))
+    : null;
+  const sentence =
+    build && !build.running && build.stop
+      ? stopSentence(build.stop, phase)
+      : null;
+  // signal: a-run-is-read-from-its-record/shows-where-it-is, against the phase the live session works
+  if (root && build?.running && build.step === "work" && build.detail)
+    throttled(`${project}/${plan}/shows`, () =>
+      reportShowsWhereItIs(root, {
+        plan,
+        shown: phase,
+        sessionPhase: build.detail,
+      }),
+    );
+  return { build, phase, sentence };
+}
+
+/** Whether this daemon holds a run of the plan in memory as running: the gap between two step sessions. */
+export function heldRunning(project: string, plan: string): boolean {
+  return (
+    builds().get(key(project, plan))?.running === true ||
+    plannings().get(key(project, plan))?.running === true
+  );
+}
+
+/** A signal is reported at most once per key in a while: the page polls every few seconds. */
+const SIGNAL_EVERY_MS = 15_000;
+const signalledAt = new Map<string, number>();
+export function throttled(id: string, send: () => Promise<void>): void {
+  const now = Date.now();
+  if (now - (signalledAt.get(id) ?? 0) < SIGNAL_EVERY_MS) return;
+  signalledAt.set(id, now);
+  void send();
+}
+
+/**
+ * The newest run of the plan, of any kind, with what the run reader says of it: this
+ * daemon's own entry decides while it holds the run, the record and its process otherwise.
+ * What the situation sentence and the steps read, so none says "in progress" without a process.
+ */
+export function runOfPlan(
+  project: string,
+  plan: string,
+): {
+  kind: RunKind;
+  status: ReturnType<typeof runStatus>;
+  step: string | null;
+  phase: string | null;
+  /** The step the record's stop names, when the run stopped on its own. */
+  stopStep: string | null;
+} | null {
+  const record = newest(
+    recordsOf(project, plan, ["planning", "release", "build"]),
+  );
+  if (!record) return null;
+  const heldHere =
+    record.kind === "planning"
+      ? plannings().get(key(project, plan))?.running === true
+      : builds().get(key(project, plan))?.running === true;
+  const status = heldHere
+    ? ({ state: "running" } as const)
+    : statusOfRecord(record);
+  return {
+    kind: record.kind,
+    status,
+    step: record.step,
+    phase: record.phase,
+    stopStep: heldHere ? null : (record.stop?.step ?? null),
+  };
+}
+
+/** The newest build or release record's state: what the page shows when this daemon holds nothing. */
+function buildStateOnDisk(project: string, plan: string): BuildState | null {
+  const record = newest(recordsOf(project, plan, ["build", "release"]));
+  return record ? buildStateFromRecord(project, record) : null;
+}
+
+/** Once per plan in a while: a plan shown in progress has a process running for it (a signal, Decision 17). */
+const IDLE_CHECK_EVERY_MS = 15_000;
+const idleCheckedAt = new Map<string, number>();
+function checkInProgress(
+  project: string,
+  plan: string,
+  kind: RunKind,
+  heldHere: boolean,
+): void {
+  const k = `${key(project, plan)}/${kind}`;
+  const now = Date.now();
+  if (now - (idleCheckedAt.get(k) ?? 0) < IDLE_CHECK_EVERY_MS) return;
+  idleCheckedAt.set(k, now);
+  const root = getProjectPath(project);
+  if (!root) return;
+  try {
+    // signal: a-run-is-read-from-its-record/never-in-progress-when-idle, read from the process table
+    void reportNotInProgressWhenIdle(root, {
+      plan,
+      kind,
+      heldHere,
+      sessions: sessionManager()
+        .running()
+        .filter((r) => r.project === project && r.plan === plan),
+      table: psAll(),
+    });
+  } catch {
+    // best-effort
+  }
 }
 
 /**
@@ -97,7 +463,12 @@ function classifierFor(root: string, plan: string, planning: boolean) {
   };
 }
 
-async function depsFor(project: string, plan: string, state: BuildState) {
+async function depsFor(
+  project: string,
+  plan: string,
+  state: BuildState,
+  handle: RunHandle,
+) {
   const root = getProjectPath(project);
   if (!root) throw new Error(`no project named ${project}`);
   const where = await planLocation(project, plan);
@@ -117,15 +488,20 @@ async function depsFor(project: string, plan: string, state: BuildState) {
             phase,
           );
           if ("error" in chosen) return { error: chosen.error };
-          return runStepSession(step, {
-            manager: sessionManager(),
-            worktree: where.cwd,
-            ...(where.addDirs ? { addDirs: where.addDirs } : {}),
-            project,
-            plan,
-            ...(reason ? { reason } : {}),
-            ...chosen,
-          });
+          try {
+            return await runStepSession(step, {
+              manager: sessionManager(),
+              worktree: where.cwd,
+              ...(where.addDirs ? { addDirs: where.addDirs } : {}),
+              project,
+              plan,
+              ...(reason ? { reason } : {}),
+              ...chosen,
+              onSession: (r) => handle.update({ process: processOf(r) }),
+            });
+          } finally {
+            handle.update({ process: null });
+          }
         },
         {
           root,
@@ -146,6 +522,7 @@ async function depsFor(project: string, plan: string, state: BuildState) {
         if (u.kind === "step") {
           state.step = u.step ?? null;
           state.detail = u.detail ?? null;
+          handle.update({ step: state.step, phase: state.detail });
         }
       },
     },
@@ -161,7 +538,12 @@ function assertNoBuildSession(project: string, plan: string): void {
     );
 }
 
-/** Start the build in the background; refused while a build runs or a build session is held for the plan. */
+/**
+ * Start the build in the background; refused while a build runs or a build session is held for the plan.
+ * A run whose process is gone is not "running": its record reads stopped, and Build starts the step the
+ * plan's own documents say is next (a-run-can-be-trusted, Decision 5) — a planning run that died, or a
+ * plan not yet past planning, is sent to its planning run.
+ */
 export async function startBuild(
   project: string,
   plan: string,
@@ -173,9 +555,11 @@ export async function startBuild(
   if (planningState(project, plan)?.running)
     throw new Error(`${plan} is being planned: its planning run has not ended`);
   assertNoBuildSession(project, plan);
-  // Admitted once, here, and holding its place under the cap until it ends —
-  // between its steps too, so another plan's start cannot take it.
-  const free = sessionManager().admitBuild(project, plan);
+  reportBuildPressed(project, plan);
+  // Held before the first await, as startRelease and startPlanning are: from the press on the
+  // plan reads running and a second press is refused, so one plan never has two builds (A96).
+  const k = key(project, plan);
+  const before = builds().get(k);
   const state: BuildState = {
     running: true,
     step: null,
@@ -183,28 +567,98 @@ export async function startBuild(
     stop: null,
     release: null,
   };
+  builds().set(k, state);
+  const letGo = () => {
+    if (builds().get(k) !== state) return;
+    if (before) builds().set(k, before);
+    else builds().delete(k);
+  };
+  const dead = deadRun(project, plan);
+  if (dead !== null) {
+    let restart: Awaited<ReturnType<typeof restartFor>>;
+    try {
+      const root = getProjectPath(project);
+      if (!root) throw new Error(`no project named ${project}`);
+      restart = await restartFor(root, plan, dead);
+    } catch (err) {
+      letGo();
+      throw err;
+    }
+    if (restart.run === "planning") {
+      letGo();
+      return startPlanningFromBuild(project, plan);
+    }
+    if (restart.run === "release") {
+      letGo();
+      return startRelease(project, plan);
+    }
+  }
+  // Admitted once, here, and holding its place under the cap until it ends —
+  // between its steps too, so another plan's start cannot take it.
+  let free: () => void;
+  try {
+    free = sessionManager().admitBuild(project, plan);
+  } catch (err) {
+    letGo();
+    throw err;
+  }
+  const handle = openRecord(project, plan, "build");
   let root: string;
   let deps: Awaited<ReturnType<typeof depsFor>>["deps"];
   try {
-    ({ root, deps } = await depsFor(project, plan, state));
+    ({ root, deps } = await depsFor(project, plan, state, handle));
   } catch (err) {
+    state.running = false;
+    state.stop = { step: "cannot-continue", why: (err as Error).message };
+    handle.update({
+      stop: state.stop,
+      stopReason: (err as Error).message,
+    });
     free();
     throw err;
   }
-  builds().set(key(project, plan), state);
   void runBuild({ ...deps, autoAccept: autoAccepts(root) })
     .then((stop) => {
-      state.stop = stop;
+      // An auto-accepted release is judged from the trunk too, never from its step's word.
+      const judged =
+        stop.step === "released"
+          ? judgedRelease(project, plan, { released: true, error: null })
+          : null;
+      state.stop = judged?.stop ?? stop;
+      if (judged) state.release = judged.release;
+      handle.update({ stop: state.stop, stopReason: whyOf(state.stop) });
     })
     .catch((err: Error) => {
       state.stop = { step: "cannot-continue", why: err.message };
+      handle.update({ stop: state.stop, stopReason: err.message });
     })
     .finally(() => {
       state.running = false;
       state.step = null;
+      handle.update({ process: null });
       free();
     });
   return state;
+}
+
+/** Build on a plan still in planning: its planning run is started again, and the answer says it runs. */
+async function startPlanningFromBuild(
+  project: string,
+  plan: string,
+): Promise<BuildState> {
+  const run = await startPlanning(project, plan);
+  if (!run.started) {
+    const why =
+      run.stop && "why" in run.stop ? run.stop.why : (run.stop?.step ?? "");
+    throw new Error(`${plan} is still being planned: ${why}`);
+  }
+  return {
+    running: run.running,
+    step: run.step,
+    detail: null,
+    stop: null,
+    release: null,
+  };
 }
 
 /**
@@ -222,7 +676,7 @@ export async function startRelease(
   if (existing?.running)
     throw new Error(`${plan} is already building or releasing`);
   assertNoBuildSession(project, plan);
-  const state: BuildState = existing ?? {
+  const state: BuildState = builds().get(key(project, plan)) ?? {
     running: false,
     step: null,
     detail: null,
@@ -233,27 +687,34 @@ export async function startRelease(
   state.running = true;
   state.stop = null;
   builds().set(key(project, plan), state);
+  const handle = openRecord(project, plan, "release");
   let deps: Awaited<ReturnType<typeof depsFor>>["deps"];
   try {
-    ({ deps } = await depsFor(project, plan, state));
+    ({ deps } = await depsFor(project, plan, state, handle));
   } catch (err) {
     state.running = false;
+    handle.update({
+      stop: { step: "cannot-continue", why: (err as Error).message },
+      stopReason: (err as Error).message,
+    });
     throw err;
   }
   void runRelease(deps, "person")
     .then((r) => {
-      state.release = r;
-      state.stop = r.released
-        ? { step: "released" }
-        : { step: "release-failed", why: r.error ?? "unknown" };
+      const judged = judgedRelease(project, plan, r);
+      state.release = judged.release;
+      state.stop = judged.stop;
+      handle.update({ stop: state.stop, stopReason: whyOf(state.stop) });
     })
     .catch((err: Error) => {
       state.release = { released: false, error: err.message };
       state.stop = { step: "release-failed", why: err.message };
+      handle.update({ stop: state.stop, stopReason: err.message });
     })
     .finally(() => {
       state.running = false;
       state.step = null;
+      handle.update({ process: null });
     });
   return state;
 }
@@ -284,11 +745,40 @@ const plannings = (): Map<string, PlanningRunState> => {
   return g[PLANNING_KEY];
 };
 
+/**
+ * The plan's planning run: this daemon's own entry when it holds one, else the
+ * record on disk, judged by the run's own process (a-run-can-be-trusted).
+ */
 export function planningState(
   project: string,
   plan: string,
 ): PlanningRunState | null {
-  return plannings().get(key(project, plan)) ?? null;
+  const held = plannings().get(key(project, plan));
+  if (held) {
+    if (held.running) checkInProgress(project, plan, "planning", true);
+    return held;
+  }
+  const record = recordsOf(project, plan, ["planning"])[0];
+  if (!record) return null;
+  const status = statusOfRecord(record);
+  if (status.state === "running") {
+    checkInProgress(project, plan, "planning", false);
+    return {
+      started: true,
+      running: true,
+      step: record.step as PlanningStep | null,
+      stop: null,
+    };
+  }
+  return {
+    started: true,
+    running: false,
+    step: null,
+    stop: (record.stop as PlanningStop | null) ?? {
+      step: "cannot-continue",
+      why: status.reason ?? "the run's process is gone",
+    },
+  };
 }
 
 /**
@@ -335,6 +825,8 @@ const declined = (stop: PlanningStop): PlanningRunState => ({
 export async function startPlanning(
   project: string,
   plan: string,
+  /** The tracer the three clauses of a-brief-is-accepted-on-current-main report through; absent, the commands' one. */
+  bring: BringTrunkOptions = {},
 ): Promise<PlanningRunState> {
   const inPlanning = planningStepRefusal("starting a planning run");
   if (inPlanning) throw new Error(inPlanning);
@@ -387,9 +879,23 @@ export async function startPlanning(
       release();
       return declined(next);
     }
+    // A brief accepted by hand, or a run held for looks and started later, is
+    // still planned on current main; a refusal here is the route's 409.
+    // The place for the run is taken first: a run that cannot start leaves the branch as it was.
     free = sessionManager().admitBuild(project, plan);
     where = await planLocation(project, plan);
     if ("error" in where) throw new Error(where.error);
+    await bringTrunkIntoPlan(
+      root,
+      plan,
+      {
+        refused: "its planning run did not start",
+        again: "start its planning again",
+        when: "its planning run",
+      },
+      undefined,
+      bring,
+    );
   } catch (err) {
     release();
     free?.();
@@ -397,6 +903,7 @@ export async function startPlanning(
   }
   const releasePlace = free;
   const location = where;
+  const handle = openRecord(project, plan, "planning");
   void runPlanning({
     signals: { root, plan },
     read: () => readPlanningState(root, plan),
@@ -405,14 +912,19 @@ export async function startPlanning(
         // A planning step runs on the work step's default tier.
         const chosen = await stepModelOption(root, plan, "work", undefined);
         if ("error" in chosen) return { error: chosen.error };
-        return runStepSession(step, {
-          manager: sessionManager(),
-          worktree: location.cwd,
-          ...(location.addDirs ? { addDirs: location.addDirs } : {}),
-          project,
-          plan,
-          ...chosen,
-        });
+        try {
+          return await runStepSession(step, {
+            manager: sessionManager(),
+            worktree: location.cwd,
+            ...(location.addDirs ? { addDirs: location.addDirs } : {}),
+            project,
+            plan,
+            ...chosen,
+            onSession: (r) => handle.update({ process: processOf(r) }),
+          });
+        } finally {
+          handle.update({ process: null });
+        }
       },
       {
         root,
@@ -423,17 +935,21 @@ export async function startPlanning(
     ),
     onStep: (step) => {
       state.step = step;
+      handle.update({ step });
     },
   })
     .then((stop) => {
       state.stop = stop;
+      handle.update({ stop, stopReason: whyOf(stop) });
     })
     .catch((err: Error) => {
       state.stop = { step: "cannot-continue", why: err.message };
+      handle.update({ stop: state.stop, stopReason: err.message });
     })
     .finally(() => {
       state.running = false;
       state.step = null;
+      handle.update({ process: null });
       releasePlace();
     });
   return state;
