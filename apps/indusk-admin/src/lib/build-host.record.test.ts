@@ -1,6 +1,7 @@
 // clause: a-run-is-read-from-its-record/kept-on-disk
 // clause: a-run-is-read-from-its-record/dead-reads-stopped
 // promise: a-build-runs-to-review-unasked
+// clause: a-run-is-read-from-its-record/released-only-when-landed
 // promise: an-accepted-brief-is-planned-unasked
 
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
@@ -66,6 +67,15 @@ const identity = () => {
     startedAt: (started ?? new Date()).toISOString(),
   };
 };
+
+/** Whether the plan is on main, which a release reads from (stood in for; the rule is the package's). */
+let onMain = true;
+vi.mock("@infinitedusky/indusk-mcp/run-record", async () => {
+  const actual = await vi.importActual<
+    typeof import("@infinitedusky/indusk-mcp/run-record")
+  >("@infinitedusky/indusk-mcp/run-record");
+  return { ...actual, planLandedOnMain: () => onMain };
+});
 
 vi.mock("@infinitedusky/indusk-mcp/build", async () => {
   const actual = await vi.importActual<
@@ -174,6 +184,7 @@ beforeEach(() => {
   );
   home = bookkeepingRoots(project).home;
   held = { implStatus: "in-progress", accepted: false };
+  onMain = true;
   runs = { build: 0, planning: 0, release: 0 };
   handed = { build: null, planning: null };
   stepHold = new Promise((resolve) => {
@@ -267,6 +278,22 @@ describe("A3 — after the admin forgets, the page shows the same step, phase an
       step: before?.step,
     });
     expect(before).toMatchObject({ running: true, step: "plan-adr" });
+  });
+
+  it("A18 a release that ended cleanly while the plan is not on main reads stopped, never released", async () => {
+    onMain = false;
+    await startRelease(PROJECT, PLAN);
+    await vi.waitFor(() =>
+      expect(buildState(PROJECT, PLAN)?.running).toBe(false),
+    );
+    const shown = buildState(PROJECT, PLAN);
+    expect(shown?.release?.released).toBe(false);
+    expect(shown?.stop).toMatchObject({
+      step: "release-failed",
+      why: expect.stringContaining("not on main"),
+    });
+    forget();
+    expect(buildState(PROJECT, PLAN)?.release?.released).toBe(false);
   });
 
   it("A3 a release that ended reads released from its record alone", async () => {

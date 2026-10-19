@@ -530,13 +530,13 @@ This phase makes the admin's builds, planning runs and releases leave a record o
 
 This phase makes the admin say true things from the record the last phase keeps. The build controls name the phase the plan is on, read from the plan's files each time; the plan page and its nav row state the plan's situation in words from one reader; and a release reads released only when the plan is on main, otherwise stopped with the reason. Every plan that is not closed shows its next step and who takes it; the planning steps gain a Planning audit step after the impl; and a plan merged to main reads complete, with a list of what is still to be confirmed, ticked as each is. The page is then checked against the two looks the person approved before the plan did.
 
-- [ ] Make the build controls name the phase the plan is on, read from the plan each time.
+- [x] Make the build controls name the phase the plan is on, read from the plan each time.
   <details><summary>Technical</summary>
 
   New `lib/run-record/shown-phase.ts`: `shownPhase(plan, { startedAtPhase })` returns the first phase with work left from `nextBuildStep` (never the record's phase), or `null` when unreadable. The admin's build controls (the component that renders the stop sentence on the plan page; find it with `grep -rn "buildState" apps/indusk-admin/src/app apps/indusk-admin/src/components`) call it; the record's phase is shown nowhere.
 
   </details>
-- [ ] Make a release read released only when the plan has landed.
+- [x] Make a release read released only when the plan has landed.
   <details><summary>Technical</summary>
 
   New `lib/run-record/landed.ts`: `landedOnMain(trunk, plan, git)` (git is an input) is true only when the trunk's history has a merge whose subject is exactly `Merge plan/<plan>: <plan> landed` (`git log <trunk> --merges --format=%s`; the workbench landing uses `Merge <code branch>: <plan> landed`, matched by its ` <plan> landed` ending on a merge) or the trunk holds `.indusk/planning/archive/<plan>` (`git cat-file -e <trunk>:.indusk/planning/archive/<plan>`). It never asks whether the branch is an ancestor: `plans land` deletes the branch, and a fresh branch with no commits is already an ancestor (Decision 6). `releaseOutcome({ stepResult, landedOnMain, landError })`, with the trunk branch from `lib/trunk-branch.ts`; not landed reads `{ state: "stopped", reason: landError ?? "the release ended but the plan is not on main" }`. In `startRelease`'s handlers replace the `r.released` reading with it; capture `plans land`'s refusal text from the release step's output. A release found after a restart is judged the same way. A21 builds a temp project with `planLifecycleProject`, lands the plan with the package's `landPlan` (clause tests injected as passing), confirms the branch is gone, and expects released; A87 makes a branch from main with no commits and expects not landed.

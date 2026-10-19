@@ -76,7 +76,7 @@ export function nextBuildStep(
 
 	const open = plan.impl.phases.find(isOpen);
 	if (open) {
-		const phase = `${open.kind === "test" ? "Test" : "Build"} Phase ${open.number}: ${open.name}`;
+		const phase = phaseLabel(open);
 		if (open.blocker)
 			return { step: "cannot-continue", why: `${phase} has a blocker: ${open.blocker}` };
 		const items = detectHumanGate(open, plan.trajectory);
@@ -109,6 +109,12 @@ export function nextBuildStep(
 	return { step: "review" };
 }
 
-function isOpen(phase: ImplPhase): boolean {
+/** A phase as the runner and the page word it: `Build Phase 2: <name>`. */
+export function phaseLabel(phase: ImplPhase): string {
+	return `${phase.kind === "test" ? "Test" : "Build"} Phase ${phase.number}: ${phase.name}`;
+}
+
+/** The phase still has an unchecked item. */
+export function isOpen(phase: ImplPhase): boolean {
 	return phase.gates.some((g) => g.items.some((i) => !i.checked));
 }

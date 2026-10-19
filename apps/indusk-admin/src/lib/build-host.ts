@@ -24,17 +24,21 @@ import {
   bringTrunkIntoPlan,
 } from "@infinitedusky/indusk-mcp/plans";
 import {
+  planLandedOnMain,
   psAll,
   type RunKind,
   type RunRecord,
   readRunRecord,
   realProcessReads,
+  releaseOutcome,
   reportDeadReadsStopped,
   reportKeptOnDisk,
   reportNotInProgressWhenIdle,
   restartStep,
   runStatus,
+  shownPhase,
   startRunRecord,
+  stopSentence,
   writeRunRecord,
 } from "@infinitedusky/indusk-mcp/run-record";
 import matter from "gray-matter";
@@ -121,6 +125,34 @@ function whyOf(stop: { step: string }): string | null {
   return typeof why === "string" ? why : null;
 }
 
+/**
+ * How a release ended, read from the trunk and not from the release step's say-so
+ * (a-run-can-be-trusted, Decision 6): released only when the plan is on main,
+ * otherwise stopped with the reason — `plans land`'s refusal when the step carried
+ * one, else that the plan is not on main.
+ */
+function judgedRelease(
+  project: string,
+  plan: string,
+  step: { released: boolean; error: string | null } | null,
+): {
+  release: { released: boolean; error: string | null };
+  stop: RunnerStop;
+} {
+  const root = getProjectPath(project);
+  const outcome = releaseOutcome({
+    step,
+    landedOnMain: root !== null && planLandedOnMain(root, plan),
+    landError: step?.error ?? null,
+  });
+  return outcome.state === "released"
+    ? { release: { released: true, error: null }, stop: { step: "released" } }
+    : {
+        release: { released: false, error: outcome.reason },
+        stop: { step: "release-failed", why: outcome.reason },
+      };
+}
+
 /** The step session's own process, as the manager recorded it, for the record. */
 function processOf(r: { pid: number; bin: string; startedAt: string }) {
   return { pid: r.pid, bin: r.bin, startedAt: r.startedAt };
@@ -148,7 +180,7 @@ function statusOfRecord(record: RunRecord) {
 }
 
 /** The build page's state from a record: nothing held here, so the record decides. */
-function buildStateFromRecord(record: RunRecord): BuildState {
+function buildStateFromRecord(project: string, record: RunRecord): BuildState {
   const status = statusOfRecord(record);
   if (status.state === "running") {
     return {
@@ -159,21 +191,26 @@ function buildStateFromRecord(record: RunRecord): BuildState {
       release: null,
     };
   }
-  const stop = (record.stop as RunnerStop | null) ?? {
-    step: "cannot-continue" as const,
-    why: status.reason ?? "the run's process is gone",
-  };
+  // A release that recorded "released" is read again from the trunk (found after a restart too).
+  const recorded =
+    record.kind === "release" && record.stop?.step === "released"
+      ? judgedRelease(project, record.plan, { released: true, error: null })
+      : null;
+  const stop = recorded?.stop ??
+    (record.stop as RunnerStop | null) ?? {
+      step: "cannot-continue" as const,
+      why: status.reason ?? "the run's process is gone",
+    };
   return {
     running: false,
     step: null,
     detail: record.phase,
     stop,
     release:
-      record.kind === "release" && record.stop
-        ? record.stop.step === "released"
-          ? { released: true, error: null }
-          : { released: false, error: whyOf(record.stop) }
-        : null,
+      recorded?.release ??
+      (record.kind === "release" && record.stop
+        ? { released: false, error: whyOf(stop) }
+        : null),
   };
 }
 
@@ -256,10 +293,34 @@ export function buildState(project: string, plan: string): BuildState | null {
   return shown;
 }
 
+/**
+ * What the build controls show: the run's state, the phase the plan is on read from
+ * its impl now (never the run's start phase), and the stop sentence naming it.
+ */
+export async function buildView(
+  project: string,
+  plan: string,
+): Promise<{
+  build: BuildState | null;
+  phase: string | null;
+  sentence: string | null;
+}> {
+  const build = buildState(project, plan);
+  const root = getProjectPath(project);
+  const phase = root
+    ? shownPhase(await readBuildPlan(root, plan).catch(() => null))
+    : null;
+  const sentence =
+    build && !build.running && build.stop
+      ? stopSentence(build.stop, phase)
+      : null;
+  return { build, phase, sentence };
+}
+
 /** The newest build or release record's state: what the page shows when this daemon holds nothing. */
 function buildStateOnDisk(project: string, plan: string): BuildState | null {
   const record = newest(recordsOf(project, plan, ["build", "release"]));
-  return record ? buildStateFromRecord(record) : null;
+  return record ? buildStateFromRecord(project, record) : null;
 }
 
 /** Once per plan in a while: a plan shown in progress has a process running for it (a signal, Decision 17). */
@@ -461,8 +522,14 @@ export async function startBuild(
   builds().set(key(project, plan), state);
   void runBuild({ ...deps, autoAccept: autoAccepts(root) })
     .then((stop) => {
-      state.stop = stop;
-      handle.update({ stop, stopReason: whyOf(stop) });
+      // An auto-accepted release is judged from the trunk too, never from its step's word.
+      const judged =
+        stop.step === "released"
+          ? judgedRelease(project, plan, { released: true, error: null })
+          : null;
+      state.stop = judged?.stop ?? stop;
+      if (judged) state.release = judged.release;
+      handle.update({ stop: state.stop, stopReason: whyOf(state.stop) });
     })
     .catch((err: Error) => {
       state.stop = { step: "cannot-continue", why: err.message };
@@ -537,10 +604,9 @@ export async function startRelease(
   }
   void runRelease(deps, "person")
     .then((r) => {
-      state.release = r;
-      state.stop = r.released
-        ? { step: "released" }
-        : { step: "release-failed", why: r.error ?? "unknown" };
+      const judged = judgedRelease(project, plan, r);
+      state.release = judged.release;
+      state.stop = judged.stop;
       handle.update({ stop: state.stop, stopReason: whyOf(state.stop) });
     })
     .catch((err: Error) => {

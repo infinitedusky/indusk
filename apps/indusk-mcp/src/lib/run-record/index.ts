@@ -23,3 +23,15 @@ export {
 	reportKeptOnDisk,
 	reportNotInProgressWhenIdle,
 } from "./signals.js";
+export { type ShownPhasePlan, shownPhase } from "./shown-phase.js";
+export { stopSentence } from "./stop-sentence.js";
+export {
+	type GitReads,
+	landedOnMain,
+	landingSubject,
+	NOT_ON_MAIN,
+	planLandedOnMain,
+	type ReleaseOutcome,
+	realGitReads,
+	releaseOutcome,
+} from "./landed.js";
