@@ -75,7 +75,7 @@ This phase writes the tests that show what changes: a phase's set that should ho
 
 #### Test Phase 1 Verification
 
-- [ ] Each test exists and fails on its own assertion, not on a missing file.
+- [x] Each test exists and fails on its own assertion, not on a missing file.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/test-set.test.ts src/lib/plans/plan-tests.test.ts src/__tests__/skills-run-the-plan-test-set.test.ts`; T5 under `--config vitest.system.config.ts` after a build.
@@ -84,7 +84,7 @@ This phase writes the tests that show what changes: a phase's set that should ho
 
 #### Test Phase 1 Context
 
-- [ ] Record nothing new; the rule lands with the build phase.
+- [x] Record nothing new; the rule lands with the build phase.
   <details><summary>Technical</summary>
 
   Confirm no context file needs a line yet.
@@ -93,7 +93,7 @@ This phase writes the tests that show what changes: a phase's set that should ho
 
 #### Test Phase 1 Document
 
-- [ ] Write nothing in the docs yet.
+- [x] Write nothing in the docs yet.
   <details><summary>Technical</summary>
 
   Confirm the docs change with Build Phase 1.
