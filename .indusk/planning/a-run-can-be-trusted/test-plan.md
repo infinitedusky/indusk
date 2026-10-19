@@ -96,10 +96,10 @@ Added 2026-10-19 (Sandy): `a-brief-is-accepted-on-current-main` read "release in
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-----------|
-| A50 | A plan whose planning run is on a step reads "planning" with that step (writing the test plan, writing the impl, reading the plan cold), on the page and in its nav row. | unit |
-| A51 | A plan whose build is on a phase reads "building" with that phase; one waiting on the person reads what it waits on (review, approval, an amendment, its plan review). | unit |
-| A52 | A plan that has landed on main but is not archived reads "landed" with what it still waits on to close (each clause with no signal), never "releasing". | unit |
-| A53 | A plan whose run stopped reads "stopped" with the reason and what starts it again. | unit |
+| A65 | A plan whose planning run is on a step reads "planning" with that step (writing the test plan, writing the impl, reading the plan cold), on the page and in its nav row. | unit |
+| A66 | A plan whose build is on a phase reads "building" with that phase; one waiting on the person reads what it waits on (review, approval, an amendment, its plan review). | unit |
+| A67 | A plan that has landed on main but is not archived reads "landed" with what it still waits on to close (each clause with no signal), never "releasing". | unit |
+| A68 | A plan whose run stopped reads "stopped" with the reason and what starts it again. | unit |
 
 ### `never-in-progress-when-idle` — nothing reads as in progress while no process is running for it
 
@@ -107,7 +107,7 @@ Added 2026-10-19 (Sandy): `a-brief-is-accepted-on-current-main` read "release in
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-----------|
-| A54 | An accepted plan with no release process running, after an admin restart, reads landed, stopped or waiting — never "release in progress". | unit |
+| A69 | An accepted plan with no release process running, after an admin restart, reads landed, stopped or waiting — never "release in progress". | unit |
 
 ## `a-plan-document-is-written-through-its-checks`
 
