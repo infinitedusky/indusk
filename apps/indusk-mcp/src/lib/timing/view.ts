@@ -1,11 +1,14 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { mainCheckoutOf } from "../bookkeeping/roots.js";
 import { git } from "../git.js";
 import { phaseLabel } from "../impl-headings.js";
+import { PlanCommandRefusal } from "../plans/plan-branch.js";
 import { findPlanFolder } from "../promises/plan-folder.js";
 import { readBoundaries } from "../shape/boundary.js";
 import type { PhaseBoundaryRecord } from "../shape/boundary-record.js";
+import { livePlanCopy } from "../worktree/plan-worktrees.js";
+import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import { readTimings, type StepOutcome, type TimingRecord, timingLogPath } from "./log.js";
 
 /**
@@ -84,6 +87,7 @@ function phasesOf(
 	timings: TimingRecord[],
 	plan: string,
 	now: number,
+	landedAt: string | null,
 ): PhaseTime[] {
 	// The earliest opening of each phase wins, as `findPhaseStart` reads it.
 	const opened = new Map<string, { label: string; opened: string }>();
@@ -104,7 +108,8 @@ function phasesOf(
 	const ordered = [...opened.values()].sort((a, b) => at(a.opened) - at(b.opened));
 	return ordered.map((phase, i) => {
 		const recorded = closes.get(phase.label) ?? null;
-		const next = ordered[i + 1]?.opened ?? null;
+		// A plan that has landed has no open phase: its last one ends at the landing.
+		const next = ordered[i + 1]?.opened ?? landedAt;
 		const closed = recorded ?? next;
 		return {
 			label: phase.label,
@@ -156,10 +161,16 @@ function testRunsOf(timings: TimingRecord[], plan: string): TestRunTime[] {
 export async function planTime(
 	root: string,
 	plan: string,
-	options: { now?: () => number; reads?: PlanTimeReads; home?: string } = {},
+	options: {
+		now?: () => number;
+		reads?: PlanTimeReads;
+		home?: string;
+		/** The checkout holding the plan's live copy (its worktree while built there); default `root`. */
+		liveRoot?: string;
+	} = {},
 ): Promise<PlanTime> {
 	const now = (options.now ?? Date.now)();
-	const reads = options.reads ?? defaultReads(root, plan, options.home);
+	const reads = options.reads ?? defaultReads(root, plan, options.home, options.liveRoot ?? root);
 	const missing: string[] = [];
 
 	let boundaries: PhaseBoundaryRecord[] = [];
@@ -173,14 +184,14 @@ export async function planTime(
 	}
 	const timings = await reads.timings();
 
-	const phases = phasesOf(boundaries, timings, plan, now);
+	const landed = await reads.landedAt();
+	const phases = phasesOf(boundaries, timings, plan, now, landed);
 	const steps = stepsOf(timings, plan, now);
 	const testRuns = testRunsOf(timings, plan);
 	if (steps.length === 0) missing.push("steps");
 	if (testRuns.length === 0) missing.push("test runs");
 
 	const from = await reads.acceptedAt();
-	const landed = await reads.landedAt();
 	let total: PlanTime["total"] = null;
 	if (from === null) missing.push("acceptance time");
 	else {
@@ -192,9 +203,10 @@ export async function planTime(
 	return { plan, phases, steps, testRuns, total, between, missing };
 }
 
-/** Durations print like `1h 04m`, `4m 12s`, `9s`. */
+/** Durations print like `1h 04m`, `4m 12s`, `9s`; a negative one keeps its sign. */
 export function formatDuration(ms: number): string {
-	const seconds = Math.max(0, Math.round(ms / 1000));
+	if (ms < 0) return `-${formatDuration(-ms)}`;
+	const seconds = Math.round(ms / 1000);
 	const h = Math.floor(seconds / 3600);
 	const m = Math.floor((seconds % 3600) / 60);
 	if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m`;
@@ -267,12 +279,17 @@ export function formatPlanTime(result: PlanTime): string {
 	return lines.join("\n").trimEnd();
 }
 
-function defaultReads(root: string, plan: string, home?: string): PlanTimeReads {
+function defaultReads(
+	root: string,
+	plan: string,
+	home: string | undefined,
+	liveRoot: string,
+): PlanTimeReads {
 	return {
-		boundaries: () => readBoundaries(root),
+		boundaries: () => readBoundaries(liveRoot),
 		timings: () => readTimings(timingLogPath(root, plan, home)),
 		acceptedAt: async () => {
-			const folder = findPlanFolder(root, plan);
+			const folder = findPlanFolder(liveRoot, plan) ?? findPlanFolder(root, plan);
 			if (folder === null) return null;
 			try {
 				const text = readFileSync(join(folder, "brief.md"), "utf-8");
@@ -286,16 +303,40 @@ function defaultReads(root: string, plan: string, home?: string): PlanTimeReads 
 	};
 }
 
+/** The seams of the landing search: where the code lives, its trunk, and git. */
+export interface LandingDeps {
+	/** The checkout the plan's code lands into; null when it cannot be resolved. */
+	codeRootOf: (root: string, plan: string) => string | null;
+	trunkOf: (checkout: string) => string;
+	runGit: (cwd: string, ...args: string[]) => Promise<string>;
+}
+
+const landingDeps: LandingDeps = {
+	codeRootOf: (root, plan) => {
+		const roots = resolveExecutionRoots(root, plan);
+		return isRootsRefusal(roots) ? null : roots.codeRoot;
+	},
+	trunkOf: mainCheckoutOf,
+	runGit: git,
+};
+
 /**
  * When the plan landed: the author time of the trunk's merge commit whose
  * subject `plans land` writes (`Merge <branch>: <plan> landed`); null while no
- * such commit exists. The archive records no landing time of its own.
+ * such commit exists. The archive records no landing time of its own. The merge
+ * is written in the repository the plan's code lands into, which for a
+ * workbench plan is a code repo, not the workbench root.
  */
-async function landingTime(root: string, plan: string): Promise<string | null> {
+export async function landingTime(
+	root: string,
+	plan: string,
+	deps: LandingDeps = landingDeps,
+): Promise<string | null> {
 	try {
 		const escaped = plan.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		const out = await git(
-			mainCheckoutOf(root),
+		const searchRoot = deps.codeRootOf(root, plan) ?? root;
+		const out = await deps.runGit(
+			deps.trunkOf(searchRoot),
 			"log",
 			"--first-parent",
 			"-E",
@@ -307,4 +348,40 @@ async function landingTime(root: string, plan: string): Promise<string | null> {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * The command's answer: refuses a name that is no plan, reads the phase
+ * openings from the plan's worktree while it is built there.
+ */
+export async function planTimeText(
+	root: string,
+	plan: string,
+	options: {
+		now?: () => number;
+		home?: string;
+		/** The checkout holding the plan's live copy; null when the plan has none. */
+		liveRoot?: (root: string, plan: string) => Promise<string | null>;
+	} = {},
+): Promise<string> {
+	const resolve = options.liveRoot ?? liveRootOf;
+	const live = await resolve(root, plan);
+	if (live === null && findPlanFolder(root, plan) === null) {
+		throw new PlanCommandRefusal(`no plan named ${plan}, on the trunk or in a worktree`);
+	}
+	const result = await planTime(root, plan, {
+		...(options.now ? { now: options.now } : {}),
+		...(options.home ? { home: options.home } : {}),
+		liveRoot: live ?? root,
+	});
+	return formatPlanTime(result);
+}
+
+/** The checkout where the plan's documents are written: its worktree, else the trunk; null when neither holds it. */
+async function liveRootOf(root: string, plan: string): Promise<string | null> {
+	const found = await livePlanCopy(root, plan);
+	if (!found.ok) return null;
+	const { copy } = found;
+	if (copy.source === "worktree") return copy.root;
+	return existsSync(copy.dir) ? copy.root : null;
 }

@@ -59,11 +59,52 @@ export async function appendTiming(
 	await appendFile(path, `${JSON.stringify(record)}\n`, "utf8");
 }
 
+const OUTCOMES: readonly string[] = ["finished", "blocked", "failed", "stopped"];
+
+const isStr = (v: unknown): v is string => typeof v === "string";
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const isTime = (v: unknown): boolean => isStr(v) && Number.isFinite(Date.parse(v));
+
+function hasFieldsOfKind(r: Record<string, unknown>): boolean {
+	switch (r.kind) {
+		case "phase-close":
+			return isNum(r.phase);
+		case "step-start":
+			return isStr(r.id) && isStr(r.step);
+		case "step-end":
+			return isStr(r.id) && isStr(r.step) && isStr(r.outcome) && OUTCOMES.includes(r.outcome);
+		case "test-run": {
+			const scope = r.scope as { phase?: unknown } | string | null | undefined;
+			const files = r.files as Record<string, unknown> | null | undefined;
+			return (
+				(scope === "landing" ||
+					(typeof scope === "object" && scope !== null && isStr(scope.phase))) &&
+				typeof files === "object" &&
+				files !== null &&
+				isNum(files.own) &&
+				isNum(files.reached) &&
+				isNum(files.mustNotBreak) &&
+				isNum(r.durationMs) &&
+				isTime(r.startedAt) &&
+				typeof r.passed === "boolean"
+			);
+		}
+		default:
+			return false;
+	}
+}
+
+/** A record the view can read without a throw or a NaN: its version, kind, plan, time and the fields its kind needs. */
 function isTimingRecord(value: unknown): value is TimingRecord {
 	if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
 	const r = value as Record<string, unknown>;
 	return (
-		r.v === 1 && typeof r.kind === "string" && KINDS.includes(r.kind) && typeof r.at === "string"
+		r.v === 1 &&
+		isStr(r.kind) &&
+		KINDS.includes(r.kind) &&
+		isStr(r.plan) &&
+		isTime(r.at) &&
+		hasFieldsOfKind(r)
 	);
 }
 
