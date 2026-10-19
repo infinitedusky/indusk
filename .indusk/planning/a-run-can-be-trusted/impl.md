@@ -439,13 +439,13 @@ This phase makes the admin's builds, planning runs and releases leave a record o
   New `lib/run-record/restart.ts`: `restartStep(kind, plan)` over the existing `nextBuildStep(await readBuildPlan(root, plan))` and `nextPlanningStep` (`lib/build/next-step.ts`, `next-planning-step.ts`). A build never answers `release` unless the plan is accepted (`nothing-ships-until-accepted`); a planning kind never answers a build step or release. Export `restartStep` and the record functions from the package's `build` export so the admin imports them.
 
   </details>
-- [ ] Make the admin write the record as a run starts, advances and stops, and read it on every ask.
+- [x] Make the admin write the record as a run starts, advances and stops, and read it on every ask.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/build-host.ts`: in `startBuild`, `startRelease` and `startPlanning` write the record before the first step finishes; `onStep` rewrites it on each step and phase; the `.then`/`.catch`/`.finally` handlers write `stop` and `stopReason`; `buildState` and `planningState` merge the in-memory entry with `readRunRecord` + `runStatus` (the record wins when the entry is absent, as after a restart). The process is the step session's: add `onSession?(record: SessionRecord)` to `BuildSessionOptions` in `apps/indusk-mcp/src/lib/build/build-session.ts`, called by `oneSession` right after `manager.start` with the manager's own `SessionRecord` (`pid`, `bin`, `startedAt`), and have the host's `run` closures (build, release and planning) rewrite the record's `process` with it. Never the admin daemon's `process.pid`.
 
   </details>
-- [ ] Make a dead run stop blocking Build.
+- [x] Make a dead run stop blocking Build.
   <details><summary>Technical</summary>
 
   `startBuild`'s `existing?.running` and `planningState(...).running` checks, and `startRelease`'s, read `runStatus(...).state === "running"`, not the flag. A still-live run of the same plan and kind is still refused ("already building"); a dead one starts again from `restartStep`. When the plan's dead run is a planning run, or its impl is not yet approved, `startBuild` calls `startPlanning(project, plan)` instead of `runBuild`, since the admin's Build route (`apps/indusk-admin/src/app/api/plans/build/route.ts`) calls only `startBuild` (A74 in `build-host.record.test.ts`). `decisions-reader.ts`' `stoppedAt` reads the merged state.

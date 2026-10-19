@@ -25,6 +25,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * the restart rule are the package's real ones, over a temporary home.
  */
 
+const priorHome = process.env.INDUSK_HOME;
 const PROJECT = "seats";
 const PLAN = "keeps-a-record";
 
@@ -188,7 +189,8 @@ afterEach(() => {
   forget();
   rmSync(project, { recursive: true, force: true });
   rmSync(process.env.INDUSK_HOME ?? "", { recursive: true, force: true });
-  delete process.env.INDUSK_HOME;
+  if (priorHome === undefined) delete process.env.INDUSK_HOME;
+  else process.env.INDUSK_HOME = priorHome;
 });
 
 const readRecord = (kind: RunKind) => readRunRecord(home, PLAN, kind);
