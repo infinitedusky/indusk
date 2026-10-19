@@ -41,9 +41,10 @@ describe("A18 — a release `plans land` refused reads stopped with the refusal"
 	});
 
 	it("A18 with no captured refusal it says the plan is not on main", () => {
-		expect(
-			releaseOutcome({ step: { released: true, error: null }, landedOnMain: false }),
-		).toEqual({ state: "stopped", reason: NOT_ON_MAIN });
+		expect(releaseOutcome({ step: { released: true, error: null }, landedOnMain: false })).toEqual({
+			state: "stopped",
+			reason: NOT_ON_MAIN,
+		});
 	});
 
 	it("A18 a step that failed reads stopped with its own error", () => {
@@ -122,9 +123,9 @@ describe("A21 and A87 — against a real repository", () => {
 		);
 		const real = realGitReads(p.trunk);
 		expect(landedOnMain("main", PLAN, real)).toBe(false);
-		expect(releaseOutcome({ step: { released: true, error: null }, landedOnMain: false }).state).toBe(
-			"stopped",
-		);
+		expect(
+			releaseOutcome({ step: { released: true, error: null }, landedOnMain: false }).state,
+		).toBe("stopped");
 
 		await acceptPlan(p.trunk, PLAN);
 		await landPlan(p.trunk, PLAN, {

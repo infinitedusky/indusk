@@ -31,7 +31,10 @@ describe("A70 — every situation short of closed has a next step and who takes 
 		["planning", { ...base, run: { kind: "planning", status: running, step: "plan-impl" } }],
 		["building", { ...base, run: { kind: "build", status: running, phase: "Build Phase 1: x" } }],
 		["releasing", { ...base, run: { kind: "release", status: running } }],
-		...WAITING_KINDS.map((on): [string, SituationInput] => [`waiting on ${on}`, { ...base, waitingOn: on }]),
+		...WAITING_KINDS.map((on): [string, SituationInput] => [
+			`waiting on ${on}`,
+			{ ...base, waitingOn: on },
+		]),
 		["stopped build", { ...base, run: { kind: "build", status: gone } }],
 		["stopped release", { ...base, run: { kind: "release", status: gone } }],
 		["stopped planning", { ...base, run: { kind: "planning", status: gone } }],
@@ -81,7 +84,12 @@ describe("A71 — no open plan in this repo's planning folder reads without a ne
 		const plans = parseAllPlans(REPO);
 		expect(plans.length).toBeGreaterThan(0);
 		for (const summary of plans) {
-			const position = derivePlanPosition({ summary, impl: null, readiness: null, archived: false });
+			const position = derivePlanPosition({
+				summary,
+				impl: null,
+				readiness: null,
+				archived: false,
+			});
 			const snapshot: PlanSnapshot = {
 				workflow: summary.workflow ?? null,
 				position,

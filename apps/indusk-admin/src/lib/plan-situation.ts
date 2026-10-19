@@ -1,24 +1,32 @@
+import { join } from "node:path";
 import { readBuildPlan } from "@infinitedusky/indusk-mcp/build";
 import {
   type LivePlan,
   type PlanSnapshot,
+  planSteps,
   stepAt,
 } from "@infinitedusky/indusk-mcp/plans/steps";
 import type { Waiting } from "@infinitedusky/indusk-mcp/plans/waiting";
+import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
 import {
   type Confirmation,
   confirmationsOf,
+  landedOnMain as landed,
   liveCheckRecorded,
   type NextStep,
   nextStepFor,
+  psAll,
+  readReviewText,
   realGitReads,
+  reportNextStep,
+  reportPlanningAudit,
+  reportSaysWhatIsTrue,
   type Situation,
-  landedOnMain as landed,
   shownPhase,
   situation,
+  trunkMergeSubjects,
 } from "@infinitedusky/indusk-mcp/run-record";
-import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
-import { runOfPlan } from "./build-host";
+import { heldRunning, runOfPlan, throttled } from "./build-host";
 import { snapshotOf } from "./plan-snapshot";
 import type { Plan } from "./planning-reader";
 import { sessionManager } from "./session-host";
@@ -41,7 +49,9 @@ function liveOf(project: string, plan: string): LivePlan {
   const going = run?.status.state === "running" ? run : null;
   const interactive = sessionManager()
     .running()
-    .some((r) => r.project === project && r.plan === plan && r.kind !== "build");
+    .some(
+      (r) => r.project === project && r.plan === plan && r.kind !== "build",
+    );
   return {
     writing: going?.kind === "planning" || interactive,
     planningStep: going?.kind === "planning" ? going.step : null,
@@ -89,7 +99,9 @@ export async function withSituations(
     const run = runOfPlan(project, plan.name);
     const phase =
       run?.kind === "build" && run.status.state === "running"
-        ? shownPhase(await readBuildPlan(projectPath, plan.name).catch(() => null))
+        ? shownPhase(
+            await readBuildPlan(projectPath, plan.name).catch(() => null),
+          )
         : null;
     const onMain = isLanded(plan.name);
     const confirmations =
@@ -104,10 +116,9 @@ export async function withSituations(
       run: run ? { ...run, phase } : null,
       ...(confirmations ? { confirmations } : {}),
     });
-    out.push({
-      ...withLive,
-      situation: { situation: reading, next: nextStepFor(reading) },
-    });
+    const next = nextStepFor(reading);
+    reportSituation(project, projectPath, withLive, reading, next);
+    out.push({ ...withLive, situation: { situation: reading, next } });
   }
   return out;
 }
@@ -135,4 +146,57 @@ async function confirmationsFor(
       .filter((r) => r.levelText === "live check")
       .map((r) => ({ id: r.id, recorded: liveCheckRecorded(content, r.id) })),
   });
+}
+
+/**
+ * The signals that read what the page says of a plan, judged from raw sources the reader
+ * does not use (a-run-can-be-trusted, Decision 17): the process table beside the session
+ * manager's own sessions, a plain `git log` of the trunk, and plan-review.md on disk.
+ * At most once per plan in a while, so the nav's reads and the page's poll do not flood.
+ */
+function reportSituation(
+  project: string,
+  root: string,
+  plan: Plan,
+  reading: Situation,
+  next: NextStep | null,
+): void {
+  const id = `${project}/${plan.name}`;
+  // signal: a-run-is-read-from-its-record/says-what-is-true
+  throttled(`${id}/says`, () =>
+    reportSaysWhatIsTrue(root, {
+      plan: plan.name,
+      kind: reading.kind,
+      text: reading.text,
+      heldHere: heldRunning(project, plan.name),
+      sessions: sessionManager()
+        .running()
+        .filter((r) => r.project === project && r.plan === plan.name),
+      table: psAll(),
+      subjects: trunkMergeSubjects(root),
+    }),
+  );
+  // signal: a-run-is-read-from-its-record/always-a-next-step
+  throttled(`${id}/next`, () =>
+    reportNextStep(root, { plan: plan.name, kind: reading.kind, next }),
+  );
+  // signal: a-run-is-read-from-its-record/the-planning-audit-is-a-step
+  const implStatus =
+    typeof plan.impl?.frontmatter.status === "string"
+      ? plan.impl.frontmatter.status
+      : null;
+  if (implStatus !== null)
+    throttled(`${id}/audit`, () =>
+      reportPlanningAudit(root, {
+        plan: plan.name,
+        shown:
+          planSteps(snapshotOf(plan)).planning.find(
+            (s) => s.name === "Planning audit",
+          )?.state ?? null,
+        implStatus,
+        reviewText: readReviewText(
+          join(plan.worktree?.path ?? root, ".indusk", "planning", plan.name),
+        ),
+      }),
+    );
 }

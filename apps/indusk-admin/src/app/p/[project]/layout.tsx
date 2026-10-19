@@ -19,8 +19,8 @@ import {
   WorktreeRecordError,
 } from "@/components/Worktrees";
 import { readWaiting } from "@/lib/decisions-reader";
-import { withSituations } from "@/lib/plan-situation";
 import { worktreePromises } from "@/lib/plan-health";
+import { withSituations } from "@/lib/plan-situation";
 import {
   readActivePlans,
   readArchivedPlans,

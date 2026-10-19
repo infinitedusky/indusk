@@ -120,10 +120,20 @@ export function situation(input: SituationInput): Situation {
 	// Only a live process reads as in progress.
 	if (run?.status.state === "running") {
 		if (run.kind === "planning") {
-			return { ...base, kind: "planning", text: `Planning — ${planningWords(run.step)}`, running: true };
+			return {
+				...base,
+				kind: "planning",
+				text: `Planning — ${planningWords(run.step)}`,
+				running: true,
+			};
 		}
 		if (run.kind === "release") {
-			return { ...base, kind: "releasing", text: "Releasing — the retrospective is landing it", running: true };
+			return {
+				...base,
+				kind: "releasing",
+				text: "Releasing — the retrospective is landing it",
+				running: true,
+			};
 		}
 		return {
 			...base,
@@ -145,7 +155,8 @@ export function situation(input: SituationInput): Situation {
 
 	if (run?.status.state === "stopped") {
 		const reason = run.status.reason ?? "it ended";
-		const again = run.kind === "planning" ? "Build starts the planning again" : "Build starts it again";
+		const again =
+			run.kind === "planning" ? "Build starts the planning again" : "Build starts it again";
 		return {
 			...base,
 			kind: "stopped",

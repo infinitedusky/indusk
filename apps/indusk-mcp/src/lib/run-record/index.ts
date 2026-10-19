@@ -5,26 +5,6 @@
  */
 
 export { type PsRow, psAll, realProcessReads } from "../process-identity.js";
-export { type RunStatus, runStatus } from "./liveness.js";
-export {
-	type RunKind,
-	type RunProcess,
-	type RunRecord,
-	readRunRecord,
-	runRecordPath,
-	startRunRecord,
-	writeRunRecord,
-} from "./record.js";
-export { type Restart, type RestartReads, restartStep } from "./restart.js";
-export {
-	type DeadReadsInput,
-	type IdleInput,
-	reportDeadReadsStopped,
-	reportKeptOnDisk,
-	reportNotInProgressWhenIdle,
-} from "./signals.js";
-export { type ShownPhasePlan, shownPhase } from "./shown-phase.js";
-export { stopSentence } from "./stop-sentence.js";
 export {
 	type GitReads,
 	landedOnMain,
@@ -35,7 +15,26 @@ export {
 	realGitReads,
 	releaseOutcome,
 } from "./landed.js";
+export { type RunStatus, runStatus } from "./liveness.js";
 export { type NextStep, nextStepFor } from "./next-step.js";
+export {
+	type RunKind,
+	type RunProcess,
+	type RunRecord,
+	readRunRecord,
+	runRecordPath,
+	startRunRecord,
+	writeRunRecord,
+} from "./record.js";
+export { type Restart, type RestartReads, restartStep } from "./restart.js";
+export { type ShownPhasePlan, shownPhase } from "./shown-phase.js";
+export {
+	type DeadReadsInput,
+	type IdleInput,
+	reportDeadReadsStopped,
+	reportKeptOnDisk,
+	reportNotInProgressWhenIdle,
+} from "./signals.js";
 export {
 	type Confirmation,
 	type ConfirmationSources,
@@ -49,3 +48,20 @@ export {
 	situation,
 	waitingWords,
 } from "./situation.js";
+export {
+	expectedAudit,
+	judgeNextStep,
+	judgePlanningAudit,
+	judgeReleased,
+	judgeSaysWhatIsTrue,
+	judgeShowsWhereItIs,
+	readReviewText,
+	reportNextStep,
+	reportPlanningAudit,
+	reportReleased,
+	reportSaysWhatIsTrue,
+	reportShowsWhereItIs,
+	type TrueInput,
+	trunkMergeSubjects,
+} from "./situation-signals.js";
+export { stopSentence } from "./stop-sentence.js";

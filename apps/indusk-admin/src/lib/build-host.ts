@@ -34,6 +34,8 @@ import {
   reportDeadReadsStopped,
   reportKeptOnDisk,
   reportNotInProgressWhenIdle,
+  reportReleased,
+  reportShowsWhereItIs,
   restartStep,
   runStatus,
   shownPhase,
@@ -145,6 +147,9 @@ function judgedRelease(
     landedOnMain: root !== null && planLandedOnMain(root, plan),
     landError: step?.error ?? null,
   });
+  // signal: a-run-is-read-from-its-record/released-only-when-landed, from the trunk's own log read again
+  if (outcome.state === "released" && root !== null)
+    void reportReleased(root, plan);
   return outcome.state === "released"
     ? { release: { released: true, error: null }, stop: { step: "released" } }
     : {
@@ -314,7 +319,34 @@ export async function buildView(
     build && !build.running && build.stop
       ? stopSentence(build.stop, phase)
       : null;
+  // signal: a-run-is-read-from-its-record/shows-where-it-is, against the phase the live session works
+  if (root && build?.running && build.step === "work" && build.detail)
+    throttled(`${project}/${plan}/shows`, () =>
+      reportShowsWhereItIs(root, {
+        plan,
+        shown: phase,
+        sessionPhase: build.detail,
+      }),
+    );
   return { build, phase, sentence };
+}
+
+/** Whether this daemon holds a run of the plan in memory as running: the gap between two step sessions. */
+export function heldRunning(project: string, plan: string): boolean {
+  return (
+    builds().get(key(project, plan))?.running === true ||
+    plannings().get(key(project, plan))?.running === true
+  );
+}
+
+/** A signal is reported at most once per key in a while: the page polls every few seconds. */
+const SIGNAL_EVERY_MS = 15_000;
+const signalledAt = new Map<string, number>();
+export function throttled(id: string, send: () => Promise<void>): void {
+  const now = Date.now();
+  if (now - (signalledAt.get(id) ?? 0) < SIGNAL_EVERY_MS) return;
+  signalledAt.set(id, now);
+  void send();
 }
 
 /**

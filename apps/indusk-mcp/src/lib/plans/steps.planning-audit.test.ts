@@ -129,7 +129,9 @@ describe("A81 — a planning step reads in progress only while a process runs fo
 		});
 
 	it("A81 the document being written reads in progress while a process writes it", () => {
-		const { planning } = planSteps(writingDraft({ live: { writing: true, planningStep: "plan-adr" } }));
+		const { planning } = planSteps(
+			writingDraft({ live: { writing: true, planningStep: "plan-adr" } }),
+		);
 		expect(states(planning).Decision).toBe("current");
 	});
 

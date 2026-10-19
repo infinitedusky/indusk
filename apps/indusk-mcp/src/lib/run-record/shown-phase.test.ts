@@ -19,7 +19,10 @@ const phase = (kind: "test" | "build", number: number, open: boolean): ImplPhase
 		gates: [{ type: "implementation", items: [{ checked: !open, text: "an item" }] }],
 	}) as unknown as ImplPhase;
 
-const planWith = (closed: Array<[("test" | "build"), number]>, open: Array<[("test" | "build"), number]>) => ({
+const planWith = (
+	closed: Array<["test" | "build", number]>,
+	open: Array<["test" | "build", number]>,
+) => ({
 	impl: {
 		phases: [
 			...closed.map(([k, n]) => phase(k, n, false)),

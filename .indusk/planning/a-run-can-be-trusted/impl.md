@@ -572,31 +572,31 @@ This phase makes the admin say true things from the record the last phase keeps.
   `steps.ts`' `planningStep` and `releaseStep` take the run's live state for the plan (Decision 15): an `active` segment reads `current` only while a live process of that kind runs, else `not-yet` (the step the plan is at, to do; no new state, no new look). `situation()` and the release indicator read the same live state: a build or release with no live process never reads building, releasing or pulsing. Rows A81 in `steps.planning-audit.test.ts` (planning steps and the Planning audit) and A82 in `situation.test.ts` (Build step, release indicator, sentence). Header `// clause: a-run-is-read-from-its-record/never-in-progress-when-idle`.
 
   </details>
-- [ ] Report the signal for the clause that the controls show where the plan is.
+- [x] Report the signal for the clause that the controls show where the plan is.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/shows-where-it-is` — read in the build controls' text, reported from `apps/indusk-mcp/src/lib/run-record/signals.ts` with `phase: "Build Phase 2"`. Judged against the process doing the work, not `shownPhase` (Decision 17): while a build runs, the phase shown is compared with the phase the live step session was started for, taken from the runner's own `onStep` report for that session; `broken` names the plan, the phase shown and the phase the session works; upheld when they match. Nothing is reported while no build runs.
 
   </details>
-- [ ] Report the signal for the clause that a release reads released only when landed.
+- [x] Report the signal for the clause that a release reads released only when landed.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/released-only-when-landed` — read in the release's state, reported from `apps/indusk-mcp/src/lib/run-record/signals.ts`. When the admin marks a release released, the trunk's own log is read again with a plain `git log <trunk> --merges --format=%s` for the landing subject (not through `landed.ts`); `broken` names the plan if it is absent; upheld otherwise.
 
   </details>
-- [ ] Report the signal for the clause that the page says what is true.
+- [x] Report the signal for the clause that the page says what is true.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/says-what-is-true` — read where the sentence is shown, reported from `apps/indusk-mcp/src/lib/run-record/signals.ts`. The page and the nav row each pass their sentence to the reporter, which re-derives each claim from raw sources with no call to `situation()` or the run record (Decision 17): "planning", "building" or "releasing" needs a live process in `psAll()` matching a session the session manager holds for that plan and kind, or this daemon's in-memory running entry; "complete" needs the landing subject in `git log <trunk>`; "stopped" needs neither a live process nor a landing. `broken` names the plan, the words shown and what the raw source said.
 
   </details>
-- [ ] Report the signal for the clause that every open plan has a next step.
+- [x] Report the signal for the clause that every open plan has a next step.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/always-a-next-step` — read where the page and the nav row are read. Upheld when every open plan shown has a next step naming who takes it; `broken` names the plan shown with none. Reported through `apps/indusk-mcp/src/lib/run-record/signals.ts`, at most once per plan per read.
 
   </details>
-- [ ] Report the signal for the clause that the planning audit is a step.
+- [x] Report the signal for the clause that the planning audit is a step.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/the-planning-audit-is-a-step` — read where the planning steps are shown. Upheld when a plan with an impl shows a Planning audit step whose state matches its `plan-review.md` read directly from disk (absent, its `read:` against the documents' hash, every finding answered); `broken` names the plan and the step state shown. Reported from `apps/indusk-mcp/src/lib/run-record/signals.ts`.

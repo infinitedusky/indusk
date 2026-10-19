@@ -27,13 +27,13 @@ import {
   type PlanReviewState,
   readPlanReview,
 } from "@infinitedusky/indusk-mcp/plans/plan-review";
+import type { LivePlan } from "@infinitedusky/indusk-mcp/plans/steps";
 import { afterClose } from "@infinitedusky/indusk-mcp/promises/after-close";
 import {
   displayWords,
   planTitle,
   readPlanName,
 } from "@infinitedusky/indusk-mcp/promises/display";
-import type { LivePlan } from "@infinitedusky/indusk-mcp/plans/steps";
 import type { NextStep, Situation } from "@infinitedusky/indusk-mcp/run-record";
 import type { PhaseBoundaryRecord } from "@infinitedusky/indusk-mcp/shape/boundary";
 import {

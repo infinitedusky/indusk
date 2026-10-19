@@ -1,5 +1,5 @@
-import type { ImplPhase } from "../impl-parser-core.js";
 import { isOpen, phaseLabel } from "../build/next-step.js";
+import type { ImplPhase } from "../impl-parser-core.js";
 
 /**
  * The phase the build controls name (a-run-can-be-trusted, Decision 5): read from

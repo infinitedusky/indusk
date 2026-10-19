@@ -71,7 +71,12 @@ describe("A10 — steps follow the type", () => {
 				impl: { status: "in-progress" },
 			},
 		});
-		expect(bugfix.planning.map((s) => s.name)).toEqual(["Brief", "Test plan", "Impl", "Planning audit"]);
+		expect(bugfix.planning.map((s) => s.name)).toEqual([
+			"Brief",
+			"Test plan",
+			"Impl",
+			"Planning audit",
+		]);
 	});
 
 	it("A10 a ritual skipped with a reason is skipped, carries the reason and is not owed", () => {

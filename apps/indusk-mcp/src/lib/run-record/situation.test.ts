@@ -90,7 +90,11 @@ describe("A67 — a plan merged to main reads complete with a confirmation list"
 	});
 
 	it("A67 it never reads landed or releasing", () => {
-		for (const run of [null, { kind: "release" as const, status: running }, { kind: "release" as const, status: gone }]) {
+		for (const run of [
+			null,
+			{ kind: "release" as const, status: running },
+			{ kind: "release" as const, status: gone },
+		]) {
 			const s = situation(input({ landedOnMain: true, run, confirmations: list }));
 			expect(s.kind).toBe("complete");
 			expect(s.text).not.toMatch(/landed|releasing/i);
@@ -125,7 +129,8 @@ describe("A67 — a plan merged to main reads complete with a confirmation list"
 	});
 
 	it("A67 a live check is recorded by its id beside a date in the impl's Notes", () => {
-		const body = "## Notes\n\n- L1 — 2026-10-20 — killed the session, read the stop sentence\n- L2 pending\n\n## After\n";
+		const body =
+			"## Notes\n\n- L1 — 2026-10-20 — killed the session, read the stop sentence\n- L2 pending\n\n## After\n";
 		expect(liveCheckRecorded(body, "L1")).toBe(true);
 		expect(liveCheckRecorded(body, "L2")).toBe(false);
 		expect(liveCheckRecorded("no notes at all", "L1")).toBe(false);

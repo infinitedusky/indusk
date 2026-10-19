@@ -25,11 +25,11 @@ import { planLookState } from "@/lib/look-state";
 import { masterStory } from "@/lib/master-story";
 import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
-import { withSituations } from "@/lib/plan-situation";
 import { buildGroups, groupOf } from "@/lib/plan-groups";
 import { readPlanHealth } from "@/lib/plan-health";
 import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
+import { withSituations } from "@/lib/plan-situation";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -193,9 +193,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         archived={plan.archived || Boolean(plan.archivedInWorktree)}
       />
       <WaitingAmendments project={project} plan={name} parts={parts} />
-      {plan.situation ? (
-        <PlanSituationLine situation={plan.situation} />
-      ) : null}
+      {plan.situation ? <PlanSituationLine situation={plan.situation} /> : null}
       {waiting && waiting.on !== "amendment" ? (
         <DecisionCard project={project} waiting={waiting} />
       ) : (

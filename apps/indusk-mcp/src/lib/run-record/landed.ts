@@ -41,9 +41,7 @@ export function landedOnMain(trunk: string, plan: string, git: GitReads): boolea
 	}
 }
 
-export type ReleaseOutcome =
-	| { state: "released" }
-	| { state: "stopped"; reason: string };
+export type ReleaseOutcome = { state: "released" } | { state: "stopped"; reason: string };
 
 export const NOT_ON_MAIN = "the release ended but the plan is not on main";
 
@@ -67,7 +65,11 @@ export function releaseOutcome(input: {
 /** Real reads of the repository at `root`. */
 export function realGitReads(root: string): GitReads {
 	const run = (...args: string[]): string =>
-		execFileSync("git", args, { cwd: root, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] });
+		execFileSync("git", args, {
+			cwd: root,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		});
 	return {
 		mergeSubjects: (trunk) =>
 			run("log", trunk, "--merges", "--format=%s").split("\n").filter(Boolean),
