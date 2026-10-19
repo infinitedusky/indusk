@@ -95,7 +95,11 @@ describe("a conflict refuses the acceptance", () => {
 		p.commit(wt, { [NOTES]: withLine("mine"), "docs/more.md": withLine("mine") }, "mine");
 		p.commit(
 			p.trunk,
-			{ [NOTES]: withLine("theirs"), "docs/more.md": withLine("theirs"), "docs/clean.md": withLine("x") },
+			{
+				[NOTES]: withLine("theirs"),
+				"docs/more.md": withLine("theirs"),
+				"docs/clean.md": withLine("x"),
+			},
 			"theirs",
 		);
 		const lines = (await refusal()).split("\n").map((l) => l.trim());

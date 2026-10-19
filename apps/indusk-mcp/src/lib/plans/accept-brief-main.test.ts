@@ -44,7 +44,8 @@ function behindMain(files: Record<string, string> = { "docs/from-main.md": "main
 	p.commit(wt, { [briefPath]: draft(briefText(PLAN)) }, "the brief");
 	p.commit(p.trunk, files, "main moves");
 }
-const subjects = (args: string[] = []) => git(wt, ["log", "--first-parent", "--format=%s", ...args]).split("\n");
+const subjects = (args: string[] = []) =>
+	git(wt, ["log", "--first-parent", "--format=%s", ...args]).split("\n");
 
 describe("accepting a brief brings main in first", () => {
 	it("A1: a file main gained after the branch was cut is in the worktree, and the brief reads accepted", async () => {
@@ -105,8 +106,15 @@ describe("accepting a brief brings main in first", () => {
 		git(p.trunk, ["add", "-A"]);
 		git(p.trunk, ["commit", "-q", "-m", "promise"]);
 		wt = p.makeWorktree(PLAN);
-		p.commit(wt, { [briefPath]: draft(briefText(PLAN, { mustNotBreak: ["seat-promise"] })) }, "the brief");
-		const retired = writePromise(join(p.trunk, ".indusk", "promises"), { ...spec, state: "retired" });
+		p.commit(
+			wt,
+			{ [briefPath]: draft(briefText(PLAN, { mustNotBreak: ["seat-promise"] })) },
+			"the brief",
+		);
+		const retired = writePromise(join(p.trunk, ".indusk", "promises"), {
+			...spec,
+			state: "retired",
+		});
 		expect(retired).toContain("seat-promise");
 		git(p.trunk, ["add", "-A"]);
 		git(p.trunk, ["commit", "-q", "-m", "main retires the promise"]);
@@ -137,7 +145,11 @@ describe("accepting a brief brings main in first", () => {
 describe("guards: what accepting must not do", () => {
 	it("A18: a brief that fails its contract is refused with the check's messages and main is not merged in", async () => {
 		behindMain();
-		p.commit(wt, { [briefPath]: draft(briefText(PLAN, { mustNotBreak: ["no-such-promise"] })) }, "bad");
+		p.commit(
+			wt,
+			{ [briefPath]: draft(briefText(PLAN, { mustNotBreak: ["no-such-promise"] })) },
+			"bad",
+		);
 		await expect(acceptBrief(p.trunk, PLAN)).rejects.toThrow(/no-such-promise/);
 		expect(existsSync(join(wt, "docs", "from-main.md"))).toBe(false);
 	});
@@ -156,7 +168,11 @@ describe("guards: what accepting must not do", () => {
 		const main = p.mainSha();
 		await acceptBrief(p.trunk, PLAN);
 		expect(p.mainSha()).toBe(main);
-		p.commit(wt, { [briefPath]: draft(briefText(PLAN, { mustNotBreak: ["no-such-promise"] })) }, "bad");
+		p.commit(
+			wt,
+			{ [briefPath]: draft(briefText(PLAN, { mustNotBreak: ["no-such-promise"] })) },
+			"bad",
+		);
 		await expect(acceptBrief(p.trunk, PLAN)).rejects.toThrow();
 		expect(p.mainSha()).toBe(main);
 	});
