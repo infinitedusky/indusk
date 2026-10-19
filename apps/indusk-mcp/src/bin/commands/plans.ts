@@ -28,6 +28,7 @@ import {
 	startPlan,
 } from "../../lib/plans/index.js";
 import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
+import { formatPlanTime, planTime } from "../../lib/timing/view.js";
 import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
 /** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
@@ -355,6 +356,16 @@ export function plansArchiveDead(projectRoot: string, opts: PlansArchiveDeadOpti
 			console.info(`  - ${s.name}: ${s.reason}`);
 		}
 	}
+}
+
+/**
+ * `indusk plans time <name>` — a plan's phases, unattended steps and test runs
+ * with their durations, and its total from the brief's acceptance to landing.
+ *
+ * promise: a-plan-says-how-long-it-took
+ */
+export function plansTime(root: string, name: string): Promise<void> {
+	return planVerb(async () => formatPlanTime(await planTime(root, name)));
 }
 
 /**

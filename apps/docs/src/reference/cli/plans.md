@@ -163,6 +163,10 @@ The files run through the project's test command, once per package, a file in th
 
 Each run that is not a `--list` appends a record to the plan's timing log in machine state (`indusk eval home` prints where): the plan, the phase or the landing, how many files ran for each reason, how long it took and whether it passed. The record is written beside the run and never changes which files run or the exit code; a record that cannot be written only prints a warning.
 
+### `plans time <name>`
+
+How long a plan took: its phases, unattended steps and test runs with their durations, and a total from the brief's acceptance to the plan's landing. See [`plans time`](/reference/cli/plans-time).
+
 ### `plans review <name> [--json]`
 
 What a person reads before accepting a built plan, assembled from its documents and its branch. The admin's review panel renders the JSON.

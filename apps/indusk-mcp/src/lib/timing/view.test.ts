@@ -3,10 +3,11 @@
 import { expect, it } from "vitest";
 import type { PhaseBoundaryRecord } from "../shape/boundary-record.js";
 import type { TimingRecord } from "./log.js";
-import { formatPlanTime, formatDuration, type PlanTimeReads, planTime } from "./view.js";
+import { formatDuration, formatPlanTime, type PlanTimeReads, planTime } from "./view.js";
 
 const P = "p";
-const iso = (min: number) => new Date(Date.parse("2026-06-01T08:00:00.000Z") + min * 60_000).toISOString();
+const iso = (min: number) =>
+	new Date(Date.parse("2026-06-01T08:00:00.000Z") + min * 60_000).toISOString();
 const ms = (min: number) => Date.parse(iso(min));
 
 const opening = (phase: number, min: number, kind?: "test" | "build"): PhaseBoundaryRecord => ({
@@ -73,7 +74,9 @@ it("A10 lists phases, steps and test runs in the order they happened, each with 
 		}),
 	});
 	expect(result.phases.map((p) => p.label)).toEqual(["Test Phase 1", "Build Phase 1"]);
-	expect(result.steps).toMatchObject([{ step: "work", durationMs: 6 * 60_000, outcome: "finished" }]);
+	expect(result.steps).toMatchObject([
+		{ step: "work", durationMs: 6 * 60_000, outcome: "finished" },
+	]);
 	expect(result.testRuns).toMatchObject([{ durationMs: 45_000, passed: true }]);
 });
 
@@ -92,7 +95,11 @@ it("A10 a phase ends at its recorded close, else when the next phase opened, els
 	const by = Object.fromEntries(result.phases.map((p) => [p.label, p]));
 	expect(by["Test Phase 1"]).toMatchObject({ durationMs: 30 * 60_000, derived: true, open: false });
 	// Build Phase 1 has a recorded close at minute 50
-	expect(by["Build Phase 1"]).toMatchObject({ durationMs: 20 * 60_000, derived: false, open: false });
+	expect(by["Build Phase 1"]).toMatchObject({
+		durationMs: 20 * 60_000,
+		derived: false,
+		open: false,
+	});
 	expect(by["Build Phase 2"]).toMatchObject({ durationMs: 40 * 60_000, open: true });
 });
 
@@ -136,9 +143,7 @@ it("A12 a plan recorded before this change prints what exists, names what has no
 		}),
 	});
 	expect(result.phases).toHaveLength(1);
-	expect(result.missing).toEqual(
-		expect.arrayContaining(["steps", "test runs", "acceptance time"]),
-	);
+	expect(result.missing).toEqual(expect.arrayContaining(["steps", "test runs", "acceptance time"]));
 	const text = formatPlanTime(result);
 	expect(text).toMatch(/no record of: .*steps.*test runs/);
 	expect(text).toMatch(/Build Phase 1/);

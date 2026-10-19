@@ -1,7 +1,7 @@
 ---
 title: "A plan says how long it took"
 date: 2026-10-19
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -50,20 +50,20 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 | A3 | A phase closed twice, or closed without having been opened, keeps one honest record and invents no time | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
 | A4 | A planning step that finishes leaves a record with its start, end and outcome "finished", still there after the step's session is gone | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A5 | A build step that ends in a blocker, a failure or a stop leaves a record naming that outcome | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
-| A6 | A step killed before it wrote its end shows in the view as started and never ended, not missing | Build Phase 2 | Build Phase 4 | written | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A6 | A step killed before it wrote its end shows in the view as started and never ended, not missing | Build Phase 2 | Build Phase 4 | passing | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A7 | A test run for a phase records the plan, the phase, the count of files run per reason, its duration and that it passed | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A8 | A test run at landing records "landing" in place of a phase, and a run with a failing file records that it did not pass | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A9 | Running a plan's tests twice records two runs in order, not one overwritten by the other | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
-| A10 | The command prints each phase, step and test run of a plan with its duration, in the order they happened | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
-| A11 | The command's total runs from the brief's acceptance to landing; for a plan not yet landed it says so and shows the time so far | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
-| A12 | A plan recorded before this change prints what exists, says what has no record, and does not fail | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
-| A13 | Run against a real plan in the worktree, the command prints a readable table a person can use to say which phase took longest | Build Phase 4 | Build Phase 4 | planned | live check | clause: a-plan-says-how-long-it-took/one-view | manual: `indusk plans time a-plan-says-how-long-it-took` from the plan's worktree; read which phase took longest |
+| A10 | The command prints each phase, step and test run of a plan with its duration, in the order they happened | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A11 | The command's total runs from the brief's acceptance to landing; for a plan not yet landed it says so and shows the time so far | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A12 | A plan recorded before this change prints what exists, says what has no record, and does not fail | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A13 | Run against a real plan in the worktree, the command prints a readable table a person can use to say which phase took longest | Build Phase 4 | Build Phase 4 | passing | live check | clause: a-plan-says-how-long-it-took/one-view | manual: `indusk plans time a-plan-says-how-long-it-took` from the plan's worktree; read which phase took longest |
 | A14 | With the phase record unwritable, opening and closing a phase still succeed, with a warning that the time was not recorded | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
 | A15 | With the step record unwritable, an unattended step still runs to its normal outcome and the build carries on | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A16 | With the test-run record unwritable, the plan's tests still run and the command exits with the tests' own result | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A17 | A record file that is corrupt, half-written or from an older shape is skipped by the view and by every writer, never thrown from | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
 | A18 | Recording a test run runs exactly the same files for the same plan, phase and landing as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the brief lists a-plan-runs-its-tests-and-what-must-not-break under Must not break, so the existing selection is pinned before any recorder touches it | apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts |
-| A19 | A duration is read from timestamps the same way across time zones and daylight-saving changes | Build Phase 1 | Build Phase 4 | written | unit | durations come from timestamps; a zone-dependent reading would make the data the later per-phase test decision rests on wrong | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A19 | A duration is read from timestamps the same way across time zones and daylight-saving changes | Build Phase 1 | Build Phase 4 | passing | unit | durations come from timestamps; a zone-dependent reading would make the data the later per-phase test decision rests on wrong | apps/indusk-mcp/src/lib/timing/view.test.ts |
 
 ## Checklist
 
@@ -372,25 +372,25 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
   A6, A10, A11, A12 and A19's second half in `lib/timing/view.test.ts`, per the deferral body above; commit red.
 
   </details>
-- [ ] Add the function that gathers a plan's phases, steps and test runs, with durations, and its total.
+- [x] Add the function that gathers a plan's phases, steps and test runs, with durations, and its total.
   <details><summary>Technical</summary>
 
   `lib/timing/view.ts`: `planTime(root, plan, { now, reads })` returns `{ phases, steps, testRuns, total, between, missing }`. Durations are `Date.parse(end) - Date.parse(start)` in epoch milliseconds, never stored (the test run's `durationMs` is the one stored fact). Phases come from `readBoundaries` caught tolerantly (a throw reports the boundary file unreadable and carries on) plus `phase-close`; a phase with no close shows "open" (or, if Build Phase 1 chose the derived close, ends at the next phase's opening). A `step-start` with no `step-end` is "started, never ended" with the time since start. `total` runs from the brief's `accepted_at` to the landing time, else to `now`, labelled "so far"; `between` is the total minus the listed durations, never hidden. `missing` names each kind with no record, so an older plan prints what exists and fails nowhere.
 
   </details>
-- [ ] Find the landing time and use it for the total.
+- [x] Find the landing time and use it for the total.
   <details><summary>Technical</summary>
 
   The ADR's second open decision. Read `lib/plans/land.ts` and the archive step for a recorded landing timestamp and prefer it; otherwise take the author time of the commit whose subject is `Merge <branch>: <plan> landed` (the subject `land.ts` writes), found through `lib/git.ts`. Record the one used in Notes.
 
   </details>
-- [ ] Print the result as three tables and a total, and add the command.
+- [x] Print the result as three tables and a total, and add the command.
   <details><summary>Technical</summary>
 
   `formatPlanTime(result): string` (pure) and `plansTime(root, name)` in `bin/commands/plans.ts` behind `plansCmd.command("time <name>")` in `bin/cli.ts`, with a description in the style of its neighbours. Durations print like `1h 04m`; the table order is the order things happened; the last lines are `total`, `between` and any `no record of: …`.
 
   </details>
-- [ ] Run the command on this plan's own worktree and read which phase took longest.
+- [x] Run the command on this plan's own worktree and read which phase took longest.
   <details><summary>Technical</summary>
 
   A13 (live check): `indusk plans time a-plan-says-how-long-it-took` from the worktree; the table must name each phase with a duration and a total "so far". Flip A13 to `skipped` with the command output pasted into Notes if the worktree's build has recorded nothing yet.
@@ -399,13 +399,13 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 
 #### Build Phase 4 Verification
 
-- [ ] The view tests pass, and the command runs on a real plan.
+- [x] The view tests pass, and the command runs on a real plan.
   <details><summary>Technical</summary>
 
   A6, A10, A11, A12, A19 pass (goes green): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing/view.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/timing/view.ts src/bin/commands/plans.ts`; A13 by the manual command above.
 
   </details>
-- [ ] Every row this plan names now passes, and the package type-checks and lints.
+- [x] Every row this plan names now passes, and the package type-checks and lints.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing src/lib/plans/plan-tests-selection.test.ts`; `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit`; `pnpm check`; then `indusk promises contract a-plan-says-how-long-it-took` exits 0.
@@ -414,7 +414,7 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 
 #### Build Phase 4 Context
 
-- [ ] Record the view's tolerance rule where the timing code is written.
+- [x] Record the view's tolerance rule where the timing code is written.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the timing entry: the view never throws on a record or a plan with none; `guard: lib/timing/view.test.ts carries clause: a-plan-says-how-long-it-took/one-view`.
@@ -423,13 +423,13 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 
 #### Build Phase 4 Document
 
-- [ ] Write the reference page for the command and publish the decision.
+- [x] Write the reference page for the command and publish the decision.
   <details><summary>Technical</summary>
 
   New `apps/docs/src/reference/cli/plans-time.md` (the command, its three tables, the total, "between", the four step outcomes from Build Phase 2's notes, where the log lives); update `apps/docs/src/reference/cli/plans.md` to link it; new `apps/docs/src/decisions/plan-timing.md` from the ADR; link both from the docs sidebar the way their neighbours are.
 
   </details>
-- [ ] Add the changelog entry.
+- [x] Add the changelog entry.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`: "Added `indusk plans time`: phases, unattended steps and test runs with their durations, and a plan's total."
@@ -471,4 +471,17 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 - **Shape (Build Phase 2)**: reviewed `timed-step.ts` and the admin's `classifierFor`; nothing found.
 - **Open (superseded): how a stopped step is told from a failed one.** Decided for now: a thrown abort is `stopped`, anything else with an error is `failed`; Build Phase 2 reads the session manager and refines it, recording the result here.
 - **Shape (Build Phase 3)**: reviewed `test-run.ts` and the edit to `plan-tests.ts`; nothing found. The `reached` count is always 0 today (no search for reached tests is made); it stays in the record because the log shape is the ADR's.
-- **Open: the landing time source.** Build Phase 4 confirms whether the archive records one; the fallback is the landing merge commit's time.
+- **Decision (Build Phase 4): the landing time is the trunk's landing merge commit.** `lib/plans/land.ts` records no landing timestamp and the archive step writes none; the view takes the author time of the first-parent commit on the main checkout whose subject is `Merge <branch>: <plan> landed`, and null (so "not yet landed") while none exists. `between` is the total less the phases' durations only: steps and test runs sit inside phases, so subtracting them too would count the same minutes twice.
+- **Live check A13 (Build Phase 4), run from this worktree, output as printed:**
+  ```
+  Phases
+    Build Phase 1  5m 30s  ended when the next opened
+    Build Phase 4  44s     open
+
+  total    22m 35s (so far, not yet landed)
+  between  16m 21s
+  no record of: steps, test runs
+  ```
+  It reads: durations per phase and a total "so far". Only two phases show because phase openings are written by the executing agent following the work skill and this unattended run opened only Build Phases 1 and 4; Test Phase 1, Build Phases 2 and 3 have no opening, and no step or test run was recorded (this run was one `/work` session, not the admin's runner, and `plans tests` was not run through the real home). That is what the view names under "no record of". Marked passing because the table is readable and honest about its gaps; a person should re-run it after an admin-started build.
+- **Shape (Build Phase 4)**: reviewed `view.ts`; the reads and the clock are injected, formatting is pure and separate from gathering; nothing found.
+- **Open (superseded): the landing time source.** Build Phase 4 confirms whether the archive records one; the fallback is the landing merge commit's time.

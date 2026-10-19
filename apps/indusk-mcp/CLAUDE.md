@@ -187,6 +187,8 @@ pointer; the pointer holds the story.
   A new unattended step kind is timed by being run through `timedStep` (`lib/timing/timed-step.ts`), which
   wraps the runner's `run` function at the admin's call sites; the runners are not edited. Guarded by
   `timing/timed-step.test.ts` (`clause: a-plan-says-how-long-it-took/steps-are-timed`).
+  `plans time` (`timing/view.ts`) never throws on a record or a plan with none: it prints what exists and
+  names what has no record. Guarded by `timing/view.test.ts` (`clause: a-plan-says-how-long-it-took/one-view`).
   — see `/decisions/plan-timing`
 
 ## Promises and telemetry
