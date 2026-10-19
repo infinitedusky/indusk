@@ -1,5 +1,4 @@
 // clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests
-// clause: a-plan-runs-its-tests-and-what-must-not-break/what-its-changes-reach
 // clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break
 // clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs
 // promise: a-plan-runs-its-tests-and-what-must-not-break
@@ -49,9 +48,23 @@ it("T1 a test phase and a build phase of the same number are different phases", 
 	expect(set.files.map((f) => f.path)).toEqual(["b.test.ts"]);
 });
 
-it("T2 reached tests are part of a phase's set, named as reached", () => {
-	const set = planTestSet({ ...reads, reached: ["r.test.ts"] }, { phase: phase("Build Phase 1") });
-	expect(set.files).toContainEqual({ path: "r.test.ts", reason: "reached" });
+// A search for the tests a change imports is no longer made, so a caller that still
+// hands one in changes nothing: a test a file merely imports does not run.
+const withReached = { ...reads, reached: ["r.test.ts"] };
+
+it("T1 a phase's set holds the Must-not-break promises' tests, named for the promise", () => {
+	const set = planTestSet(reads, { phase: phase("Build Phase 1") });
+	expect(set.files).toContainEqual({ path: "k.test.ts", reason: "must not break: kept" });
+});
+
+it("T1 a phase's set is its rows and the Must-not-break tests and nothing a change merely imports", () => {
+	const set = planTestSet(withReached, { phase: phase("Build Phase 1") });
+	expect(set.files.map((f) => f.path).sort()).toEqual(["a.test.ts", "k.test.ts"]);
+});
+
+it("T1 a phase names a Must-not-break promise that lists no test, as a landing does", () => {
+	const set = planTestSet({ ...reads, mustNotBreak: ["bare"] }, { phase: phase("Build Phase 1") });
+	expect(set.withoutTests).toEqual(["bare"]);
 });
 
 it("T4 landing adds every Must-not-break promise's tests", () => {
@@ -75,18 +88,14 @@ it("T4 a Must-not-break promise is found by an earlier name", () => {
 	expect(set.files.map((f) => f.path)).toContain("k.test.ts");
 });
 
-it("T6 landing holds nothing else", () => {
-	const set = planTestSet({ ...reads, reached: ["r.test.ts"] }, { landing: true });
-	expect(set.files.map((f) => f.path).sort()).toEqual([
-		"a.test.ts",
-		"b.test.ts",
-		"k.test.ts",
-		"r.test.ts",
-	]);
+it("T2 landing holds every row's files and the Must-not-break tests, and nothing a change merely imports", () => {
+	const set = planTestSet(withReached, { landing: true });
+	expect(set.files.map((f) => f.path).sort()).toEqual(["a.test.ts", "b.test.ts", "k.test.ts"]);
 });
 
-it("T6 a file two reasons name is in the set once", () => {
-	const set = planTestSet({ ...reads, reached: ["a.test.ts"] }, { landing: true });
+it("T2 a file two reasons name is in the set once", () => {
+	const both = { ...reads, registry: [{ name: "kept", tests: ["a.test.ts"] }] };
+	const set = planTestSet(both, { landing: true });
 	expect(set.files.filter((f) => f.path === "a.test.ts")).toHaveLength(1);
 });
 
