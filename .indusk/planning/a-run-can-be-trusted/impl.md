@@ -920,6 +920,18 @@ This phase makes the admin's offer of approval and the approve command ask one r
   `indusk promises change approval-waits-for-a-finished-plan --plan a-run-can-be-trusted --statement "A plan is offered for approval only when its impl is written, no session is still writing it, and its plan review is written for the documents as they stand with every finding answered; a plan whose impl is written without such a plan review, and that no run is still writing, is listed as needing its plan review." --reason "the offer read a plan review as answered without checking it was written for the documents as they stand"` (the planner's `change_promise` tool does the same).
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules by hand; nothing to change.
+  <details><summary>Technical</summary>
+
+  `prepareShapeReview` returned `review` with 24 files and no unreadable extension rules (read 2026-10-19 after Verification was green). `plan-review.ts` holds one reading with three small named parts (`planReviewRead`, `planReviewAnswered`, `planDocumentsHash`), each reachable by a test without the others; `refuseUnreadyPlanReview` in `approve.ts` is the one refusal for both the normal and the workbench approval and names which state refused; `readReview` in `read-planning.ts` now only maps the reader's answer onto the run's shape. The test fixture `approveWithReview` has one job, writing the review for the documents as they stand before the CLI approves.
+
+  </details>
+- [x] Shape — leave the signal's own reading of the review's hash beside the reader it judges.
+  <details><summary>Technical</summary>
+
+  `situation-signals.ts` reads the documents' hash (`readDocumentsHash`) and the review's `read:` line (`recordedRead`, a pattern) itself rather than calling `planDocumentsHash` / `planReviewRead` in `plan-review.ts`. Considered sharing them. Left as is: Decision 17 makes a signal read a source independent of the code it judges, and a signal that called the reader would agree with the page by construction. Whether the two hash-of-four-documents readers should share a file-reading helper is a cross-file question for `/cleanup`.
+
+  </details>
 
 #### Build Phase 5 Verification
 
@@ -934,8 +946,10 @@ This phase makes the admin's offer of approval and the approve command ask one r
 
 #### Build Phase 5 Context
 
-- [ ] Record that the plan review has one reader.
+- [x] Record that the plan review has one reader.
   <details><summary>Technical</summary>
+
+  Done 2026-10-19: the `lib/audit/` entry of `apps/indusk-mcp/CLAUDE.md` now names the four states, every asker (`plans approve` among them, refusing anything but answered), the guard `decisions-reader.approval.test.ts` with its promise, and the fixture a CLI approval in a test uses.
 
   `apps/indusk-mcp/CLAUDE.md` (its `lib/audit/` entry already says `planReviewState` is the one reading; add that `plans approve` calls it too): "guarded by `decisions-reader.approval.test.ts` (`promise: approval-waits-for-a-finished-plan`)" — destination: the package's area file.
 
