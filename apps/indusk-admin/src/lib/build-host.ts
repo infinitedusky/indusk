@@ -392,14 +392,15 @@ export async function startPlanning(
     }
     // A brief accepted by hand, or a run held for looks and started later, is
     // still planned on current main; a refusal here is the route's 409.
+    // The place for the run is taken first: a run that cannot start leaves the branch as it was.
+    free = sessionManager().admitBuild(project, plan);
+    where = await planLocation(project, plan);
+    if ("error" in where) throw new Error(where.error);
     await bringTrunkIntoPlan(root, plan, {
       refused: "its planning run did not start",
       again: "start its planning again",
       when: "its planning run",
     });
-    free = sessionManager().admitBuild(project, plan);
-    where = await planLocation(project, plan);
-    if ("error" in where) throw new Error(where.error);
   } catch (err) {
     release();
     free?.();

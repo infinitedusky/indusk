@@ -122,6 +122,7 @@ function planLifecycleProject(prefix: string): PlanLifecycleProject {
 let trunk = "";
 let wt = "";
 const runs: Array<{ sawMainFile: boolean }> = [];
+const place = vi.hoisted(() => ({ full: false }));
 
 vi.mock("@infinitedusky/indusk-mcp/build", async () => {
   const actual = await vi.importActual<
@@ -161,7 +162,10 @@ vi.mock("./session-host", () => ({
     Response.json({ error }, { status }),
   sessionManager: () => ({
     forPlan: () => undefined,
-    admitBuild: () => () => {},
+    admitBuild: () => {
+      if (place.full) throw new Error("every place is taken");
+      return () => {};
+    },
   }),
 }));
 vi.mock("./registry-client", () => ({ getProjectPath: () => trunk }));
@@ -172,6 +176,7 @@ import { planningConversationEnded, startPlanning } from "./build-host";
 let p: PlanLifecycleProject;
 beforeEach(() => {
   runs.length = 0;
+  place.full = false;
   p = planLifecycleProject("build-host-trunk");
   trunk = p.trunk;
   wt = p.makeWorktree(PLAN);
@@ -257,5 +262,34 @@ describe("the end of the accepting conversation starts the run once", () => {
     );
     expect(state).toBeNull();
     expect(runs).toHaveLength(0);
+  });
+});
+
+describe("a planning start that cannot go on leaves the branch as it was", () => {
+  it("A34: no place for the run on a branch behind main leaves the head where it was", async () => {
+    p.commit(trunk, { "docs/from-main.md": "main\n" }, "main moves");
+    p.commit(wt, { "docs/mine.md": "mine\n" }, "my work");
+    const head = git(wt, ["rev-parse", "HEAD"]);
+    place.full = true;
+    await expect(startPlanning(PROJECT, PLAN)).rejects.toThrow(/taken/);
+    expect(git(wt, ["rev-parse", "HEAD"])).toBe(head);
+    expect(existsSync(join(wt, "docs", "from-main.md"))).toBe(false);
+    expect(runs).toHaveLength(0);
+  });
+});
+
+describe("a plan with no branch of its own", () => {
+  it("A30: a plan planned on the trunk still starts its planning run", async () => {
+    const lone = planLifecycleProject("build-host-lone");
+    try {
+      lone.commit(lone.trunk, { [briefPath]: briefText(PLAN) }, "the brief");
+      trunk = lone.trunk;
+      wt = lone.trunk;
+      const state = await startPlanning(PROJECT, PLAN);
+      expect(state.started).toBe(true);
+      await vi.waitFor(() => expect(runs).toHaveLength(1));
+    } finally {
+      lone.cleanup();
+    }
   });
 });
