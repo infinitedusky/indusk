@@ -4,6 +4,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { addProject } from "../lib/admin/registry.js";
+import { readScanRecords, scanFinishedAfter } from "../lib/admin/scan-record.js";
+import { INCIDENT_WAIT_UPPER_BOUND_MS, waitForIncident } from "../lib/admin/wait-for-incident.js";
 import { gitOut, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { newTraceId } from "./helpers/local-jaeger.js";
 import { RELEASED, startTwoSources, type TwoSources } from "./helpers/two-sources.js";
@@ -14,13 +16,13 @@ import { RELEASED, startTwoSources, type TwoSources } from "./helpers/two-source
  * The thing no unit test can show: the admin daemon itself — `next start`,
  * with no page open — runs the recorder. A project naming a real always-on
  * server as its production source is registered; the daemon is started; a
- * violation is marked on the server; within a minute the incident is
- * committed on the project's trunk by the admin, and nothing was typed.
+ * violation is marked on the server; the incident is committed on the
+ * project's trunk by the admin, and nothing was typed. The test waits for
+ * that incident, or for the admin to finish a scan after the break was loaded
+ * and find none (`waitForIncident`) — never for a fixed minute.
  *
  * System tier: it starts a Jaeger, an always-on server and the admin daemon.
  */
-
-const MINUTE = 60_000;
 
 /**
  * a-run-can-be-trusted A59, A61 — clause: landing-tests-hold-under-load/recorder-waits-for-its-break.
@@ -30,6 +32,9 @@ const MINUTE = 60_000;
  * which adds no load to any other landing running beside this one.
  */
 const PAUSE_PAST_THE_OLD_MINUTE = 75_000;
+
+/** Startup, the pause and the commit's git work, on top of the wait's own upper bound. */
+const SETUP_AND_PAUSE_MARGIN_MS = 120_000;
 
 function recorderSuite(title: string, pauseAdminMs: number) {
 	describe.skipIf(SHOULD_SKIP)(title, () => {
@@ -56,11 +61,18 @@ function recorderSuite(title: string, pauseAdminMs: number) {
 			return existsSync(dir) ? readdirSync(dir) : [];
 		};
 
+		// The test's machine state holds only this project; its key is the registry's path for it
+		// (a resolved path on macOS), so the latest record is read rather than a guessed key.
+		const lastScan = () =>
+			Object.values(readScanRecords(t.env.INDUSK_HOME)).sort(
+				(a, b) => b.startedAt - a.startedAt,
+			)[0];
+
 		const adminPid = () =>
 			Number.parseInt(readFileSync(join(t.env.INDUSK_HOME, "admin-ui.pid"), "utf-8").trim(), 10);
 
 		it(
-			"within a minute of the break, with no page open, the incident is committed by the admin",
+			"after the break, with no page open, the incident is committed by the admin",
 			async () => {
 				const start = runCli(t.project.root, ["ui", "start", "--no-open", "--port", "0"], t.env);
 				expect(start.code, `${start.stdout}\n${start.stderr}`).toBe(0);
@@ -76,6 +88,7 @@ function recorderSuite(title: string, pauseAdminMs: number) {
 					},
 				]);
 				const marked = Date.now();
+				const breakName = `seat-holds/release (${RELEASED}) violated`;
 
 				const pid = adminPid();
 				let resume: ReturnType<typeof setTimeout> | undefined;
@@ -84,10 +97,15 @@ function recorderSuite(title: string, pauseAdminMs: number) {
 					resume = setTimeout(() => process.kill(pid, "SIGCONT"), pauseAdminMs);
 				}
 				try {
-					while (incidents().length === 0 && Date.now() - marked < MINUTE) {
-						await new Promise((r) => setTimeout(r, 1_000));
-					}
-					expect(incidents(), "no incident within a minute of the break").toHaveLength(1);
+					await waitForIncident({
+						now: Date.now,
+						sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+						incident: () => incidents()[0] ?? null,
+						scanFinishedAfterBreak: () => scanFinishedAfter(lastScan(), marked),
+						lastScanError: () => lastScan()?.error,
+						breakName,
+					});
+					expect(incidents(), `${breakName} was not recorded`).toHaveLength(1);
 					expect(gitOut(t.project.root, ["log", "-1", "--format=%s"])).toMatch(
 						/^chore\(indusk\): incident i-.* recorded by admin/,
 					);
@@ -103,7 +121,7 @@ function recorderSuite(title: string, pauseAdminMs: number) {
 					}
 				}
 			},
-			3 * MINUTE,
+			INCIDENT_WAIT_UPPER_BOUND_MS + SETUP_AND_PAUSE_MARGIN_MS,
 		);
 	});
 }

@@ -996,7 +996,7 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
   `apps/indusk-mcp/src/lib/admin/recorder-loop.ts` writes nothing today. Add a `scanRecord?(root, { startedAt, endedAt, ok, error? })` option, called by `tick` after each pass (in `finally`, `ok: false` with the message when the pass threw); the admin's wiring writes it whole (temp file and rename) to `<machine state>/recorder-scan.json`. Row A89 in `src/lib/admin/recorder-loop.scan.test.ts` with faked time and a pass that resolves and one that throws. Header `// clause: landing-tests-hold-under-load/recorder-waits-for-its-break`.
 
   </details>
-- [ ] Make the recorder test use it, asserting exactly what it asserted before.
+- [x] Make the recorder test use it, asserting exactly what it asserted before.
   <details><summary>Technical</summary>
 
   `src/__tests__/admin-recorder.test.ts`: replace the fixed `MINUTE` wait with `waitForIncident`, `scanFinishedAfterBreak` read from the scan record the previous task adds (under the test's `INDUSK_HOME`). Set the test's vitest timeout to `INCIDENT_WAIT_UPPER_BOUND_MS` plus the setup and pause margin (the 75 s pause, startup), derived from the constant, so vitest never ends it before the rule decides. Keep: one committed incident, same subject, clean tree, system tier; the delayed-scan case pauses the admin with `SIGSTOP`/`SIGCONT`, never a CPU load.
