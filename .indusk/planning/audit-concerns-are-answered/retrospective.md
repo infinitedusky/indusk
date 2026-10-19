@@ -92,3 +92,5 @@ wrong (0 / 0 recorded in the impl).
 ## Metrics
 
 - Files touched: 50; +1905 / −204.
+
+Landed on main at 58b0e18f, 2026-10-19. Installed (`pnpm install:local`) and the admin restarted; nothing published. Promises stay declared until the signals follow-on confirms them.
