@@ -27,3 +27,5 @@ built. T1 now guards both.
 - Two lines changed; the admin's production build passes in the worktree.
 - Falsification, cleanup and audit skipped with reasons (Sandy approved, 2026-10-19).
 - Shape findings: 0 raised, 0 judged wrong.
+
+Landed on main at d25bf51d, 2026-10-19. `pnpm install:local` then succeeded on main (the install the bug had broken; T2 confirmed) and `indusk plans accept-brief` is in the installed build. Nothing published.

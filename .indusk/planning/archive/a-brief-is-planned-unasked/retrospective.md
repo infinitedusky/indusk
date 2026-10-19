@@ -77,3 +77,5 @@ reviewed), 0 judged wrong by a human.
 - Each phase's own test set: 9–11 files, about 12 s
 
 Landed on main at d8cd4eafc, 2026-10-19. Installed with `pnpm install:local`; nothing published. Accepted with the plan's own build, since the installed one did not yet read the admin's exclude list.
+
+The install that failed after this landing succeeded once admin-builds-with-the-planning-reader landed (d25bf51d).
