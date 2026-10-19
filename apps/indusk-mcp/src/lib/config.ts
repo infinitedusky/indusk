@@ -55,6 +55,11 @@ export interface WorkflowSteps {
 		/** Installs the landed build locally, run after the merge; a project that publishes per plan declares none. */
 		install?: string;
 	};
+	/**
+	 * Whether `indusk release` waits for open follow-on plans (decisions-as-questions);
+	 * absent is on, `false` turns the wait off for a project whose main deploys.
+	 */
+	release_follow_on?: boolean;
 	release?: {
 		/** The command that publishes or deploys. */
 		command?: string;

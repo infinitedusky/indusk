@@ -16,3 +16,13 @@ Loaded by Claude Code when a file under `src/lib/questions/` is read
   never approves a brief, a test plan, a look or an ADR.
 - **Every question is kept in the plan's history in all four states**, through
   `plans/history.ts`'s `appendHistoryLine`, the one writer of that file.
+- **A plan waiting on a held question holds no session slot.** A question that
+  holds ends its run, so `SessionManager.holdQuestion` takes the plan out of the
+  set `capRefusal` counts; one on a set time keeps its session and its place.
+  `runningCount` (`session/question-wait.ts`) is the one count `sessions.max`
+  reads. — guarded by `question-wait.test.ts` (`promise: sessions-are-capped`)
+- **A choice is asked through `ask_decision`, never `AskUserQuestion`, in an
+  unattended run**: `protocol.ts` turns its permission request into a `question`
+  event marked `decision`, `build-session.ts` records it (`decision-request.ts`)
+  and a plain question is refused naming the tool. A conversation session's
+  question is unchanged.

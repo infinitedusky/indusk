@@ -85,9 +85,7 @@ export async function POST(
         record: (entry) => appendDecision(root, name, entry),
         questions: {
           answer: (id, text) => {
-            const q = readQuestions(root, name).find((x) => x.id === id);
-            if (!q) throw new Error(`${name} has no question ${id}`);
-            recordQuestion(root, applyAnswer(q, text, Date.now()));
+            answerQuestionRecord(root, name, id, text);
           },
           resume: () => resumeAfterQuestion(project, name),
           byRequest: (requestId) =>

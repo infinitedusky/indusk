@@ -38,6 +38,12 @@ export interface ReleaseDeps {
 	 * `failed: []`.
 	 */
 	settleFailures?(slow: SlowRun): SettledFailures;
+	/**
+	 * The follow-on plans still open (decisions-as-questions): the release waits for them,
+	 * before any publish step. Absent reads as none. `workflow.steps.release_follow_on: false`
+	 * turns the wait off.
+	 */
+	openFollowOns?(): string[];
 }
 
 /** One failing file and where it was routed: `incident <id>` or `plan <name>`. */
@@ -80,6 +86,8 @@ export interface ReleaseOutcome {
 	recorded: SettledFailures;
 	/** What a reader should look at when the release is published and not done, or a run was red. */
 	openFailures: string[];
+	/** The follow-on plans that refused the release: nothing ran while any is open. */
+	waitingOn?: string[];
 }
 
 const EMPTY: SettledFailures = { failed: [], flakes: [] };
@@ -96,6 +104,10 @@ export function runRelease(deps: ReleaseDeps): ReleaseOutcome {
 		openFailures: [],
 	};
 	if (!release.command) return outcome;
+
+	// A known-wrong thing on main waits for a person before it is published (clause release-refuses).
+	const waiting = deps.steps.release_follow_on === false ? [] : (deps.openFollowOns?.() ?? []);
+	if (waiting.length > 0) return { ...outcome, waitingOn: waiting };
 
 	const runSlow = (): boolean => {
 		if (!slowSpec) return true;

@@ -44,6 +44,18 @@ A slow run that a fully green run already covered is skipped, with the same rule
 
 `slow_tests.report` is a glob of JUnit files; `slow_tests.rerun` is optional and must contain `{files}`. A project that declares no `slow_tests` runs only its command.
 
+## Waiting for a follow-on
+
+Before any step above runs, the release looks for follow-on plans: a plan whose brief carries `follow_on_of: <plan>/<question-id>`, opened when someone's late answer to a question an unattended run had already sent ahead disagreed with what the run did (see [Questions](/guide/questions)). While one is open the release refuses, publishes nothing, runs no slow tests, and names each open follow-on:
+
+```
+release refused: 2 follow-on plans are still open — seat-holds-q-1 (follow-on to seat-holds/q-1, draft); …
+```
+
+A follow-on is closed once it is **landed**, **abandoned** or **archived**, and only then does the release go on. An ordinary plan never blocks it, and **landing never waits**: a plan lands, and a follow-on lands, whatever else is open. The dead-draft sweep (`indusk plans archive-dead`) leaves a follow-on alone however old it is, so a person closes it.
+
+`workflow.steps.release_follow_on` moves the wait: absent or `true` is the default (the release waits); `false` turns it off, for a project whose main deploys and which would rather wait at the pull request.
+
 ## Outcome and exit
 
 | Line printed | Meaning |

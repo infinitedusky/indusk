@@ -17,8 +17,9 @@ import {
 	recordGreenRun,
 } from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
-import type { WorkflowSteps } from "../../lib/config.js";
+import { getPlanningDir, type WorkflowSteps } from "../../lib/config.js";
 import { announceIncidents } from "../../lib/release/announce.js";
+import { followOnRefusal, openFollowOns } from "../../lib/release/follow-on-refusal.js";
 import { recordOf, recordRelease, releaseVersion } from "../../lib/release/record.js";
 import { type Routed, routeFailures } from "../../lib/release/route.js";
 import { type ReleaseOutcome, runRelease } from "../../lib/release/run.js";
@@ -47,7 +48,14 @@ export async function releaseCommand(checkout: string): Promise<number> {
 		codeKey: () => codeKey(root, steps),
 		coveringRun: (key) => findCoveringRun(root, key),
 		recordGreen: (run) => recordGreenRun(root, { ...run, cwd: root, sha: headCommit(root) }),
+		openFollowOns: () => openFollowOns(getPlanningDir(root)).map((o) => o.name),
 	});
+
+	if (outcome.waitingOn) {
+		const open = openFollowOns(getPlanningDir(root));
+		console.error(followOnRefusal(open));
+		return 1;
+	}
 
 	if (!outcome.declared) {
 		console.error(

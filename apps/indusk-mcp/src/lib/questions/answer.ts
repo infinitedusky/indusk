@@ -1,3 +1,5 @@
+import { differs, openFollowOnOnTrunk } from "./follow-on.js";
+import { readQuestions, recordQuestion } from "./history.js";
 import { isAnswer, type Question } from "./record.js";
 
 /**
@@ -33,4 +35,28 @@ export function answersNote(questions: readonly Question[]): string {
 	if (questions.length === 0) return "";
 	const lines = questions.map((q) => `- ${q.id}, "${q.text}" — the person answered: ${q.answer}`);
 	return `\n\nQuestions you asked earlier have been answered. Use these answers, and do not ask them again:\n${lines.join("\n")}\n`;
+}
+
+/**
+ * Apply the person's answer to question `id` of `plan` and keep it in the history.
+ * A late answer (the question already went ahead) that differs from what was done
+ * also opens the plan's one draft follow-on, linked from the record (ADR decision 8).
+ * Throws on an empty reply, an unknown question, or one already answered.
+ */
+export function answerQuestionRecord(
+	anyCheckout: string,
+	plan: string,
+	id: string,
+	text: string,
+	now = Date.now(),
+): Question {
+	const q = readQuestions(anyCheckout, plan).find((x) => x.id === id);
+	if (!q) throw new Error(`${plan} has no question ${id}`);
+	let next = applyAnswer(q, text, now);
+	if (next.state === "answered-late" && differs(next, text)) {
+		const follow = openFollowOnOnTrunk(anyCheckout, next, text);
+		if (follow.plan) next = { ...next, followOn: follow.plan };
+	}
+	recordQuestion(anyCheckout, next);
+	return next;
 }

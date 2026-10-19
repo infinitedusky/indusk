@@ -23,7 +23,7 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 	if (steps === undefined) return {};
 	if (!isObject(steps)) throw new Error("workflow.steps must be an object of steps");
 	const out: WorkflowSteps = {};
-	const known = new Set<string>(["land", "release", ...TIER_STEPS]);
+	const known = new Set<string>(["land", "release", "release_follow_on", ...TIER_STEPS]);
 	for (const key of Object.keys(steps)) {
 		if (!known.has(key)) {
 			throw new TierConfigError(`workflow.steps.${key} is not a step InDusk reads`);
@@ -39,6 +39,12 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 			);
 		}
 		out[step] = { tier };
+	}
+	if (steps.release_follow_on !== undefined) {
+		if (typeof steps.release_follow_on !== "boolean") {
+			throw new Error("workflow.steps.release_follow_on must be true or false");
+		}
+		out.release_follow_on = steps.release_follow_on;
 	}
 	if (steps.land !== undefined) {
 		const land = section(steps.land, "land");
