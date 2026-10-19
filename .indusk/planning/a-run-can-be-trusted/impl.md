@@ -697,20 +697,22 @@ This phase adds a hook on the shell tool that reads each command and refuses one
   New `indusk plans archive <plan>` in `apps/indusk-mcp/src/bin/commands/plans.ts` over a new `apps/indusk-mcp/src/lib/plans/archive.ts`: `git mv .indusk/planning/<plan> .indusk/planning/archive/<plan>` run by the package (creating `archive/` first), refused when the plan's promises are not confirmed (the retrospective's Step 8 order) or the target exists. Reuse the folder-move helper behind `plans archive-dead` where it fits. Change Step 9 of `apps/indusk-mcp/skills/retrospective.md` from the raw `mv` to `indusk plans archive {plan-name}`, then run `indusk update` in this worktree so `.claude/skills/retrospective/` is synced from the package (never edited directly; `skill-sync-parity.test.ts`). Row A80 in `src/lib/plans/archive.test.ts`: the command moves the folder in a temp repo, the guard's `refusalFor("indusk plans archive x", cwd)` is null, and the skill's Step 9 names the command and no `mv`.
 
   </details>
-- [ ] Report the signal for the clause that a shell write is refused.
+- [x] Report the signal for the clause that a shell write is refused.
   <details><summary>Technical</summary>
 
   signal: `a-plan-document-is-written-through-its-checks/shell-write-refused` — read in the decision file and the plan folders on disk, reported from `apps/indusk-mcp/src/lib/promises/clause-verdicts.ts` by the drain, never by the hook. Upheld for a refusal the shell parser reads as a write to a plan path; `broken`, naming the file and the command, for an allowed command after which a plan document changed on disk (Decision 8).
 
   </details>
-- [ ] Report the signal for the limit that reads pass.
+- [x] Report the signal for the limit that reads pass.
   <details><summary>Technical</summary>
 
   signal: `a-plan-document-is-written-through-its-checks/reads-pass` — read in the decision file and the plan folders on disk, reported from `apps/indusk-mcp/src/lib/promises/clause-verdicts.ts` by the drain. `broken`, naming the command, for a refusal the shell parser reads as only reading; upheld for an allowed command that named a plan path and changed nothing on disk. A wrongful refusal of a read is never counted for the other clause.
 
   </details>
-- [ ] Add the two contract test files to the system tier.
+- [x] Add the two contract test files to the system tier.
   <details><summary>Technical</summary>
+
+  Already done: all four files were in `SYSTEM` before this phase (Test Phase 1 added the guard's, the clause-signals' and accept-brief's contracts; Build Phase 1 added `run-liveness.contract`), so nothing was added here.
 
   `apps/indusk-mcp/vitest.tiers.ts`: add `src/__tests__/plan-write-guard.contract.test.ts` and `src/__tests__/impl-clause-signals.contract.test.ts` to `SYSTEM` (and, if their own phases have not already, `run-liveness.contract.test.ts` and `accept-brief-signals.contract.test.ts`) (they run a hook as a process, as Claude Code runs it; `everyday-tests-never-wait` fails them otherwise); landing runs both tiers.
 
