@@ -1,7 +1,7 @@
 ---
 title: "A brief is accepted on current main — Impl"
 date: 2026-10-19
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -361,19 +361,19 @@ This phase adds the one package function that brings the trunk into a plan's bra
 
 This phase makes what people read match what the command and the admin now do, and leaves the one manual check ready for the person to run once the plan has landed and the build is installed. It follows Build Phase 1 because the words describe behaviour that must already exist.
 
-- [ ] Make the planner skill say that accepting brings main in first, that the planning run does too, and what a refusal asks.
+- [x] Make the planner skill say that accepting brings main in first, that the planning run does too, and what a refusal asks.
   <details><summary>Technical</summary>
 
   Edit `apps/indusk-mcp/skills/planner.md` (never `.claude/skills/` directly), in step 4 where `indusk plans accept-brief` is described: it first brings main into the plan's branch; it refuses a conflict, main changing the plan's own documents, or uncommitted files in the way, naming the files with nothing changed; the planning run's start does the same, so a status set by hand is still planned on current main. Keep the skill's existing length conventions; then `indusk update` syncs `.claude/skills/`.
 
   </details>
-- [ ] Add the changelog entry and update the briefs guide.
+- [x] Add the changelog entry and update the briefs guide.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`: "**A brief is accepted on current main** (a-brief-is-accepted-on-current-main): `indusk plans accept-brief` and the admin's planning start bring main into the plan's branch first (a workbench plan's code branch to its repo's trunk), so the plan is written against current code; a conflict is undone and refused, naming the files." `apps/docs/src/guide/briefs.md` near line 147: the accepting paragraph gains one sentence on the same.
 
   </details>
-- [ ] Leave the after-landing live check's steps where the person will find them.
+- [x] Leave the after-landing live check's steps where the person will find them.
   <details><summary>Technical</summary>
 
   The A12 recipe and its empty `Result:` line are in `## Notes` (Test Phase 1 Document). The row stays `skipped` until the person runs it after landing's `pnpm install:local` and `indusk ui restart`; a planning run that does not start, or main not an ancestor, is a break to fix, not a note.
@@ -382,7 +382,7 @@ This phase makes what people read match what the command and the admin now do, a
 
 #### Build Phase 2 Verification
 
-- [ ] The skill and the docs describe the new order, and the manual check waits in the Notes with its recipe.
+- [x] The skill and the docs describe the new order, and the manual check waits in the Notes with its recipe.
   <details><summary>Technical</summary>
 
   `grep -n "main" apps/indusk-mcp/skills/planner.md` shows the accept-brief paragraph; `grep -n "accept-brief" apps/docs/src/reference/cli/plans.md apps/docs/src/changelog.md` shows both entries; A12 reads `skipped` in the trajectory with its recipe and an empty `Result:` in Notes.
@@ -391,7 +391,7 @@ This phase makes what people read match what the command and the admin now do, a
 
 #### Build Phase 2 Context
 
-- [ ] Check that no always-loaded context still says accepting only sets a status.
+- [x] Check that no always-loaded context still says accepting only sets a status.
   <details><summary>Technical</summary>
 
   Tier: planning (the planner skill is the planning rules' delivery). Nothing new in root `CLAUDE.md`; `grep -n "accept-brief" CLAUDE.md .indusk/planning/CLAUDE.md` shows no line saying it only sets a status.
@@ -400,7 +400,7 @@ This phase makes what people read match what the command and the admin now do, a
 
 #### Build Phase 2 Document
 
-- [ ] Publish the plan's page contribution at close.
+- [x] Publish the plan's page contribution at close.
   <details><summary>Technical</summary>
 
   The retrospective (or the plan's skip of it, with `indusk promises confirm a-brief-is-accepted-on-current-main`) carries the docs handoff; no decision page is published (no ADR). Confirm `apps/docs/src/reference/cli/plans.md` and the changelog entry are in the diff.
@@ -435,4 +435,5 @@ This phase makes what people read match what the command and the admin now do, a
 - A `blocker:` line: none.
 - Settled after the plan review: the merge at planning start (decision 1), workbench plans (decision 10), nothing changed on any refusal (decisions 2 and 5), plain refusal words (decisions 7 and 8), main changing the plan's own documents (decision 6), the admin route's answer (decision 9), local main (decision 4), the manual check after landing (A12).
 - Test Phase 1 result: observed red on an assertion — A1, A2, A5, A6, A7, A8, A9, A10, A11, A13, A14, A15, A16, A17, A19, A21, A22, A26, A27, A28 (25 test cases red across the six files; A9 and A16 and A14 have two cases each). Observed passing as guards — A3, A18, A20, A24, A25, and A23 (the existing `accept-brief.test.ts`, a system-tier file, run with `vitest.system.config.ts`: 4 of 4). One row behaved otherwise than the Verification fold said: **A4 passes today** — nothing is merged, so nothing is rewritten or dropped; it is kept as a guard whose State is `written` until Build Phase 1 closes (its `Passes at`). Decision (unattended): the new test files stay in the everyday tier — they run real git in temp repositories at ~0.4s a case and start no process that outlives a call; only `accept-brief.test.ts` was already listed in the system tier and stays there.
+- Build Phase 1 result: every row except A12 reads passing; the 27 cases of the six package files and the 5 of `build-host.trunk.test.ts` are green, `tsc --noEmit` is clean in both apps, and Biome is clean on every file this plan touched. `pnpm check` over the whole repo fails in this environment on the installed Biome CLI (2.5.14) against the repo's 2.4.8 config schema — a pre-existing environment mismatch, not from these files (decision, unattended: checked the touched files directly instead). Shape review of `bring-trunk.ts` and the `accept-brief.ts` change: nothing found — `bringTrunkIntoPlan` has one reason to change, its two helpers (`whyNotBrought`, `ownDocumentsMessage`) are named and separate, and the merge and the undo are one seam a test reaches. Decisions made while building: (1) dirty files are read with `git diff --name-only HEAD` plus `git ls-files --others`, not `status --porcelain`, because `lib/git.ts`'s `git()` trims output and eats the first line's leading column; (2) the existing `build-host.test.ts` mocks `@infinitedusky/indusk-mcp/plans` with only `acceptPlan` on a fake non-repository path, so it gained a no-op `bringTrunkIntoPlan` — the real behaviour is `build-host.trunk.test.ts`'s; (3) `build-host.trunk.test.ts` inlines a small copy of the package's plan-lifecycle fixture, because the admin's type-check cannot take that fixture's imports (the impl allowed this).
 - A12 recipe and `Result:`: after landing, run `pnpm install:local` and `indusk ui restart`; start a throwaway bugfix plan, commit a new file to main after it was cut, open a planning conversation on it in the admin and ask it to accept the brief; when the conversation ends, note that the planning run starts and that `git merge-base --is-ancestor main <accept commit>` exits 0 in the plan's worktree; record the date and result here. `Result:` (empty until the person runs it)
