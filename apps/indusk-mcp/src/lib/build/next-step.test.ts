@@ -52,6 +52,7 @@ function fixturePlan(opts: { open?: boolean; blocker?: string } = {}): BuildPlan
 		impl: parseImplString(text),
 		trajectory: parseTrajectory(matter(text).content),
 		readiness: ready,
+		amendments: [],
 	};
 }
 
@@ -134,5 +135,31 @@ describe("A15 — an over-long skip reason is shortened, not re-run", () => {
 			),
 		);
 		expect(step).toMatchObject({ step: "shorten-reason", ritual: "cleanup" });
+	});
+});
+
+// clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person
+describe("A12 — a waiting amendment stops the build for re-approval", () => {
+	it("stops by name, instead of running a step", () => {
+		const plan = { ...fixturePlan(), amendments: ["promise a-x"] };
+		expect(nextBuildStep(plan)).toEqual({ step: "amendment", amendments: ["promise a-x"] });
+	});
+	it("stops by name when every phase is closed too", () => {
+		const plan = { ...fixturePlan({ open: false }), amendments: ["promise a-x"] };
+		expect(nextBuildStep(plan).step).toBe("amendment");
+	});
+});
+
+// promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes
+describe("A14 — the audit runs when the build phases close, before falsification", () => {
+	const closed = (missing: string[]) => {
+		const plan = fixturePlan({ open: false });
+		return { ...plan, readiness: { ...ready, passes: false, missing } };
+	};
+	it("is the audit while the audit, falsification and cleanup are to do", () => {
+		expect(nextBuildStep(closed(["falsification", "cleanup", "audit"]))).toEqual({ step: "audit" });
+	});
+	it("is falsification once the audit file exists", () => {
+		expect(nextBuildStep(closed(["falsification", "cleanup"]))).toEqual({ step: "falsify" });
 	});
 });
