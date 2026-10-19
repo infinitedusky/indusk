@@ -28,8 +28,13 @@ const at = (
 	contractOk: true,
 	unapprovedLooks: [],
 	blocker: null,
+	review: { exists: false, complete: false, dismissals: [], amendments: [] },
 	...over,
 });
+
+const reviewed: Partial<PlanningState> = {
+	review: { exists: true, complete: true, dismissals: [], amendments: [] },
+};
 
 function scripted(states: PlanningState[], opts: { stuck?: boolean } = {}) {
 	let i = 0;
@@ -48,15 +53,17 @@ function scripted(states: PlanningState[], opts: { stuck?: boolean } = {}) {
 }
 
 describe("A7 — a planning run ends at approval, a blocker, or no progress", () => {
-	it("writes the test plan, the ADR and the impl, then stops waiting for approval", async () => {
+	it("writes the test plan, the ADR and the impl, has the plan read, then stops waiting for approval", async () => {
 		const s = scripted([
 			at(absent, absent, absent),
 			at(good, absent, absent),
 			at(good, good, absent),
 			at(good, good, good),
+			at(good, good, good, reviewed),
 		]);
 		expect(await runPlanning(s.deps)).toEqual({ step: "ready-for-approval" });
-		expect(s.ran).toEqual(["plan-test-plan", "plan-adr", "plan-impl"]);
+		// Moved by audit-concerns-are-answered A21: the plan review is the run's last step.
+		expect(s.ran).toEqual(["plan-test-plan", "plan-adr", "plan-impl", "plan-review"]);
 	});
 
 	it("ends with the blocker's reason when a step writes one", async () => {

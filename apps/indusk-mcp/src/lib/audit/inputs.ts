@@ -205,3 +205,37 @@ export async function auditInputs(
 
 	return { plan, approvedAt: sha, documents, implAsApproved, trajectoryNow, ...code };
 }
+
+/**
+ * What the plan review's reader is handed before approval (audit-concerns-are-answered,
+ * ADR D9): the four documents as they stand and the tracked-file list, nothing else —
+ * never `research.md`, which holds the planning conversation's decisions, and no diff,
+ * since no code exists yet. A document the plan lacks is null.
+ *
+ * promise: the-auditor-sees-the-plan-not-the-session
+ * clause: a-plan-is-read-cold-before-approval/the-reader-sees-documents-only
+ */
+export interface PlanReviewInputs {
+	plan: string;
+	documents: Record<"brief" | "testPlan" | "adr" | "impl", AuditText | null>;
+	/** `git ls-tree -r --name-only <branch>` less `.indusk/`: every tracked file. */
+	tree: string;
+}
+
+export async function planReviewInputs(checkout: string, plan: string): Promise<PlanReviewInputs> {
+	const src = await auditSource(checkout, plan);
+	const { docsRoot, planDir } = src;
+	const doc = (file: string): AuditText | null =>
+		existsSync(join(docsRoot, planDir, file)) ? readText(docsRoot, `${planDir}/${file}`) : null;
+	const { tree } = await codeChanges(src.code);
+	return {
+		plan,
+		documents: {
+			brief: doc("brief.md"),
+			testPlan: doc("test-plan.md"),
+			adr: doc("adr.md"),
+			impl: doc("impl.md"),
+		},
+		tree,
+	};
+}

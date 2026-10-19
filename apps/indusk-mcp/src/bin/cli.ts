@@ -1125,6 +1125,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("review-inputs <name>")
+	.description(
+		"What the plan review's reader is handed before approval, as JSON: the plan's brief, test plan, ADR and impl as they stand and every tracked file — never the research",
+	)
+	.action(async (name: string) => {
+		const { plansReviewInputs } = await import("./commands/plans.js");
+		await plansReviewInputs(process.cwd(), name);
+	});
+
+plansCmd
 	.command("audit-answers <name>")
 	.description(
 		"Every dismissal and amendment answer in the plan's audit.md, for the person; exits 2 naming each finding or question still to answer",

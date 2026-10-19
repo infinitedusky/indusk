@@ -124,6 +124,10 @@ What the auditor is handed, as JSON, read from the plan's worktree and branch (a
 
 The approval is the first-parent merge on the trunk whose subject starts `plan(<name>): approved` — for a workbench plan, the plain commit of that subject on the workbench root's branch, since `plans approve` merges nothing there. A plan with no such commit is refused, naming the plan: an audit of an unapproved plan has no impl "as approved". When history was rewritten and the subject cannot be found, `--approved <sha>` names the merge by hand.
 
+### `plans review-inputs <name>`
+
+What the plan review's reader is handed before approval, as JSON, read from the plan's worktree: `documents` (`brief`, `testPlan`, `adr` and `impl` as they stand, each `{ path, text }` or `null` when the plan has none) and `tree` (every tracked file, less `.indusk/`). Never `research.md`, which holds the planning conversation's decisions, and no diff — no code exists yet. It writes nothing. A planning run's last step, `plan-review`, runs `/audit <name> --before-approval` over it and writes `plan-review.md`; the run is ready for approval once every finding in it is answered, and its stop carries each dismissal and amendment answer for the person.
+
 ### `plans audit-answers <name> [--plan-review]`
 
 Reads `audit.md` in the plan folder (with `--plan-review`, `plan-review.md`, the read before approval) from the plan's worktree and prints every dismissal (`<question> — <finding> — nothing: <reason>`) and every amendment answer (`… — amendment: <part of the brief>`), so the person sees each concern the plan's agent waved away or sent back to them. It writes nothing. A finding with no `breaks when:` line, no answer, or a signal answer naming no `clause: <promise>/<clause>`, a missing question, or findings with no `What let these through?` section (the audit's, not the plan review's) exit it with code 2, naming each; the plan's agent answers them and runs it again.

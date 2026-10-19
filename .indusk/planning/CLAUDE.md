@@ -184,13 +184,20 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
 - **Commit cadence**: one commit per checklist item on the plan's
   `plan/{name}` branch, intent-named; in a monorepo, one commit per app or
   context; merge and delete fast. — see `/reference/skills/work`
-- **Close-out rituals**: `/work` → `/falsify` (authors a Falsification Phase)
+- **A plan is read cold before it is presented, and audited before falsification;
+  the agent answers every concern.** `/audit {plan} --before-approval` has a fresh
+  reader write `plan-review.md`, answered before approval; the audit's `audit.md`
+  is answered the same way (a fix, a signal naming a clause, or a reason). An
+  answer that would change a promise, an expectation or a look is an amendment:
+  the session stops for the person. Every "nothing" answer is shown to the
+  person (`indusk plans audit-answers`). — see `/decisions/audit-concerns-are-answered`
+- **Close-out rituals**: `/work` → `/audit` (a fresh reader writes `audit.md`,
+  answered at once; advisory) → `/falsify` (authors a Falsification Phase)
   → `/work` → `/cleanup` (authors a Cleanup Phase; its threshold is
-  attention-focus, not a cap) → `/work` → `/audit` (a fresh reader writes
-  `audit.md`; advisory) → `/retrospective`, whose Step 0 blocks unless both
-  rituals are terminal or skipped with a reason and `audit.md` exists or the
-  impl carries `audit: skipped` + `audit_reason` — the file's existence is
-  read, never its content. Ritual phases are detected by titles that START
+  attention-focus, not a cap) → `/work` → `/retrospective`, whose Step 0
+  blocks unless both rituals are terminal or skipped with a reason and
+  `audit.md` exists or the impl carries `audit: skipped` + `audit_reason` —
+  the file's existence is read, never its content. Ritual phases are detected by titles that START
   with the ritual word. The retrospective
   confirms the plan's promises (`indusk promises confirm <plan>`) before it
   archives; a declared promise no passing row names blocks the close. A

@@ -79,11 +79,11 @@ amendment. Every concern waved away is shown to the person.
 | A15 | The audit, falsify, cleanup and retrospective instructions give the order build, audit, falsify, cleanup, retrospective | Test Phase 1 | Build Phase 4 | written | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A16 | The audit's before-approval instructions put the four plan questions to the reader, as the reader's exported list names them | Test Phase 1 | Build Phase 4 | written | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A17 | Reading a plan review with one of the four questions missing reports it incomplete, naming the question; one with all four passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A18 | The plan review's inputs are the brief, test plan, ADR and impl as they stand and the tracked-file list, and nothing else | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-is-read-cold-before-approval/the-reader-sees-documents-only | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
+| A18 | The plan review's inputs are the brief, test plan, ADR and impl as they stand and the tracked-file list, and nothing else | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-reader-sees-documents-only | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
 | A19 | The audit's instructions tell the planning agent to answer each plan-review finding by changing a document or with a reason and to show the dismissals; the planner's tell it to run the plan review before presenting a plan written by hand | Test Phase 1 | Build Phase 4 | written | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
-| A20 | The planning run's ready-for-approval stop lists each plan-review dismissal with its finding and reason | Test Phase 1 | Build Phase 3 | written | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
-| A21 | Once the impl and the contract pass, the planning run's next step is the plan review; while it is missing, incomplete or unanswered it stays next; once answered, the run is ready for approval | Test Phase 1 | Build Phase 3 | written | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
-| A22 | The plan review is a planning step, so approving is refused from inside it | Test Phase 1 | Build Phase 3 | written | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/step-env.test.ts |
+| A20 | The planning run's ready-for-approval stop lists each plan-review dismissal with its finding and reason | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
+| A21 | Once the impl and the contract pass, the planning run's next step is the plan review; while it is missing, incomplete or unanswered it stays next; once answered, the run is ready for approval | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
+| A22 | The plan review is a planning step, so approving is refused from inside it | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/step-env.test.ts |
 | A23 | The next unattended planning run after landing writes an answered plan review before it stops for approval | Build Phase 4 | Build Phase 4 | planned | live check | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | manual: after landing, `pnpm install:local` and `indusk ui restart`, accept a brief in the admin; read the run's steps for a plan-review step after plan-impl, `plan-review.md` in the plan folder with every finding answered, and the ready-for-approval stop listing its dismissals |
 
 ### Deferred Verification
@@ -360,25 +360,25 @@ This phase adds what the plan review's reader is handed and the command that
 prints it, makes the review the unattended planning run's last step, and puts
 its dismissals in the stop that asks the person for approval.
 
-- [ ] Write the review inputs' test from the recorded body.
+- [x] Write the review inputs' test from the recorded body. Decision: written over the file's own fixture plan (a worktree with committed documents), through `planReviewInputs` directly, rather than the recorded `planReviewInputs(root, "p")` placeholder; the file is system-tier, run with `vitest.system.config.ts`.
   <details><summary>Technical</summary>
 
   A18 in `apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts`, from the body above.
 
   </details>
-- [ ] Add what the plan review's reader is handed and the command that prints it.
+- [x] Add what the plan review's reader is handed and the command that prints it.
   <details><summary>Technical</summary>
 
   `planReviewInputs(anyCheckout, plan)` in `apps/indusk-mcp/src/lib/audit/inputs.ts`: `{ plan, documents: { brief, testPlan, adr, impl }, tree }`, each document as `{ path, text }` from the plan's live copy (absent ones `null`), `tree` as `auditInputs` builds it; never `research.md`. `indusk plans review-inputs <plan>` prints it as JSON. A18.
 
   </details>
-- [ ] Make the plan review the planning run's last step, and its dismissals part of the stop.
+- [x] Make the plan review the planning run's last step, and its dismissals part of the stop.
   <details><summary>Technical</summary>
 
   `PLANNING_STEPS` gains `plan-review` (`lib/build/step-env.ts`). `PlanningState` gains `review: { exists; complete; dismissals; amendments }`; `readPlanningState` (`lib/build/read-planning.ts`) fills it from `plan-review.md` through `readAuditAnswers(text, { questions: PLAN_REVIEW_QUESTIONS })`, complete when nothing is incomplete, unanswered or missing. `nextPlanningStep` returns `plan-review` after the contract check passes while the review is not complete, and `{ step: "ready-for-approval", dismissals, amendments }` once it is. `stepPrompt` (`lib/build/build-session.ts`) gives `plan-review`: run `/audit {plan} --before-approval`, write only `plan-review.md` and the documents its answers change. The admin's run shows the stop's dismissals in its event text. A20, A21, A22.
 
   </details>
-- [ ] Review the planning loop's changes against the extensions' rules.
+- [x] Review the planning loop's changes against the extensions' rules. Shape: reviewed, nothing found. Decisions: the stop carries `dismissals` and `amendments` only when non-empty, so every existing consumer and test of a bare `ready-for-approval` is unchanged; a `blocker:` line in `plan-review.md` stops the run like one in any planning document; the runner's progress fingerprint includes the review, so an answered review counts as progress.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
@@ -387,7 +387,7 @@ its dismissals in the stop that asks the person for approval.
 
 #### Build Phase 3 Verification
 
-- [ ] The review inputs and the planning loop's tests pass.
+- [x] The review inputs and the planning loop's tests pass.
   <details><summary>Technical</summary>
 
   A18, A20, A21, A22: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 3"` (with `an-accepted-brief-is-planned-unasked`'s tests); type check clean.
@@ -396,7 +396,7 @@ its dismissals in the stop that asks the person for approval.
 
 #### Build Phase 3 Context
 
-- [ ] Add the plan review to the planning rules.
+- [x] Add the plan review to the planning rules.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/templates/planning/CLAUDE.md` (shipped; resync `.indusk/planning/CLAUDE.md`): a plan is read cold (`/audit {plan} --before-approval`, `plan-review.md`) and answered before it is presented for approval.
@@ -405,12 +405,17 @@ its dismissals in the stop that asks the person for approval.
 
 #### Build Phase 3 Document
 
-- [ ] Describe the plan review command and the planning run's new step.
+- [x] Describe the plan review command and the planning run's new step.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`: `plans review-inputs`; the planning run's steps.
 
   </details>
+
+#### Build Phase 3 Forward Intelligence
+
+- **Watch out**: three older tests encoded the old planning end (`planning-runner.test.ts`'s run to approval) and the old build order (`runner.test.ts`); both moved with A14 and A21, not weakened — the run now ends `plan-review` then ready.
+- **Assumption**: the admin's planning stop is stored as the package returns it, so `dismissals` reach the page's JSON; no card draws them (out of scope: no look changes).
 
 ### Build Phase 4: Tell the readers and the agents what to write
 

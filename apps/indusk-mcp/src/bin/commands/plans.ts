@@ -6,7 +6,7 @@ import {
 	PLAN_REVIEW_QUESTIONS,
 	readAuditAnswers,
 } from "../../lib/audit/answers.js";
-import { auditInputs } from "../../lib/audit/inputs.js";
+import { auditInputs, planReviewInputs } from "../../lib/audit/inputs.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
@@ -146,6 +146,11 @@ export function plansModel(
 /** `indusk plans audit-inputs <name>` — what the auditor is handed, as JSON. */
 export function plansAuditInputs(cwd: string, name: string, approved?: string): Promise<void> {
 	return planVerb(async () => JSON.stringify(await auditInputs(cwd, name, approved), null, 2));
+}
+
+/** `indusk plans review-inputs <name>` — what the plan review's reader is handed before approval, as JSON. */
+export function plansReviewInputs(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => JSON.stringify(await planReviewInputs(cwd, name), null, 2));
 }
 
 /**
