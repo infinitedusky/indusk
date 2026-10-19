@@ -228,7 +228,7 @@ This phase makes the command that starts the admin pass the package root it reso
 - [ ] The lookup honours a trusted handed root and ignores a wrong one; the daemon's environment names the root; the earlier guards still pass.
   <details><summary>Technical</summary>
 
-  T1, T2, T3, T4, T5 pass: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/package-root.test.ts src/lib/admin/daemon-env.test.ts src/lib/build/read-planning-hook-path.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/package-root.ts src/lib/admin/daemon.ts src/bin/commands/ui.ts` — the whole suite runs at landing, not here. The package's type check and `pnpm check` on the changed files are clean.
+  T1, T2, T3, T4, T5 pass: `indusk plans tests the-admin-knows-the-package-root --phase "Build Phase 1"` (the rows' files and the Must-not-break promise's tests). The package's type check and `pnpm check` on the changed files are clean.
 
   </details>
 - [ ] The two live checks are written down and wait for the installed build.
