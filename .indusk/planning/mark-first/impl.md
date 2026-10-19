@@ -629,12 +629,13 @@ signals. It closes the plan: nothing after it changes behaviour.
 
   </details>
   Done: `clause-signal.live.test.ts`, listed in `vitest.tiers.ts` `SYSTEM`. **Decision D-25:** it is gated like `telemetry-daemon-found-live.test.ts` (`INDUSK_LIVE_CHECK=clause-signal`, skipped otherwise), because the system tier sets a throwaway `INDUSK_HOME` with no daemon and a release must not depend on the developer's own daemon; the item's `pnpm test:system` is the same config, run with the variable set. **Decision D-26:** the signal is written by a child process (`tsx`, no `VITEST*` in its environment) through `commandTracer()` and `markPromise`, for the fixture plan's `a-promise`, not `a-clause-is-proved-twice`, so a live-check run never moves a real promise's standing; the child signals as the fixture's project because `localSignalReader` keeps only its own project's signals (the first run failed on this: the reader found nothing, honestly), and the check requires a report newer than its own start, so an earlier run's span cannot satisfy it.
-- [ ] Write the signals guide, update the briefs and test-trajectory guides, and publish the decision.
+- [x] Write the signals guide, update the briefs and test-trajectory guides, and publish the decision.
   <details><summary>Technical</summary>
 
   New `apps/docs/src/guide/signals.md` (what a signal is, derived from the clause and not from a test, the kinds, fire rate, how a break names its clause; a Mermaid flow from the ADR's Documentation Plan: a clause joining its tests and its signal at the clause key, a break arriving at the incident); update `guide/briefs.md` ("Promises as clauses": the two proofs) and `guide/test-trajectory.md` (closing runs the clause's tests); `decisions/mark-first.md` from `adr.md` with its docs frontmatter; sidebar entries; changelog entry "Added: a clause is proved by its tests and its signal; a break names its clause; one word, signal."
 
   </details>
+  Done: `guide/signals.md` (signal attributes, derived-from-the-clause, kinds, how a clause reads, fire rate, how a break names its clause with the Mermaid flow), `guide/briefs.md` and `guide/test-trajectory.md` updated, `decisions/mark-first.md` from the ADR with title/date/status frontmatter, changelog entry under Unreleased Added. **Decision D-27:** the docs sidebar (`.vitepress/config.ts`) lists only Getting Started and Architecture, every other page is reached by links, so no sidebar entry was added; the new pages are linked from the briefs and test-trajectory guides, the changelog and each other. `reference/cli/promises.md` already described closing (Build Phase 4), so it only lost the old word.
 - [ ] Review the cleanup against the extensions' rules.
   <details><summary>Technical</summary>
 
