@@ -615,12 +615,13 @@ This phase says "signal" everywhere the telemetry was called a mark, runs the on
 end-to-end check of the whole path against the real daemon, and writes the pages that explain
 signals. It closes the plan: nothing after it changes behaviour.
 
-- [ ] Replace the old word for a promise's telemetry with "signal" in skills, tool descriptions, docs and code comments.
+- [x] Replace the old word for a promise's telemetry with "signal" in skills, tool descriptions, docs and code comments.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/*.md` (never `.claude/skills/` directly; sync after so `skill-sync-parity.test.ts` holds), MCP tool descriptions, `apps/docs/src/{guide,reference}`, comments in `src/`. Exempt: the Day 4b entry in the root `CLAUDE.md`, `.indusk/planning/archive/`, `apps/docs/src/decisions/`, this plan's name. Identifiers such as `PROMISE_MARK`, `markPromise` and `parseMarkedSpan` keep their names this release (a rename of exported symbols is not promised; decision D-4). A30 passes.
 
   </details>
+  Done: 24 prose lines in `src/` comments and the docs guide/reference pages reworded (a promise's telemetry is a signal; Git's own `prunable` flag is a flag), `skills/planner.md` synced to `.claude/skills/planner/SKILL.md`. No tool description used the word. **Decision D-24:** skills and tool descriptions held one line (planner's "asks for marks"), which the A30 pattern does not scan; it was reworded by hand rather than by widening the pattern.
 - [ ] Write the end-to-end check and run it once against the real daemon.
   <details><summary>Technical</summary>
 
