@@ -642,12 +642,13 @@ signals. It closes the plan: nothing after it changes behaviour.
   Discovered work: left by Build Phase 3 (`store.ts` reads its window through `sources.ts` now). `pnpm exec biome check` on the files this phase touched is clean for it; two findings remain in files this plan did not change (`src/lib/promises/health.ts` formatting, `src/lib/eval/otel.ts:153` optional chain), left alone.
 
   </details>
-- [ ] Review the cleanup against the extensions' rules.
+- [x] Review the cleanup against the extensions' rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
 
   </details>
+  Shape review (the phase's only new code is `clause-signal.live.test.ts`; the rest is prose and an import removal, read against the typescript and testing extensions): reviewed, nothing found. Considered and left as is: the single long `it` (the child run, the read-back and the close are one sequence sharing the child's output, so splitting would add shared state, not a seam); the inline child script as a template string (it is the part that must not run under the test runner, and a separate file would be a second place to keep the fixture's clause names in step). `prepareShapeReview` was not run as a function: this is an unattended session on a one-file change.
 
 #### Build Phase 6 Verification
 
