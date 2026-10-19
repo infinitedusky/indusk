@@ -1,7 +1,7 @@
 ---
 title: "A plan runs what must not break"
 date: 2026-10-18
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "2b2bc9af22cbaa40b4e100ccf5dcc19d96869d718e6f7270324c5f826a3a1d2d"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T00:00:44.078Z"
 ---
 
 # A plan runs what must not break
