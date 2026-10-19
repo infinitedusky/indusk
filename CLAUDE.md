@@ -95,6 +95,7 @@ dusk/
 - Plans are promises: a plan holds the promises it lands, each stated as clauses with a clause plan before the ADR; opt-in `clauses: required` — see `/decisions/plans-are-promises`
 - The daemon is found, not guessed: one daemon per machine on one stored address (`indusk telemetry address`), never a second; rules in `apps/indusk-mcp/CLAUDE.md` (Promises and telemetry) — see `/decisions/daemon-found-not-guessed`
 - Init sets up telemetry: the scaffold goes in each declared code repo, sends to the daemon's stored address with project and environment on every span, and offers a newer template beside an edit — see `/decisions/init-sets-up-telemetry`
+- Plan timing: one per-plan log in machine state, written through one never-raising writer, read by `indusk plans time` — see `/decisions/plan-timing`
 
 ## Known Gotchas
 

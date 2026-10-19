@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **A plan says how long it took** (a-plan-says-how-long-it-took): `indusk plans time <name>` prints a plan's phases, unattended steps and test runs with their durations, and its total from the brief's acceptance to landing. Steps and test runs are now recorded on this machine, and a record that cannot be written only warns. See [`plans time`](/reference/cli/plans-time) and [the decision](/decisions/plan-timing).
+
 ### Changed
 
 - **The admin builds again with the planning reader** (admin-builds-with-the-planning-reader): the reader runs the shipped impl hook through the package root and the running Node binary, which the admin's production bundler leaves alone; `pnpm install:local` had failed on main.

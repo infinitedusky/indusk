@@ -2,6 +2,8 @@
  * An unattended build's decisions and wiring (admin-plan-authoring, ADR D4–D7),
  * one definition behind `indusk plans next | review` and the admin.
  */
+
+export { type TimedStepDeps, timedStep } from "../timing/timed-step.js";
 export {
 	type BuildSessionOptions,
 	GATE_POLICY_FOR_BUILDS,

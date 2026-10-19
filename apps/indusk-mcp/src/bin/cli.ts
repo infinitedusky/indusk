@@ -1101,6 +1101,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("time <name>")
+	.description(
+		"How long a plan took: its phases, unattended steps and test runs with their durations, and a total from the brief's acceptance to the plan's landing — what has no record is named, never hidden",
+	)
+	.action(async (name: string) => {
+		const { plansTime } = await import("./commands/plans.js");
+		await plansTime(rootOrExit(), name);
+	});
+
+plansCmd
 	.command("audit-inputs <name>")
 	.description(
 		"What the auditor is handed, as JSON: the plan's documents, the impl as merged at approval, the trajectory as it stands, the branch's diff and a stat of the whole tree",
