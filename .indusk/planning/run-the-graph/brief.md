@@ -1,10 +1,11 @@
 ---
 title: "Run the graph"
 date: 2026-10-16
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "An approved plan's phases run in parallel as a graph: each phase on its own branch off its plan's branch, started as soon as what it depends on is done and no running phase touches its files, earlier plans first, so a master finishes in the time of its longest chain rather than the sum of its phases."
+accepted_at: "2026-10-19T20:53:29.524Z"
 ---
 
 # Run the graph — Brief
