@@ -1225,7 +1225,7 @@ This phase tests the finished plan against the cases where what it shows or repo
 
 #### Build Phase 7 Document
 
-- [ ] Update the shell guard's reference and hook table with the forms it now refuses and the reads it now allows.
+- [x] Update the shell guard's reference and hook table with the forms it now refuses and the reads it now allows.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/tools/indusk-mcp.md` ("A plan document is written through its checks"): the here-document, argument and variable forms, `xargs`, the extra editors and downloaders, `git apply` reading its patch; standard-stream writes and dry runs allowed; "the honest gap" keeps script files and paths built at run time, and says the witness compares the checkout the guard looked at and leaves out editing-tool writes. `apps/docs/src/guide/index.md` hook table: the same list in its `plan-write-guard` row; the `plan-write-witness` row gains its Edit/Write matcher.
