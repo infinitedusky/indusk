@@ -990,7 +990,7 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
   New `lib/admin/wait-for-incident.ts`: `waitForIncident({ now, sleep, incident, scanFinishedAfterBreak, upperBoundMs })` → `{ found }` or throws naming the break; `scanFinishedAfterBreak` is true only for a pass that started after the break was loaded and ended `ok` (a thrown pass is not finished, A62); a generous upper bound, exported as `INCIDENT_WAIT_UPPER_BOUND_MS` (4 minutes), only ends a hung admin, and its failure names the break and the last pass's error. Header `// clause: landing-tests-hold-under-load/recorder-waits-for-its-break`.
 
   </details>
-- [ ] Make the recorder loop write down each scan it makes.
+- [x] Make the recorder loop write down each scan it makes.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/admin/recorder-loop.ts` writes nothing today. Add a `scanRecord?(root, { startedAt, endedAt, ok, error? })` option, called by `tick` after each pass (in `finally`, `ok: false` with the message when the pass threw); the admin's wiring writes it whole (temp file and rename) to `<machine state>/recorder-scan.json`. Row A89 in `src/lib/admin/recorder-loop.scan.test.ts` with faked time and a pass that resolves and one that throws. Header `// clause: landing-tests-hold-under-load/recorder-waits-for-its-break`.
