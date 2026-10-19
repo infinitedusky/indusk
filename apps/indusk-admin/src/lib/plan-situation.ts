@@ -68,7 +68,10 @@ function landedAsker(projectPath: string): (plan: string) => boolean {
   const git = realGitReads(projectPath);
   let subjects: string[] | null = null;
   const reads = {
-    mergeSubjects: (trunk: string) => (subjects ??= git.mergeSubjects(trunk)),
+    mergeSubjects: (trunk: string) => {
+      if (subjects === null) subjects = git.mergeSubjects(trunk);
+      return subjects;
+    },
     hasPath: git.hasPath,
   };
   return (plan) => landed("HEAD", plan, reads);
@@ -90,37 +93,55 @@ export async function withSituations(
   const isLanded = landedAsker(projectPath);
   const out: Plan[] = [];
   for (const plan of plans) {
-    if (plan.archived) {
-      out.push(plan);
-      continue;
-    }
-    const live = liveOf(project, plan.name);
-    const withLive: Plan = { ...plan, live };
-    const run = runOfPlan(project, plan.name);
-    const phase =
-      run?.kind === "build" && run.status.state === "running"
-        ? shownPhase(
-            await readBuildPlan(projectPath, plan.name).catch(() => null),
-          )
-        : null;
-    const onMain = isLanded(plan.name);
-    const confirmations =
-      onMain && options.confirmFor?.plan === plan.name
-        ? await confirmationsFor(projectPath, plan, options.confirmFor.promises)
-        : undefined;
-    const reading = situation({
-      stepName: stepAt(snapshotOf(withLive) as PlanSnapshot)?.name ?? null,
-      archived: false,
-      landedOnMain: onMain,
-      waitingOn: waiting.find((w) => w.plan === plan.name)?.on ?? null,
-      run: run ? { ...run, phase } : null,
-      ...(confirmations ? { confirmations } : {}),
-    });
-    const next = nextStepFor(reading);
-    reportSituation(project, projectPath, withLive, reading, next);
-    out.push({ ...withLive, situation: { situation: reading, next } });
+    out.push(
+      plan.archived
+        ? plan
+        : await situatedPlan({
+            project,
+            projectPath,
+            plan,
+            waiting,
+            onMain: isLanded(plan.name),
+            confirmFor: options.confirmFor,
+          }),
+    );
   }
   return out;
+}
+
+/** One open plan with what runs for it and what it reads as; the reads of `withSituations`, named. */
+async function situatedPlan(input: {
+  project: string;
+  projectPath: string;
+  plan: Plan;
+  waiting: readonly Waiting[];
+  onMain: boolean;
+  confirmFor: SituationOptions["confirmFor"];
+}): Promise<Plan> {
+  const { project, projectPath, plan, onMain } = input;
+  const withLive: Plan = { ...plan, live: liveOf(project, plan.name) };
+  const run = runOfPlan(project, plan.name);
+  const phase =
+    run?.kind === "build" && run.status.state === "running"
+      ? shownPhase(
+          await readBuildPlan(projectPath, plan.name).catch(() => null),
+        )
+      : null;
+  const confirmations =
+    onMain && input.confirmFor?.plan === plan.name
+      ? await confirmationsFor(projectPath, plan, input.confirmFor.promises)
+      : undefined;
+  const reading = situation({
+    stepName: stepAt(snapshotOf(withLive) as PlanSnapshot)?.name ?? null,
+    archived: false,
+    landedOnMain: onMain,
+    waitingOn: input.waiting.find((w) => w.plan === plan.name)?.on ?? null,
+    run: run ? { ...run, phase } : null,
+    ...(confirmations ? { confirmations } : {}),
+  });
+  const next = nextStepFor(reading);
+  reportSituation(project, projectPath, withLive, reading, next);
+  return { ...withLive, situation: { situation: reading, next } };
 }
 
 /** The confirmation list of a plan on main: its promises' clause signals and its live checks. */

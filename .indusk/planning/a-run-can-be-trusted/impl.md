@@ -601,6 +601,20 @@ This phase makes the admin say true things from the record the last phase keeps.
 
   signal: `a-run-is-read-from-its-record/the-planning-audit-is-a-step` — read where the planning steps are shown. Upheld when a plan with an impl shows a Planning audit step whose state matches its `plan-review.md` read directly from disk (absent, its `read:` against the documents' hash, every finding answered); `broken` names the plan and the step state shown. Reported from `apps/indusk-mcp/src/lib/run-record/signals.ts`.
 
+  Built in `apps/indusk-mcp/src/lib/run-record/situation-signals.ts` with the other four of this phase (one file for the five, beside Build Phase 1's `signals.ts`). The disk read here compares done against not-done by whether the file is written with every finding answered; the `read:` hash comparison joins it in Build Phase 5, when the step itself learns a stale review.
+
+  </details>
+- [x] Shape — give the per-plan reads of the situation reader a name of their own.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/lib/plan-situation.ts`: the loop body of `withSituations` read what runs, the run, the phase, the landing, the confirmations, the sentence and then reported signals (rule: a unit has one reason to change; an inline block that does a job should be a named function a test can reach); it is now `situatedPlan`, and the loop only decides archived or not.
+
+  </details>
+- [x] Shape — review the situation sentence, the planning step and the build view, and leave them as they are.
+  <details><summary>Technical</summary>
+
+  `situation()` in `run-record/situation.ts` is one ordered list of rules (landed, running, waiting, stopped, idle), each commented, and splitting it would hide the precedence that is its whole content. `planningStep` in `plans/steps.ts` has grown a draft-impl branch, but the audit's own logic is already its own function (`planningAudit`). `buildView` in `build-host.ts` reads the view and reports one signal; the reporting is a single throttled call. Cross-file questions (a shared throttle with `checkInProgress`) are `/cleanup`'s. Note: the mechanical Shape step reported skipped because the phase's second verification item (the looks, a person's) is unchecked; the review above was made by hand against the same rules.
+
   </details>
 
 #### Build Phase 2 Verification
