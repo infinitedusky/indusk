@@ -502,12 +502,27 @@ This phase makes the admin's builds, planning runs and releases leave a record o
 
 #### Build Phase 1 Document
 
-- [ ] Document the run record on the admin reference page.
+- [x] Document the run record on the admin reference page.
   <details><summary>Technical</summary>
 
   Update `apps/docs/src/reference/admin-ui/overview.md`: where a run's record lives, what "stopped — the run's process is gone" means, and that Build restarts it. Mermaid sequence of start → record → read-after-restart is optional.
 
   </details>
+
+#### Build Phase 1 Forward Intelligence
+
+- **Trajectory**: A1–A13, A56–A58, A64, A73 and A74 are `passing`. A1, A2, A4–A6 and A64 passed from the moment `record.ts` existed (the record is the first item), so their red window was empty; the rest were red on assertions against stubs of `liveness.ts` and `restart.ts` (the build-host rows against a host that wrote no record).
+- **Decision**: the record is its own package export, `@infinitedusky/indusk-mcp/run-record`, not only the `build` export the task named. The admin's existing tests mock `@infinitedusky/indusk-mcp/build` whole (`build-host.release.test.ts` returns a fixed list of names), so a record function imported from there would be undefined under that mock. The `build` export re-exports the same names for callers that read it as one surface.
+- **Decision**: a record's `stop` is the runner's own stop object (`{ step, ...}`) and `stopReason` its `why`; the page rebuilds `BuildState.stop` from it, so the stop sentence and the Needs you card read the same after a restart. A run whose process is gone with no stop reads `stop: { step: "cannot-continue", why: "the run's process is gone" }`, the shape the page already words; Build Phase 2 words it as "died".
+- **Decision**: `runStatus` order is unknown record, then held-here, then no record, then a written stop, then the process. An unreadable record is unknown even when this daemon holds the run, as the task says (never running); the host reads its own in-memory entry first, so a live run in this daemon is unaffected.
+- **Decision**: a run's process is cleared in the record after each step session ends (`process: null`), so a daemon that dies between two steps reads dead (no process, no stop, nothing held). A daemon that dies mid-step leaves the pid, which the process table then shows gone or reused.
+- **Decision**: `startBuild` consults the documents only when a dead record exists (`deadRun`); a plan with no record starts exactly as before. This keeps the existing host tests, whose mocked `readBuildPlan` returns `{}`, unchanged. A dead record means: no stop written, liveness reads stopped. The newest such record among planning, release and build picks the route: planning (or any plan whose impl is not past `approved`/`in-progress`/`completed`) goes to the planning run, a release of an accepted plan restarts the release, everything else the build.
+- **Decision**: the admin's tests now run in a temporary `INDUSK_HOME` (set in `apps/indusk-admin/vitest.config.ts`). Without it the existing host tests wrote records into the person's real `~/.indusk/projects`; four such folders made while building this phase were removed.
+- **Decision**: the signals take their inputs through `lib/run-record/signals.ts` and are called from `build-host.ts`: kept-on-disk after every record write (read back with `JSON.parse`), dead-reads-stopped when Build is pressed over a record with a recorded process (psAll), never-in-progress-when-idle at most once per plan and kind every 15 seconds while a run reads as running (psAll beside `sessionManager().running()`). Build Phase 2 widens the last to every place the page shows in progress.
+- **Watch out**: `INDUSK_BUILD_STEP=work` is in a build session's environment; `plans-land.test.ts` and any test that runs `plans accept` as a process fail with "not accepted from inside a build step" unless it is unset (`env -u INDUSK_BUILD_STEP`). Not a regression.
+- **Watch out**: `indusk plans tests --phase 1` reports `admin-recorder.test.ts` failing: it holds A59, the delayed-scan case written red in Test Phase 1 and made to pass in Build Phase 6. It is the expected red, not this phase's. `context-tiers-register.test.ts` (root under 80% of its budget) was already red before this phase (root 14839 bytes against 14745); this phase's root line is the shortest one that says it (+186 bytes).
+- **Watch out**: `decisions-reader.planning.test.ts` (A13, from an earlier plan) fails with no `bringTrunkIntoPlan` on its `plans` mock, which `startPlanning` calls; it predates this phase and is not caused by it.
+- **Assumption**: the Context item's pointer to `/decisions/a-run-can-be-trusted` is `.indusk/planning/a-run-can-be-trusted/brief.md` for now, since the decision page is written at the retrospective; the retrospective's compaction swaps it.
 
 ### Build Phase 2: Show the real phase, the real situation, and a release that landed
 

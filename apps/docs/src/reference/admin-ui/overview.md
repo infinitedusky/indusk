@@ -112,6 +112,26 @@ Below them, **Read the brief** goes to `/p/{project}/plan/{name}/brief`. When a 
 
 The plan page is where a plan is followed. It opens with the plan's **description** (the brief's `description:` field, read as YAML) and a link to the brief. Until the brief is finished by the rail's own rule (`accepted` or `complete`), "The brief is incomplete" is the plan's current step, with **Work on the brief**; a `superseded` brief and an archived plan have none. A draft accepted as a `spike` has no brief and lands on the plan page. The plan page's agent answers questions and sends a change to what was agreed back to the brief.
 
+### A run's record
+
+Every build, planning run and release the admin starts keeps a record on disk: one JSON file per plan and kind, `runs/<plan>.<kind>.json` in the project's machine-state home (`indusk eval home`), so it never shows as a change in the plan's tree. It holds the step the run is on, the phase that step works, the step session's process (its pid, program and start time) and, once the run ends on its own, how it stopped and why. The admin writes it as the run starts, advances and stops, and the plan page reads it whenever the admin's own memory holds nothing, as after a restart, so a restart loses nothing.
+
+A run whose process is gone, with no stop written, reads **stopped — the run's process is gone** rather than going on in progress. "Gone" is judged of the step session's own process (alive, still that program, with the start time recorded when it was spawned), never of the admin daemon's, so a pid the system reused for something else reads as gone. **Build** then starts the step the plan's own documents say is next, not the step the record names: a build that died in its second phase restarts there, a planning run that died restarts at its next planning step, and a plan whose impl is not yet approved is sent to its planning run, never to the build or the release. A record that cannot be read (cut off, not a record) reads as unknown, never as running.
+
+```mermaid
+sequenceDiagram
+    participant Host as Admin build host
+    participant Disk as runs/plan.build.json
+    participant Page as Plan page
+    Host->>Disk: start: step, process
+    Host->>Disk: each step and phase
+    Note over Host: the admin restarts
+    Page->>Disk: read (memory empty)
+    Disk-->>Page: process gone, no stop: stopped
+    Page->>Host: Build
+    Host->>Host: ask the plan's documents for the next step
+```
+
 ### Sessions
 
 The admin runs one agent per plan and kind: a plan can have a planning session and a build at once, and plans run side by side. Starting a session a plan already has attaches the page to it when no other page is showing it; when one is (the plan page and the brief open at once), the start asks instead — "A planning session is already running on this plan. Do you want to continue that session here?" — with **Continue it here**, which attaches this page too. A draft's conversation is its own (`draft:<id>`) and never collides with a plan. A machine runs at most `sessions.max` sessions, 4 by default, set in `~/.indusk/config.json` (`{ "sessions": { "max": 6 } }`, under `INDUSK_HOME` when that is set); a start beyond the cap is refused, naming each running session, and a session is stopped from its plan's page. A build holds its place under the cap from its first step to its last: it is admitted once, when it starts, and each step's session after that starts even if another plan filled the cap in between (the same-plan rule still applies). Every page asks for its own plan's session (`GET /api/sessions?project=&plan=&kind=`), and **Needs you** lists one entry per running session. See [the decision](/decisions/sessions-per-plan).
