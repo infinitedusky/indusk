@@ -699,6 +699,8 @@ This phase writes the pages the ADR's documentation plan names, so a person usin
 
 **Tier**: med — the work step's default
 
+blocker: the item "Run each case for real" is a manual check a person makes, after this build is landed and installed, with real unattended runs. Every other item in the plan is closed.
+
 Added before approval (2026-10-19): a plan with clauses closes only when each clause's signal has reported it upheld in a real run, and the phases above report none. This phase makes each place that decides a clause report it through the commands' one tracer, in the shape the close already reads, then runs the real cases so the close can read them.
 
 - [x] Make each place that decides one of this plan's clauses report it as upheld or broken.
