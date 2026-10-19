@@ -351,8 +351,10 @@ This phase writes the tests the plan commits to before anything changes, so each
 
 #### Test Phase 1 Verification
 
-- [ ] The tests this phase writes exist, and each red one fails on its own assertion rather than on a missing file.
+- [x] The tests this phase writes exist, and each red one fails on its own assertion rather than on a missing file. (write red)
   <details><summary>Technical</summary>
+
+  Result (run with the system config for the contract files: `pnpm exec vitest run --config vitest.system.config.ts <files>` in `apps/indusk-mcp`; the admin file with `pnpm exec vitest run` in `apps/indusk-admin`, after `pnpm build` in `apps/indusk-mcp` made `dist/`): A29, A30, A41, A46, A47, A48, A50, A54, A59, A63, A86 fail on their own assertions today; A49, A51, A53, A55, A61 pass as guards. A52 also passes today (a plan with no review is already listed as needing its plan review), so it is kept `written` and stays a guard until Build Phase 5 changes the reader beneath it. A59 and A61 ran once in the system tier (the admin bundle was built first with `pnpm --filter indusk-admin build` and `node scripts/bundle-admin.js`): A61 green, A59 red by the fixed minute.
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-write-guard.contract.test.ts src/__tests__/impl-clause-signals.contract.test.ts src/__tests__/accept-brief-signals.contract.test.ts src/lib/plans/accept-brief-signals.test.ts src/__tests__/hook-registration.test.ts` and `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/decisions-reader.approval.test.ts`: A29, A30, A41, A46–A48, A50, A52, A54, A63, A86 are red on assertions (write the red items, `(write red)`); A49, A51, A53, A55 pass. A59 and A61 are run once in the system tier (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/admin-recorder.test.ts`). The whole suite runs at landing, not here.
 
