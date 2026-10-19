@@ -239,7 +239,7 @@ This phase writes the tests the plan commits to before anything changes, so each
   `apps/indusk-mcp/src/__tests__/admin-recorder.test.ts` already asserts one incident with the same subject and a clean tree (A61): add the headers `// promise: a-production-break-is-recorded-unasked` and `// clause: landing-tests-hold-under-load/recorder-waits-for-its-break` and a delayed-scan case (A59): after the break is loaded, pause the admin daemon (`process.kill(adminPid, "SIGSTOP")`, its pid from the `indusk ui` record) for 75 seconds and resume it (`SIGCONT`, also in `finally`), then expect the same pass. This delays the scan past the old minute as a busy machine does, without the per-core busy loops an earlier draft used, which would have loaded every other landing running at the same time. Today A59 fails by the fixed one-minute wait; it is a system-tier test (already listed in `vitest.tiers.ts`).
 
   </details>
-- [ ] Add the guard test that the new hook is registered and synced.
+- [x] Add the guard test that the new hook is registered and synced.
   <details><summary>Technical</summary>
 
   Extend `apps/indusk-mcp/src/__tests__/hook-registration.test.ts` so `HOOK_REGISTRATIONS` must contain `["PreToolUse", "Bash", "plan-write-guard.js"]` and `["PostToolUse", "Bash", "plan-write-witness.js"]`, and both hook files must exist in both `hooks/` and the project's `.claude/hooks/` (A63; `skill-sync-parity.test.ts` already pins byte equality of installed copies). Red today: the registration is absent.
