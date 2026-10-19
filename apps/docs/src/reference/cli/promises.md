@@ -308,7 +308,8 @@ A clause is refused when either half is missing, and the refusal names
 | No signal has reported the clause upheld, or the watcher is blind | `a-promise/a-clause: signal — no signal has reported it upheld in a run of the real system` |
 | The clause's signal reports broken | `a-promise/a-clause: signal — its signal reports broken` |
 | The daemon is not running | `a-promise: signal — the daemon is not running or cannot be read …` naming `indusk telemetry start`; never a pass |
-| A clause's test file carries the clause's token and asserts nothing (no `expect(` or `assert`) | the promise, the clause and the file |
+| A clause's test file ran no test — every test in it was skipped (`describe.skipIf`, `it.skip`, `it.todo`) | `a-promise/a-clause: tests — src/a.test.ts ran no test (skipped) …` |
+| A clause's test file carries the clause's token and asserts nothing (no `expect(` or `assert(` call outside comments and import statements) | the promise, the clause and the file |
 
 A failing file is reported against the clause whose `clause: <promise>/<clause>`
 token it carries. Only when both halves hold for every clause is the promise
@@ -493,6 +494,13 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   incidents otherwise; the production section by its incidents.
 - **Not seen** means no run marked it in the window. It is never reported as
   upheld or as zero breaks.
+- A promise stated as **clauses** gets one line per clause, from its own
+  signal: `clause <name> (<kind>): holding`, `no signal` or `broken`; a
+  resting clause names the promise it rests on.
+- Each run writes one signal of its own, for `a-clause-is-proved-twice`'s
+  clause `no-signal-is-not-holding`, to the local daemon: upheld when every
+  clause it shows as holding has a report, broken naming any clause shown
+  holding without one. A run that shows no clause writes nothing.
 - **State** and **structure** promises are listed as watched by the suite:
   their health is the last run of their test or check at head, not telemetry.
 - A **retired** promise is listed and not watched.

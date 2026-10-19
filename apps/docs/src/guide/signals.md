@@ -13,18 +13,18 @@ A **signal** is the report a running system makes about one clause of a promise:
 | `indusk.promise.outcome` | `upheld` or `broken`. Older writers wrote `violated`; every reader still takes both. |
 | `indusk.signal.value`, `indusk.signal.bound` | Optional: what was measured and the bound it was held to. |
 
-A broken report also carries an event with what was seen (the symptom), the promise and clause again, and `indusk.signal.plan` and `indusk.signal.phase`, the plan and phase that added the signal. InDusk's own commands write theirs through `markPromise` and the one tracer for commands (`commandTracer()`), which exports to the local daemon at its stored address and says nothing when no daemon runs. An application writes the same attributes itself, from the helper `indusk init` scaffolds.
+A broken report also carries an event with what was seen (the symptom), the promise and clause again, and `indusk.signal.plan` and `indusk.signal.phase`, the plan and phase that added the signal. The helper an application uses puts the plan and phase on the span instead of the event; readers take them from either, the event first. The value and the bound are read only as numbers: a value that arrives as text is not a measurement. InDusk's own commands write theirs through `markPromise` and the one tracer for commands (`commandTracer()`), which exports to the local daemon at its stored address and says nothing when no daemon runs. An application writes the same attributes itself, from the helper `indusk init` scaffolds.
 
 ## Derived from the clause, not from a test
 
 A signal is written from the clause's sentence: where it is read, and what upheld and broken look like. A signal that copies the assertion of the test that proves the same clause is not a second proof. It runs the same inputs somewhere else and fails exactly where the test would have, and it misses what the test missed. The value of a signal is that it sees inputs nobody chose.
 
-So a span made by a test run is not a signal. A writer under a test runner sets `indusk.run=test`, and every reader skips such a span: a clause with passing tests and a span from a test still reads **no signal**.
+So a span made by a test run is not a signal. A writer under a test runner sets `indusk.run=test`, and every reader skips such a span, whether `indusk.run` is set on the span or on its resource (a CI job that sets it through `OTEL_RESOURCE_ATTRIBUTES`): a clause with passing tests and a span from a test still reads **no signal**.
 
 ## The kinds
 
 - A **split** is a point reached within its budget on the way to the promise's goal. It is broken by missing its budget at its point, so its newest report decides.
-- A **limit** is a bound that always holds. It is broken by one report over its bound, however many reports were inside it.
+- A **limit** is a bound that always holds. It is broken by one report over its bound, however many reports were inside it — including a report sent as `upheld` whose measured value is past its bound (`signal.upheld({ …, value: 1200, bound: 1000 })` breaks it).
 - A clause that **rests on** another promise has no signal of its own: it reads as the promise it rests on.
 
 ## How a clause reads
@@ -47,7 +47,7 @@ A break arrives at a person already pointing at the clause it broke, rather than
 
 1. The system's signal for the clause reports `broken`. The event it emits carries the promise, the clause, the symptom, and the plan and phase that added the signal.
 2. The recorder (`recordBreaks`, run by the admin unasked) reads the break. Because a clause is a split or a limit, it reads promises of every kind that have such clauses, not only behaviour promises.
-3. It opens an incident named `promise/clause`. The plan and phase come second, as a pointer: plans end and their notes are archived, but a promise and its clause do not.
+3. It opens an incident named `promise/clause`. The plan and phase come second, as a pointer: plans end and their notes are archived, but a promise and its clause do not. An incident is opened per clause: when two clauses of one promise break, in one pass or in two, each gets its own incident, and a second clause's break never extends the first clause's open one.
 4. From the incident a person reaches the clause's tests (the rows and files that carry its token) and the code sites that emit its signal, with no search by file name.
 5. The recorder writes its own signal for `a-break-names-its-clause`: upheld when every incident opened by a clause's signal names `promise/clause`, broken when one names only a promise.
 
