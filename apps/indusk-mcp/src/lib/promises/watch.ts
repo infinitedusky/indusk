@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
+import { readsSignal } from "./clause-standing.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { type PromiseEntry, readPromises } from "./registry.js";
 import { maintenanceIncidentIds, ownerDir, type ReopenResult, reopenOwner } from "./reopen.js";
@@ -104,9 +105,9 @@ export async function watchPromises(
 				: `the registry has malformed entries: ${read.problems.map((p) => `${p.file}: ${p.problem}`).join("; ")}`,
 		);
 	}
-	const behaviour = read.registry.promises.filter(
-		(p) => p.kind === "behaviour" && p.state !== "retired",
-	);
+	// A promise of any kind with a clause a signal can report is read, as a
+	// behaviour promise is (mark-first, Build Phase 5).
+	const behaviour = read.registry.promises.filter(readsSignal);
 	// `--source` chooses what is read, not only what is written on the incident
 	// (promise-sources, ADR D6): `deployed` reads production, and is refused
 	// when the project names none; `local`, `smoke` and `desk` read the laptop.

@@ -555,12 +555,13 @@ Done: `MarkedSpan` gains `signal` (`parseMarkedSpan` reads `indusk.signal.plan`/
 
   </details>
 Done in the same commit (one function, `provenBy`): with a clause it lists only the rows that prove that clause (`rowsProvingClause`, made generic so the plan stays on the row), then "The signal is emitted at: …". **Decision D-22:** the emit place is the promise's registry `sites` that carry the clause's token, or all its readable sites when none does; no repository scan, because `provenBy` is synchronous and the registry already declares sites (a signal emitted from a file no `sites` names is not reachable from the incident). Paths are read under the plan root and pass `isUsableRelPath`.
-- [ ] Make the recorder open an incident from a clause's break.
+- [x] Make the recorder open an incident from a clause's break.
   <details><summary>Technical</summary>
 
   `record.ts`/`recordBreaks` reads the clause from the marked span (`parseMarkedSpan`), passes it through; `a-production-break-is-recorded-unasked` and `a-break-reaches-the-working-agent` unchanged (their tests stay green).
 
   </details>
+Done at `watch.ts`, which `recordBreaks` runs: it read only `kind: behaviour` promises, so a clause on a `state` or `structure` promise was never recorded; it now reads `readsSignal` (the rule D-15 introduced for exactly this). The clause and pointer already travel on the `MarkedSpan` (`parseMarkedSpan`), so `record.ts` itself is unchanged. New guard `record-clause-break.test.ts` drives `recordBreaks` over a state promise with a limit clause (not a trajectory row). **Decision D-23:** the clause's own signal is NOT emitted from the recorder: a recorder that opens an incident is reading a break someone else's signal already reported, and emitting `a-break-names-its-clause` there would mark the clause upheld exactly when a clause somewhere else is broken, the opposite of what that clause says. The signal for `a-break-names-its-clause` must come from where a break is first named: see D-24.
 - [ ] Make the new sentence of the incident promise true.
   <details><summary>Technical</summary>
 
