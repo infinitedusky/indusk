@@ -16,6 +16,7 @@
  * admin (test-kinds), naming the file, line and call.
  */
 export const SYSTEM = [
+	"src/__tests__/accept-brief-signals.contract.test.ts",
 	"src/__tests__/admin-bundle-pack.test.ts",
 	"src/__tests__/admin-cli-lifecycle.test.ts",
 	"src/__tests__/admin-recorder.test.ts",
