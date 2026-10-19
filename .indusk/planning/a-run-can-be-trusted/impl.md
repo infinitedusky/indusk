@@ -1002,7 +1002,7 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
   `src/__tests__/admin-recorder.test.ts`: replace the fixed `MINUTE` wait with `waitForIncident`, `scanFinishedAfterBreak` read from the scan record the previous task adds (under the test's `INDUSK_HOME`). Set the test's vitest timeout to `INCIDENT_WAIT_UPPER_BOUND_MS` plus the setup and pause margin (the 75 s pause, startup), derived from the constant, so vitest never ends it before the rule decides. Keep: one committed incident, same subject, clean tree, system tier; the delayed-scan case pauses the admin with `SIGSTOP`/`SIGCONT`, never a CPU load.
 
   </details>
-- [ ] Report the signal for the clause that the recorder test waits for its break.
+- [x] Report the signal for the clause that the recorder test waits for its break.
   <details><summary>Technical</summary>
 
   signal: `landing-tests-hold-under-load/recorder-waits-for-its-break` — read in the landing's clause-test results, reported from `apps/indusk-mcp/src/lib/plans/land.ts`. No landing-test record exists today, so this is new: after `refuseFailingClauseTests` runs, `plans land` calls `writeClauseSignals` for each result whose file carries `clause: landing-tests-hold-under-load/recorder-waits-for-its-break` — upheld on a pass, `broken` naming the plan being landed and the failure on a fail — before it throws any refusal. `plans land` is a real command run, so its span is not dropped as a test run's. It reports at each landing whose clause tests include the recorder test (this plan's, and any later plan naming it); between them the clause reads no-signal. Row A90 in `src/lib/plans/land-recorder-signal.test.ts`, the runner injected and the spans captured.
