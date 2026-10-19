@@ -5,6 +5,7 @@ import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { promiseProject } from "../../__tests__/helpers/promises-fixture.js";
 import { incidentsIn, JAEGER, OWNER, OWNER_IMPL } from "../../__tests__/helpers/record-fixture.js";
+import type { IncidentVerdict } from "./incident-signal.js";
 import { recordBreaks } from "./record.js";
 import type { MarkedSpansResult } from "./telemetry.js";
 
@@ -87,11 +88,20 @@ describe("the recorder opens an incident from a clause's break", () => {
 				],
 			]),
 		});
+		const verdicts: IncidentVerdict[] = [];
 		const result = await recordBreaks(
 			fx.root,
 			{ by: "admin", source: "deployed" },
-			{ reads, mark: () => {}, home },
+			{
+				reads,
+				mark: () => {},
+				home,
+				markIncident: async (v) => {
+					verdicts.push(v);
+				},
+			},
 		);
+		expect(verdicts, "the incident names its clause, and says so").toEqual([{ outcome: "upheld" }]);
 		expect(result.opened).toEqual([expect.objectContaining({ promise: NAME })]);
 		const [file] = incidentsIn(fx.root);
 		const text = readFileSync(join(fx.root, ".indusk", "promises", "incidents", file), "utf-8");

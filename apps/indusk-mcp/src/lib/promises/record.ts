@@ -5,6 +5,7 @@ import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { initEvalOtel } from "../eval/otel.js";
 import { appendHeard, type HeardRow } from "./heard.js";
 import { appendInbox } from "./inbox.js";
+import { type IncidentVerdict, incidentVerdict, markIncidentVerdict } from "./incident-signal.js";
 import { markPromise } from "./mark.js";
 import { commitRecorded } from "./record-commit.js";
 import { readPromises } from "./registry.js";
@@ -58,6 +59,8 @@ export interface RecordDeps {
 	env?: NodeJS.ProcessEnv;
 	/** The project's home; `bookkeepingRoots(planRoot).home` unless given. */
 	home?: string;
+	/** Where the verdict on an incident a clause's break opened is written; the command tracer unless given. */
+	markIncident?: (verdict: IncidentVerdict) => Promise<void>;
 }
 
 export interface RecordedChange {
@@ -162,9 +165,35 @@ async function pass(
 	} catch (err) {
 		return failed(result, mark, err);
 	}
+	await markClauseIncidents(planRoot, watched.changes, heardMarks, deps.markIncident);
 	result.mark = { outcome: "upheld" };
 	mark(result.mark);
 	return result;
+}
+
+/**
+ * The signal of `a-break-names-its-clause`: one verdict for each incident this
+ * pass opened from a break that named a clause. An extended incident was
+ * named when it opened; a break naming no clause has nothing to name.
+ */
+async function markClauseIncidents(
+	planRoot: string,
+	changes: WatchChange[],
+	marks: MarkedSpansResult | null,
+	write: RecordDeps["markIncident"] = markIncidentVerdict,
+): Promise<void> {
+	for (const c of changes) {
+		if (c.kind !== "opened") continue;
+		const spans = marks?.byPromise.get(c.promise)?.violations ?? [];
+		const clause = spans.find((s) => c.traces.includes(s.traceId) && s.clause)?.clause;
+		if (!clause) continue;
+		try {
+			const verdict = incidentVerdict(planRoot, c.id, c.promise, clause);
+			if (verdict) await write(verdict);
+		} catch {
+			// A verdict that could not be read or written never fails the pass.
+		}
+	}
 }
 
 function nothingRecorded(): RecordResult {
