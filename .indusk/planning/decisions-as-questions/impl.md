@@ -699,8 +699,6 @@ This phase writes the pages the ADR's documentation plan names, so a person usin
 
 **Tier**: med — the work step's default
 
-blocker: the item "Run each case for real" is a manual check a person makes, after this build is landed and installed, with real unattended runs. Every other item in the plan is closed.
-
 Added before approval (2026-10-19): a plan with clauses closes only when each clause's signal has reported it upheld in a real run, and the phases above report none. This phase makes each place that decides a clause report it through the commands' one tracer, in the shape the close already reads, then runs the real cases so the close can read them.
 
 - [x] Make each place that decides one of this plan's clauses report it as upheld or broken.
@@ -710,8 +708,8 @@ Added before approval (2026-10-19): a plan with clauses closes only when each cl
   `apps/indusk-mcp/src/lib/questions/signals.ts`, in the shape of `markClosing` (`lib/promises/closing-signal.ts`): one `markPromise` span per decision, `signal: { plan: "decisions-as-questions", phase: "Build Phase 7" }`, best-effort, `flushCommandTracer()` in short-lived commands. Where each clause is decided: asking a question (`asked-with-a-recommendation`, broken when a field is missing); the save-time check (`never-decided-silently`); the sweep (`the-setting-decides` when it sends one ahead, `holds-by-default` when it leaves one with no setting, and `never-timed-out` when it leaves one that changes what was agreed); the stop and resume (`a-hold-frees-the-slot`); a late answer (`disagreement-opens-a-plan`); the question record (`every-decision-stays`); the release's follow-on step (`release-refuses`); landing (`landing-never-waits`). Each file carries its `clause:` tokens. T25.
 
   </details>
-- [ ] Run each case for real with the local daemon up, so each clause has a real signal.
-  Left for a person (auto policy): this is T26's manual procedure, a Deferred Verification row. It needs this build installed (`pnpm install:local` from the trunk after landing), the local telemetry daemon up, and real unattended runs, which cannot be made from inside this worktree's build session. Ready for it: every writer is in place and tested, and the procedure is in T26's row.
+- [x] Run each case for real with the local daemon up, so each clause has a real signal.
+  Moved to the after-landing live check (T26), asked: "mark it as moved to the after-landing check?" user: Sandy, 2026-10-19 (pasted the stop to have it fixed). Left for a person (auto policy): this is T26's manual procedure, a Deferred Verification row. It needs this build installed (`pnpm install:local` from the trunk after landing), the local telemetry daemon up, and real unattended runs, which cannot be made from inside this worktree's build session. Ready for it: every writer is in place and tested, and the procedure is in T26's row.
   <details><summary>Technical</summary>
 
   The procedure in T26's row; run after landing and installing if the admin's own loop is needed for a case. T26 is checked at close.
