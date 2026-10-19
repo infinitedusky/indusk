@@ -1,10 +1,11 @@
 ---
 title: "A plan says how long it took"
 date: 2026-10-19
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "Every phase, every unattended step and every run of a plan's tests records when it started and ended, and one command shows a plan's time by phase, by step and by test run, so where the time goes can be read rather than guessed."
+accepted_at: "2026-10-19T02:53:18.083Z"
 ---
 
 # A plan says how long it took — Brief
