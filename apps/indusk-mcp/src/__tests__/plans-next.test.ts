@@ -98,13 +98,14 @@ const cleanup = (done: boolean): Phase => ({
 
 describe.skipIf(SHOULD_SKIP)("indusk plans next", () => {
 	it("A11 — from the first phase through falsification and cleanup, it works and never asks", () => {
+		// The audit is read when the build phases close, before falsification (Build Phase 2 of audit-concerns-are-answered).
 		const states: Array<[Phase[], string, boolean?]> = [
 			[[build(false)], "work"],
-			[[build(true)], "falsify"],
-			[[build(true), falsification(false)], "work"],
-			[[build(true), falsification(true)], "cleanup"],
-			[[build(true), falsification(true), cleanup(false)], "work"],
-			[[build(true), falsification(true), cleanup(true)], "audit"],
+			[[build(true)], "audit"],
+			[[build(true)], "falsify", true],
+			[[build(true), falsification(false)], "work", true],
+			[[build(true), falsification(true)], "cleanup", true],
+			[[build(true), falsification(true), cleanup(false)], "work", true],
 			[[build(true), falsification(true), cleanup(true)], "review", true],
 		];
 		const steps = states.map(([phases, , audited]) => next(project(phases, [], "", audited)).step);

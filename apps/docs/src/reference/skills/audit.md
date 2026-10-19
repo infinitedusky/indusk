@@ -52,6 +52,10 @@ audit_reason: "a one-line copy change; a fresh reader would find nothing to ques
 
 Both fields; a bare `audit: skipped` does not pass, and neither does a reason over 120 characters or of more than one sentence: the Step 0 readiness check refuses it and names the length and sentence count. The reason is one sentence; the detail goes in the impl body. [`/retrospective`](/reference/skills/retrospective) Step 0 refuses to start without `audit.md` or the pair.
 
+## Signals
+
+Each check reports the clause it checks, so a plan with clauses can close on a real run. `indusk plans audit-answers` reports the audit's four clauses (finds, answers, dismissals shown, teaches) or, with `--plan-review`, the four-questions clause; `indusk plans review-inputs` reports that the reader is handed documents only; a planning run reports reading it cold and answering before approval when it stops for approval; a build reports the significant-concern clause when it stops on a waiting amendment. A signal never fails its command.
+
 ## Advisory
 
 No gate reads a finding. A plan full of findings closes the same as one with none; whether any is acted on is the person's choice, and the first expectation in the plan's brief measures it over the next five plans closed.

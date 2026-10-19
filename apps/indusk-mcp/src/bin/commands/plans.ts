@@ -6,7 +6,10 @@ import {
 	PLAN_REVIEW_QUESTIONS,
 	readAuditAnswers,
 } from "../../lib/audit/answers.js";
+import { markAuditAnswers } from "../../lib/audit/answers-signal.js";
 import { auditInputs, planReviewInputs } from "../../lib/audit/inputs.js";
+import { markPlanReview, markReviewInputs } from "../../lib/audit/review-signal.js";
+import { markAmendmentStop } from "../../lib/build/amendment-signal.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
@@ -151,7 +154,11 @@ export function plansAuditInputs(cwd: string, name: string, approved?: string): 
 
 /** `indusk plans review-inputs <name>` — what the plan review's reader is handed before approval, as JSON. */
 export function plansReviewInputs(cwd: string, name: string): Promise<void> {
-	return planVerb(async () => JSON.stringify(await planReviewInputs(cwd, name), null, 2));
+	return planVerb(async () => {
+		const inputs = await planReviewInputs(cwd, name);
+		await markReviewInputs(cwd, name, inputs);
+		return JSON.stringify(inputs, null, 2);
+	});
 }
 
 /**
@@ -196,6 +203,8 @@ export async function plansAuditAnswers(
 		clauses,
 	});
 	const { open, shown } = describeAnswers(read, file);
+	if (planReview) await markPlanReview(cwd, name, read);
+	else await markAuditAnswers(cwd, name, read, open.length === 0);
 	if (open.length > 0) {
 		console.error(`${file} is not answered:\n${open.map((l) => `  ${l}`).join("\n")}`);
 		process.exit(2);
@@ -229,7 +238,9 @@ export function plansAcceptBrief(cwd: string, name: string): Promise<void> {
 /** `indusk plans next <name>` — what an unattended build does next, from the plan as it stands. */
 export async function plansNext(cwd: string, name: string, json: boolean): Promise<void> {
 	try {
-		const step = nextBuildStep(await readBuildPlan(cwd, name));
+		const plan = await readBuildPlan(cwd, name);
+		const step = nextBuildStep(plan);
+		await markAmendmentStop(cwd, name, plan.amendments, step.step);
 		console.info(json ? JSON.stringify(step) : describeStep(step));
 	} catch (err) {
 		if (err instanceof BuildPlanUnreadable) {

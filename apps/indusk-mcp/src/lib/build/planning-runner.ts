@@ -1,3 +1,4 @@
+import { markPlanningStop } from "../audit/review-signal.js";
 import {
 	nextPlanningStep,
 	type PlanningDecision,
@@ -26,6 +27,8 @@ export interface PlanningRunnerDeps {
 	/** Run one step's session to its end; `error` when it failed after its retries. */
 	run: (step: PlanningStep) => Promise<{ error: string | null }>;
 	onStep?: (step: PlanningStep) => void;
+	/** Where the run reports reaching approval (the plan review's clauses); absent, it reports nothing. */
+	signals?: { root: string; plan: string };
 }
 
 /** Every answer that is not a document to write ends the run. */
@@ -38,10 +41,22 @@ function isWrite(d: PlanningDecision): d is { step: PlanningStep } {
 export async function runPlanning(deps: PlanningRunnerDeps): Promise<PlanningStop> {
 	let last: StepOutcome | undefined;
 	let previous: StepOutcome | undefined;
+	let reviewed: boolean | undefined;
 	for (;;) {
 		const before = await deps.read();
+		// A review that stood complete when the run began was read cold before it.
+		reviewed ??= before.review.complete;
 		const next = nextPlanningStep(before, { last, previous });
-		if (!isWrite(next)) return next;
+		if (!isWrite(next)) {
+			if (next.step === "ready-for-approval" && deps.signals) {
+				await markPlanningStop(deps.signals.root, deps.signals.plan, {
+					reviewed,
+					reviewComplete: before.review.complete,
+				});
+			}
+			return next;
+		}
+		if (next.step === "plan-review") reviewed = true;
 		deps.onStep?.(next.step);
 		const { error } = await deps.run(next.step);
 		const after = await deps.read();

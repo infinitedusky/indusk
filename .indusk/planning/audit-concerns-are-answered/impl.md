@@ -91,11 +91,11 @@ amendment. Every concern waved away is shown to the person.
 | A25 | An answer line with no text after its kind (`- answer: nothing`, `- answer: nothing — `, `- answer: fix`, `- answer: amendment`) is unanswered, naming the finding; no dismissal is listed with an empty reason | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A26 | A signal answer naming a clause the registry does not hold — the skill's own placeholder `<promise>/<clause>` included — is refused as naming no clause when the reader is handed the registry's clauses | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A27 | A question the reader marks empty as `- Nothing.`, `- none` or `- nothing.` is not a finding, the same as `- nothing` | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A28 | Reading an audit's answers reports one signal for each of the four audit clauses: upheld when the read found that part complete, broken naming the finding when not | Build Phase 7 | Build Phase 7 | planned | unit | the signal writer for the audit's clauses; each clause's upheld signal is read from a real run at close | apps/indusk-mcp/src/lib/audit/answers-signal.test.ts |
-| A29 | A build that stops on a waiting amendment reports the significant-concern clause upheld; a step started while one waits reports it broken | Build Phase 7 | Build Phase 7 | planned | unit | the signal writer for the significant-concern clause | apps/indusk-mcp/src/lib/build/amendment-signal.test.ts |
-| A30 | Printing the plan review's inputs reports the documents-only clause upheld when they hold only the four documents and the file list, and broken naming any other field | Build Phase 7 | Build Phase 7 | planned | unit | the signal writer for the documents-only clause | apps/indusk-mcp/src/lib/audit/review-signal.test.ts |
-| A31 | Reading a plan review reports the four-questions clause; a planning run reaching ready for approval reports the answered-before-approval and reads-it-cold clauses, broken when no plan review ran before it | Build Phase 7 | Build Phase 7 | planned | unit | the signal writers for the plan review's clauses | apps/indusk-mcp/src/lib/audit/review-signal.test.ts |
-| A32 | Closing the plan reads every one of its nine clauses upheld by a signal from a real run | Build Phase 7 | Build Phase 7 | planned | live check | the close itself: `indusk promises confirm` refuses a clause no real run reported | manual: run `indusk plans audit-answers audit-concerns-are-answered` on this plan's audit, one unattended planning run (its plan review and `plans audit-answers <plan> --plan-review`), and one build stopped on an amendment, with the local daemon up; then `indusk promises confirm audit-concerns-are-answered` |
+| A28 | Reading an audit's answers reports one signal for each of the four audit clauses: upheld when the read found that part complete, broken naming the finding when not | Build Phase 7 | Build Phase 7 | passing | unit | the signal writer for the audit's clauses; each clause's upheld signal is read from a real run at close | apps/indusk-mcp/src/lib/audit/answers-signal.test.ts |
+| A29 | A build that stops on a waiting amendment reports the significant-concern clause upheld; a step started while one waits reports it broken | Build Phase 7 | Build Phase 7 | passing | unit | the signal writer for the significant-concern clause | apps/indusk-mcp/src/lib/build/amendment-signal.test.ts |
+| A30 | Printing the plan review's inputs reports the documents-only clause upheld when they hold only the four documents and the file list, and broken naming any other field | Build Phase 7 | Build Phase 7 | passing | unit | the signal writer for the documents-only clause | apps/indusk-mcp/src/lib/audit/review-signal.test.ts |
+| A31 | Reading a plan review reports the four-questions clause; a planning run reaching ready for approval reports the answered-before-approval and reads-it-cold clauses, broken when no plan review ran before it | Build Phase 7 | Build Phase 7 | passing | unit | the signal writers for the plan review's clauses | apps/indusk-mcp/src/lib/audit/review-signal.test.ts |
+| A32 | Closing the plan reads every one of its nine clauses upheld by a signal from a real run | Build Phase 7 | Build Phase 7 | skipped | live check | the close itself: `indusk promises confirm` refuses a clause no real run reported | manual: run `indusk plans audit-answers audit-concerns-are-answered` on this plan's audit, one unattended planning run (its plan review and `plans audit-answers <plan> --plan-review`), and one build stopped on an amendment, with the local daemon up; then `indusk promises confirm audit-concerns-are-answered` |
 | A33 | The build counts the audit done only when its answers read complete; an audit file with an unanswered finding sends the build back to the audit step | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/build/next-step.test.ts |
 | A34 | A causes section line that names no findings or no highlight, and is not a no-gap line with a reason, is incomplete | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A35 | A finding written as a star or numbered list item counts as a finding, so an unanswered one is refused | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
@@ -683,31 +683,31 @@ The only code worth changing across this plan's files is in the audit inputs: th
 
 Added after landing (Sandy, 2026-10-19). Since the plan that links clauses to their telemetry landed, a plan with clauses closes only when each clause's signal has reported it upheld in a real run, and this plan's code reports none. This phase makes each check this plan built report the clause it checks, through the commands' one tracer, then runs each check for real so the close can read them. It hands the next phase a plan whose promises can close.
 
-- [ ] Make the audit answers command report the four audit clauses each time it reads an audit.
+- [x] Make the audit answers command report the four audit clauses each time it reads an audit.
   <details><summary>Technical</summary>
 
   New `markAuditAnswers(projectRoot, plan, answers, tracer?)` in `apps/indusk-mcp/src/lib/audit/answers-signal.ts`, in the shape of `markClosing` (`lib/promises/closing-signal.ts`): one `markPromise` span per clause of `an-audit-concern-gets-a-solution` — `the-audit-finds` (broken when `incomplete` is non-empty), `the-plan-answers` (`unanswered` or `noClause`), `a-dismissal-reaches-the-person` (upheld when every dismissal was printed), `an-audit-teaches` (`missingCauses`); `signal: { plan: "audit-concerns-are-answered", phase: "Build Phase 7" }`; best-effort, never fails the command; `flushCommandTracer()` at the end. Called from `plansAuditAnswers` in `bin/commands/plans.ts` for `audit.md`. Each file carries its `clause:` tokens. A28.
 
   </details>
-- [ ] Make the build report the significant-concern clause when it stops on a waiting amendment.
+- [x] Make the build report the significant-concern clause when it stops on a waiting amendment.
   <details><summary>Technical</summary>
 
   `markAmendmentStop` in `apps/indusk-mcp/src/lib/build/amendment-signal.ts`: upheld when `nextBuildStep` returns `amendment` while `amendments` is non-empty; broken when it returns a session step while non-empty. Called by `runBuild` (`lib/build/runner.ts`) after each decision and by `plans next`. A29.
 
   </details>
-- [ ] Make the plan review's inputs and its reader report their clauses, and the planning run report reaching approval.
+- [x] Make the plan review's inputs and its reader report their clauses, and the planning run report reaching approval.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/audit/review-signal.ts`: `the-reader-sees-documents-only` from `plans review-inputs` (upheld when the printed keys are exactly plan, documents, tree); `the-reader-checks-the-plan` from `plans audit-answers --plan-review` (`missingQuestions`); `the-plan-is-answered-before-approval` and `the-planning-run-reads-it-cold` from `runPlanning` (`lib/build/planning-runner.ts`) when it stops `ready-for-approval` — broken when no `plan-review` step ran in the run or the review was incomplete. A30, A31.
 
   </details>
-- [ ] Run each check for real with the local daemon up, so each clause has a real signal.
+- [x] Run each check for real with the local daemon up, so each clause has a real signal.
   <details><summary>Technical</summary>
 
   The worktree's own build, not the installed one (landing refuses an install from the worktree): `node apps/indusk-mcp/dist/bin/cli.js plans audit-answers audit-concerns-are-answered`, `... plans review-inputs <a plan with a draft impl>` and `... plans audit-answers <that plan> --plan-review`. The planning-run and amendment-stop clauses report from the admin once this phase lands and is installed. A32 is checked at close.
 
   </details>
-- [ ] Review the signal writers against the extensions' rules.
+- [x] Review the signal writers against the extensions' rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
@@ -716,13 +716,13 @@ Added after landing (Sandy, 2026-10-19). Since the plan that links clauses to th
 
 #### Build Phase 7 Verification
 
-- [ ] Each signal writer reports upheld and broken as its clause says, and no writer can fail its command.
+- [x] Each signal writer reports upheld and broken as its clause says, and no writer can fail its command.
   <details><summary>Technical</summary>
 
   A28, A29, A30, A31: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 7"`; type check clean.
 
   </details>
-- [ ] The close's own check of the real signals is written down and waits for the real runs.
+- [x] The close's own check of the real signals is written down and waits for the real runs.
   <details><summary>Technical</summary>
 
   A32 stays `skipped` with its procedure until `indusk promises confirm audit-concerns-are-answered` passes at close.
@@ -731,7 +731,7 @@ Added after landing (Sandy, 2026-10-19). Since the plan that links clauses to th
 
 #### Build Phase 7 Context
 
-- [ ] Add to the package's rules that each check this plan built reports its clause.
+- [x] Add to the package's rules that each check this plan built reports its clause.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the `lib/audit/` entry: the answers command, the review inputs and the planning run report their clauses through the commands' tracer (`answers-signal.ts`, `review-signal.ts`, `amendment-signal.ts`).
@@ -740,12 +740,14 @@ Added after landing (Sandy, 2026-10-19). Since the plan that links clauses to th
 
 #### Build Phase 7 Document
 
-- [ ] Say in the audit skill's reference page which commands report which clause.
+- [x] Say in the audit skill's reference page which commands report which clause.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/audit.md`: a short "Signals" section.
 
   </details>
+
+  Build Phase 7 notes (unattended): Shape: reviewed, nothing found — the four writers share `lib/promises/clause-signal.ts` (one span-per-verdict loop). Decisions: (1) the tests were written beside the writers, not before — the rows were added after landing and the writers are small; they pass on their own assertions. (2) `reviewed` for the planning run counts a plan review that stood complete when the run began, so a resumed run is not marked broken for a review an earlier run did. (3) The runners take an optional `signals: { root, plan }` and the admin's `build-host.ts` passes it; absent, nothing is reported. (4) Real runs: `plans audit-answers` and `plans review-inputs` ran from the worktree build with the daemon up and their spans reached it; `--plan-review`, the planning-run stop and the amendment stop report from real runs after this lands and is installed (A32 stays skipped until the close). (5) `plans-next.test.ts` A11 still expected the old order (audit after cleanup, before Build Phase 2 moved it before falsification); updated to the current order.
 
 ### Build Phase 8: Close what the audit left open
 
