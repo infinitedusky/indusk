@@ -1,10 +1,11 @@
 ---
 title: "A brief is accepted on current main"
 date: 2026-10-19
-status: draft
+status: accepted
 workflow: bugfix
 clauses: required
 description: "Accepting a brief first brings main into its plan's branch, so the plan is written and reviewed against current code; a conflict refuses the acceptance and names the files. Merging is never the person's step."
+accepted_at: "2026-10-19T16:53:17.051Z"
 ---
 
 # A brief is accepted on current main — Brief
