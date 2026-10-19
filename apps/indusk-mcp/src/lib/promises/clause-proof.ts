@@ -2,9 +2,11 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { isUsableRelPath } from "../path-segment.js";
 import { clauseTokenPattern } from "../tokens.js";
+import { parseBriefContract } from "./brief-contract.js";
 import { type ClauseReport, clauseStanding } from "./clause-standing.js";
-import type { PromiseClause, PromiseEntry } from "./registry.js";
-import { type NamingRow, rowsProvingClause } from "./rows.js";
+import { type PlanFolder, planFolderPath, planFolderStatus } from "./plan-folder.js";
+import { type PromiseClause, type PromiseEntry, readPromises } from "./registry.js";
+import { type NamingRow, rowsNamingIn, rowsProvingClause } from "./rows.js";
 
 /**
  * A clause is proved twice (mark-first ADR D2): its tests pass when run now,
@@ -178,4 +180,50 @@ export async function clauseSignalHalf(
 		}
 	}
 	return { refusals, checked, refused };
+}
+
+/** Whether the plan's brief opts in to clauses (`clauses: required`): its promises close on their tests run now and their signals. */
+export function writtenAsClauses(folder: PlanFolder): boolean {
+	const briefPath = join(folder.dir, "brief.md");
+	if (!existsSync(briefPath)) return false;
+	const brief = parseBriefContract(readFileSync(briefPath, "utf-8"));
+	return brief.shape === "contract" && brief.clausesRequired;
+}
+
+/**
+ * The promises a plan written as clauses holds with a split or limit clause,
+ * each with the rows that name it — what landing runs the tests of. Null for
+ * a plan not written as clauses (it lands as before); a refusal when the
+ * plan, its registry or its impl cannot be read, never an empty set.
+ */
+export function clauseTestPlan(
+	planRoot: string,
+	plan: string,
+): { held: HeldPromise[] } | { refusal: string } | null {
+	const status = planFolderStatus(planRoot, plan);
+	if (status !== "active" && status !== "archived") {
+		return { refusal: `"${plan}" is not a plan folder under .indusk/planning/` };
+	}
+	const folder: PlanFolder = {
+		plan,
+		archived: status === "archived",
+		dir: planFolderPath(planRoot, plan, status === "archived"),
+	};
+	if (!writtenAsClauses(folder)) return null;
+	const read = readPromises(planRoot);
+	if (!read.ok) {
+		return { refusal: `${plan} is written as clauses and its promise registry cannot be read` };
+	}
+	const implPath = join(folder.dir, "impl.md");
+	if (!existsSync(implPath)) return { held: [] };
+	let implText: string;
+	try {
+		implText = readFileSync(implPath, "utf-8");
+		const held = read.registry.promises
+			.filter((p) => p.owner === plan && p.state !== "retired" && provableClauses(p).length > 0)
+			.map((promise) => ({ promise, rows: rowsNamingIn(implText, promise) }));
+		return { held };
+	} catch (err) {
+		return { refusal: `${plan}'s impl cannot be read: ${(err as Error).message}` };
+	}
 }

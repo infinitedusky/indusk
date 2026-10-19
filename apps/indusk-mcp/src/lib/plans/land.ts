@@ -6,7 +6,12 @@ import { promisify } from "node:util";
 import { releaseBranchBookkeeping } from "../bookkeeping/migrate.js";
 import { readConfig } from "../config.js";
 import { git, headSha } from "../git.js";
-import type { ClauseTestRunner } from "../promises/clause-proof.js";
+import {
+	type ClauseTestRunner,
+	clauseTestPlan,
+	clauseTestsHalf,
+} from "../promises/clause-proof.js";
+import { clauseTestRunner } from "../promises/closing-inputs.js";
 import { releasePlan } from "../worktree/plan-worktree-commands.js";
 import { uncommittedWork } from "./bookkeeping.js";
 import {
@@ -47,6 +52,8 @@ export interface LandedPlan {
 export interface LandOptions {
 	/** Where the running `indusk` is installed; this module's own file when not given. */
 	runningFrom?: string;
+	/** Runs the tests a clause's rows name; the project's own test command when not given. */
+	runTests?: ClauseTestRunner;
 }
 
 export async function landPlan(
@@ -57,7 +64,7 @@ export async function landPlan(
 	refuseInsideBuildStep("landed", plan);
 	const runningFrom = opts.runningFrom ?? fileURLToPath(import.meta.url);
 	const wp = await workbenchPlan(anyCheckout, plan);
-	if (wp) return landWorkbenchPlan(wp, runningFrom);
+	if (wp) return landWorkbenchPlan(wp, runningFrom, opts.runTests);
 	const pb = await planBranch(anyCheckout, plan);
 	const impl = implPath(pb);
 	if (!implKey(impl, "accepted")) {
@@ -77,6 +84,13 @@ export async function landPlan(
 			`bringing ${pb.trunkBranch} into ${pb.branch} conflicts; resolve it in ${pb.worktree} and land again: ${(err as Error).message.trim()}`,
 		);
 	}
+
+	await refuseFailingClauseTests(
+		pb.worktree,
+		pb.worktree,
+		plan,
+		opts.runTests ?? clauseTestRunner(pb.worktree, pb.worktree),
+	);
 
 	const checks = landChecks(pb.trunk);
 	for (const check of checks) {
@@ -108,7 +122,11 @@ export async function landPlan(
  *
  * promise: nothing-ships-until-accepted
  */
-async function landWorkbenchPlan(wp: WorkbenchPlan, runningFrom: string): Promise<LandedPlan> {
+async function landWorkbenchPlan(
+	wp: WorkbenchPlan,
+	runningFrom: string,
+	runTests: ClauseTestRunner | undefined,
+): Promise<LandedPlan> {
 	const { plan, code, repoTrunk, trunkBranch } = wp;
 	if (!implKey(join(wp.dir, "impl.md"), "accepted")) {
 		throw new PlanCommandRefusal(
@@ -130,6 +148,12 @@ async function landWorkbenchPlan(wp: WorkbenchPlan, runningFrom: string): Promis
 			`bringing ${trunkBranch} into ${code.branch} conflicts; resolve it in ${code.worktree} and land again: ${(err as Error).message.trim()}`,
 		);
 	}
+	await refuseFailingClauseTests(
+		wp.root,
+		code.worktree,
+		plan,
+		runTests ?? clauseTestRunner(wp.root, code.worktree),
+	);
 	const checks = landChecks(wp.root);
 	for (const check of checks) {
 		try {
@@ -197,13 +221,31 @@ function refuseRemovingOwnBuild(
 	);
 }
 
-/** Refuse to land while a clause's test fails now (mark-first A2). Not yet built: Build Phase 4. */
+/**
+ * Landing is "before release" (mark-first decision D-8): a plan written as
+ * clauses lands only when the tests its clause rows name pass when run now,
+ * through the same function closing uses, and is refused naming
+ * `promise/clause` and the file. It asks no signal. A plan written before
+ * clause plans lands as before, running nothing here.
+ *
+ * clause: a-clause-is-proved-twice/verified-before-release
+ */
 export async function refuseFailingClauseTests(
-	_planRoot: string,
-	_codeRoot: string,
-	_plan: string,
-	_runTests: ClauseTestRunner,
-): Promise<void> {}
+	planRoot: string,
+	codeRoot: string,
+	plan: string,
+	runTests: ClauseTestRunner,
+): Promise<void> {
+	const found = clauseTestPlan(planRoot, plan);
+	if (found === null) return;
+	if ("refusal" in found) {
+		throw new PlanCommandRefusal(`${plan} does not land: ${found.refusal}`);
+	}
+	const { refusals } = await clauseTestsHalf(found.held, codeRoot, runTests);
+	if (refusals.length > 0) {
+		throw new PlanCommandRefusal(`${plan} does not land:\n${refusals.join("\n")}`);
+	}
+}
 
 function landChecks(trunk: string): string[] {
 	const config = readConfig(trunk) as { plans?: { land_checks?: unknown } } | null;

@@ -12,6 +12,7 @@ import {
 	type HalfResult,
 	provableClauses,
 	type SignalReader,
+	writtenAsClauses,
 } from "./clause-proof.js";
 import { restsOnly } from "./clause-standing.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
@@ -142,14 +143,6 @@ function unmadeChanges(folder: PlanFolder, registry: Registry): CheckRefusal[] {
 		}
 	}
 	return out;
-}
-
-/** Whether the plan's brief opts in to clauses (`clauses: required`): its promises close on their tests run now and their signals. */
-export function writtenAsClauses(folder: PlanFolder): boolean {
-	const briefPath = join(folder.dir, "brief.md");
-	if (!existsSync(briefPath)) return false;
-	const brief = parseBriefContract(readFileSync(briefPath, "utf-8"));
-	return brief.shape === "contract" && brief.clausesRequired;
 }
 
 /** What a proven promise's confirmation will write. */

@@ -466,12 +466,13 @@ written before clauses on the old rule.
 
   </details>
 `clauseSignalHalf` reads each split and limit clause through `clauseStanding`; the real reader is `localSignalReader` (`closing-inputs.ts`): `readPromiseMarks` on the `local` source over the health window, read once per close; a stopped daemon or a blind watcher is a failed read whose refusal says the daemon is not running and gives `indusk telemetry start`. Both halves are decided before anything is written. **Decision D-18:** a promise made only of resting clauses (`restsOnly`, beside `hasSignalClauses`) is proved by what it rests on with no row, test or code site of its own — `rowProofs`, `judge` and the registry check (`check.ts`) each waive their "names no test / no site" refusal for it, since the check would otherwise refuse the very promise A15 lets close; its history line names the promises it rests on. **Decision D-19:** a real close writes its own signal — `markClosing` (`closing-signal.ts`) through `commandTracer()`, one span per half for `a-clause-is-proved-twice`'s `verified-before-release` and `upheld-by-its-signal`, broken only if the close accepted a clause a half refused, with the plan/phase pointer — called by `indusk promises confirm` and the confirm tool. This is the Boundary Map's "consumes Build Phase 2's tracer" and the brief's carried "closing emits the spans its clauses are read by"; `closing-signal.test.ts` pins it, with no trajectory row (D-6).
-- [ ] Make landing run the same tests and refuse by clause.
+- [x] Make landing run the same tests and refuse by clause.
   <details><summary>Technical</summary>
 
   `lib/plans/land.ts` calls the same function with the same injected runner; refusal names the clause (A2). It does not ask the signal; landing is "before release" (the test half only; decision D-8).
 
   </details>
+`refuseFailingClauseTests` (exported from `land.ts`, the seam A2 tests) finds the plan's promises with split or limit clauses through `clauseTestPlan` and runs `clauseTestsHalf`, the function closing uses; `landPlan` calls it after the trunk is merged into the branch and before the configured land checks, in both the normal and the workbench path, with `LandOptions.runTests` or the project's own runner (`clauseTestRunner`). `writtenAsClauses` moved beside it into `clause-proof.ts` so closing and landing read the opt-in one way.
 - [ ] Refuse a clause test file that carries the token and asserts nothing, if it makes no false refusals.
   <details><summary>Technical</summary>
 
