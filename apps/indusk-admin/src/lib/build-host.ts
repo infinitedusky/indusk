@@ -124,6 +124,15 @@ async function depsFor(project: string, plan: string, state: BuildState) {
   };
 }
 
+/** A build session held for the plan blocks any run that would start another. */
+function assertNoBuildSession(project: string, plan: string): void {
+  const held = sessionManager().forPlan(project, plan, "build");
+  if (held)
+    throw new Error(
+      `a build session is already running for ${plan}: ${held.id} — stop it first`,
+    );
+}
+
 /** Start the build in the background; refused while a build runs or a build session is held for the plan. */
 export async function startBuild(
   project: string,
@@ -135,11 +144,7 @@ export async function startBuild(
   if (existing?.running) throw new Error(`${plan} is already building`);
   if (planningState(project, plan)?.running)
     throw new Error(`${plan} is being planned: its planning run has not ended`);
-  const running = sessionManager().forPlan(project, plan, "build");
-  if (running)
-    throw new Error(
-      `a build session is already running for ${plan}: ${running.id} — stop it first`,
-    );
+  assertNoBuildSession(project, plan);
   // Admitted once, here, and holding its place under the cap until it ends —
   // between its steps too, so another plan's start cannot take it.
   const free = sessionManager().admitBuild(project, plan);
@@ -188,11 +193,7 @@ export async function startRelease(
   const existing = buildState(project, plan);
   if (existing?.running)
     throw new Error(`${plan} is already building or releasing`);
-  const running = sessionManager().forPlan(project, plan, "build");
-  if (running)
-    throw new Error(
-      `a build session is already running for ${plan}: ${running.id} — stop it first`,
-    );
+  assertNoBuildSession(project, plan);
   const state: BuildState = existing ?? {
     running: false,
     step: null,
@@ -306,11 +307,7 @@ export async function startPlanning(
     throw new Error(`${plan} is already being planned`);
   if (buildState(project, plan)?.running)
     throw new Error(`${plan} is building: its build has not ended`);
-  const busy = sessionManager().forPlan(project, plan, "build");
-  if (busy)
-    throw new Error(
-      `a build session is already running for ${plan}: ${busy.id} — stop it first`,
-    );
+  assertNoBuildSession(project, plan);
   const root = getProjectPath(project);
   if (!root) throw new Error(`no project named ${project}`);
 

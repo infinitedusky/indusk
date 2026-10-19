@@ -224,3 +224,16 @@ describe("A19 — the end of a planning conversation asks for the planning run",
     await expect(ended()?.(PROJECT, PLAN)).resolves.not.toThrow();
   });
 });
+
+describe("T21 — a held build session blocks every start", () => {
+  it("T21 refuses a build start and a planning start, naming the session", async () => {
+    open.push({ kind: "build", id: "sess-1" } as { kind: string });
+    await expect(startBuild(PROJECT, PLAN)).rejects.toThrow(
+      /sess-1 — stop it first/,
+    );
+    await expect(startPlanning(PROJECT, PLAN)).rejects.toThrow(
+      /sess-1 — stop it first/,
+    );
+    expect(runs).toBe(0);
+  });
+});
