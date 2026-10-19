@@ -43,8 +43,10 @@ None — a bugfix; the measure is Stabilize's bar, three plans in a row from acc
    - **`shell-write-refused`** (split). A shell command that writes, moves or deletes a file under a plan's folder is refused, naming the file and the tool to use instead.
    - **`reads-pass`** (limit). A shell command that only reads a plan document is never refused.
 
-3. **`a-plan-with-clauses-carries-its-signals`** (state). An impl for a brief that states clauses is refused unless a phase reports each split and limit clause's signal.
+3. **`a-plan-with-clauses-carries-its-signals`** (state). An impl for a brief that states clauses is refused unless a phase reports each split and limit clause's signal, and no live check that can only run after landing is a clause's proof.
    - **`refused-without-signals`** (split). Saving such an impl with no task naming a clause's signal is refused, naming each clause without one.
+   - **`a-live-check-proves-no-clause`** (split). Saving an impl whose row runs only after landing and names a clause is refused, since a skipped row blocks the clause at close.
+   - **`the-two-landed-plans-report`** (split). The three clauses of `a-brief-is-accepted-on-current-main` report their signals from the code that keeps them, so that plan can close.
 
 4. **`landing-tests-hold-under-load`** (state). The tests landing runs pass or fail for what they test, not for how busy the machine is.
    - **`recorder-waits-for-its-break`** (split). The admin-recorder landing test waits for the incident it expects rather than a fixed minute, and passes with other builds running.
