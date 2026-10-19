@@ -1,7 +1,7 @@
 ---
 title: "The admin knows the package root"
 date: 2026-10-19
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -62,6 +62,7 @@ Decisions made unattended (`INDUSK_GATE_POLICY=auto`), each with its reason:
 | T5 | The planning reader still names the impl hook through the package-root lookup, not through `"node"` or a path built from its own location | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard (`read-planning-hook-path.test.ts`): the fix goes through the same lookup, not around it | apps/indusk-mcp/src/lib/build/read-planning-hook-path.test.ts |
 | T6 | Inside the admin as started by `indusk ui`, the lookup returns the folder holding the shipped impl hook, not `.../apps/apps/indusk-mcp/dist/lib` | Build Phase 1 | Build Phase 1 | skipped | live check | promise: an-accepted-brief-is-planned-unasked | manual: build the admin, start it with `indusk ui`, read the daemon's environment (`ps eww <pid>`) for the package root and its log (`~/.indusk/admin-ui.log`) for no lookup error naming `apps/apps` |
 | T7 | A planning run over an accepted brief, in the admin as started by `indusk ui`, ends "ready for approval" instead of "cannot continue" | Build Phase 1 | Build Phase 1 | skipped | live check | promise: an-accepted-brief-is-planned-unasked | manual: after landing and `pnpm install:local`, run `indusk ui`, start a planning run over an accepted brief, read the run's stop reason in the admin |
+| T8 | A Claude session the admin starts does not inherit the handed package root, so an `indusk` running inside it (its MCP server, its CLI calls) finds its own install, not the install that started the admin | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard: a handed value must never beat a correct lookup (T4's purpose), carried to the admin's sessions | apps/indusk-mcp/src/lib/session/start-env.test.ts |
 
 (T1 to T7 are the test plan's A1 to A6 with the live check split: A1 is T1, A4 is T2, A5 is T4, A6 is T5, A2 is T6, A3 is T7, and T3 is the positive half of A1's hand-down that the lookup must honour.)
 
@@ -262,6 +263,69 @@ This phase makes the command that starts the admin pass the package root it reso
 
 Unattended decisions in this phase: `pnpm biome check --write` over `src/lib` touched two unrelated files; reverted them so the commit holds only this plan's changes. Shape review: `package-root.ts` and `daemon.ts` have one `holdsThisPackage` and one `daemonEnv`; reviewed, nothing found. The live checks T6 and T7 stay skipped for the slow tier after landing.
 
+### Build Phase 2: Falsification — the handed root reaches past the admin, and the live checks read an old admin
+
+**Tier**: med — the work step's default
+
+The handed package root is meant for the admin's own bundled code, but today every Claude session the admin starts inherits it too, and inside such a session the `indusk` on the path trusts it whenever it names any copy of this package, even a different install from the one that session runs. This phase stops the admin's sessions from inheriting the value, so only the admin itself reads it, and corrects the two live checks so they restart the admin instead of reading one left running from before the upgrade. Once it closes, a handed root can only ever answer for the code it was handed to.
+
+- [ ] Stop the sessions the admin starts from inheriting the handed package root.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/session/start.ts:88` builds the session's environment as `{ ...process.env, ...opts.env }`, so the admin daemon's `INDUSK_MCP_PACKAGE_ROOT` reaches the spawned `claude`, its `indusk serve` MCP server (the `indusk` on PATH, per `.mcp.json`) and every `indusk` it runs. Those are not bundled — their own walk-up is correct — but `induskMcpPackageRoot()` checks the handed root first and its trust check (`holdsThisPackage`) only compares the package name, so a different install passes. Concrete failure: the admin started by one install (`node <worktree>/apps/indusk-mcp/dist/bin/cli.js ui`, or a global install while PATH resolves another) → the session's `indusk plans start`, `scaffold/apply`, `draft.ts` copy of `skills/planner.md` read templates, skills and hooks from the starting install, not their own. Add a pure `sessionEnv(base: NodeJS.ProcessEnv, extra?: Record<string, string>)` in `start.ts` that drops `PACKAGE_ROOT_ENV` (imported from `../package-root.js`) from `base` and then spreads `extra`; `spawn` uses `env: sessionEnv(process.env, opts.env)`. A caller passing the variable explicitly in `opts.env` keeps it (deliberate, not inherited). Answers T8.
+
+  </details>
+- [ ] Make the two live checks restart the admin before they read it.
+  <details><summary>Technical</summary>
+
+  `uiStart` (`bin/commands/ui.ts:83-90`) returns early when a daemon is already running, reusing it — its old bundle and its old environment, without the variable. The T6 and T7 procedures say "run `indusk ui`" after `pnpm install:local`; on a machine where the admin was already up (the normal case), they read the pre-fix daemon and report the bug still present. Change both rows' `Test` column to `indusk ui restart` (which calls `uiStop` then `uiStart`). Only the manual command changes; the rows' assertions and states are untouched — decided unattended: this corrects how the check is run, not what it claims, so it is not goalpost drift.
+
+  </details>
+
+#### Build Phase 2 Verification
+
+- [ ] A session started by the admin carries no inherited package root and keeps everything else, failing today and passing after the fix.
+  <details><summary>Technical</summary>
+
+  T8: `apps/indusk-mcp/src/lib/session/start-env.test.ts` — `sessionEnv({ [PACKAGE_ROOT_ENV]: "/other", KEEP: "1" })` has no `PACKAGE_ROOT_ENV` and keeps `KEEP`; `sessionEnv(base, { X: "y" })` adds `X`; an explicit `opts.env` value for the variable is kept. Writable at Build Phase 2, not Phase 0: its subject `sessionEnv` does not exist, and testing through `startSession` would spawn a process (a system test, `vitest.tiers.ts`), which this pure function avoids. Run `indusk plans tests the-admin-knows-the-package-root --phase "Build Phase 2"`; T1 to T5 stay green.
+
+  </details>
+- [ ] The two live checks' procedures restart the admin.
+  <details><summary>Technical</summary>
+
+  `grep -n "indusk ui restart" .indusk/planning/the-admin-knows-the-package-root/impl.md` shows both the T6 and T7 rows; they stay `skipped` for the slow tier.
+
+  </details>
+
+#### Build Phase 2 Context
+
+- [ ] Add to the package's rule on the handed root that the admin's sessions do not inherit it.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, One home per fact, the existing bullet on code the admin bundles: append "and `sessionEnv` (`lib/session/start.ts`) drops it from the sessions the admin starts, whose own lookup is correct" and add `start-env.test.ts` to its guards. One clause on an existing bullet, delivered by the test.
+
+  </details>
+
+#### Build Phase 2 Document
+
+- [ ] (none needed — the changelog line from Build Phase 1 already describes the user-visible fix; keeping the value out of the admin's sessions changes nothing a reader of the docs would see)
+
+#### Build Phase 2 hunt record
+
+Decided unattended (`INDUSK_GATE_POLICY=auto`): the Notes' assumption that everything the daemon spawns "runs from the same install" was tested and found not guaranteed — the admin's starter and the `indusk` on PATH are independent — so the fix narrows the value to the one process that needs it rather than tightening the trust check (a version comparison would still let a same-version dev build and global install trade files).
+
+Searched without a hypothesis forming:
+- **Every admin-daemon starter**: `daemonStart` has one caller, `uiStart`; `uiRestart` goes through it; `indusk demo` calls the telemetry daemon's `daemonStart`, a different function.
+- **`daemonEnv`**: strips an inherited value, passes `projectRoot` and `packageRoot` only when given; `ui.ts` resolves the root in the CLI process, whose walk-up is correct and absolute.
+- **`holdsThisPackage`**: missing file, unreadable JSON and a wrong name all read false; the walk-up's bound and the throw are unchanged.
+- **The lookup's timing**: the variable is read per call, not at module load, so no import-order hazard.
+- **Other spawns from the admin**: `read-planning.ts` runs the impl hook with `process.execPath`, and `new-project/create.ts` runs this package's own `cli.js` — both from the same install, where the value is correct or ignored.
+
+Not investigated, with reasons:
+- **Whether Turbopack inlines `process.env[PACKAGE_ROOT_ENV]` at build time**: only a built bundle can answer it; T6, the live check reading the running daemon, is the test that would catch it.
+- **A relative handed path**: only `daemonEnv` sets the variable, from an absolute lookup, and it strips any inherited value; nothing in the plan's paths produces a relative one.
+- **The admin started by `next dev`**: out of this plan's scope — the bug is in the production bundle, and the dev server is never started by `indusk`.
+
 ## Files Affected
 
 | File | Change |
@@ -271,6 +335,8 @@ Unattended decisions in this phase: `pnpm biome check --write` over `src/lib` to
 | `apps/indusk-mcp/src/bin/commands/ui.ts` | passes `packageRoot: induskMcpPackageRoot()` |
 | `apps/indusk-mcp/src/lib/package-root.test.ts` | new: T2, T3, T4 |
 | `apps/indusk-mcp/src/lib/admin/daemon-env.test.ts` | new: T1 |
+| `apps/indusk-mcp/src/lib/session/start.ts` | `sessionEnv` drops the handed root from the sessions the admin starts (Build Phase 2) |
+| `apps/indusk-mcp/src/lib/session/start-env.test.ts` | new: T8 (Build Phase 2) |
 | `apps/indusk-mcp/CLAUDE.md` | one clause on the existing admin/package-root entry |
 | `apps/docs/src/changelog.md` | unreleased line |
 
