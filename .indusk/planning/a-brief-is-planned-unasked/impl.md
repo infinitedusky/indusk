@@ -193,7 +193,7 @@ This phase gives accepting a brief a command, so it has a moment the planning ru
   `approvePlan` (`lib/plans/approve.ts`) and `lib/looks/approve.ts`: refuse when `currentBuildStep()` names a planning step (`plan-test-plan`, `plan-adr`, `plan-impl`), naming it. T6.
 
   </details>
-- [ ] Make the planner skill accept a brief with the command, and resync its installed copy.
+- [x] Make the planner skill accept a brief with the command, and resync its installed copy.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/planner.md` step 4: after declaring the promises, run `indusk plans accept-brief <plan>` instead of setting the status by hand; `.claude/skills/planner/SKILL.md`; `skill-sync-parity.test.ts`.
