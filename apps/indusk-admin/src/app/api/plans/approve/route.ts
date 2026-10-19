@@ -3,6 +3,7 @@ import {
   PlanCommandRefusal,
 } from "@infinitedusky/indusk-mcp/plans";
 import type { NextRequest } from "next/server";
+import { startBuild } from "@/lib/build-host";
 import { getProjectPath } from "@/lib/registry-client";
 import { adminOnly, refuse } from "@/lib/session-host";
 
@@ -10,9 +11,28 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
+ * Start the approved plan's build. The approval stands whatever this answers:
+ * a build that cannot start (another is running, the cap is held) is said, not
+ * thrown, so the person sees an approved plan and why it is not yet building.
+ */
+async function buildAfterApproval(
+  project: string,
+  plan: string,
+): Promise<{ started: true } | { started: false; why: string }> {
+  try {
+    await startBuild(project, plan);
+    return { started: true };
+  } catch (err) {
+    return { started: false, why: (err as Error).message };
+  }
+}
+
+/**
  * Approve a plan (admin-plan-authoring A9, A23): `{ project, plan }`. The same
  * command as `indusk plans approve` — the brief check, then the documents and
- * promises merge to the trunk. A refusal is returned as the command words it.
+ * promises merge to the trunk — and then its build starts, unattended
+ * (a-brief-is-planned-unasked A8). A refusal is returned as the command words
+ * it and starts nothing.
  */
 export async function POST(request: NextRequest): Promise<Response> {
   const refused = adminOnly(
@@ -30,7 +50,11 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (!root) return refuse(404, `no project named ${body.project}`);
   try {
     const approved = await approvePlan(root, body.plan);
-    return Response.json(approved);
+    // Only an approval that returned starts the build; a refusal above started nothing.
+    return Response.json({
+      ...approved,
+      build: await buildAfterApproval(body.project, body.plan),
+    });
   } catch (err) {
     if (err instanceof PlanCommandRefusal) return refuse(409, err.message);
     throw err;
