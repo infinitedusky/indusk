@@ -250,15 +250,16 @@ async function restartFor(root: string, plan: string, dead: RunKind) {
  */
 export function buildState(project: string, plan: string): BuildState | null {
   const held = builds().get(key(project, plan));
-  const shown =
-    held ??
-    (() => {
-      const record = newest(recordsOf(project, plan, ["build", "release"]));
-      return record ? buildStateFromRecord(record) : null;
-    })();
+  const shown = held ?? buildStateOnDisk(project, plan);
   if (shown?.running)
     checkInProgress(project, plan, "build", held?.running === true);
   return shown;
+}
+
+/** The newest build or release record's state: what the page shows when this daemon holds nothing. */
+function buildStateOnDisk(project: string, plan: string): BuildState | null {
+  const record = newest(recordsOf(project, plan, ["build", "release"]));
+  return record ? buildStateFromRecord(record) : null;
 }
 
 /** Once per plan in a while: a plan shown in progress has a process running for it (a signal, Decision 17). */
