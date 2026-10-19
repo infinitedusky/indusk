@@ -71,14 +71,14 @@ command, [`indusk plans tests`](/reference/cli/plans#plans-tests-name-phase-ref-
 computes what it owes:
 
 - **At a phase** (`--phase N`): the test files of the rows that phase writes or
-  makes pass, and the tests whose imports reach the files the phase changed.
+  makes pass, and the tests of each promise the brief lists as Must not break.
   Seconds.
-- **At landing** (`--landing`): every row's tests, the tests the plan's branch
-  reaches, and the tests of each promise the brief lists as Must not break.
+- **At landing** (`--landing`): every row's tests and those same promises' tests.
 
 Each file prints with the reason it is in the set. Until
 the sampler (the next plan) runs the rest behind the scenes, a test no plan
-names, reaches or protects does not run unless a person runs it.
+names or protects does not run unless a person runs it, however many files it
+imports from the ones the plan changed.
 
 No test run is replayed from turbo's cache (`"cache": false` on the `test`
 task). turbo keys a cache on a package's own files, and some tests read beyond
