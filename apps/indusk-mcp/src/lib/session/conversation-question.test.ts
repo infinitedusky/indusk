@@ -15,7 +15,9 @@ describe("T19 — a conversation question carries no cost and no timer", () => {
 			.split("\n")
 			.filter((l) => l.startsWith("<< "))
 			.map((l) => l.slice(3));
-		const questions = lines.flatMap((l) => parseSessionLine(l)).filter((e) => e.type === "question");
+		const questions = lines
+			.flatMap((l) => parseSessionLine(l))
+			.filter((e) => e.type === "question");
 		expect(questions.length).toBeGreaterThan(0);
 		for (const q of questions) {
 			expect(Object.keys(q).sort()).toEqual(["input", "questions", "requestId", "type"]);

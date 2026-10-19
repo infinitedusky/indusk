@@ -25,7 +25,10 @@ let doc: string;
 beforeEach(() => {
 	root = mkdtempSync(join(tmpdir(), "decided-unattended-"));
 	mkdirSync(join(root, ".indusk", "planning", "demo"), { recursive: true });
-	writeFileSync(join(root, ".indusk", "config.json"), JSON.stringify({ otel: { role: "library" } }));
+	writeFileSync(
+		join(root, ".indusk", "config.json"),
+		JSON.stringify({ otel: { role: "library" } }),
+	);
 	doc = join(root, ".indusk", "planning", "demo", "adr.md");
 });
 afterEach(() => rmSync(root, { recursive: true, force: true }));
@@ -66,8 +69,8 @@ describe("T3 — a choice is never recorded as decided unattended without a ques
 	it("does not check review or acceptance text, or a run with a person present", async () => {
 		const review = join(root, ".indusk", "planning", "demo", "plan-review.md");
 		expect((await save("The agent decided unattended here.\n", review)).exitCode).toBe(0);
-		expect((await save("Decided unattended: x\n", doc, { INDUSK_GATE_POLICY: "ask" })).exitCode).toBe(
-			0,
-		);
+		expect(
+			(await save("Decided unattended: x\n", doc, { INDUSK_GATE_POLICY: "ask" })).exitCode,
+		).toBe(0);
 	});
 });
