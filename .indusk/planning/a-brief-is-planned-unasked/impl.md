@@ -212,7 +212,7 @@ This phase gives accepting a brief a command, so it has a moment the planning ru
 
 #### Build Phase 2 Context
 
-- [ ] Add to the package's context file that a brief is accepted by its command, not by a hand edit.
+- [x] Add to the package's context file that a brief is accepted by its command, not by a hand edit.
   <details><summary>Technical</summary>
 
   `.indusk/planning/CLAUDE.md` via `apps/indusk-mcp/templates/planning/CLAUDE.md` (the shipped planning rules): the brief line names `indusk plans accept-brief`.
