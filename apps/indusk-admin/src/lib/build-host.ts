@@ -18,7 +18,10 @@ import {
   type ShortenReason,
   timedStep,
 } from "@infinitedusky/indusk-mcp/build";
-import { acceptPlan } from "@infinitedusky/indusk-mcp/plans";
+import {
+  acceptPlan,
+  bringTrunkIntoPlan,
+} from "@infinitedusky/indusk-mcp/plans";
 import { getProjectPath } from "./registry-client";
 import { planLocation, sessionManager } from "./session-host";
 
@@ -387,6 +390,13 @@ export async function startPlanning(
       release();
       return declined(next);
     }
+    // A brief accepted by hand, or a run held for looks and started later, is
+    // still planned on current main; a refusal here is the route's 409.
+    await bringTrunkIntoPlan(root, plan, {
+      refused: "its planning run did not start",
+      again: "start its planning again",
+      when: "its planning run",
+    });
     free = sessionManager().admitBuild(project, plan);
     where = await planLocation(project, plan);
     if ("error" in where) throw new Error(where.error);

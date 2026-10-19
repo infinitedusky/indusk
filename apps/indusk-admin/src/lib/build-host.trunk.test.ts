@@ -2,16 +2,20 @@
 // clause: a-brief-is-accepted-on-current-main/a-conflict-refuses
 // promise: an-accepted-brief-is-planned-unasked
 
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { briefText } from "../../../indusk-mcp/src/__tests__/helpers/plan-fixture";
-import {
-  type PlanLifecycleProject,
-  planLifecycleProject,
-} from "../../../indusk-mcp/src/__tests__/helpers/plan-lifecycle-fixture";
-import { git } from "../../../indusk-mcp/src/__tests__/helpers/test-git";
 
 /**
  * a-brief-is-accepted-on-current-main, Test Phase 1: the admin's planning start
@@ -25,6 +29,95 @@ import { git } from "../../../indusk-mcp/src/__tests__/helpers/test-git";
 const PROJECT = "seats";
 const PLAN = "seat-holds";
 const briefPath = ".indusk/planning/seat-holds/brief.md";
+
+/**
+ * A trunk on `main` with InDusk configured and one plan worktree, as the
+ * package's own `planLifecycleProject` builds them — inlined, because the
+ * admin's type-check cannot take that fixture's imports.
+ */
+function git(cwd: string, args: string[]): string {
+  const r = spawnSync("git", args, {
+    cwd,
+    encoding: "utf-8",
+    env: {
+      ...process.env,
+      GIT_AUTHOR_NAME: "test",
+      GIT_AUTHOR_EMAIL: "test@test.local",
+      GIT_COMMITTER_NAME: "test",
+      GIT_COMMITTER_EMAIL: "test@test.local",
+    },
+  });
+  if (r.status !== 0)
+    throw new Error(`git ${args.join(" ")} failed: ${r.stderr}`);
+  return r.stdout.trim();
+}
+
+interface PlanLifecycleProject {
+  base: string;
+  trunk: string;
+  makeWorktree(plan: string): string;
+  commit(
+    checkout: string,
+    files: Record<string, string>,
+    message: string,
+  ): void;
+  cleanup(): void;
+}
+
+function planLifecycleProject(prefix: string): PlanLifecycleProject {
+  const base = realpathSync(mkdtempSync(join(tmpdir(), `${prefix}-`)));
+  const trunk = join(base, "proj");
+  mkdirSync(join(trunk, ".indusk", "promises"), { recursive: true });
+  mkdirSync(join(trunk, ".indusk", "planning"), { recursive: true });
+  git(trunk, ["init", "-q", "-b", "main"]);
+  writeFileSync(
+    join(trunk, ".indusk", "config.json"),
+    `${JSON.stringify({ mode: "full", otel: { role: "library" }, promises: { domains: ["seating"] } })}\n`,
+  );
+  writeFileSync(join(trunk, ".indusk", "planning", "master.md"), "# Plans\n");
+  writeFileSync(join(trunk, "README.md"), "proj\n");
+  git(trunk, ["add", "-A"]);
+  git(trunk, ["commit", "-q", "-m", "init"]);
+  return {
+    base,
+    trunk,
+    makeWorktree(plan) {
+      const path = join(base, "proj-worktrees", plan);
+      git(trunk, ["worktree", "add", "-q", path, "-b", `plan/${plan}`, "main"]);
+      const common = git(trunk, [
+        "rev-parse",
+        "--path-format=absolute",
+        "--git-common-dir",
+      ]);
+      writeFileSync(
+        join(common, "indusk-plan-worktrees.json"),
+        `${JSON.stringify({
+          version: 1,
+          assignments: [
+            {
+              plan,
+              path: realpathSync(path),
+              branch: `plan/${plan}`,
+              at: new Date().toISOString(),
+            },
+          ],
+        })}\n`,
+      );
+      return realpathSync(path);
+    },
+    commit(checkout, files, message) {
+      for (const [rel, content] of Object.entries(files)) {
+        mkdirSync(dirname(join(checkout, rel)), { recursive: true });
+        writeFileSync(join(checkout, rel), content);
+      }
+      git(checkout, ["add", "-A"]);
+      git(checkout, ["commit", "-q", "-m", message]);
+    },
+    cleanup() {
+      rmSync(base, { recursive: true, force: true });
+    },
+  };
+}
 
 let trunk = "";
 let wt = "";

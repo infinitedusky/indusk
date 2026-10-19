@@ -54,6 +54,9 @@ vi.mock("@infinitedusky/indusk-mcp/build", async () => {
 });
 vi.mock("@infinitedusky/indusk-mcp/plans", () => ({
   acceptPlan: async () => {},
+  // The fake project here is not a repository; bringing main in is
+  // `build-host.trunk.test.ts`'s, against real git.
+  bringTrunkIntoPlan: async () => undefined,
 }));
 const open: Array<{ kind: string }> = [];
 const admitted = new Set<string>();
