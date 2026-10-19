@@ -3278,3 +3278,24 @@ Two guesses to confirm in Build Phase 1: the placement test adds a src/ folder b
 Next: Build Phase 1 (tier strong), the scaffold per code repo.
 
 ---
+
+## Session 31df1058 — starting catchup
+
+**Session ID**: 31df1058-950f-4b59-8aaa-9f8928e8459f
+**Last updated**: 2026-10-19T16:35:50.906Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
