@@ -26,6 +26,8 @@ import { type NamingRow, rowsNamingIn, rowsProvingClause } from "./rows.js";
 export interface TestFileResult {
 	file: string;
 	passed: boolean;
+	/** Why a file did not pass when it is not a failure, e.g. "ran no test (skipped)". */
+	reason?: string;
 }
 
 /** Runs test files (paths as the rows name them) and gives each its verdict. */
@@ -107,6 +109,7 @@ export async function clauseTestsHalf(
 		};
 	}
 	const verdict = new Map(results.map((r) => [r.file, r.passed]));
+	const why = new Map(results.flatMap((r) => (r.reason ? [[r.file, r.reason] as const] : [])));
 	const refusals: string[] = [];
 	const refused = new Set<string>();
 	for (const { promise, rows } of held) {
@@ -128,7 +131,7 @@ export async function clauseTestsHalf(
 			for (const c of blamed) {
 				refused.add(key(promise, c));
 				refusals.push(
-					`${key(promise, c)}: tests — ${file} ${passed === false ? "fails when run now" : "was not reported by the test run"}${states.length > 0 ? ` (${[...new Set(states)].join(", ")})` : ""}; a clause's tests pass before the plan closes or lands`,
+					`${key(promise, c)}: tests — ${file} ${passed === false ? (why.get(file) ?? "fails when run now") : "was not reported by the test run"}${states.length > 0 ? ` (${[...new Set(states)].join(", ")})` : ""}; a clause's tests pass before the plan closes or lands`,
 				);
 			}
 		}

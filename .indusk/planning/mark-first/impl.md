@@ -728,12 +728,13 @@ This phase tests the finished plan against signals and breaks shaped differently
   Hypothesis (A35): the scaffold's `telemetry-settings.ts` documents `indusk.run=test` as a resource attribute, and the helper copies it onto the span only from its own settings object; a run marked through `OTEL_RESOURCE_ATTRIBUTES` (a CI job) or a span written without the helper carries it only in Jaeger's process tags. `parseMarkedSpan` checks `span.tags` only, though it already falls back to `processTags` for the environment. Fix: check `tag(span.tags, …) ?? tag(processTags, …)`, as the environment does.
 
   </details>
-- [ ] Treat a clause test file whose tests were all skipped as not passing when closing or landing runs it.
+- [x] Treat a clause test file whose tests were all skipped as not passing when closing or landing runs it.
   <details><summary>Technical</summary>
 
   Hypothesis (A36): `runFiles`'s verdict is `own !== "failed"` (`lib/tests/run-files.ts`), so a file Vitest reports `skipped` or `pending` counts as passed. `clauseTestRunner` passes that through, so a clause whose only test is `describe.skipIf(…)` closes on a test that never ran. This plan's own A11 is one: `clause-signal.live.test.ts` skips unless `INDUSK_LIVE_CHECK=clause-signal`, so closing reads it as passing every time. Fix (decision D-30): `runFiles` returns each file's report status beside `passed` (its other callers keep `passed` unchanged), and `clauseTestRunner` maps a file with no test run to `passed: false` with a reason `clauseTestsHalf` prints as "ran no test (skipped)". The rule "a test not run is never a test passed" already in `clauseTestsHalf` then covers it.
 
   </details>
+  Done, with one correction to the hypothesis: Vitest 4's JSON report gives a file only `passed` or `failed` — a file whose tests were all skipped is `passed` — so a file's own status cannot tell it. **Decision D-36:** `runFiles` reads each file's tests (`assertionResults`) and adds `ranNoTest` when none of them passed or failed (all skipped, todo or pending, or none at all); `passed` is unchanged for the plan's test set and phase verification. `clauseTestRunner` turns a passed file that ran no test into `passed: false` with the reason "ran no test (skipped)", which `clauseTestsHalf` prints in place of "fails when run now" (a new optional `reason` on `TestFileResult`).
 - [ ] Count only a real assertion call, not an imported name or a word in a comment, when checking that a clause test asserts something.
   <details><summary>Technical</summary>
 

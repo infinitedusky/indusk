@@ -22,7 +22,8 @@ import type { MarkedSpansResult } from "./telemetry.js";
  * Runs clause test files the way every plan test is run (`runFiles`), with the
  * project's own test command (`verify.testRunner` / `verify.testCommand` in
  * `configRoot`'s config), in `codeRoot`. A project naming no test command
- * cannot run them, which is a refusal, never a pass.
+ * cannot run them, which is a refusal, never a pass; a file whose tests were
+ * all skipped did not pass.
  */
 export function clauseTestRunner(
 	configRoot: string,
@@ -42,7 +43,13 @@ export function clauseTestRunner(
 			files: files.map((path) => ({ path, reason: "proves a clause" })),
 			run,
 		});
-		return results.map((r) => ({ file: r.path, passed: r.passed }));
+		// A file whose every test was skipped is "passed" to Vitest; to a clause
+		// it is a test not run, and a test not run is never a test passed (D-30).
+		return results.map((r) =>
+			r.passed && r.ranNoTest
+				? { file: r.path, passed: false, reason: "ran no test (skipped)" }
+				: { file: r.path, passed: r.passed },
+		);
 	};
 }
 
