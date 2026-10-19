@@ -1,7 +1,7 @@
 ---
 title: "A brief is planned unasked"
 date: 2026-10-18
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "Once a person accepts a brief and approves the looks it names, an unattended session writes the plan's test plan, ADR and impl and stops for the person's approval; approving starts the build, which runs to review as today."
@@ -57,7 +57,7 @@ None.
 
 ## Looks
 
-{To settle: the admin shows a plan being planned unattended and, at the end, that it waits for approval; if that changes a screen, it is listed here, else None with the reason.}
+None — the admin already shows a plan's running session by kind and lists a plan waiting for approval under Needs you; how an unattended run is shown is the activity page's (`activity-and-graph`).
 
 ## Depends On
 
