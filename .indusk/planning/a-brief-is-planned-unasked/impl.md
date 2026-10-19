@@ -145,11 +145,12 @@ This phase narrows what counts as the admin's interface to the files that draw â
   `appRouterDir` in `lib/looks/touched.ts`: a source whose last segment is `app` is the app folder. T10. Harmless now that sources are unchanged; kept so a narrower declaration also resolves.
 
   </details>
-- [ ] Shape â€” review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape â€” review the files this phase changes against the enabled extensions' craft rules.
+  - Reviewed `interface-files.ts` and `touched.ts`: one reason to change each, the new `under` and `trimmed` helpers are named and reachable by T10; nothing found.
 
 #### Build Phase 1 Verification
 
-- [ ] The admin's server code is not interface, its pages and components are, and every look's sources still read.
+- [x] The admin's server code is not interface, its pages and components are, and every look's sources still read.
   <details><summary>Technical</summary>
 
   T10; `indusk plans tests a-brief-is-planned-unasked --phase "Build Phase 1"`.
@@ -158,7 +159,7 @@ This phase narrows what counts as the admin's interface to the files that draw â
 
 #### Build Phase 1 Context
 
-- [ ] Add to the admin's context file that its interface is its pages and components, not its server code.
+- [x] Add to the admin's context file that its interface is its pages and components, not its server code.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`: one line, T10 as its guard.
@@ -167,7 +168,7 @@ This phase narrows what counts as the admin's interface to the files that draw â
 
 #### Build Phase 1 Document
 
-- [ ] Say on the looks reference page that a screens file can exclude paths from an app's interface.
+- [x] Say on the looks reference page that a screens file can exclude paths from an app's interface.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`; changelog.
