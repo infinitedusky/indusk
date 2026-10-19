@@ -1,5 +1,7 @@
 // promise: an-accepted-brief-is-planned-unasked
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -52,11 +54,20 @@ vi.mock("@infinitedusky/indusk-mcp/build", async () => {
 vi.mock("@infinitedusky/indusk-mcp/plans", () => ({
   acceptPlan: async () => {},
 }));
+const open: Array<{ kind: string }> = [];
+const admitted = new Set<string>();
 vi.mock("./session-host", () => ({
   planLocation: async () => ({ root: "/p", cwd: "/p" }),
   sessionManager: () => ({
-    forPlan: () => undefined,
-    admitBuild: () => () => {},
+    forPlan: (_project: string, _plan: string, kind?: string) =>
+      open.find((r) => kind === undefined || r.kind === kind),
+    // A set, as the real manager's: a second admit shares the first's place.
+    admitBuild: (project: string, plan: string) => {
+      admitted.add(`${project}/${plan}`);
+      return () => {
+        admitted.delete(`${project}/${plan}`);
+      };
+    },
   }),
 }));
 vi.mock("./registry-client", () => ({ getProjectPath: () => "/p" }));
@@ -69,6 +80,8 @@ const PLAN = "plan-from-brief";
 beforeEach(() => {
   held = { briefStatus: "accepted", unapprovedLooks: [] };
   runs = 0;
+  open.length = 0;
+  admitted.clear();
   finishRun();
   const g = globalThis as unknown as Record<symbol, Map<string, unknown>>;
   g[Symbol.for("indusk.admin.builds")]?.clear();
@@ -121,5 +134,56 @@ describe("A2 — a planning run starts when the brief is ready", () => {
     } finally {
       vi.unstubAllEnvs();
     }
+  });
+});
+
+describe("A11 — two asks at once start one planning run", () => {
+  it("A11 starts one run when two asks arrive together", async () => {
+    const asks = await Promise.allSettled([
+      startPlanning(PROJECT, PLAN),
+      startPlanning(PROJECT, PLAN),
+    ]);
+    expect(runs).toBe(1);
+    const started = asks.filter(
+      (a) => a.status === "fulfilled" && a.value.started,
+    );
+    expect(started).toHaveLength(1);
+  });
+
+  it("A11 holds one place for the run it started, not released by a refused second ask", async () => {
+    await Promise.allSettled([
+      startPlanning(PROJECT, PLAN),
+      startPlanning(PROJECT, PLAN),
+    ]);
+    expect(admitted.has(`${PROJECT}/${PLAN}`)).toBe(true);
+  });
+});
+
+describe("A12 — no planning run while a person's planning conversation is open", () => {
+  it("A12 declines to start while a planning-kind session is open on the plan", async () => {
+    open.push({ kind: "planning" });
+    const outcome = await startPlanning(PROJECT, PLAN).then(
+      (state) => state,
+      (err: Error) => err,
+    );
+    expect(runs).toBe(0);
+    const text =
+      outcome instanceof Error ? outcome.message : (outcome.stop?.why ?? "");
+    expect(text).toMatch(/planning/i);
+  });
+
+  it("A12 tells the planning conversation, in the planner skill, to stop once the admin is planning", () => {
+    const skill = readFileSync(
+      join(
+        process.cwd(),
+        "..",
+        "indusk-mcp",
+        "skills",
+        "planner.md",
+      ),
+      "utf-8",
+    );
+    expect(skill).toMatch(/end (this|the) conversation here/i);
+    expect(skill).toMatch(/admin[^\n]*(writes|is writing|plans)/i);
   });
 });

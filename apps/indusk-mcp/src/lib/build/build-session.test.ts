@@ -300,3 +300,23 @@ describe("A5 — a planning step writes only its document, unattended", () => {
 		});
 	});
 });
+
+/**
+ * a-brief-is-planned-unasked T17 (A17): the planner skill's steps stop on an
+ * ADR left proposed; a planning step must not, and must change no document but its own.
+ */
+describe("A17 — an earlier document's draft or proposed status is no reason to stop", () => {
+	it("A17 tells a planning step an earlier document left draft or proposed is not a reason to stop", () => {
+		for (const step of ["plan-adr", "plan-impl"] as const) {
+			const prompt = stepPrompt(step, "seats");
+			expect(prompt).toMatch(/proposed/);
+			expect(prompt).toMatch(/draft/);
+			expect(prompt).toMatch(/not a reason to stop/i);
+		}
+	});
+
+	it("A17 tells a planning step it changes no other document's status", () => {
+		const prompt = stepPrompt("plan-impl", "seats");
+		expect(prompt).toMatch(/other document'?s? status|status of any other document/i);
+	});
+});

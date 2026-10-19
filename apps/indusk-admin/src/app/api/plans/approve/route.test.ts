@@ -24,7 +24,9 @@ vi.mock("@infinitedusky/indusk-mcp/plans", () => {
     },
   };
 });
+let planning: { running: boolean; step: string | null } | null = null;
 vi.mock("@/lib/build-host", () => ({
+  planningState: () => planning,
   startBuild: async () => {
     calls.push("build");
     return build();
@@ -50,6 +52,7 @@ const post = () =>
 
 beforeEach(() => {
   calls.length = 0;
+  planning = null;
   approval = async () => ({ plan: "a-plan", approved: "sha" });
   build = async () => ({ running: true });
 });
@@ -91,5 +94,22 @@ describe("A8 — approving a plan starts its build", () => {
       started: false,
       why: "another plan is building",
     });
+  });
+});
+
+describe("A16 — a plan is not approved while its planning run is running", () => {
+  it("A16 refuses with 409 naming the step, and approves nothing", async () => {
+    planning = { running: true, step: "plan-impl" };
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toContain("plan-impl");
+    expect(calls).toEqual([]);
+  });
+
+  it("A16 approves once the planning run has ended", async () => {
+    planning = { running: false, step: null };
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(calls).toEqual(["approve", "build"]);
   });
 });
