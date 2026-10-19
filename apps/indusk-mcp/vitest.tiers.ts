@@ -33,6 +33,7 @@ export const SYSTEM = [
 	"src/__tests__/archived-plan-found.test.ts",
 	"src/__tests__/build-session-gates.test.ts",
 	"src/__tests__/cli-bare-ui-cwd-aware.test.ts",
+	"src/__tests__/clause-signal.live.test.ts",
 	"src/__tests__/demo-command.test.ts",
 	"src/__tests__/looks-admin-all.contract.test.ts",
 	"src/__tests__/looks-browser.contract.test.ts",
