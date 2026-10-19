@@ -427,13 +427,13 @@ This phase makes the admin's builds, planning runs and releases leave a record o
   New `apps/indusk-mcp/src/lib/run-record/record.ts`: `writeRunRecord(home, record)` (temporary file in the same directory then `renameSync`), `readRunRecord(home, plan, kind)` returning `RunRecord | "unknown" | null` (null: no file), `RunRecord = { plan, kind: "build" | "planning" | "release", step, phase, process: { pid, bin, startedAt } | null, startedAt, stop, stopReason, updatedAt }` — `process` is the current step session's `claude` child (Decision 4), `startedAt` is when the run began. The home is the machine-state directory `indusk eval home` prints (`lib/bookkeeping/home`); a path join under `runs/`. Never throws on a bad file. Header `// clause: a-run-is-read-from-its-record/kept-on-disk`.
 
   </details>
-- [ ] Add the one rule that says whether a run is alive, using the existing process-identity reader.
+- [x] Add the one rule that says whether a run is alive, using the existing process-identity reader.
   <details><summary>Technical</summary>
 
   New `lib/run-record/liveness.ts`: `runStatus(record, deps: ProcessDeps, heldHere: boolean)` → `{ state: "running" | "stopped" | "unknown", reason? }`. A record with a `stop` reads stopped with that reason; `heldHere` (this daemon holds the run in memory as running, the gap between two step sessions) reads running; otherwise `isOwnProcess(record.process.pid, [record.process.bin], deps, record.process.startedAt)` from `lib/process-identity.ts` — the step session's own pid, program and start time, never the daemon's or the run's start — alive reads running, anything else (no process recorded, gone, a recycled pid) reads stopped with "the run's process is gone". Write A73 in `src/__tests__/run-liveness.contract.test.ts` (system tier): spawn `node -e "setTimeout(()=>{},120000)"`, record its pid, `process.execPath` as the marker and its start time read by `realProcessReads.startTime`, set the run's `startedAt` ten minutes earlier, expect running with the real reads; kill it, wait for exit, expect stopped. Nothing in the file calls `process.kill(pid, 0)` itself (`lesson: identify-a-process-by-what-it-cannot-rewrite`). `readRunRecord` returning "unknown" yields unknown, never running. Header `// clause: a-run-is-read-from-its-record/dead-reads-stopped`; the limit `never-in-progress-when-idle` is proved where the situation is stated, in Build Phase 2 (A69).
 
   </details>
-- [ ] Add the rule that picks the step Build starts from the plan's documents.
+- [x] Add the rule that picks the step Build starts from the plan's documents.
   <details><summary>Technical</summary>
 
   New `lib/run-record/restart.ts`: `restartStep(kind, plan)` over the existing `nextBuildStep(await readBuildPlan(root, plan))` and `nextPlanningStep` (`lib/build/next-step.ts`, `next-planning-step.ts`). A build never answers `release` unless the plan is accepted (`nothing-ships-until-accepted`); a planning kind never answers a build step or release. Export `restartStep` and the record functions from the package's `build` export so the admin imports them.
