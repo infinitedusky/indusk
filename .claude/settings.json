@@ -307,6 +307,10 @@
 					{
 						"type": "command",
 						"command": "node \"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/workbench-sync.js"
+					},
+					{
+						"type": "command",
+						"command": "node \"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/plan-write-witness.js"
 					}
 				]
 			},

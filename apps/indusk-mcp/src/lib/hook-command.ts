@@ -64,6 +64,10 @@ export const HOOK_REGISTRATIONS: readonly (readonly [
 	["PostToolUse", "Edit|Write", "workbench-sync.js"],
 	["PostToolUse", "Bash", "eval-trigger.js"],
 	["PostToolUse", "Bash", "plan-write-witness.js"],
+	// The witness also records an editing tool's write to a plan document made while a shell
+	// command runs (one turn's tool calls run at once), so the drain does not blame the command.
+	// `Edit|Write`, the editing matcher every hook here uses (A24 pins the vocabulary).
+	["PostToolUse", "Edit|Write", "plan-write-witness.js"],
 	// A break reaches the working agent (incident-recording): once per prompt,
 	// before the model reads it. The event takes no matcher; "" writes none.
 	["UserPromptSubmit", "", "break-inbox.js"],

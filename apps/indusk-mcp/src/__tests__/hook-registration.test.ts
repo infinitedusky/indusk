@@ -149,6 +149,8 @@ describe("A63 — the shell guard and its witness are registered and installed",
 	it.each([
 		["PreToolUse", "Bash", "plan-write-guard.js"],
 		["PostToolUse", "Bash", "plan-write-witness.js"],
+		// a-run-can-be-trusted A100: an editing tool's write during a shell command is recorded
+		["PostToolUse", "Edit|Write", "plan-write-witness.js"],
 	])("%s under %s names %s", (event, matcher, file) => {
 		expect(table.some(([e, m, f]) => e === event && m === matcher && f === file)).toBe(true);
 	});
@@ -157,7 +159,9 @@ describe("A63 — the shell guard and its witness are registered and installed",
 		"%s exists in the package's hooks and the project's installed hooks",
 		(file) => {
 			expect(existsSync(join(PACKAGE_HOOKS, file)), `${file} in the package`).toBe(true);
-			expect(existsSync(join(PROJECT_HOOKS, file)), `${file} installed in .claude/hooks`).toBe(true);
+			expect(existsSync(join(PROJECT_HOOKS, file)), `${file} installed in .claude/hooks`).toBe(
+				true,
+			);
 		},
 	);
 });

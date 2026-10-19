@@ -62,8 +62,19 @@ export type DecisionLine = {
 	files: string[];
 	before: Snapshot;
 };
-export type AfterLine = { kind: "after"; toolUseId: string; after: Snapshot };
-export type PlanWriteLine = DecisionLine | AfterLine;
+export type AfterLine = { kind: "after"; toolUseId: string; at?: string; after: Snapshot };
+/**
+ * A write by the Edit or Write tool to a plan document while a shell command was in flight
+ * (A100): the file, root-relative, and its size and modified time just after the tool wrote it.
+ */
+export type ToolWriteLine = {
+	kind: "tool-write";
+	at: string;
+	root?: string;
+	file: string;
+	stat: [number, number] | null;
+};
+export type PlanWriteLine = DecisionLine | AfterLine | ToolWriteLine;
 
 // ─── the writing half (mirrored by hooks/_clause-verdicts.js) ──────────────
 
@@ -449,7 +460,12 @@ function movesThroughChecks(command: string, cwd: string): boolean {
  * changed: `shell-write-refused` broken, naming the files and the command;
  * nothing changed: `reads-pass` upheld for a command that named a plan path).
  */
-export function judgeDecision(d: DecisionLine, after?: Snapshot): ClauseVerdict | null {
+export function judgeDecision(
+	d: DecisionLine,
+	after?: Snapshot,
+	/** Plan documents an editing tool wrote during the command, as the after snapshot holds them. */
+	toolWritten: ReadonlySet<string> = new Set(),
+): ClauseVerdict | null {
 	if (d.decision === "refused") {
 		if (parserReadsWrite(d.command, d.cwd))
 			return { promise: PROMISE, clause: "shell-write-refused" };
@@ -460,7 +476,7 @@ export function judgeDecision(d: DecisionLine, after?: Snapshot): ClauseVerdict 
 		};
 	}
 	if (after === undefined) return null;
-	const changed = changedFiles(d.before, after);
+	const changed = changedFiles(d.before, after).filter((f) => !toolWritten.has(f));
 	if (changed.length > 0) {
 		if (movesThroughChecks(d.command, d.cwd)) return null;
 		return {
@@ -470,6 +486,33 @@ export function judgeDecision(d: DecisionLine, after?: Snapshot): ClauseVerdict 
 		};
 	}
 	return d.files.length > 0 ? { promise: PROMISE, clause: "reads-pass" } : null;
+}
+
+/**
+ * The plan documents an editing tool wrote while the command ran: a tool-write line after the
+ * decision began (`at`) and before its after line (by `at`, else by its place in the file), for
+ * the same checkout, whose recorded size and time are what the after snapshot holds. A file the
+ * shell command wrote again after the tool is not among them: its after differs (A100).
+ */
+export function toolWrittenDuring(
+	lines: readonly PlanWriteLine[],
+	d: DecisionLine,
+	after: AfterLine,
+): Set<string> {
+	const start = Date.parse(d.at);
+	const end = after.at === undefined ? Number.POSITIVE_INFINITY : Date.parse(after.at);
+	const afterIndex = lines.indexOf(after);
+	const out = new Set<string>();
+	lines.forEach((l, i) => {
+		if (l.kind !== "tool-write") return;
+		const at = Date.parse(l.at);
+		if (!(at >= start && at <= end)) return;
+		if (after.at === undefined && afterIndex !== -1 && i > afterIndex) return;
+		if (l.root !== undefined && d.root !== undefined && l.root !== d.root) return;
+		if (l.stat !== null && JSON.stringify(l.stat) === JSON.stringify(after.after[l.file] ?? null))
+			out.add(l.file);
+	});
+	return out;
 }
 
 /** The plan a decision concerns, for the span: the first plan path it names or changed. */
@@ -556,6 +599,11 @@ export async function drainPlanWriteDecisions(
 		const keep: PlanWriteLine[] = [];
 		let sent = 0;
 		for (const l of parsed) {
+			if (l.kind === "tool-write") {
+				// kept while a decision it could account for may still be waiting for its after line
+				if (!(now.getTime() - Date.parse(l.at) > UNPAIRED_MAX_AGE_MS)) keep.push(l);
+				continue;
+			}
 			if (l.kind !== "decision") continue;
 			const after = afters.get(l.toolUseId);
 			const age = now.getTime() - Date.parse(l.at);
@@ -563,7 +611,11 @@ export async function drainPlanWriteDecisions(
 				if (!(age > UNPAIRED_MAX_AGE_MS)) keep.push(l);
 				continue;
 			}
-			const verdict = judgeDecision(l, after?.after);
+			const verdict = judgeDecision(
+				l,
+				after?.after,
+				after ? toolWrittenDuring(parsed, l, after) : undefined,
+			);
 			if (!verdict) continue;
 			await writeClauseSignals(
 				root,
