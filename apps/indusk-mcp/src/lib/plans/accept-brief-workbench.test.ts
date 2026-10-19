@@ -1,6 +1,6 @@
 // clause: a-brief-is-accepted-on-current-main/main-is-merged-first
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { isAbsolute, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { briefText } from "../../__tests__/helpers/plan-fixture.js";
 import {
@@ -79,5 +79,22 @@ describe("accepting a workbench plan", () => {
 		expect(readFileSync(briefAt(wb.root), "utf-8")).toContain("status: draft");
 		expect(git(codeWorktree, ["rev-parse", "HEAD"])).toBe(head);
 		expect(git(codeWorktree, ["status", "--porcelain"])).toBe("");
+	});
+
+	it("A35: a rejected commit at the root leaves the brief a draft, nothing staged, and the code branch as it was", async () => {
+		commitIn(trunk(), "trunk-moved.md", "new\n", "trunk moves");
+		commitIn(codeWorktree, "mine.md", "mine\n", "my work");
+		const head = git(codeWorktree, ["rev-parse", "HEAD"]);
+		const hooks = git(wb.root, ["rev-parse", "--git-path", "hooks"]);
+		const hook = join(isAbsolute(hooks) ? hooks : resolve(wb.root, hooks), "commit-msg");
+		writeFileSync(hook, '#!/bin/sh\ngrep -q "brief accepted" "$1" && exit 1\nexit 0\n');
+		chmodSync(hook, 0o755);
+		await expect(acceptBrief(wb.root, PLAN)).rejects.toThrow();
+		expect(readFileSync(briefAt(wb.root), "utf-8")).toContain("status: draft");
+		expect(git(wb.root, ["status", "--porcelain"])).toBe("");
+		expect(git(codeWorktree, ["rev-parse", "HEAD"])).toBe(head);
+		rmSync(hook);
+		await acceptBrief(wb.root, PLAN);
+		expect(readFileSync(briefAt(wb.root), "utf-8")).toContain("status: accepted");
 	});
 });

@@ -1,5 +1,7 @@
-import { relative } from "node:path";
+import { existsSync } from "node:fs";
+import { isAbsolute, relative, resolve } from "node:path";
 import { git, headSha } from "../git.js";
+import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import { PlanCommandRefusal, planBranch } from "./plan-branch.js";
 import { workbenchPlan } from "./workbench-plan.js";
 
@@ -51,12 +53,18 @@ export async function bringTrunkIntoPlan<T>(
 	how: BringTrunkHow,
 	after?: () => T | Promise<T>,
 ): Promise<T | undefined> {
+	const live = await livePlanCopy(anyCheckout, plan);
+	// A plan with no branch of its own is planned on the trunk: already current.
+	if (live.ok && live.copy.source === "trunk" && !(await workbenchPlan(anyCheckout, plan)))
+		return await after?.();
 	const at = await placeOf(anyCheckout, plan);
+	await refuseUnfinishedWork(at, plan, how);
 	const before = await headSha(at.checkout);
 	try {
 		await git(
 			at.checkout,
 			"merge",
+			"--ff",
 			"--no-edit",
 			"-m",
 			`plan(${plan}): ${at.trunk} merged before ${how.when}`,
@@ -78,6 +86,33 @@ export async function bringTrunkIntoPlan<T>(
 		// `--merge`, not `--hard`: a person's unrelated uncommitted files survive.
 		await git(at.checkout, "reset", "--merge", before);
 		throw err;
+	}
+}
+
+/** Another change that git left half done in the checkout: the merge, rebase, cherry-pick or revert belongs to whoever started it. */
+const UNFINISHED = [
+	"MERGE_HEAD",
+	"CHERRY_PICK_HEAD",
+	"REVERT_HEAD",
+	"rebase-merge",
+	"rebase-apply",
+];
+
+async function refuseUnfinishedWork(at: Place, plan: string, how: BringTrunkHow): Promise<void> {
+	for (const name of UNFINISHED) {
+		const path = await git(at.checkout, "rev-parse", "--git-path", name);
+		if (!existsSync(isAbsolute(path) ? path : resolve(at.checkout, path))) continue;
+		const unresolved = lines(
+			await git(at.checkout, "diff", "--name-only", "--diff-filter=U").catch(() => ""),
+		);
+		throw new PlanCommandRefusal(
+			[
+				head(plan, how),
+				`${at.checkout} is partway through bringing other changes in, which belongs to whoever started it${unresolved.length > 0 ? "; these files are unresolved:" : "."}`,
+				...(unresolved.length > 0 ? [list(unresolved)] : []),
+				`Finish or set that work aside first, then ${how.again}.`,
+			].join("\n"),
+		);
 	}
 }
 
@@ -127,18 +162,27 @@ async function whyNotBrought(
 	}
 	// Paths, not `status --porcelain`: `git()` trims its output, which eats the first line's leading column.
 	const dirty = [
-		...lines(await git(at.checkout, "diff", "--name-only", "HEAD").catch(() => "")),
+		...new Set([
+			...lines(await git(at.checkout, "diff", "--name-only", "HEAD").catch(() => "")),
+			...lines(await git(at.checkout, "diff", "--name-only", "--cached").catch(() => "")),
+		]),
 		...lines(await git(at.checkout, "ls-files", "--others", "--exclude-standard").catch(() => "")),
 	];
 	const trunkChanges = new Set(
-		lines(await git(at.checkout, "diff", "--name-only", `HEAD...${at.trunk}`).catch(() => "")),
+		lines(
+			await git(at.checkout, "diff", "--name-only", "--no-renames", `HEAD...${at.trunk}`).catch(
+				() => "",
+			),
+		),
 	);
+	// Git also refuses a merge for a staged file the trunk never touches, so a dirty tree explains any refusal that is no conflict.
 	const inTheWay = dirty.filter((p) => trunkChanges.has(p));
-	if (inTheWay.length > 0) {
+	const named = inTheWay.length > 0 ? inTheWay : dirty;
+	if (named.length > 0) {
 		return [
 			head(plan, how),
 			`${at.trunk} could not be brought into ${at.branch} because these files in ${at.checkout} have uncommitted changes, which belong to whoever made them:`,
-			list(inTheWay),
+			list(named),
 		].join("\n");
 	}
 	const reason = ((err as Error).message ?? String(err))

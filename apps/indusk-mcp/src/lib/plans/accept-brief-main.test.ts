@@ -125,6 +125,15 @@ describe("accepting a brief brings main in first", () => {
 		expect(readFileSync(join(wt, briefPath), "utf-8")).toContain("status: draft");
 	});
 
+	it("A36: a repository set to allow only fast-forwards still has main brought in", async () => {
+		behindMain();
+		p.commit(wt, { "docs/mine.md": "mine\n" }, "my work");
+		git(wt, ["config", "merge.ff", "only"]);
+		await acceptBrief(p.trunk, PLAN);
+		expect(existsSync(join(wt, "docs", "from-main.md"))).toBe(true);
+		expect(readFileSync(join(wt, briefPath), "utf-8")).toContain("status: accepted");
+	});
+
 	it("A26: a skill that changed on main after the branch was cut is in the worktree after accepting", async () => {
 		behindMain({ ".claude/skills/audit/SKILL.md": "audit concerns are answered\n" });
 		await acceptBrief(p.trunk, PLAN);

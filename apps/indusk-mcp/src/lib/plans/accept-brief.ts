@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
+import { git } from "../git.js";
 import { checkPlanContract } from "../promises/contract.js";
 import { type BringTrunkHow, bringTrunkIntoPlan } from "./bring-trunk.js";
 import {
@@ -45,9 +46,18 @@ export async function acceptBrief(anyCheckout: string, plan: string): Promise<Ac
 		const brief = readDraftBrief(wp.dir, plan);
 		refuseFailingContract(wp.root, plan);
 		// The registry at the root is not changed by the code branch's merge: no second check.
-		await bringTrunkIntoPlan(anyCheckout, plan, ACCEPTING);
-		writeFileSync(brief.path, setFrontmatterKeys(brief.text, acceptedKeys()));
-		await commitAtRoot(wp.root, [relative(wp.root, brief.path)], message);
+		await bringTrunkIntoPlan(anyCheckout, plan, ACCEPTING, async () => {
+			const rel = relative(wp.root, brief.path);
+			try {
+				writeFileSync(brief.path, setFrontmatterKeys(brief.text, acceptedKeys()));
+				await commitAtRoot(wp.root, [rel], message);
+			} catch (err) {
+				// A refused commit leaves the brief a draft, on disk and in the index.
+				writeFileSync(brief.path, brief.text);
+				await git(wp.root, "reset", "-q", "--", rel).catch(() => undefined);
+				throw err;
+			}
+		});
 		return { plan };
 	}
 	const pb = await planBranch(anyCheckout, plan);
@@ -55,13 +65,19 @@ export async function acceptBrief(anyCheckout: string, plan: string): Promise<Ac
 	refuseFailingContract(pb.worktree, plan);
 	// Main's registry and the brief itself can change under the merge, so both
 	// are read again inside the undo: no refusal leaves the merge behind.
-	const brief = await bringTrunkIntoPlan(anyCheckout, plan, ACCEPTING, () => {
+	await bringTrunkIntoPlan(anyCheckout, plan, ACCEPTING, async () => {
 		const merged = readDraftBrief(pb.dir, plan);
 		refuseFailingContract(pb.worktree, plan);
-		return merged;
+		try {
+			// `setImplKeys` sets frontmatter keys in any plan document and commits that file alone.
+			await setImplKeys(pb, merged.path, acceptedKeys(), message);
+		} catch (err) {
+			// A refused commit leaves the brief a draft, on disk and in the index, before the merge is undone.
+			writeFileSync(merged.path, merged.text);
+			await git(pb.worktree, "reset", "-q", "--", merged.path).catch(() => undefined);
+			throw err;
+		}
 	});
-	// `setImplKeys` sets frontmatter keys in any plan document and commits that file alone.
-	await setImplKeys(pb, (brief as { path: string }).path, acceptedKeys(), message);
 	return { plan };
 }
 

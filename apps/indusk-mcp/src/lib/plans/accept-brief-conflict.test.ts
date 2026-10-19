@@ -1,8 +1,8 @@
 // clause: a-brief-is-accepted-on-current-main/a-conflict-refuses
 // clause: a-brief-is-accepted-on-current-main/the-person-never-merges
 // promise: a-brief-is-accepted-on-current-main
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { isAbsolute, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { briefText } from "../../__tests__/helpers/plan-fixture.js";
 import {
@@ -171,6 +171,71 @@ describe("a conflict refuses the acceptance", () => {
 		expect(message).toContain("brief.md");
 		expectUntouched(head);
 		expect(existsSync(join(wt, NOTES))).toBe(true);
+	});
+});
+
+describe("work already in the worktree is named and left as it was", () => {
+	it("A31: a person's own unfinished merge survives an acceptance, named without saying main conflicts", async () => {
+		cutFromMain({ [NOTES]: base });
+		p.commit(wt, { [NOTES]: withLine("mine") }, "mine");
+		p.commit(p.trunk, { [NOTES]: withLine("theirs") }, "theirs");
+		expect(() => git(wt, ["merge", "main"])).toThrow();
+		const mergeHead = git(wt, ["rev-parse", "MERGE_HEAD"]);
+		const held = readFileSync(join(wt, NOTES), "utf-8");
+		p.commit(p.trunk, { "docs/later.md": "later\n" }, "main moves again");
+		const message = await refusal();
+		expect(message).toContain(NOTES);
+		expect(message).not.toMatch(/conflicts in these files/);
+		expect(message).not.toMatch(/\b(merge|rebase|commit|stash)\b/i);
+		expect(git(wt, ["rev-parse", "MERGE_HEAD"])).toBe(mergeHead);
+		expect(readFileSync(join(wt, NOTES), "utf-8")).toBe(held);
+		expect(git(wt, ["diff", "--name-only", "--diff-filter=U"])).toBe(NOTES);
+	});
+
+	it("A32: a staged file main does not touch is named, in none of git's words, and stays staged", async () => {
+		cutFromMain({ [NOTES]: base });
+		p.commit(wt, { "docs/mine.md": "mine\n" }, "my work");
+		p.commit(p.trunk, { "docs/from-main.md": "main\n" }, "main moves");
+		writeFileSync(join(wt, "docs", "staged.md"), "staged\n");
+		git(wt, ["add", "docs/staged.md"]);
+		const head = git(wt, ["rev-parse", "HEAD"]);
+		const message = await refusal();
+		expect(message).toContain("docs/staged.md");
+		expect(message).not.toMatch(/overwritten|Your local changes/);
+		expect(message).not.toMatch(/\b(merge|commit|stash)\b/i);
+		expect(git(wt, ["diff", "--cached", "--name-only"])).toBe("docs/staged.md");
+		expect(git(wt, ["rev-parse", "HEAD"])).toBe(head);
+	});
+
+	it("A33: an uncommitted edit to a file main renamed is named by its path in the worktree", async () => {
+		cutFromMain({ [NOTES]: base });
+		p.commit(wt, { "docs/mine.md": "mine\n" }, "my work");
+		git(p.trunk, ["mv", NOTES, "docs/renamed.md"]);
+		p.commit(p.trunk, {}, "main renames the notes");
+		writeFileSync(join(wt, NOTES), withLine("not committed"));
+		const message = await refusal();
+		expect(message).toContain(NOTES);
+		expect(message).not.toMatch(/commit your changes|stash/i);
+		expect(readFileSync(join(wt, NOTES), "utf-8")).toBe(withLine("not committed"));
+	});
+});
+
+describe("a step after the merge that refuses leaves nothing behind", () => {
+	it("A35: a rejected acceptance commit undoes the merge, the brief a draft, and accepting again works", async () => {
+		cutFromMain({ [NOTES]: base });
+		p.commit(wt, { "docs/mine.md": "mine\n" }, "my work");
+		p.commit(p.trunk, { "docs/from-main.md": "main\n" }, "main moves");
+		const head = git(wt, ["rev-parse", "HEAD"]);
+		const hooks = git(wt, ["rev-parse", "--git-path", "hooks"]);
+		const hook = join(isAbsolute(hooks) ? hooks : resolve(wt, hooks), "commit-msg");
+		writeFileSync(hook, '#!/bin/sh\ngrep -q "brief accepted" "$1" && exit 1\nexit 0\n');
+		chmodSync(hook, 0o755);
+		await expect(acceptBrief(p.trunk, PLAN)).rejects.toThrow();
+		expectUntouched(head);
+		expect(git(wt, ["show", `HEAD:${briefPath}`])).toContain("status: draft");
+		rmSync(hook);
+		await acceptBrief(p.trunk, PLAN);
+		expect(readFileSync(join(wt, briefPath), "utf-8")).toContain("status: accepted");
 	});
 });
 
