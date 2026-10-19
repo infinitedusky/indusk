@@ -20,12 +20,14 @@ export async function register(): Promise<void> {
   const [
     { startRecorderLoops },
     { recordBreaks },
+    { drainPlanWriteDecisions },
     { sourceNames },
     { readRegistryProjects },
     { readAdminRefreshMs },
   ] = await Promise.all([
     import("@infinitedusky/indusk-mcp/admin/recorder-loop"),
     import("@infinitedusky/indusk-mcp/promises/record"),
+    import("@infinitedusky/indusk-mcp/promises/clause-verdicts"),
     import("@infinitedusky/indusk-mcp/promises/sources"),
     import("./lib/registry-client"),
     import("./lib/project-reader"),
@@ -35,6 +37,11 @@ export async function register(): Promise<void> {
     projects: () => readRegistryProjects().map((p) => p.path),
     hasProduction: (root) => sourceNames(root).includes("production"),
     intervalFor: readAdminRefreshMs,
-    record: (root) => recordBreaks(root, { by: "admin", source: "deployed" }),
+    // Each tick also judges the shell guard's recorded decisions
+    // (a-run-can-be-trusted, Decision 8); best-effort, it never fails a pass.
+    record: async (root) => {
+      await drainPlanWriteDecisions(root);
+      return recordBreaks(root, { by: "admin", source: "deployed" });
+    },
   });
 }
