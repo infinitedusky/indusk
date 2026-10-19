@@ -17,6 +17,9 @@
 
 export type SessionKind = "planning" | "build";
 
+/** The tool an unattended session asks a decision through (decisions-as-questions, ADR decision 12). */
+export const ASK_DECISION_TOOL = "mcp__indusk__ask_decision";
+
 export interface QuestionOption {
 	label: string;
 	description?: string;
@@ -33,7 +36,18 @@ export type SessionEvent =
 	| { type: "init"; sessionId: string; model: string; version: string; cwd: string }
 	| { type: "text"; text: string }
 	| { type: "tool"; name: string; input: Record<string, unknown> }
-	| { type: "question"; requestId: string; questions: Question[]; input: Record<string, unknown> }
+	| {
+			type: "question";
+			requestId: string;
+			questions: Question[];
+			input: Record<string, unknown>;
+			/**
+			 * Set when the question came through `ask_decision`: an unattended session's
+			 * structured question (options with what they change, a recommendation, a cost).
+			 * A conversation session's `AskUserQuestion` never carries it.
+			 */
+			decision?: true;
+	  }
 	| { type: "permission"; requestId: string; tool: string; input: Record<string, unknown> }
 	| { type: "ack"; requestId: string }
 	| {
@@ -148,12 +162,35 @@ function controlRequestEvents(
 	if (request?.subtype !== "can_use_tool")
 		return [{ type: "other", text: JSON.stringify(request ?? {}) }];
 	const input = (request.input ?? {}) as Record<string, unknown>;
+	if (request.tool_name === ASK_DECISION_TOOL) {
+		return [
+			{
+				type: "question",
+				requestId,
+				questions: [decisionAsQuestion(input)],
+				input,
+				decision: true,
+			},
+		];
+	}
 	if (request.tool_name === "AskUserQuestion") {
 		return [
 			{ type: "question", requestId, questions: (input.questions ?? []) as Question[], input },
 		];
 	}
 	return [{ type: "permission", requestId, tool: String(request.tool_name ?? ""), input }];
+}
+
+/** An `ask_decision` request in the shape the panels draw a question in: its text and its options' labels. */
+function decisionAsQuestion(input: Record<string, unknown>): Question {
+	const options = Array.isArray(input.options) ? (input.options as Record<string, unknown>[]) : [];
+	return {
+		question: typeof input.question === "string" ? input.question : "",
+		options: options.map((o) => ({
+			label: String(o?.label ?? ""),
+			...(typeof o?.description === "string" ? { description: o.description } : {}),
+		})),
+	};
 }
 
 /** The line that starts or continues the conversation with what a person typed. */
@@ -163,9 +200,11 @@ export function userMessage(text: string): string {
 
 /** The reply to a question: allow, with the person's answer per question (question text → chosen label). */
 export function answerQuestion(ev: QuestionEvent, answers: Record<string, string>): string {
+	// An `ask_decision` tool returns the `answer` it was given, so the session hears it.
+	const answer = ev.decision ? { answer: Object.values(answers).join("\n") } : {};
 	return controlResponse(ev.requestId, {
 		behavior: "allow",
-		updatedInput: { ...ev.input, answers },
+		updatedInput: { ...ev.input, answers, ...answer },
 	});
 }
 

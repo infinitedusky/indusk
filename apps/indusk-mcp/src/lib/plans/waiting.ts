@@ -1,6 +1,7 @@
 import type { PlanningStop } from "../build/planning-runner.js";
 import type { DocumentPosition } from "../lifecycle.js";
-import type { Question } from "../session/protocol.js";
+import type { Question as QuestionRecord } from "../questions/record.js";
+import type { Question as AskedQuestion } from "../session/protocol.js";
 import { requiredDocuments } from "../workflow-types.js";
 import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
 
@@ -11,6 +12,10 @@ import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
  *   - **question** — a running admin session for the plan has asked
  *     (`AskUserQuestion`) and nobody has answered; it waits at the plan's
  *     current step. A blocked agent outranks the rest.
+ *   - **question** (held) — an unattended run asked a decision through
+ *     `ask_decision` and its question holds (no stored deadline): the run ended
+ *     and freed its place, and the plan waits with no timer until the person
+ *     answers; the answer resumes the run.
  *   - **review** — its build stopped at review, or the plan stands at review
  *     (the build's stop is held in memory; the position is on disk, so it
  *     survives a restart of the admin).
@@ -58,7 +63,7 @@ export interface WaitingSession {
 	plan: string;
 	kind: "planning" | "build";
 	/** The question the session asked and nobody has answered yet, if any. */
-	question: { requestId: string; questions: Question[] } | null;
+	question: { requestId: string; questions: AskedQuestion[] } | null;
 	/**
 	 * The session's turn is open — it is working, not idle waiting for the
 	 * person. Absent means writing: approval is withheld rather than offered early.
@@ -89,6 +94,8 @@ export interface WaitingInput {
 	amendments?: ReadonlyArray<{ plan: string; count: number }>;
 	/** The admin's planning runs; absent (an admin restart) reads as no run. */
 	plannings?: ReadonlyArray<WaitingPlanning>;
+	/** The plans' question records; one still waiting with no stored deadline holds its plan. */
+	questions?: ReadonlyArray<QuestionRecord>;
 }
 
 /** One question of an ask: its words and the two answers the card offers. */
@@ -111,6 +118,8 @@ export interface Waiting {
 	alternative: string;
 	/** The session's request a question's answer goes to. */
 	requestId?: string;
+	/** The held question a plan waits on (no session asked it any more): answered by recording, then the run resumes. */
+	questionId?: string;
 	/** Every question the agent asked, in its order; present for a question. */
 	questions?: WaitingQuestion[];
 }
@@ -131,11 +140,13 @@ export function planWaiting({
 	builds = [],
 	amendments = [],
 	plannings = [],
+	questions = [],
 }: WaitingInput): Waiting[] {
 	const waiting: Waiting[] = [];
 	for (const plan of plans) {
 		const one =
 			askedOf(plan, sessions) ??
+			heldQuestion(plan, questions) ??
 			(amended(plan.name, amendments) ? amendment(plan.name) : null) ??
 			(atReview(plan, builds) ? review(plan.name) : null) ??
 			(awaitingApproval(plan) &&
@@ -170,6 +181,28 @@ function askedOf(
 			accept: q.options[0]?.label ?? "Yes",
 			alternative: q.options[1]?.label ?? "No",
 		})),
+	};
+}
+
+/** The plan's oldest question that holds: waiting, with no stored deadline. */
+function heldQuestion(
+	plan: PlanSnapshot & { name: string },
+	questions: ReadonlyArray<QuestionRecord>,
+): Waiting | null {
+	const q = questions.find(
+		(x) => x.plan === plan.name && x.state === "waiting" && x.dueAt === null,
+	);
+	if (!q) return null;
+	const [accept, alternative] = q.options.map((o) => o.label);
+	return {
+		plan: plan.name,
+		on: "question",
+		step: stepAt(plan)?.name ?? "Build",
+		decision: q.text,
+		accept: accept ?? "Yes",
+		alternative: alternative ?? "No",
+		questionId: q.id,
+		questions: [{ question: q.text, accept: accept ?? "Yes", alternative: alternative ?? "No" }],
 	};
 }
 

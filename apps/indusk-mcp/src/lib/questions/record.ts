@@ -38,8 +38,12 @@ export interface Question extends QuestionInput {
 	text: string;
 	/** The cost the agent stated; `cost` is the effective one the admin fixed. */
 	statedCost: Cost;
-	/** The stored wall-clock deadline (ms), or `null` for a question that holds. */
-	dueAt: number | null;
+	/**
+	 * The stored wall-clock deadline (ms), or `null` for a question that holds. Always stored
+	 * when a question is asked; absent only in a record written by hand, which reads its time
+	 * from the settings.
+	 */
+	dueAt?: number | null;
 	state: QuestionState;
 	answer?: string;
 	/** When the answer was given (ms). */
@@ -48,6 +52,10 @@ export interface Question extends QuestionInput {
 	done?: string;
 	/** When it went ahead (ms). */
 	wentAheadAt?: number;
+	/** The session and request a question still waiting on a set time is held by, while the session lives. */
+	session?: { id: string; requestId: string };
+	/** The answer has been told to the agent (a held question's session was stopped, so it is told on resume). */
+	told?: boolean;
 	/** The follow-on plan a late disagreeing answer opened. */
 	followOn?: string;
 }

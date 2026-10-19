@@ -1,3 +1,8 @@
+import { answersNote, untold } from "../questions/answer.js";
+import { readQuestionWait } from "../questions/deadline.js";
+import { nextQuestionId, readQuestions, recordQuestion } from "../questions/history.js";
+import type { Question } from "../questions/record.js";
+import { readQuestionWaitSetting } from "../session/limits.js";
 import type { SessionManager, SessionRecord } from "../session/manager.js";
 import { decideBuildPermission, refuseBuildQuestion } from "../session/permissions.js";
 import {
@@ -6,6 +11,7 @@ import {
 	rateLimitDelayMs,
 } from "../session/rate-limit.js";
 import type { StartedEvent } from "../session/start.js";
+import { type DecisionStore, receiveDecision } from "./decision-request.js";
 import type { ShortenReason } from "./next-step.js";
 import type { BuildStepName } from "./runner.js";
 import { BUILD_STEP_ENV, type PlanningStep } from "./step-env.js";
@@ -14,7 +20,8 @@ import { BUILD_STEP_ENV, type PlanningStep } from "./step-env.js";
  * One step of a build as a session of the developer's own `claude`
  * (admin-plan-authoring, ADR D4, D5): a fresh `build` session in the plan's
  * worktree, under `INDUSK_GATE_POLICY=auto`, its requests decided in code
- * (`permissions.ts`) and its questions refused with "decide and record why".
+ * (`permissions.ts`); a choice it asks through `ask_decision` becomes a question record
+ * (`decision-request.ts`), and a plain `AskUserQuestion` is refused naming `ask_decision`.
  * A step that ends in a rate limit is tried again, as the evaluator's runs
  * are; any other failure is the step's error.
  */
@@ -33,10 +40,19 @@ export function stepEnv(step: SessionStepName): Record<string, string> {
 }
 
 const UNATTENDED =
-	"This build runs unattended (INDUSK_GATE_POLICY=auto): nobody will answer a question. Decide on your own judgement and record each decision and its reason in the plan. Skip a gate item only as `(none needed — <why>)`; the person reviewing the build reads every skip.";
+	"This build runs unattended (INDUSK_GATE_POLICY=auto): nobody is watching. When you meet a choice the plan does not settle, ask it with the `ask_decision` tool (at least two options, the one you recommend and why, a cost, and what each option changes of the brief, a promise, a look or a gate); the answer comes back, or this session ends and a new one starts with it. Never record a choice as decided unattended. Skip a gate item only as `(none needed — <why>)`; the person reviewing the build reads every skip.";
 
 /** What each step asks for. The runner decides which step; this only words it. */
-export function stepPrompt(step: SessionStepName, plan: string, reason?: ShortenReason): string {
+export function stepPrompt(
+	step: SessionStepName,
+	plan: string,
+	reason?: ShortenReason,
+	answered = "",
+): string {
+	return `${stepText(step, plan, reason)}${answered}`;
+}
+
+function stepText(step: SessionStepName, plan: string, reason?: ShortenReason): string {
 	switch (step) {
 		case "work":
 			return `/work ${plan}\n\n${UNATTENDED} Work the plan's open phases in order until every one is closed, then stop. Do not run /falsify, /cleanup, /audit or /retrospective.`;
@@ -143,19 +159,46 @@ export interface BuildSessionOptions {
 	onSession?: (record: SessionRecord) => void;
 	/** For a `shorten-reason` step: the reason to rewrite. */
 	reason?: ShortenReason;
+	/** The clock a question's asked time and deadline are read from; the real one by default. */
+	now?: () => number;
+}
+
+/** Run `read`; its failure is the fallback, never the step's: the history is an aid to the run. */
+function attempt<T>(read: () => T, fallback: T): T {
+	try {
+		return read();
+	} catch {
+		return fallback;
+	}
+}
+
+/** Keep a question in the plan's history, tied to the session that asked it while that session lives. */
+function keep(worktree: string, q: Question, sessionId: string, requestId: string): boolean {
+	try {
+		recordQuestion(
+			worktree,
+			q.state === "waiting" && q.dueAt !== null
+				? { ...q, session: { id: sessionId, requestId } }
+				: q,
+		);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 /** Run one step to its end. `error` is null when the session finished its work. */
 export async function runStepSession(
 	step: SessionStepName,
 	opts: BuildSessionOptions,
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; waiting?: string }> {
 	const delays =
 		opts.retryDelaysMs ??
 		Array.from({ length: RATE_LIMIT_RETRIES }, (_, i) => rateLimitDelayMs(i + 1));
 	const sleep = opts.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
 	for (let attempt = 0; ; attempt++) {
-		const { error, rateLimited } = await oneSession(step, opts);
+		const { error, rateLimited, waiting } = await oneSession(step, opts);
+		if (waiting) return { error: null, waiting };
 		if (error === null) return { error: null };
 		if (!rateLimited || attempt >= delays.length) return { error };
 		await sleep(delays[attempt]);
@@ -165,15 +208,31 @@ export async function runStepSession(
 async function oneSession(
 	step: SessionStepName,
 	opts: BuildSessionOptions,
-): Promise<{ error: string | null; rateLimited: boolean }> {
+): Promise<{ error: string | null; rateLimited: boolean; waiting?: string }> {
 	let result: Extract<StartedEvent, { type: "result" }> | undefined;
+	let waiting: string | undefined;
+	const told = attempt(() => untold(readQuestions(opts.worktree, opts.plan)), []);
+	for (const q of told)
+		attempt(() => recordQuestion(opts.worktree, { ...q, told: true }), undefined);
+	const store: DecisionStore = {
+		nextId: () => attempt(() => nextQuestionId(opts.worktree, opts.plan), `q-${Date.now()}`),
+		wait: () => {
+			try {
+				return readQuestionWaitSetting();
+			} catch {
+				// A setting that cannot be read holds every question: a typo never sends one ahead.
+				return readQuestionWait({});
+			}
+		},
+		now: () => (opts.now ?? Date.now)(),
+	};
 	let stderr = "";
 	const holder: { id?: string } = {};
 	const { id, session } = opts.manager.start({
 		cwd: opts.worktree,
 		...(opts.addDirs?.length ? { addDirs: opts.addDirs } : {}),
 		kind: "build",
-		prompt: stepPrompt(step, opts.plan, opts.reason),
+		prompt: stepPrompt(step, opts.plan, opts.reason, answersNote(told)),
 		project: opts.project,
 		plan: opts.plan,
 		env: stepEnv(step),
@@ -191,6 +250,41 @@ async function oneSession(
 					},
 					"rule",
 				);
+			} else if (ev.type === "question" && ev.decision) {
+				let reply = receiveDecision(ev, opts.plan, store);
+				// A question that cannot be kept is not asked: the session hears why and decides as it must.
+				if (
+					reply.to !== "refuse" &&
+					!keep(opts.worktree, reply.question, holder.id, ev.requestId)
+				) {
+					reply = {
+						to: "refuse",
+						message:
+							"This question could not be recorded in the plan's history, so it was not asked. Record the choice and its reason in the plan and say plainly that it could not be asked.",
+					};
+				}
+				if (reply.to === "refuse") {
+					opts.manager.reply(
+						holder.id,
+						{ requestId: ev.requestId, allow: false, message: reply.message },
+						"rule",
+					);
+				} else if (reply.to === "answer") {
+					opts.manager.reply(
+						holder.id,
+						{ requestId: ev.requestId, answers: reply.answers },
+						"rule",
+					);
+				} else if (reply.to === "hold") {
+					waiting = reply.question.id;
+					opts.manager.reply(
+						holder.id,
+						{ requestId: ev.requestId, allow: false, message: reply.message },
+						"rule",
+					);
+					void opts.manager.stop(holder.id).catch(() => {});
+				}
+				// `wait`: the question was kept with its session; the request stays open.
 			} else if (ev.type === "question") {
 				const refusal = refuseBuildQuestion(ev);
 				opts.manager.reply(
@@ -216,6 +310,7 @@ async function oneSession(
 		if (record) opts.onSession(record);
 	}
 	const code = await session.done;
+	if (waiting) return { error: null, rateLimited: false, waiting };
 	if (result?.ok) return { error: null, rateLimited: false };
 	if (result) {
 		return {

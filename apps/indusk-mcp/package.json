@@ -120,6 +120,10 @@
 			"types": "./dist/lib/plans/index.d.ts",
 			"default": "./dist/lib/plans/index.js"
 		},
+		"./questions": {
+			"types": "./dist/lib/questions/index.d.ts",
+			"default": "./dist/lib/questions/index.js"
+		},
 		"./session": {
 			"types": "./dist/lib/session/index.d.ts",
 			"default": "./dist/lib/session/index.js"

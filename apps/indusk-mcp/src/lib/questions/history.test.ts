@@ -55,12 +55,9 @@ describe("T14 — every question stays, in every state", () => {
 		expect(nextQuestionId(f.main, "seat-holds")).toBe("q-3");
 	});
 
-	it("an answer in time is also a decision line; other states are not", () => {
-		recordQuestion(f.main, base);
-		expect(readHistory(f.main, "seat-holds")).toEqual([]);
+	it("a question line is not a decision line: the decision history reads past it", () => {
 		recordQuestion(f.main, { ...base, state: "answered", answer: "files" });
-		expect(readHistory(f.main, "seat-holds")).toMatchObject([
-			{ decision: "q-1: Which store?", answer: "files", by: "person" },
-		]);
+		expect(readHistory(f.main, "seat-holds")).toEqual([]);
+		expect(readQuestions(f.main, "seat-holds")[0]).toMatchObject({ answer: "files" });
 	});
 });

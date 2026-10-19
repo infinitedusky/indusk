@@ -1,4 +1,4 @@
-import { appendDecision, appendHistoryLine, readHistoryLines } from "../plans/history.js";
+import { appendHistoryLine, readHistoryLines } from "../plans/history.js";
 import type { Question } from "./record.js";
 
 /**
@@ -10,8 +10,8 @@ import type { Question } from "./record.js";
  *
  *   - <at> — question <id> <state> — <record JSON>
  *
- * An answer given in time is also recorded as any decision the person answers is
- * (`appendDecision`), so the decision card's history reads it with the rest.
+ * The person's answer is also a decision line (`appendDecision`), written by the one
+ * place that delivers an answer (the admin's decision route), so it is never written twice.
  *
  * clause: a-late-answer-opens-a-follow-on/every-decision-stays
  */
@@ -21,14 +21,6 @@ const LINE = /^- (\S+) — question (\S+) (waiting|answered|went-ahead|answered-
 export function recordQuestion(anyCheckout: string, q: Question, at = new Date()): void {
 	const line = `- ${at.toISOString()} — question ${q.id} ${q.state} — ${JSON.stringify(q)}`;
 	appendHistoryLine(anyCheckout, q.plan, line, `question ${q.id} ${q.state}`);
-	if (q.state === "answered" && q.answer !== undefined) {
-		appendDecision(anyCheckout, q.plan, {
-			decision: `${q.id}: ${q.text}`,
-			answer: q.answer,
-			by: "person",
-			at: at.toISOString(),
-		});
-	}
 }
 
 /** Every question of `plan`, each in the state last recorded, oldest first. */

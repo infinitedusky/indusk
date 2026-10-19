@@ -111,6 +111,20 @@ describe("A11 — the runner works through phases, falsification and cleanup wit
 		expect(s.ran).toEqual(["work", "work"]);
 	});
 
+	it("stops on a question that holds, naming it, without reading progress or trying again", async () => {
+		const s = scripted([planOf([phase("Seats", false)], [])]);
+		const stop = await runBuild({
+			...s.deps,
+			run: async (step) => {
+				s.ran.push(step);
+				return { error: null, waiting: "q-1" };
+			},
+			autoAccept: false,
+		});
+		expect(stop).toEqual({ step: "question", id: "q-1" });
+		expect(s.ran).toEqual(["work"]);
+	});
+
 	it("stops when a step's session fails, naming the error", async () => {
 		const s = scripted([planOf([phase("Seats", false)], [])], { failAt: 1 });
 		const stop = await runBuild({ ...s.deps, autoAccept: false });
