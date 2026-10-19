@@ -53,7 +53,7 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T7 | A planning run ends when the impl passes its check, waiting for approval; a step that writes a blocker, or two steps without progress, end it with that reason | Build Phase 3 | Build Phase 3 | planned | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/planning-runner.test.ts |
 | T8 | Approving a plan from the admin starts its build, and an approval refused for any reason starts nothing | Build Phase 4 | Build Phase 4 | planned | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
 | T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | planned | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
-| T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | written | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
+| T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
 
 ## Checklist
 
@@ -133,16 +133,16 @@ This phase narrows what counts as the admin's interface to the files that draw â
   `apps/indusk-mcp/src/lib/plans/plan-tests.test.ts` calls `execFileSync("git")`, which `everyday-tests-never-wait.test.ts` refuses in the everyday suite; add it to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`. Discovered at Build Phase 1.
 
   </details>
-- [ ] Narrow the admin's declared interface to its pages and components, leaving out its API routes.
+- [x] Leave the admin's server code and API routes out of its declared interface.
   <details><summary>Technical</summary>
 
-  `.indusk/mockups/admin/screens.json`: `"sources": ["apps/indusk-admin/src/app", "apps/indusk-admin/src/components"]`, `"exclude": ["apps/indusk-admin/src/app/api"]`; `interfaceSources`/`interfaceFilesAmong` (`lib/promises/interface-files.ts`) honour `exclude`. Check every other reader of `sources` (grep `\.sources` under `src/lib/looks`) still finds the stylesheets and config it read before.
+  `.indusk/mockups/admin/screens.json`: `sources` stays `["apps/indusk-admin/src"]` and gains `"exclude": ["apps/indusk-admin/src/lib", "apps/indusk-admin/src/app/api", "apps/indusk-admin/src/instrumentation.ts"]`. Sources are not narrowed because an approval binds `declarationsHashOf({devices, ignore, sources})`, so changing them would return every approved look to proposed; `exclude` is outside that hash. `interfaceSources`/`interfaceFilesAmong` (`lib/promises/interface-files.ts`) honour `exclude`. Every other reader of `sources` reads it unchanged; `looks status admin` shows no look flipped.
 
   </details>
-- [ ] Let the look check read the app's routes when a declared source is the app folder itself.
+- [x] Let the look check read the app's routes when a declared source is the app folder itself.
   <details><summary>Technical</summary>
 
-  `appRouterDir` in `lib/looks/touched.ts`: a source whose last segment is `app` is the app folder. T10.
+  `appRouterDir` in `lib/looks/touched.ts`: a source whose last segment is `app` is the app folder. T10. Harmless now that sources are unchanged; kept so a narrower declaration also resolves.
 
   </details>
 - [ ] Shape â€” review the files this phase changes against the enabled extensions' craft rules.
