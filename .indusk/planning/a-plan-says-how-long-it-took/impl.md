@@ -1,7 +1,7 @@
 ---
 title: "A plan says how long it took"
 date: 2026-10-19
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -62,7 +62,7 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 | A15 | With the step record unwritable, an unattended step still runs to its normal outcome and the build carries on | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A16 | With the test-run record unwritable, the plan's tests still run and the command exits with the tests' own result | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A17 | A record file that is corrupt, half-written or from an older shape is skipped by the view and by every writer, never thrown from | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
-| A18 | Recording a test run runs exactly the same files for the same plan, phase and landing as before | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: the brief lists a-plan-runs-its-tests-and-what-must-not-break under Must not break, so the existing selection is pinned before any recorder touches it | apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts |
+| A18 | Recording a test run runs exactly the same files for the same plan, phase and landing as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the brief lists a-plan-runs-its-tests-and-what-must-not-break under Must not break, so the existing selection is pinned before any recorder touches it | apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts |
 | A19 | A duration is read from timestamps the same way across time zones and daylight-saving changes | Build Phase 1 | Build Phase 4 | planned | unit | durations come from timestamps; a zone-dependent reading would make the data the later per-phase test decision rests on wrong | apps/indusk-mcp/src/lib/timing/view.test.ts |
 
 ## Checklist
@@ -73,13 +73,13 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 
 This phase writes the one test whose subject exists today: that the tests a plan runs at a phase and at landing are exactly the files chosen now. It passes the moment it is written, so later phases cannot change the selection without it going red. Every other test belongs to code the build phases introduce, so each is recorded below as a deferral with its body, and each build phase starts with its tests already written.
 
-- [ ] Create or confirm this plan's worktree, so the plan tools read the plan from it.
+- [x] Create or confirm this plan's worktree, so the plan tools read the plan from it.
   <details><summary>Technical</summary>
 
   `indusk worktree create a-plan-says-how-long-it-took` from the trunk; it exists from `indusk plans start`, so this confirms it.
 
   </details>
-- [ ] Write the test that pins which files a plan's tests run at a phase and at landing.
+- [x] Write the test that pins which files a plan's tests run at a phase and at landing.
   <details><summary>Technical</summary>
 
   A18 in `apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts`: over a fixture plan (reuse `__tests__/helpers/plan-worktree-fixture.ts`), `planTestSet(reads, { phase })` and `planTestSet(reads, { landing: true })` return the exact file lists and reasons written into the test as literals. Read `lib/plans/test-set.ts` for the shape. It passes today.
@@ -131,13 +131,13 @@ This phase writes the one test whose subject exists today: that the tests a plan
 
 #### Test Phase 1 Verification
 
-- [ ] The selection test exists and passes against today's code.
+- [x] The selection test exists and passes against today's code.
   <details><summary>Technical</summary>
 
   A18 passes: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/plan-tests-selection.test.ts` (goes green).
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [x] Every deferred test body above has been read and judged.
   <details><summary>Technical</summary>
 
   Each deferred body reviewed against both questions: will it load at the phase it names, and does it assert what its row claims?
@@ -146,7 +146,7 @@ This phase writes the one test whose subject exists today: that the tests a plan
 
 #### Test Phase 1 Context
 
-- [ ] Record nothing new; the rules land with the build phases.
+- [x] (none needed — no context file needs a line yet; the rules land with the build phases, as this item says)
   <details><summary>Technical</summary>
 
   Confirm no context file needs a line yet.
@@ -155,7 +155,7 @@ This phase writes the one test whose subject exists today: that the tests a plan
 
 #### Test Phase 1 Document
 
-- [ ] Write nothing in the docs yet.
+- [x] (none needed — the docs change with Build Phase 4, as this item says)
   <details><summary>Technical</summary>
 
   Confirm the docs change with Build Phase 4.
