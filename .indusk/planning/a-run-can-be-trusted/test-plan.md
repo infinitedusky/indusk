@@ -88,6 +88,27 @@ Every build, planning run and release the admin starts keeps a record on disk of
 | A20 | A release whose process died before landing reads stopped saying it died, and Build restarts it at the step the plan is at; never "released". | unit |
 | A21 | A release in a real temporary repository: the plan's branch merged to the trunk reads released; the same branch not merged reads stopped. | unit |
 
+### `says-what-is-true` — the plan page and its nav row state the plan's situation in words, read from its record and its files
+
+Added 2026-10-19 (Sandy): `a-brief-is-accepted-on-current-main` read "release in progress" after it had landed and nothing ran for it; a landed plan kept open for its signals has no state of its own.
+
+- Signal: the situation the admin states for each plan, emitted when the page is read. Upheld when the words match the record and the files (a running process for "planning" or "building", a merge on main for "landed"); broken reports the plan, the words shown and what the record says.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-----------|
+| A50 | A plan whose planning run is on a step reads "planning" with that step (writing the test plan, writing the impl, reading the plan cold), on the page and in its nav row. | unit |
+| A51 | A plan whose build is on a phase reads "building" with that phase; one waiting on the person reads what it waits on (review, approval, an amendment, its plan review). | unit |
+| A52 | A plan that has landed on main but is not archived reads "landed" with what it still waits on to close (each clause with no signal), never "releasing". | unit |
+| A53 | A plan whose run stopped reads "stopped" with the reason and what starts it again. | unit |
+
+### `never-in-progress-when-idle` — nothing reads as in progress while no process is running for it
+
+- Signal: the same read. Upheld when every plan shown as planning, building or releasing has a live process in its record; broken reports the plan shown as in progress with none.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-----------|
+| A54 | An accepted plan with no release process running, after an admin restart, reads landed, stopped or waiting — never "release in progress". | unit |
+
 ## `a-plan-document-is-written-through-its-checks`
 
 A shell command that writes a plan document is refused, so every change to a plan document passes the checks that guard it.
