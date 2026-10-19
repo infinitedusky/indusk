@@ -177,7 +177,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   Looks page) and any waiting amendment come from the package's
   `readPlanParts`, read from the plan's own checkout on every request; Approve
   on an amendment posts to `plans/[name]/reapprove`. The review's `evidence`
-  group is read, not signed off. Guarded by `cockpit-single-definition.test.ts`
+  group is read, not signed off. Each promise's dot is its health from the
+  package's `planPromiseHealth` (the alarm source, as the nav's red) — a promise only the plan's
+  checkout registers too, so no signal is never the enforced green — its
+  registry state only when telemetry says nothing. The nav's red dot reads the same worktree
+  promises through `worktreePromises` (`lib/plan-health.ts`), so the two never disagree. Guarded by `cockpit-single-definition.test.ts`
   and `plan-parts.test.tsx` (A15). — see `/reference/admin-ui/overview`
 - **A task's Technical detail renders through `components/Markdown.tsx` in
   `PhaseItems`, never as raw text**: the phase's paragraph and each task's
@@ -294,3 +298,5 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `/decisions/cockpit-redraw`
 - **A running agent's events are heard through `useSessionEvents`** — `components/session/use-session-events.ts`, the one subscription every conversation uses (the `EventSource` on `/api/sessions/:id/events`, `running`, a refresh on a write and on exit, an `onWrite` callback). A new view of a session uses it rather than opening its own `EventSource`; a draft's agent is found with `draftSession`/`stopDraftSession` in `lib/new-project-session.ts`, never by comparing `sessionManager().current()?.plan`. Guarded by `use-session-events.test.tsx` (A34).
 - **A promise is upheld or broken; live, holding or broken; past, held or broke; unknown, no signal** — never violated, unverified or not seen, and no signal is never green: an enforced promise nothing has reported is a grey dot and "no signal yet" in the list (`PromiseRow`'s `no-signal`). `PromiseWords.test.tsx` and `PromiseRow.test.tsx` hold it. — `promise: a-promise-is-upheld-or-broken`, see `/decisions/one-promise-language`
+- **The admin's interface is its pages and components, not its server code**: `screens.json` keeps `sources` as `src` (an approval binds them) and `exclude`s `src/lib`, `src/app/api` and `instrumentation.ts`, so a change there needs no look. Guarded by `interface-files.test.ts` (T10 of a-brief-is-planned-unasked).
+- **The host starts planning runs as well as builds, and approval starts the build**: `build-host.ts`'s `startPlanning` (behind `POST /api/plans/plan`) takes `startBuild`'s slot, asks the package's `nextPlanningStep` first and starts nothing while it waits for looks, awaits approval or cannot continue; both are refused inside a planning step. `accept-brief` asks it over the address `indusk ui` recorded, the look approval asks for the plan whose worktree recorded it, a planning conversation's end asks too, but only when that conversation accepted the brief (the sessions route hands the manager an `onEnd` calling `planningConversationEnded` with the session's start; the brief's `accepted_at` must be at or after it, and a brief with none starts nothing; the run is held back while the conversation is open), and the approve route calls `startBuild` only after `approvePlan` returned. Guarded by `build-host.test.ts` (T2, T19, T22), `api/sessions/route.test.ts` and `api/plans/approve/route.test.ts` (T8). — see `/decisions/a-brief-is-planned-unasked`, `promise: an-accepted-brief-is-planned-unasked`

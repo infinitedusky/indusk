@@ -1,6 +1,6 @@
 # `indusk plans`
 
-A plan's lifecycle from start to landing — `start`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
+A plan's lifecycle from start to landing — `start`, `accept-brief`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
 
 ## A plan's lifecycle
 
@@ -8,6 +8,7 @@ A plan is written on its own branch, in its own worktree. Its documents and decl
 
 ```bash
 indusk plans start <type> <name>    # its branch, its worktree, its first document
+indusk plans accept-brief <name>    # a draft brief is accepted once its contract check passes
 indusk plans approve <name>         # the brief check, then its documents merge to the trunk
 indusk plans reapprove <name>       # a person approves an amendment; an agent's call is refused
 indusk plans accept <name> [--auto] # the build may ship
@@ -77,6 +78,16 @@ While an amendment waits, `check-gates` refuses to check off any build item, nam
 
 Lists the amendments waiting, each as `part name: was "…" — now "…"`, or says nothing waits. `--json` prints the list (`[{part, name, was, now}]`) — what `check-gates` reads; `--dir` names the plan folder the caller means, otherwise the plan's live copy is read. Refused, exit 1, when what was approved cannot be told: no approval commit on the branch, or one whose brief is not the `approved_brief` recorded — never read as "nothing changed".
 
+### `plans accept-brief <name>`
+
+The person says the brief is settled. Refused, with nothing written, when the brief is not a `draft`, or when the plan's contract check (`indusk promises contract`) refuses, with the check's own messages. Otherwise sets the brief's `status: accepted` and commits it on the plan's branch as `plan(<name>): brief accepted`; in a workbench, at the workbench root. The planner skill runs it after declaring the promises instead of editing the status by hand, so acceptance has a moment later steps can start from.
+
+Refused inside a build step, naming the step: a session that plans or builds does not decide the brief is settled. Approving a plan or a look is refused inside a planning step (`plan-test-plan`, `plan-adr`, `plan-impl`) the same way.
+
+#### What runs after it
+
+The planning loop writes the rest of the plan unattended, one fresh session per document: the test plan, then the ADR when the workflow has one, then the impl. Each session reads the plan's brief and research, follows the planner skill's section for its one document, records each open decision with its reason in that document, and commits it on the plan's branch. A document that fails its check is written again; the loop waits while a look the brief makes is not approved, and ends when the impl passes its structure check and the plan's contract passes, waiting for the person's approval. A session that cannot decide writes a `blocker:` line and ends the run with that reason; so do a failed session and two steps in a row that change nothing. No planning step approves anything or builds. The admin's host starts the loop (`POST /api/plans/plan`): `accept-brief` asks the running admin, at the address `indusk ui` recorded, and says plainly when no admin is running, the project is not registered or the admin refuses; approving the last look a brief names starts it too. There is no CLI start of the loop itself. Two asks at once start one run, and none starts while a person's planning conversation is open on the plan: when `accept-brief` says the admin is writing the plan, the planner skill ends that conversation, and when it says no run started because a conversation is open, the plan is written there. Approving the plan from the admin is refused, naming the running step, until the run stops for approval; the approval then starts the build.
+
 ### `plans reapprove <name>`
 
 The person approves the amendments an approved plan waits on. Refused before approval — that is `approve`'s, which also merges, and refuses a branch past approval. Runs the brief check and the looks check `approve` runs (an amendment that names a look waits for that look's approval), records the brief as the one approved (`approved_brief`, `approved_by`, `approved_at`), commits the impl, the brief and the promises the amendments changed on the plan's branch as `plan(<name>): amendment approved`, and appends each amendment to the plan's history (`.indusk/plan-history/<name>.md`, on `main`) as `amendment to the <part> <name>: was …, now …`, answered *Approve*, with who and when. Nothing waiting and the brief unchanged: nothing is written. `plans review` then shows each approved amendment, both versions, beside any still waiting.
@@ -140,6 +151,16 @@ What an unattended build does next, read from the plan as it stands — its work
 
 Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.
 
+### `plans tests <name> --phase <ref> | --landing [--list]`
+
+Runs the tests a plan owes, and says why each file is in the set. Nothing else runs: a test no row names and no protected promise lists is not part of building the plan, however many files it imports from the ones the plan changed.
+
+- **`--phase <ref>`** (`"Build Phase 2"`, `"Test Phase 1"` or a bare build number) runs the test files of the trajectory rows whose *Writable at* or *Passes at* is that phase, and the tests listed under `tests:` for every promise the brief lists as **Must not break**.
+- **`--landing`** runs every row's test files and the same Must-not-break promises' tests. A Must-not-break promise that names no test is printed as having none, never dropped.
+- **`--list`** prints the rows' and Must-not-break promises' files and runs nothing.
+
+The files run through the project's test command, once per package, a file in the package's system tier (`vitest.tiers.ts`) under that package's system config. A row's `manual:` reference is listed and not run. Each file prints with its reason (`row T1`, `must not break: <promise>`); the exit code is non-zero when any file fails. In a one-repo workbench the tests run in the code repo. The work, verify and retrospective skills name this command at a phase and at landing in place of the whole suite. See [test levels](/guide/test-levels#what-a-plan-runs).
+
 ### `plans review <name> [--json]`
 
 What a person reads before accepting a built plan, assembled from its documents and its branch. The admin's review panel renders the JSON.
@@ -177,6 +198,10 @@ A workbench plan's documents are already at the workbench root, and its code is 
 - **`land`** refuses an unaccepted plan. Otherwise it brings the repo's trunk into the code branch, runs the land checks in the code worktree, and merges the branch into the repo's trunk with a merge commit. Then it removes the code worktree and branch. The documents stay at the root, where the retrospective archives them.
 
 Every one of these reads the plan's code from `code.json`. A code file that names a worktree that is gone is refused by name.
+
+## Archived plans are found
+
+Every command that acts on a plan finds it in `.indusk/planning/<plan>` or, when it is not there, in `.indusk/planning/archive/<plan>`, through one lookup (`findPlanFolder`, which also refuses names that are not a plan's folder: the archive folder itself, a file such as `master.md`, a name with path separators or `..`). A workbench plan's `code.json` is found there too. A plan the retrospective archived before it lands is accepted, re-approved, tested at landing and landed where it lies, with no moving it out of the archive and back. A plan in both places is read from the planning folder. Re-approval and `plans amendments` read the approved brief from the path it had at the approval commit, archived or not.
 
 ## Housekeeping
 

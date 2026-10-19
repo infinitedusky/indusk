@@ -1,5 +1,5 @@
 /**
- * promise: a-look-check-costs-what-changed — which looks the check opens and
+ * promise: a-look-check-runs-what-changed — which looks the check opens and
  * how it reports them, decided from an opener it is given (looks-check-speed
  * A1, A9, A16, A17, A18, A33, A35, A37). No browser.
  * promise: tokens-are-held-exactly — a look not held everywhere is never kept (A37).

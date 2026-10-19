@@ -1,144 +1,64 @@
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+	DURATION_FILE,
 	otherTestRuns,
-	SUITE_PROMISE,
-	sendSuiteMark,
-	suiteSpanAttributes,
-	suiteSpeedMark,
-	THRESHOLD_MS,
+	recordSuiteDuration,
+	suiteDurationRecord,
 } from "../../scripts/suite-speed.js";
 
 /**
- * promise: everyday-suite-stays-fast — test-kinds A16, A17.
- * promise: a-promise-is-upheld-or-broken — one-promise-language A17.
- *
- * Each everyday run is marked held or broken with how long it took; a slow run
- * fails nothing; a run that overlapped another is not judged; with no daemon,
- * nothing is marked and the reason is said. The daemon and the sender are
- * passed in, so none of this needs a daemon or a wait
- * (lesson: a-suites-speed-is-a-promise-not-a-gate).
+ * tests-never-make-us-wait: each everyday run's duration is recorded in the
+ * project's machine state, and marks no promise (the brief's expectation reads
+ * the record). A run that overlapped another is flagged, not judged; a record
+ * that cannot be written is said and never throws, so it cannot change the
+ * run's result (lesson: a-suites-speed-is-a-promise-not-a-gate).
  */
 
-describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
-	it("A16: under the threshold is held, at or over it is broken, and an overlapping run is not judged", () => {
-		expect(suiteSpeedMark({ durationMs: 54_000, overlapped: false })).toEqual({
-			outcome: "upheld",
-			durationMs: 54_000,
-		});
-		expect(suiteSpeedMark({ durationMs: THRESHOLD_MS, overlapped: false }).outcome).toBe(
-			"violated",
-		);
-		expect(suiteSpeedMark({ durationMs: 300_000, overlapped: true })).toEqual({
-			skip: expect.stringMatching(/overlapped/),
-		});
+describe("the everyday suite's duration record", () => {
+	it("a run becomes one line: when, how long, whether it passed, whether it overlapped", () => {
+		expect(
+			suiteDurationRecord({
+				durationMs: 31_400.4,
+				overlapped: false,
+				exitCode: 0,
+				at: "2026-10-18T10:00:00Z",
+			}),
+		).toEqual({ at: "2026-10-18T10:00:00Z", durationMs: 31_400, passed: true, overlapped: false });
+		expect(
+			suiteDurationRecord({ durationMs: 3_000, overlapped: true, exitCode: 1, at: "t" }),
+		).toMatchObject({ passed: false, overlapped: true });
 	});
 
-	it("A17: a slow run is sent as a violation of the promise, in this project, with its duration", async () => {
-		const sent: Array<{ intake: string; attrs: Record<string, unknown> }> = [];
-		const said = await sendSuiteMark(
+	it("appends each run to the project's home, one JSON line each, and says what it recorded", async () => {
+		const home = mkdtempSync(join(tmpdir(), "suite-duration-"));
+		try {
+			const first = suiteDurationRecord({ durationMs: 30_000, overlapped: false, at: "a" });
+			const second = suiteDurationRecord({ durationMs: 95_000, overlapped: true, at: "b" });
+			const said = await recordSuiteDuration("/repo", first, { home: () => home });
+			const saidOverlap = await recordSuiteDuration("/repo", second, { home: () => home });
+			const lines = readFileSync(join(home, DURATION_FILE), "utf-8").trim().split("\n");
+			expect(lines.map((l) => JSON.parse(l))).toEqual([first, second]);
+			expect(said).toBe("recorded 30 s");
+			expect(saidOverlap).toBe("recorded 95 s (overlapped another test run)");
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
+	});
+
+	it("a record that cannot be written is said, never thrown", async () => {
+		const said = await recordSuiteDuration(
 			"/repo",
-			suiteSpeedMark({ durationMs: 130_000, overlapped: false }),
+			suiteDurationRecord({ durationMs: 1, overlapped: false, at: "a" }),
 			{
-				status: async () => ({ running: true, otlpPort: 4318 }),
-				project: () => "dusk",
-				body: (_name, attrs) => ({ body: attrs }),
-				send: async (intake, body) => {
-					sent.push({ intake, attrs: body as Record<string, unknown> });
+				home: () => {
+					throw new Error("the home is read-only");
 				},
 			},
 		);
-		expect(sent).toEqual([
-			{
-				intake: "http://localhost:4318",
-				attrs: {
-					"indusk.promise": SUITE_PROMISE,
-					"indusk.promise.outcome": "violated",
-					"indusk.suite.duration_ms": 130_000,
-					"indusk.project": "dusk",
-				},
-			},
-		]);
-		expect(said, "lesson: a-suites-speed-is-a-promise-not-a-gate").toMatch(
-			/signal sent: .* broken \(130 s\)/,
-		);
-	});
-
-	it("A16: with no daemon nothing is marked and the reason is said; a failing sender never throws", async () => {
-		const mark = suiteSpeedMark({ durationMs: 50_000, overlapped: false });
-		const noDaemon = await sendSuiteMark("/repo", mark, {
-			status: async () => ({ running: false }),
-			project: () => "dusk",
-			body: () => ({ body: {} }),
-			send: async () => {},
-		});
-		expect(noDaemon).toBe("no signal sent: no telemetry daemon is running");
-		const refused = await sendSuiteMark("/repo", mark, {
-			status: async () => ({ running: true, otlpPort: 4318 }),
-			project: () => "dusk",
-			body: () => ({ body: {} }),
-			send: async () => {
-				throw new Error("http://localhost:4318/v1/traces refused the span (500)");
-			},
-		});
-		expect(refused).toMatch(/^no signal sent: .*refused the span/);
-	});
-
-	it("one-promise-language A17: the signal still writes violated this release; the line it prints says broken and signal, never violated or marked", async () => {
-		const sent: Array<Record<string, unknown>> = [];
-		const deps = {
-			status: async () => ({ running: true, otlpPort: 4318 }),
-			project: () => "dusk",
-			body: (_name: string, attrs: object) => ({ body: attrs }),
-			send: async (_intake: string, body: unknown) => {
-				sent.push(body as Record<string, unknown>);
-			},
-		};
-		const slow = await sendSuiteMark(
-			"/repo",
-			suiteSpeedMark({ durationMs: 130_000, overlapped: false }),
-			deps,
-		);
-		const fast = await sendSuiteMark(
-			"/repo",
-			suiteSpeedMark({ durationMs: 50_000, overlapped: false }),
-			deps,
-		);
-		expect(sent[0]?.["indusk.promise.outcome"]).toBe("violated");
-		expect(slow).toBe(`signal sent: ${SUITE_PROMISE} broken (130 s)`);
-		expect(fast).toBe(`signal sent: ${SUITE_PROMISE} upheld (50 s)`);
-		const skipped = await sendSuiteMark("/repo", { skip: "overlapped" }, deps);
-		const noDaemon = await sendSuiteMark(
-			"/repo",
-			suiteSpeedMark({ durationMs: 1, overlapped: false }),
-			{
-				...deps,
-				status: async () => ({ running: false }),
-			},
-		);
-		for (const said of [slow, fast, skipped, noDaemon]) expect(said).not.toMatch(/violat|marked/i);
-		expect(skipped).toMatch(/^no signal sent:/);
-		expect(noDaemon).toBe("no signal sent: no telemetry daemon is running");
-	});
-
-	it("A23: a run that failed fast is not marked held — a crash measures nothing; a slow failing run is still broken", () => {
-		expect(suiteSpeedMark({ durationMs: 3_000, overlapped: false, exitCode: 1 })).toEqual({
-			skip: expect.stringMatching(/failed/),
-		});
-		expect(suiteSpeedMark({ durationMs: 200_000, overlapped: false, exitCode: 1 }).outcome).toBe(
-			"violated",
-		);
-		expect(suiteSpeedMark({ durationMs: 50_000, overlapped: false, exitCode: 0 }).outcome).toBe(
-			"upheld",
-		);
-	});
-
-	it("the attributes are the promise vocabulary every reader uses", () => {
-		expect(Object.keys(suiteSpanAttributes({ outcome: "upheld", durationMs: 1 }, "p"))).toEqual([
-			"indusk.promise",
-			"indusk.promise.outcome",
-			"indusk.suite.duration_ms",
-			"indusk.project",
-		]);
+		expect(said).toBe("not recorded: the home is read-only");
 	});
 
 	it("an overlapping run is another vitest process — not a shell that names the word, not this run's own", () => {
@@ -153,7 +73,7 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 				pid: 11,
 				ppid: 10,
 				command:
-					"node apps/indusk-mcp/scripts/with-daemon-guard.js --mark everyday-suite-stays-fast",
+					"node apps/indusk-mcp/scripts/with-daemon-guard.js --record-duration",
 			},
 			{ pid: 12, ppid: 11, command: "node /repo/node_modules/vitest/vitest.mjs run" },
 			{

@@ -1,7 +1,13 @@
 import { sanitizeGroupId } from "../config.js";
-import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
+import { daemonMetaPath, resolveLocalDaemonHere } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
-import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome, readOutcome } from "./vocabulary.js";
+import {
+	ENVIRONMENT_ATTRIBUTE,
+	LOOK_MARK,
+	PROMISE_MARK,
+	type PromiseOutcome,
+	readOutcome,
+} from "./vocabulary.js";
 
 /**
  * The one query for promise marks (day-monitor, ADR D4).
@@ -48,6 +54,8 @@ export interface MarkedSpan {
 	environment: string | null;
 	/** Which look a look check's mark is for (`indusk.look.*`); absent on any other mark. */
 	look?: LookKey;
+	/** The clause of the promise this signal concerns (`indusk.clause`); absent when the span names none. */
+	clause?: string;
 }
 
 /** The app, screen, state and device a look check's span names. */
@@ -82,7 +90,7 @@ function lookOf(tags: JaegerTag[] | undefined): LookKey | null {
  * way to reach Jaeger.
  */
 export interface JaegerEndpoint {
-	/** e.g. `http://localhost:16686` — no trailing slash. */
+	/** e.g. `http://localhost:<interface port>` — no trailing slash. */
 	queryUrl: string;
 	headers?: Record<string, string>;
 }
@@ -130,7 +138,7 @@ export interface PromiseMarks {
 }
 
 export interface MarkedSpansResult {
-	/** The query endpoint that answered, e.g. `http://localhost:16686`. */
+	/** The query endpoint that answered, e.g. `http://localhost:<interface port>`. */
 	queryUrl: string;
 	since: Date;
 	/** One entry per requested promise, present even when nothing was marked. */
@@ -156,14 +164,6 @@ export interface JaegerTrace {
 	spans: JaegerSpan[];
 	processes: Record<string, { serviceName: string; tags?: JaegerTag[] }>;
 }
-
-/**
- * OpenTelemetry's own resource attribute for the deployment environment. We
- * read the conventional name rather than invent an `indusk.` one: a system
- * that is already instrumented has set this, and asking it to set a second
- * attribute for us is asking it to carry InDusk in its code (ADR D6).
- */
-export const ENVIRONMENT_ATTRIBUTE = "deployment.environment";
 
 export const DEFAULT_TIMEOUT_MS = 5_000;
 /** Jaeger's own default is 20 traces per query, which would silently truncate a busy window. */
@@ -242,6 +242,7 @@ export function parseMarkedSpan(
 		if (typeof s === "string") symptom = s;
 	}
 	const look = lookOf(span.tags);
+	const clause = tag(span.tags, PROMISE_MARK.clause);
 	return {
 		promise,
 		outcome,
@@ -253,6 +254,7 @@ export function parseMarkedSpan(
 		symptom,
 		environment: typeof environment === "string" ? environment : null,
 		...(look ? { look } : {}),
+		...(typeof clause === "string" ? { clause } : {}),
 	};
 }
 
@@ -337,11 +339,11 @@ export async function markedSpans(opts: {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	let endpoint = opts.endpoint;
 	if (!endpoint) {
-		const status = await daemonStatus();
-		if (!status.running) {
+		const daemon = await resolveLocalDaemonHere("promises");
+		if (daemon === null) {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
-		endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+		endpoint = jaegerEndpoint(`http://localhost:${daemon.uiPort}`);
 	}
 	const queryUrl = endpoint.queryUrl;
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);

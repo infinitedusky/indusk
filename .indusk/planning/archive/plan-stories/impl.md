@@ -11,7 +11,7 @@ gate_policy: ask
 approved_brief: "6969084f4c82f8d416fb0f82af9106c575e0516bbbde08591ca6492816721ef8"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-15T00:14:23.699Z"
-accepted: 2026-10-15T03:31:54.882Z
+accepted: 2026-10-17T02:32:03.948Z
 accepted_by: person
 ---
 
@@ -78,7 +78,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 | A25 | A master plan's page still shows what any plan page shows around its story — the trust notice, a waiting amendment or decision with its answer, the history and the way to ask about the plan — so a master that waits on the person can be answered from its page | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place, promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
 | A26 | The Promises page, a promise's page, the incidents table and the Looks page's plan picker name each plan by its title, a Path group by its master's title, and a plan with no title, or a declared title that is just its handle, as its handle in words — never a bare folder name | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/promise-dashboard.test.ts |
 | A27 | A plan whose brief changed after approval is found waiting on its amendment by the admin's own lookup, read in its worktree — not only by a stand-in; a plan whose brief is unchanged, or whose approval cannot be read, waits on nothing | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
-| A28 | a-master-plan-tells-its-story holds again after i-2026-10-16-a-master-plan-tells-its-story: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-master-plan-tells-its-story |  |
+| A28 | a-master-plan-tells-its-story holds again after i-2026-10-16-a-master-plan-tells-its-story: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | passing | contract | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/__tests__/plan-stories.contract.test.ts |
 
 ### Deferred Verification
 
@@ -509,17 +509,17 @@ Titles and descriptions come from research.md's tables. A description already wr
 
 ### Build Phase 9: Maintenance — i-2026-10-16-a-master-plan-tells-its-story
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-master-plan-tells-its-story.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-master-plan-tells-its-story.md`)
+- [x] Fix: a code site, a widened test, or a revised promise — landed with cockpit-redraw's Maintenance (2735cb7d), the shared built-admin helper
 
 #### Build Phase 9 Verification
 
-- [ ] A28: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A28: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
 
 #### Build Phase 9 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — none: the check's refusal already names the fix
 
 #### Build Phase 9 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section

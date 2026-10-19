@@ -94,8 +94,8 @@ The admin is built from components defined once, each with an approved story per
 | A39 | The approve and unapprove routes read a request the same way: a checkout with no worktree holding mockups is answered 404 with the same text by both, and a story body without `snapshotHash` is answered 400 by both | Build Phase 10 | Build Phase 10 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks-approve-binding.test.tsx |
 | A40 | A component a mockup names with no implementation in the app is reported by `indusk looks coverage` as `unimplemented component: <name>` and the command exits 1: in the fixture, a mockup naming `ghost` (no file marks `ghost`) reads `unimplemented component: ghost` — so A2's comparison can fail | Build Phase 11 | Build Phase 11 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
 | A41 | A story's check run never stands for a screen's: a story's span carries `indusk.look.kind = story`, the run read back keeps it, and a screen `nav.expanded @ phone` whose newest screen run broke reads broken although a later held run of the story `nav.expanded @ phone` exists | Build Phase 11 | Build Phase 11 | passing | unit | promise: a-look-reports-like-any-promise | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
-| A42 | mockups-render-in-the-cockpit holds again after i-2026-10-16-mockups-render-in-the-cockpit: the test that reproduces it, named by its root cause, passes | Build Phase 12 | Build Phase 12 | planned | unit | promise: mockups-render-in-the-cockpit |  |
-| A43 | a-mockup-composes-approved-components holds again after i-2026-10-16-a-mockup-composes-approved-components: the test that reproduces it, named by its root cause, passes | Build Phase 13 | Build Phase 13 | planned | unit | promise: a-mockup-composes-approved-components |  |
+| A42 | mockups-render-in-the-cockpit holds again after i-2026-10-16-mockups-render-in-the-cockpit: the test that reproduces it, named by its root cause, passes | Build Phase 12 | Build Phase 12 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts, apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
+| A43 | a-mockup-composes-approved-components holds again after i-2026-10-16-a-mockup-composes-approved-components: the test that reproduces it, named by its root cause, passes | Build Phase 13 | Build Phase 13 | passing | contract | promise: a-mockup-composes-approved-components | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 
 ### Deferred Verification
 
@@ -675,34 +675,40 @@ Evidence found while hunting:
 
 ### Build Phase 12: Maintenance — i-2026-10-16-mockups-render-in-the-cockpit
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-mockups-render-in-the-cockpit.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-mockups-render-in-the-cockpit.md`)
+- [x] Fix: a code site, a widened test, or a revised promise
+  Landed before this phase was worked: the checks on this branch (cc1e18618, 04a75ed0a, 742861018, 29b156c3e), the drawing by `mockups-draw-components-as-stories` (element resets in `_reset.css`, page-only mockup rules, Message wraps, end-aligned stories fitted).
 
 #### Build Phase 12 Verification
 
-- [ ] A42: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A42: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+  2026-10-17 on main (d435f127d), `rerun-system.js` over both files: A30 (composition check, every device) passed in 191 s, A18 (every story framed) in 1 665 s. T2 in the same file failed with `ERR_CONNECTION_REFUSED`: the built admin had exited by the time it ran, after A18's 28 minutes; T2 alone passes in 0.7 s. A harness finding, not this incident's. `promises status` lists the promise as a state promise watched by the suite, which is green on both named tests.
 
 #### Build Phase 12 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention
+  No convention changed: the fixes were to two tests' matching and timeout, and the drawing rules `mockups-draw-components-as-stories` recorded at its own close.
 
 #### Build Phase 12 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section
 
 ### Build Phase 13: Maintenance — i-2026-10-16-a-mockup-composes-approved-components
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-mockup-composes-approved-components.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-mockup-composes-approved-components.md`)
+- [x] Fix: a code site, a widened test, or a revised promise
+  Landed before this phase was worked: 742861018 (A18 reads stories from a built admin) and 29b156c3e (A18's limit raised to 1 800 s). The composition rules were not implicated.
 
 #### Build Phase 13 Verification
 
-- [ ] A43: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A43: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+  2026-10-17 on main (d435f127d): A18 passed in 1 665 s (same run as A42). `promises status` lists the promise as a structure promise watched by the suite, green on its named test.
 
 #### Build Phase 13 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention
+  No convention changed: the fix was a test's server and timeout.
 
 #### Build Phase 13 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section

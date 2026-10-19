@@ -101,7 +101,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - `replace_promise` for each entry under **Replaces** (it declares the new promise recording which it replaces; the old one stays in force until this plan closes). A promise that is some entry's replacement is saved this way only, not also with `declare_promise`; if it was, `replace_promise` records the link on it;
    - nothing yet for **Changes**: `change_promise` rewrites a promise's sentence, and the registry must not say what the code does not yet do, so it is run in the build phase that makes the new sentence true. Give the impl a checklist item for it.
 
-   Then run `indusk promises contract {plan-name}`. It refuses, naming the promise or the expectation, until the brief and the registry agree. When it passes, set `status: accepted`. From then on `indusk promises check` holds the plan to it, and so does the project's test run wherever that runs the check.
+   Then run `indusk promises contract {plan-name}`. It refuses, naming the promise or the expectation, until the brief and the registry agree. When it passes, run `indusk plans accept-brief {plan-name}` rather than setting the status by hand: it runs the same check, refuses with its message, sets `status: accepted` and commits it on the plan's branch (it is refused inside a build or planning step; accepting is the person's). From then on `indusk promises check` holds the plan to it, and so does the project's test run wherever that runs the check. **Read what `accept-brief` prints.** The admin writes the test plan, the ADR and the impl unattended and stops for the person's approval. It holds its run back while a planning conversation is open (two writers on one document), so the run starts when this conversation ends: tell the person the brief is accepted, that the documents are written once this conversation ends and then wait for their approval, end this conversation here, and write none of them. Only when `accept-brief` says the admin is not running, or will not plan (it is not registered, or it refused), is the plan written here, from step 5, as it is when the person asks to plan by hand.
 
    **If the person later drops or renames a promise this plan declared**, take it back with `withdraw_promise` and edit the brief to match. A rename is `withdraw_promise`, then `declare_promise` with the new name. A dropped promise that was seriously considered goes under **Not promised**, with where it went. Never delete a file under `.indusk/promises/` by hand. Only a promise that was never in force can be withdrawn: one that is already `enforced` leaves the registry when a later plan replaces it.
 
@@ -182,7 +182,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Name every phase's tier.** Every phase carries `**Tier**: <tier>` under its heading, written when you write the phase: the step's default spelled out (`indusk plans model` answers from it), or a different tier with its reason (`**Tier**: strong — edits the readiness gate every plan's close goes through`). A tier other than the default needs its reason, or the impl is refused. The config names the model, not the plan.
 
-   **Open each phase with a summary, written for someone without the shorthand.** Set `phase_summary: required` in the impl frontmatter. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain sentence saying what will be true when it is done, and its instruction goes in an indented `<details><summary>Technical</summary>` fold beneath it: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. Write for a reader who has worked on this project and knows none of its shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. The test before writing a sentence: would someone who has worked here, but never read this plan, know what every noun in it refers to? Before: "Build Phase 1: the checkers only read top-level lines." After: "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate." The folded detail is only read: it never ticks a box, skips a gate or adds a task.
+   **Open each phase with a summary, written for someone without the shorthand.** Set `phase_summary: required` in the impl frontmatter. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain instruction saying what to do ("Make the prompt box's text area use the app's font"), and each verification item one plain statement of what must hold ("The prompt box draws in the app's font"); a task's technical detail goes in an indented `<details><summary>Technical</summary>` fold beneath it: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. Write for a reader who has worked on this project and knows none of its shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. The test before writing a sentence: would someone who has worked here, but never read this plan, know what every noun in it refers to? Before: "Build Phase 1: the checkers only read top-level lines." After: "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate." A task is an instruction, not an outcome. Before: "The prompt box draws in the app's font." After: "Make the prompt box's text area use the app's font." The folded detail is only read: it never ticks a box, skips a gate or adds a task.
 
    **Open Phase 1 with a worktree kickoff item.** Worktree-per-plan is the default (see the `worktree-visibility` ADR): every impl's first phase begins with a checklist item that creates or confirms the plan's own worktree — e.g. `Create/confirm this plan's worktree (indusk worktree create <plan>, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs indusk worktree assign <plan> <path>) — worktree-per-plan default; skip only if worktree: none in frontmatter`. A plan opts out by setting `worktree: none` in the impl frontmatter (no workflow sets it by default — even hotfix gets a worktree). `/work`'s Worktree Kickoff step reads the frontmatter and nudges before code is written; the kickoff item makes the intent explicit in the checklist.
 
@@ -605,13 +605,13 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 {Summary: a paragraph saying what this phase does for the whole plan and what it hands to the next, in words someone who has worked on the project but never read this plan would follow. No row labels.}
 
-- [ ] {One plain sentence: every test that can honestly be written now is written and fails on its own assertion; the rest are recorded with the reason they wait.}
+- [ ] {One plain instruction: write every test that can honestly be written now so it fails on its own assertion, and record the rest with the reason they wait.}
   <details><summary>Technical</summary>
 
   {Author T1, T2, … against the subject, RED. Names, paths, commands, code and row labels go here.}
 
   </details>
-- [ ] {One plain sentence: no test fails only because a file it loads is missing.}
+- [ ] {One plain instruction: make sure no test fails only because a file it loads is missing.}
   <details><summary>Technical</summary>
 
   {Confirm each fails on its own assertion rather than on a missing import.}
@@ -636,13 +636,13 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 #### Test Phase 1 Verification
 
-- [ ] {One plain sentence: the tests this phase writes exist and fail for the right reason.}
+- [ ] {One plain statement of what must hold: the tests this phase writes exist and fail for the right reason.}
   <details><summary>Technical</summary>
 
   {T1, T2, … are authored, and each red one fails on its own assertion.}
 
   </details>
-- [ ] {One plain sentence: every deferred test body above has been read and judged.}
+- [ ] {One plain statement of what must hold: every deferred test body above has been read and judged.}
   <details><summary>Technical</summary>
 
   {Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?}
@@ -655,7 +655,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 {Summary: a paragraph saying what this phase does for the whole plan and how it hands to the next, written for someone who has worked on the project but knows none of this plan's shorthand.}
 
-- [ ] {Task: one plain sentence saying what will be true when it is done. Code, paths, commands and row labels go in the fold below, with snippets when syntax matters.}
+- [ ] {Task: one plain instruction saying what to do, such as "Make the prompt box's text area use the app's font". Code, paths, commands and row labels go in the fold below, with snippets when syntax matters.}
   <details><summary>Technical</summary>
 
   {The instruction itself, e.g. a signature that must match this shape:}
@@ -670,7 +670,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 {OPTIONAL: #### Build Phase 1 OTel — include ONLY if the project's `otel.role` in `.indusk/config.json` is unset or `"service"`. Skip the entire OTel block for projects with `otel.role: "library" | "tool" | "none"`. Use `shouldEmitOtelGate(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to decide.}
 
 #### Build Phase 1 OTel
-- [ ] {One plain sentence saying what is now observable.}
+- [ ] {One plain instruction saying what to instrument so it can be observed.}
   <details><summary>Technical</summary>
 
   {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
@@ -678,13 +678,13 @@ For multi-phase impls, include a boundary map showing what each phase produces a
   </details>
 
 #### Build Phase 1 Verification
-- [ ] {One plain sentence saying what the tests now prove.}
+- [ ] {One plain statement of what must hold: what the tests now prove.}
   <details><summary>Technical</summary>
 
   T1 passes (`{this phase's rows and related tests, e.g. pnpm exec vitest run <the row's test files> && pnpm exec vitest related <files this phase changed>}`) — the whole suite runs at landing, not here
 
   </details>
-- [ ] {One plain sentence saying which test is written now and waits for a later phase.}
+- [ ] {One plain statement of what must hold: which test is written now and waits for a later phase.}
   <details><summary>Technical</summary>
 
   T2 flips to `written` state (skipped until Phase 2)
@@ -695,7 +695,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 {- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})}
 
 #### Build Phase 1 Context
-- [ ] {One plain sentence saying what changes about how the project works.}
+- [ ] {One plain instruction saying which rule to record about how the project works.}
   <details><summary>Technical</summary>
 
   {A rule this phase produces, naming its tier and destination — e.g., "guard: `<test>` carries `lesson: <name>`", "planning: …", "mcp: …", "current.md: …", "root (Conventions): … — always-on because …". An item aimed at the root must say why it must be always-on; one that cannot belongs at a lower tier (see the `/claude-md` tier table). Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
@@ -703,7 +703,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
   </details>
 
 #### Build Phase 1 Document
-- [ ] {One plain sentence saying what a reader can now find in the docs.}
+- [ ] {One plain instruction saying what to write or update in the docs.}
   <details><summary>Technical</summary>
 
   {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}

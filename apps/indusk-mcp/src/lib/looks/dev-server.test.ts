@@ -1,4 +1,4 @@
-// promise: a-look-check-costs-what-changed — looks-check-speed A13, A34
+// promise: a-look-check-runs-what-changed — looks-check-speed A13, A34
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";

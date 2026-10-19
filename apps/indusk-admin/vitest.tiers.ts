@@ -11,46 +11,62 @@
  * (apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts) fails it.
  */
 export const SYSTEM = [
-  // The Promises page against a real Jaeger: strips, bands, chips per source,
-  // the sidebar's red, banners. Their rules are unit tests
-  // (src/lib/__tests__/promise-store, promise-health); these check the page
-  // draws what the rules decide.
-  "src/__tests__/http-promise-health.test.ts",
-  "src/__tests__/http-promise-remote.test.ts",
-  "src/__tests__/http-promise-sources.test.ts",
-  "src/__tests__/http-promise-timeline-sources.test.ts",
-  "src/__tests__/http-promise-timeline.test.ts",
-  "src/__tests__/http-watcher-blind.test.ts",
-  // Pages over plan documents.
-  "src/__tests__/http-plan-worktrees.test.ts",
-  "src/__tests__/http-project-promises.test.ts",
-  "src/__tests__/http-project-research.test.ts",
-  "src/__tests__/http-project-scorecards.test.ts",
-  "src/__tests__/http-smoke.test.ts",
-  "src/__tests__/http-stale-project.test.ts",
-  "src/__tests__/live-refresh.e2e.test.ts",
-  // The Looks page's mockup frame in Chromium (ui-promises A15, A16).
-  "src/app/p/[project]/looks/looks-browser.contract.test.ts",
-  // Storybook in Chromium, and the catalog the render step writes
-  // (storybook-components A5, A13).
-  "src/__tests__/storybook.contract.test.ts",
-  // Components in the cockpit (storybook-components A7, A18, A19): a composed
-  // mockup and the stories framed from the served /storybook, and the value
-  // check over the stories, in Chromium.
-  "src/app/p/[project]/looks/looks-components.contract.test.ts",
-  "src/__tests__/storybook-held.contract.test.ts",
-  // A composed mockup draws each component as its story does (storybook-
-  // components A30): computed values compared in Chromium, mockup against story.
-  "src/__tests__/composition.contract.test.ts",
-  // A look the agent draws appears on the open plan page, at each device
-  // (brief-as-the-contract A16).
-  "src/__tests__/plan-parts.contract.test.ts",
-  // The screens cockpit-redraw names read approved and are held by value at
-  // each reference device (cockpit-redraw A10).
-  "src/__tests__/cockpit-redraw.contract.test.ts",
-  // The master plan page, the retitled plan and nav screens and the
-  // subplan-row stories read approved and are held by value (plan-stories A6).
-  "src/__tests__/plan-stories.contract.test.ts",
+	// The Promises page against a real Jaeger: strips, bands, chips per source,
+	// the sidebar's red, banners. Their rules are unit tests
+	// (src/lib/__tests__/promise-store, promise-health); these check the page
+	// draws what the rules decide.
+	"src/__tests__/http-promise-health.test.ts",
+	"src/__tests__/http-promise-remote.test.ts",
+	"src/__tests__/http-promise-sources.test.ts",
+	"src/__tests__/http-promise-timeline-sources.test.ts",
+	"src/__tests__/http-promise-timeline.test.ts",
+	"src/__tests__/http-watcher-blind.test.ts",
+	// Pages over plan documents.
+	"src/__tests__/http-plan-worktrees.test.ts",
+	"src/__tests__/http-project-promises.test.ts",
+	"src/__tests__/http-project-research.test.ts",
+	"src/__tests__/http-project-scorecards.test.ts",
+	"src/__tests__/http-smoke.test.ts",
+	"src/__tests__/http-stale-project.test.ts",
+	"src/__tests__/live-refresh.e2e.test.ts",
+	// The Looks page's mockup frame in Chromium (ui-promises A15, A16).
+	"src/app/p/[project]/looks/looks-browser.contract.test.ts",
+	// Storybook in Chromium, and the catalog the render step writes
+	// (storybook-components A5, A13).
+	"src/__tests__/storybook.contract.test.ts",
+	// Components in the cockpit (storybook-components A7, A18, A19): a composed
+	// mockup and the stories framed from the served /storybook, and the value
+	// check over the stories, in Chromium.
+	"src/app/p/[project]/looks/looks-components.contract.test.ts",
+	"src/__tests__/storybook-held.contract.test.ts",
+	// A composed mockup draws each component as its story does (storybook-
+	// components A30): computed values compared in Chromium, mockup against story.
+	"src/__tests__/composition.contract.test.ts",
+	// A look the agent draws appears on the open plan page, at each device
+	// (brief-as-the-contract A16).
+	"src/__tests__/plan-parts.contract.test.ts",
+	// The screens cockpit-redraw names read approved and are held by value at
+	// each reference device (cockpit-redraw A10).
+	"src/__tests__/cockpit-redraw.contract.test.ts",
+	// The master plan page, the retitled plan and nav screens and the
+	// subplan-row stories read approved and are held by value (plan-stories A6).
+	"src/__tests__/plan-stories.contract.test.ts",
+	// tests-never-make-us-wait: a test that starts the command line, git or Node is a
+	// process start, and process starts were 80% of the everyday suite's time. They run
+	// when a plan's rows name them or its changes reach them, and in the system tier.
+	"src/app/p/[project]/looks/looks-components.test.tsx",
+	"src/app/p/[project]/looks/looks.test.tsx",
+	"src/lib/__tests__/planning-reader.own-branch.test.ts",
+	"src/lib/decisions-reader.amendments.test.ts",
+	"src/lib/planning-reader.title.test.ts",
+
+	// tests-never-make-us-wait Build Phase 4: a test that calls a shared helper that starts a
+	// process (hook-runner, test-git, the CLI runner) is a process start too, so these run with the
+	// system tier. The guard reads the helpers, not a list of names.
+	"src/__tests__/plan-page-layout.test.tsx",
+	"src/__tests__/plan-parts.test.tsx",
+	"src/app/p/[project]/looks/looks-approve-binding.test.tsx",
+	"src/app/p/[project]/looks/looks-unapprove.test.tsx",
 ];
 
 /**
@@ -70,14 +86,12 @@ export const SYSTEM_TIER_ENV = "INDUSK_ADMIN_SYSTEM_TIER";
  * ui-promises A1, A2, A13, A14, and A29, A30 in the approve route's own file), which a browser cannot reach.
  */
 export const NODE_PAGES = [
-  "src/app/p/[project]/looks/looks.test.tsx",
-  "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
-  "src/app/p/[project]/looks/looks-components.test.tsx",
-  "src/app/p/[project]/looks/looks-unapprove.test.tsx",
-  // A plan's page over a real project (brief-as-the-contract A5, A15).
-  "src/__tests__/plan-parts.test.tsx",
-  // The approved layout of the plan page and its document route.
-  "src/__tests__/plan-page-layout.test.tsx",
+	"src/app/p/[project]/looks/looks-approve-binding.test.tsx",
+	"src/app/p/[project]/looks/looks-unapprove.test.tsx",
+	// A plan's page over a real project (brief-as-the-contract A5, A15).
+	"src/__tests__/plan-parts.test.tsx",
+	// The approved layout of the plan page and its document route.
+	"src/__tests__/plan-page-layout.test.tsx",
 ];
 
 /**

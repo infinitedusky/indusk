@@ -19,7 +19,7 @@ import {
 import {
   type DevServer,
   makeHome,
-  startNextDev,
+  startNextBuilt,
 } from "@/__tests__/helpers/next-dev";
 
 /**
@@ -125,7 +125,7 @@ beforeAll(async () => {
   });
   writeLooksPlans(project);
   writeMaster(project);
-  server = await startNextDev({
+  server = await startNextBuilt({
     home: makeHome([{ name: "dusk", path: project }]),
   });
 }, 600_000);

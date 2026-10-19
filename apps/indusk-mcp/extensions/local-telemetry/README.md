@@ -1,6 +1,6 @@
 # local-telemetry
 
-Machine-global OTel backend for InDusk dev loops. A single daemon (Jaeger + OTel Collector core, as native binaries) absorbs the `development` profile's traces and logs; the agent queries it through MCP, you query it through `indusk telemetry *`. Staging and production OTel continue to route to Dash0 unchanged.
+Machine-global OTel backend for InDusk dev loops. A single daemon (Jaeger + OTel Collector core, as native binaries) absorbs the `development` profile's traces and logs; the agent queries it through MCP, you query it through `indusk telemetry *`. A deployed system is read through its own recording server.
 
 Required-by-default — every `indusk init` and `indusk update` (1.28.0+) enables it automatically. Opt out via `"disabled_extensions": ["local-telemetry"]` in `.indusk/config.json` only if you really need to.
 
@@ -14,7 +14,7 @@ indusk telemetry services   # see the services that have emitted
 indusk telemetry tail       # live logs
 ```
 
-The Jaeger UI is at `http://localhost:16686`.
+The daemon runs on its own address, chosen once and stored (`indusk telemetry address` prints it); `indusk init` scaffolds your app to send there; the Jaeger UI is at `http://localhost:24316` when InDusk's block was free.
 
 ## What you get
 
@@ -23,7 +23,7 @@ The Jaeger UI is at `http://localhost:16686`.
 
 ## Full documentation
 
-- Architecture + env routing + migration from Dash0-only: [reference/telemetry/overview](https://indusk.dev/reference/telemetry/overview)
+- Architecture and address: [reference/telemetry/overview](https://indusk.dev/reference/telemetry/overview)
 - CLI reference: [reference/telemetry/cli](https://indusk.dev/reference/telemetry/cli)
 - Agent diagnosis patterns: [`skill.md`](./skill.md) in this directory
 

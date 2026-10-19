@@ -66,7 +66,9 @@ Detections are **not** short-circuited in practice — a run reports every break
 
 The `red-test` detection reads the trajectory's optional [`Test` column](../../guide/test-trajectory.md), which names the test **files** backing a row.
 
-**Paths are repo-root-relative.** The test command runs with its working directory at the repository root, so in a monorepo a package-relative path (`src/lib/…`) resolves to nothing. Write `apps/indusk-mcp/src/lib/…`.
+**Paths are repo-root-relative.** Write `apps/indusk-mcp/src/lib/…`, not `src/lib/…`; a package-relative path resolves to nothing from the repository root.
+
+**A row's test runs in its own package and tier.** Verify runs each file the way [`plans tests`](./plans#plans-tests-name-phase-ref-landing-list) does: from the nearest folder above it with a Vitest config, and a file in that package's system tier (`vitest.tiers.ts`) under its `vitest.system.config.ts`. A passing system-tier test therefore reads as passing here too. The verdict is still the exit code and the JSON report file, never printed output; a runner other than Vitest runs one file per invocation.
 
 **A reference that cannot be executed is `unverified`, never `red`.** Verify stats every path before running anything. Two cases report as unverified rather than as failures:
 

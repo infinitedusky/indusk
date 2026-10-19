@@ -1,5 +1,9 @@
-import { rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { parseTrajectory } from "../trajectory/parser.js";
+import { detectRedTests } from "./red-tests.js";
 import { runVerify } from "./verify.js";
 import { buildImpl, makeVerifyFixture, nodeTestScript } from "./verify.test-support.js";
 
@@ -180,5 +184,46 @@ describe("A14 — a plan authored before test references still verifies", () => 
 
 		expect(report.verdict).toBe("clean");
 		expect(report.unverifiedRows).toEqual(expect.arrayContaining(["A1", "A2"]));
+	});
+});
+
+describe("T20 — a system-tier test file runs the way the plan's test set runs it", () => {
+	// A file in a package's system tier is not a project of the root config, so
+	// run from the repository root it reads as failing. A regression guard after
+	// this plan moved about 190 files to the system tier.
+	it("runs it in its own package under the system config, and a pass is not reported red", async () => {
+		const root = await mkdtemp(join(tmpdir(), "red-tests-system-"));
+		roots.push(root);
+		const files: Record<string, string> = {
+			".indusk/config.json": JSON.stringify({ verify: { testCommand: "npx vitest run" } }),
+			"pkg/vitest.config.ts": "export default {};\n",
+			"pkg/vitest.system.config.ts": "export default {};\n",
+			"pkg/vitest.tiers.ts": 'export const system = ["src/slow.test.ts"];\n',
+			"pkg/src/slow.test.ts": "// a system-tier test\n",
+		};
+		for (const [path, content] of Object.entries(files)) {
+			await mkdir(join(root, path, ".."), { recursive: true });
+			await writeFile(join(root, path), content, "utf8");
+		}
+		const trajectory = parseTrajectory(
+			implWithTests([{ id: "T1", test: "pkg/src/slow.test.ts", state: "passing" }]),
+		);
+		const calls: Array<{ args: string[]; cwd: string }> = [];
+
+		const result = await detectRedTests({
+			root,
+			trajectory,
+			phase: 1,
+			run: async (_command, args, cwd) => {
+				calls.push({ args, cwd });
+				return { code: 0, output: "" };
+			},
+		});
+
+		expect(calls).toHaveLength(1);
+		expect(calls[0].cwd).toBe(join(root, "pkg"));
+		expect(calls[0].args).toEqual(expect.arrayContaining(["--config", "vitest.system.config.ts"]));
+		expect(calls[0].args).toContain("src/slow.test.ts");
+		expect(result.findings).toEqual([]);
 	});
 });

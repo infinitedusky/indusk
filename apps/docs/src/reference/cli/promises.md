@@ -156,7 +156,7 @@ clause, and nothing is written. The MCP `declare_promise` tool takes the same
 specs as `clauses`.
 
 ```
-indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>"
+indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>" [--clause "<spec>" ...]
 ```
 
 Improves a promise in place, when a later plan partly changes what it commits
@@ -164,7 +164,10 @@ to. The sentence is replaced, the plan takes the promise over, and its History
 gains a line with the old sentence, the reason and the plan that owned it
 before. Its name, state, incidents and aliases are untouched, so the signals
 that name it and its incidents stay attached. If it breaks later, the plan
-that changed it is the one reopened.
+that changed it is the one reopened. A repeatable `--clause` (the same specs
+`declare` takes; the MCP `change_promise` tool takes `clauses`) replaces the
+promise's clauses, and the History line names the ones it replaced; without it
+the clauses stay.
 
 ```
 indusk promises replace <old> --by <new> --plan <plan> --kind <kind> --domain <domain> --statement "<sentence>"
@@ -432,7 +435,7 @@ line that starts with its name:
 Promises observed in the last 7 days, from Jaeger at http://localhost:16686
 
 every-commit-evaluated (behaviour, gates, enforced)
-  1 break in the last 7 days
+  broken — 1 break in the last 7 days
     4bf92f3577b34da6a3ce929d0e0e4736  2026-09-19T10:14:40Z  indusk-eval-agent  claude exited with code 1: There's an issue with the selected model …
   last seen upheld 2026-09-19T02:30:20Z (3147fdaa7db94980735c887ff6ce47f0)
 
@@ -446,6 +449,12 @@ phase-boundary-record-never-malformed (state, planning, enforced)
 - A **behaviour** promise lists its breaks in the window with each
   trace id, when, the service and the symptom from the break event, then
   when it was last seen upheld.
+- The break-count line opens with **`broken — `** while a break is live and
+  **`broke — fixed — `** when every break's incident is fixed, by the same
+  rule (`healthOf`) the admin and the editor use. Each source is judged by
+  its own rule, as the admin judges it (`ruleFor`): the local section by its
+  newest signal when the project also has a production source, and by its
+  incidents otherwise; the production section by its incidents.
 - **Not seen** means no run marked it in the window. It is never reported as
   upheld or as zero breaks.
 - **State** and **structure** promises are listed as watched by the suite:
@@ -501,7 +510,7 @@ Promises observed in the last 7 days, from Jaeger at https://indusk-always-on.fl
 …
 ```
 
-The same promise can be red in one and green in the other: a break on the
+Each section is judged by the rule the admin uses for that source: `local` by its newest signal when the project also has production (a local break followed by a newer upheld report reads as holding there), `production` by its incidents. The same promise can be red in one and green in the other: a break on the
 laptop is work in progress, and a break in production is the alarm. A source
 that could not be read says so in its own section, naming where it looked,
 and the other source is still printed. The exit code follows the **alarm

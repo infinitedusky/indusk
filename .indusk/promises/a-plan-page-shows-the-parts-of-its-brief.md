@@ -2,7 +2,7 @@
 name: a-plan-page-shows-the-parts-of-its-brief
 kind: state
 lifetime: holds
-state: known-broken
+state: enforced
 domain: admin
 owner: cockpit-redraw
 sites:

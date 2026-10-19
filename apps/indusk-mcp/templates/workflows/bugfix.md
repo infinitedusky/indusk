@@ -76,7 +76,7 @@ phase_summary: required
 
 {A paragraph saying what this phase does for the whole plan, written for someone who has worked on the project but knows none of this plan's shorthand.}
 
-- [ ] {One plain sentence saying what will be true once the fix is in.}
+- [ ] {One plain instruction saying what to do to fix the bug, such as "Make the prompt box's text area use the app's font".}
   <details><summary>Technical</summary>
 
   {The fix, be specific: names, paths and code go here.}
@@ -84,13 +84,13 @@ phase_summary: required
   </details>
 
 #### Phase 1 Verification
-- [ ] {One plain sentence saying what proves the bug is fixed.}
+- [ ] {One plain statement of what must hold: the bug is fixed.}
   <details><summary>Technical</summary>
 
   {Command that proves the bug is fixed}
 
   </details>
-- [ ] {One plain sentence saying what keeps it fixed.}
+- [ ] {One plain statement of what must hold: the bug stays fixed.}
   <details><summary>Technical</summary>
 
   {Regression test if applicable}

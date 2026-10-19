@@ -2,6 +2,7 @@ import { existsSync, readdirSync, realpathSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { getPlanningDir } from "../config.js";
 import { git, listWorktrees } from "../git.js";
+import { findPlanFolder, planFolderPath } from "../promises/plan-folder.js";
 import { type Assignment, readRecord } from "./plan-worktree-record.js";
 import { isWorkbench } from "./repos.js";
 
@@ -101,7 +102,9 @@ function trunkCopy(
 	projectRoot: string,
 	plan: string,
 ): { plan: string; root: string; dir: string; source: "trunk" } {
-	return { plan, root: projectRoot, dir: join(getPlanningDir(projectRoot), plan), source: "trunk" };
+	// promise: a-plan-is-found-in-the-archive — a plan archived on the trunk is found there.
+	const dir = findPlanFolder(projectRoot, plan) ?? join(getPlanningDir(projectRoot), plan);
+	return { plan, root: projectRoot, dir, source: "trunk" };
 }
 
 function trunkPlans(projectRoot: string): string[] {
@@ -208,24 +211,17 @@ function worktreeCopy(
 	trunk: ReturnType<typeof trunkCopy>,
 ): PlanCopy {
 	const worktree = { name: basename(path), path, branch };
-	const planning = getPlanningDir(path);
-	const active = join(planning, plan);
-	if (existsSync(active)) return { plan, root: path, dir: active, source: "worktree", worktree };
-	const archived = join(planning, "archive", plan);
-	if (existsSync(archived)) {
+	const active = planFolderPath(path, plan);
+	const archived = planFolderPath(path, plan, true);
+	const dir = findPlanFolder(path, plan);
+	if (dir === active) return { plan, root: path, dir, source: "worktree", worktree };
+	if (dir !== null) {
 		// Archived on the trunk as well: a closed plan an incident reopened,
 		// worked here like any other — not one awaiting its landing.
 		if (existsSync(join(getPlanningDir(trunk.root), "archive", plan))) {
-			return { plan, root: path, dir: archived, source: "worktree", worktree };
+			return { plan, root: path, dir, source: "worktree", worktree };
 		}
-		return {
-			plan,
-			root: path,
-			dir: archived,
-			source: "worktree",
-			worktree,
-			archivedInWorktree: true,
-		};
+		return { plan, root: path, dir, source: "worktree", worktree, archivedInWorktree: true };
 	}
 	return {
 		...trunk,

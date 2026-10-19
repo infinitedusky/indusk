@@ -1,6 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { classFindings } from "../lib/looks/lint-classes.js";
 import {
 	app,
 	finding,
@@ -15,6 +16,7 @@ import {
  * promise: a-mockup-leaves-nothing-undefined — ui-promises A31, A32, A33 and, through the lint's own modules, A38.
  * promise: a-mockup-is-approved-by-a-person — ui-promises A33 (an approval binds only its own bytes).
  * promise: every-part-of-the-ui-is-covered — ui-promises A34 (the source half).
+ * promise: mockups-render-in-the-cockpit — T9 (a wrapping class the theme lacks names the standard utility).
  *
  * The lint's rules beyond the first five — a redefined token, a raw value
  * behind a function or in a size property, a mockup reaching outside itself —
@@ -218,5 +220,25 @@ describe("looks coverage — a computed component name is named, never ignored (
 		const { code, out } = run(root, ["coverage", "demo"]);
 		expect(out).toMatch(/^\s*unresolved component:\s*src\/Dynamic\.jsx:2\s*$/m);
 		expect(code).toBe(1);
+	});
+});
+
+describe("looks lint — an arbitrary wrapping class names the standard utility (T9)", () => {
+	// T9
+	it("T9 an arbitrary overflow-wrap or word-break value is refused, naming the utilities to use", () => {
+		for (const token of ["[overflow-wrap:anywhere]", "[word-break:break-all]", "wrap-[anywhere]"]) {
+			const found = classFindings("src/Message.tsx", `<p className="${token}" />`, new Set());
+			expect(found, token).toHaveLength(1);
+			expect(found[0]?.rule).toBe("arbitrary-class");
+			expect(found[0]?.message, token).toMatch(/wrap-anywhere/);
+			expect(found[0]?.message, token).toMatch(/wrap-break-word/);
+			expect(found[0]?.message, token).toMatch(/break-all/);
+		}
+	});
+
+	it("T9 any other arbitrary value keeps the general message", () => {
+		const [found] = classFindings("src/Badge.jsx", '<i className="p-[13px]" />', new Set());
+		expect(found?.message).toMatch(/use a class from the foundation's theme/);
+		expect(found?.message).not.toMatch(/wrap-anywhere/);
 	});
 });

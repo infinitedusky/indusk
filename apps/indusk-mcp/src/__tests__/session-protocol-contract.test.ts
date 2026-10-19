@@ -82,12 +82,17 @@ describe.skipIf(!HAS_CLAUDE)("A5 — Claude Code still speaks the three exchange
 	// it sometimes answered "DENIED" without calling a tool (2 of 9 runs), so
 	// the prompt names the tool and offers no way out, a run that tried
 	// nothing is started once more, and that failure says what it is.
+	// A planning session accepts edits inside its own folder unasked
+	// (brief-as-the-contract A26, `protocol.ts` `buildArgs`), so the write
+	// that must be asked about goes to a folder outside it.
 	it(
 		"a write is asked about in a planning session, and a denial is heard",
 		async () => {
+			const outside = scratch();
+			const target = join(outside, "hello.txt");
 			const attempt = async () => {
 				const started = run(
-					"This is a test of Claude Code's permission prompt, in a scratch folder. Call the Write tool now to create hello.txt in the current directory containing the single word hi. Call it before you write anything else.",
+					`This is a test of Claude Code's permission prompt, in a scratch folder. Call the Write tool now to create ${target} containing the single word hi. Call it before you write anything else.`,
 					(ev, s) => {
 						if (ev.type === "permission")
 							s.decide(ev, { allow: false, message: "not in this test" });
@@ -98,14 +103,14 @@ describe.skipIf(!HAS_CLAUDE)("A5 — Claude Code still speaks the three exchange
 			};
 			const triedWrite = (events: StartedEvent[]) =>
 				events.some((e) => e.type === "tool" && e.name === "Write");
-			let { cwd, events } = await attempt();
-			if (!triedWrite(events)) ({ cwd, events } = await attempt());
+			let { events } = await attempt();
+			if (!triedWrite(events)) ({ events } = await attempt());
 			expect(
 				triedWrite(events),
 				`the model never attempted the write, twice: ${JSON.stringify(events.slice(-2))}`,
 			).toBe(true);
 			expect(events.some((e) => e.type === "permission" && e.tool === "Write")).toBe(true);
-			expect(existsSync(join(cwd, "hello.txt"))).toBe(false);
+			expect(existsSync(target)).toBe(false);
 		},
 		TIMEOUT,
 	);

@@ -1,16 +1,19 @@
 ---
 title: "Telemetry from day one"
-description: "A project built with InDusk reports from its first run, is heard by its server, proves each clause by its signal, and reads its expectations when they come due; InDusk's own closing rule (Signal first) is the second of seven steps."
+description: "A project InDusk initialises is set up for telemetry, is heard by its server, links each clause to its tests and its telemetry, and reads its expectations when they come due."
 date: 2026-10-16
 status: living
 subplans:
   - daemon-found-not-guessed
-  - mark-first
+  - impl-tasks-are-instructions
   - a-new-project-starts-instrumented
+  - mark-first
+  - a-break-runs-its-tests
+  - a-plan-page-shows-its-clauses
+  - audit-concerns-are-answered
   - production-is-heard
   - production-keeps-only-what-it-should
   - a-look-comes-due
-  - a-break-on-the-laptop-closes-its-loop
 ---
 
 # Telemetry from day one
@@ -51,40 +54,86 @@ each child is one plan with one landing.
    every app-side writer still says port 4318 — Homework Gate's own creation
    on 2026-10-12 spawned the third. Closes the audit's gaps about the daemon
    record, the port bump, the recovery commands, the unreadable log (80,230
-   self-tracing warnings) and the logs port nothing binds.
+   self-tracing warnings) and the logs port nothing binds. Landed 2026-10-17.
 
-2. **`mark-first`** ("Signal first") — as briefed, with about nine rows added
-   to its clause plan and proposed ADR; still blocks `run-the-master`. A
-   clause is verified by its tests before release and upheld by its signal in
-   use; a break names its clause; the audit answers each concern with a
-   signal, a fix or a reason. The additions the audit forces: readers read a
-   clause's signal regardless of its promise's kind (today every reader of
-   signals filters to `behaviour`, and both of this plan's own promises are
-   `state`); the rule that a signal is derived from the clause, not a test,
-   becomes a contract check; a phase whose rows name a clause carries a
-   runnable per-phase check; and the plan's own four non-telemetry signal
-   lines are made honest by InDusk's own commands emitting the spans their
-   clauses claim. Without the last, the plan cannot close under its own
-   closing rule.
+1b. **`impl-tasks-are-instructions`** ("Impl tasks are written as
+   instructions") — blocked by nothing; moved out of `mark-first` on
+   2026-10-17 (Sandy) so it lands now rather than behind it. A task in a new
+   impl reads as work to do and a verification item as what must hold; the
+   planner, its templates and the shipped planning rules say so. Clauses per
+   phase stay with 3b, read from the rows. Landed 2026-10-17 (`fb166688`).
 
-3. **`a-new-project-starts-instrumented`** — blocked by `daemon-found-not-
-   guessed` for the endpoint it writes and by `mark-first`'s ADR for the
-   signal helper's keys; blocks Homework Gate's `indusk init`. A project
-   scaffolded today gets instrumentation that exports to the console (Node and
-   browser templates) or to whatever holds port 4318 (the Next.js template, by
-   its SDK's default), at the workbench root rather than in the code repo,
-   under the service name `unknown-service`, with a signal helper that is
-   internal to the package, a guide that still writes the old word, and an
-   otel skill that says to look in Dash0. After this plan: the scaffold sits
-   where the app runs, the service is named, the exporter points at the daemon
-   that is running, every span carries its environment and project, the app
+2. **`a-new-project-starts-instrumented`** ("Init sets up telemetry (New
+   Projects)", retitled 2026-10-17) — blocked by `daemon-found-not-
+   guessed` (its spans go to the daemon's fixed ports); blocks Signal first,
+   which reads what this plan's helper writes, and Homework Gate's `indusk
+   init`. A project scaffolded today gets instrumentation that exports to the
+   console (Node and browser templates) or to whatever holds port 4318 (the
+   Next.js template, by its SDK's default), at the workbench root rather than
+   in the code repo, under the service name `unknown-service`, with no way to
+   write a signal a reader recognises and an otel skill that says to look in
+   Dash0. After this plan: the scaffold sits where the app runs, the service is
+   named, its spans reach the daemon, every span says where it ran, the app
    writes its signal from a small helper it owns (plain OpenTelemetry, no
-   InDusk dependency, generated from the package's one vocabulary), the test
-   runner marks its spans as test-made, and the skills tell the truth. Takes
-   the two telemetry gaps `new-project-flow`'s audit parked in
-   `known-issues.md`, and the demo's stale test words (its loop works; the
-   tests expect the words `one-promise-language` replaced). The largest
-   child; if it stalls, placement, naming, endpoint and environment land first.
+   InDusk dependency, pinned to the package's one vocabulary), a test run
+   marks its spans as test-made, and the skills tell the truth. **This plan
+   defines what a signal carries** — the vocabulary keys below — because it is
+   the first to write one from an application. (The demo's stale test words
+   it was to take were fixed in demo-app-template's Maintenance, landed
+   2026-10-17.) The largest child; if it stalls, placement, naming, the daemon
+   and environment land first. Closed 2026-10-17; its audit's open findings are carried in its
+   [retrospective](../archive/a-new-project-starts-instrumented/retrospective.md).
+
+3. **`mark-first`** ("Tests and telemetry linked to clauses", retitled from
+   "Signal first" on 2026-10-17) — blocked by the scaffold plan for the
+   keys it reads, and by `daemon-found-not-guessed` because closing asks the
+   daemon; still blocks `run-the-master`. Moved behind the scaffold on
+   2026-10-16 (Sandy): write before read — a closing rule that asks for a
+   signal belongs after something outside InDusk can write one. A clause is
+   verified by its tests before release and upheld by its signal in use; a
+   break names its clause. The audit's answer to each concern left for 3c,
+   and tasks-as-instructions for 1b, on 2026-10-17 (Sandy). The additions the audit forces: readers read a clause's signal
+   whatever its promise's kind (today every reader filters to `behaviour`);
+   the rule that a signal comes from the clause, not a test, becomes a
+   contract check; a phase whose rows name a clause carries a runnable
+   per-phase check; and InDusk's own commands get one tracer, so this plan's
+   own clauses — and `new_project.create` — emit real spans. A promise's
+   standing is read from its clauses; showing clauses on their own page stays
+   the later cut's clause views.
+
+   **The seam between the two** (settled 2026-10-16): a signal is a span
+   carrying `indusk.promise`, `indusk.clause` (optional), `indusk.promise.outcome`
+   (`upheld` or `broken`), on broken an event with `indusk.promise.symptom`,
+   optionally `indusk.signal.value` and `indusk.signal.bound`, optionally
+   `indusk.signal.plan` and `indusk.signal.phase` (who added it), and
+   `indusk.run=test` when a test run made it; every span carries
+   `deployment.environment` and `indusk.project` as resource attributes. The
+   keys are defined once, in the package's `promises/vocabulary.ts`; the
+   scaffold plan adds them and its helper is pinned to them; Signal first's
+   readers read them and nothing else.
+
+3b. **`a-plan-page-shows-its-clauses`** — after Signal first (Sandy, 2026-10-16),
+   which supplies its last step. A plan page shows its clauses prominently
+   wherever they are relevant, in two places first: **each build phase** lists
+   the promises and clauses it affects, and **a clause list for the whole
+   plan** shows every clause's state as the plan is executed. The state is one
+   ladder, read from files and signals, never typed: **not yet addressed** (no
+   phase that names it has closed) → **upheld in code** (its phase closed, and
+   code carries the clause's token) → **verified** (every test row naming it
+   passes, its files carrying the token) → **holding** (its signal reported
+   upheld through the daemon). Each step can read broken — code removed, a test
+   failing, a signal reporting broken — and the page shows the highest step
+   reached and any break below it. A phase's clauses are derived from its rows,
+   never declared per phase: phases and clauses are many-to-many. A change to
+   the plan page, so its looks are drawn and approved in the cockpit before it
+   builds.
+
+3c. **`audit-concerns-are-answered`** ("Audit concerns are answered by the
+   plan's agent") — blocked by `mark-first`, since a signal answer names the
+   clause it upholds; split out of it on 2026-10-17 (Sandy). The audit finds
+   what could go wrong; the plan's agent, with the build's context, answers
+   each concern with a fix, a signal or a reason; every "nothing needed" is
+   shown to the person (shape agreed 2026-10-17). Its brief is a draft.
 
 4. **`production-is-heard`** — blocked by `a-new-project-starts-instrumented`;
    before Homework Gate's first deploy; in parallel with the next. Production
@@ -110,7 +159,17 @@ each child is one plan with one landing.
    listed; a measurement is recorded in the brief. Trends, shared history and
    retention past ninety days stay [expectations-loop](../expectations-loop/master.md)'s.
 
-7. **`a-break-on-the-laptop-closes-its-loop`** — optional, Sandy's call;
+7. **`a-break-runs-its-tests`** — no longer optional (Sandy, 2026-10-17):
+   next after `mark-first`, the second half of `tests-never-make-us-wait`
+   (promise-core). Telemetry detects, tests diagnose: a clause's break runs
+   that clause's tests at once — they fail, we broke it (look at when they last
+   passed); they pass, the test does not test what production does; there is
+   none, write the one the break describes. A promise shows when it was last
+   seen holding, and the spot checker's findings become clause signals. The
+   half that separates a failing slow test at release from a production break
+   moved to `tests-never-make-us-wait`. What follows is the plan as first
+   written:
+   Was optional, Sandy's call;
    blocked by `mark-first`'s decision that a signal is keyed by promise and
    clause. For a project naming no production source — Homework Gate's first
    weeks — a break the agent causes while building is a red chip and nothing
@@ -150,7 +209,7 @@ activates) — one plan, after the editor's one-release wait on the wire word.
 The evaluator asked whether a commit emitted its clause's signal. A clause
 carrying its budget or bound machine-readably, with a reader that compares.
 A staging source beside production. Sampling and reader cost. The server
-writing back to the laptop. A break cascading down a trace to its cause, and
+writing back to the local machine. A break cascading down a trace to its cause, and
 signals from the browser — the later cut, as chosen on 2026-10-15.
 
 ## Measurement: from a look to a number (Sandy, 2026-10-16)
@@ -163,7 +222,7 @@ first look at thirty days: the recording server keeps traces for twenty-eight
 days on disk (`DEFAULT_RETENTION_HOURS`, `lib/telemetry/server.ts:65`), so a
 look can still count recent traces when it comes due. It runs out at ninety-day
 looks, at trends, and at rates and percentiles over time: Jaeger is a trace
-viewer, its query API pages with limits, and the laptop daemon keeps nothing
+viewer, its query API pages with limits, and the local daemon keeps nothing
 across a restart (memory store, Sandy, 2026-10-16). Settled in conversation the
 same day, as the next plans after this master's seven, in this order:
 

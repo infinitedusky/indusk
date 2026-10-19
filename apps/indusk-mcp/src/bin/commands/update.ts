@@ -13,7 +13,7 @@ import {
 	HOOK_REGISTRATIONS,
 } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
-import { ensureMcpJson } from "../../lib/mcp-config.js";
+import { ensureCodeRepoMcpJson, ensureMcpJson } from "../../lib/mcp-config.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
 import { missingIgnoreRules } from "../../lib/worktree/shareable.js";
@@ -415,6 +415,20 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	}
 
+	// 5c'''. The OpenTelemetry scaffold, every run: a repo that gained an app is
+	// scaffolded, a file InDusk wrote and nobody changed is refreshed, and an edited
+	// one keeps its edit with the newer version beside it. Through the one scaffold
+	// module init calls; skipped in local mode.
+	{
+		const { applyScaffold } = await import("../../lib/scaffold/apply.js");
+		const { readConfig } = await import("../../lib/config.js");
+		try {
+			applyScaffold(projectRoot, { local: readConfig(projectRoot)?.mode === "local" });
+		} catch (err) {
+			console.info(`  could not scaffold: ${(err as Error).message}`);
+		}
+	}
+
 	// 5d. Retire skills renamed in the package. Same shape as 5c: the skills
 	// sync above added the new name; this removes the old directory, which
 	// would otherwise stay listed and keep answering to its old slash command.
@@ -435,6 +449,9 @@ export async function update(projectRoot: string): Promise<void> {
 	// 5a. A checkout with no `.mcp.json` (a fresh clone — the file is per machine and
 	// untracked) gets one naming the indusk server. An existing file is never touched.
 	ensureProjectMcpJson(projectRoot);
+	for (const file of ensureCodeRepoMcpJson(projectRoot)) {
+		console.info(`  created: ${file} (indusk server, for the code repo)`);
+	}
 
 	// 5b. Migrate stale MCP configs
 	const mcpJsonPath = join(projectRoot, ".mcp.json");
@@ -499,26 +516,26 @@ export async function update(projectRoot: string): Promise<void> {
 				}
 			}
 
-			// Sync jaeger MCP url to the live telemetry daemon's mcpPort.
-			// `mcpPort` is OS-assigned per spawn so it rotates on every daemon
-			// start/restart; without this sync, `indusk update` couldn't fix
-			// a project whose entry had gone stale from a prior daemon run.
-			// Only writes when the daemon is running AND the URL is wrong;
-			// silent no-op otherwise.
+			// Sync this project's jaeger MCP url to the daemon's stored MCP port (or,
+			// in a home that stores none, the running daemon's). The address never
+			// moves, so this repairs an entry that went stale; it writes only when
+			// the URL differs, and never another project's entry.
 			const jaegerEntry = mcpConfig.mcpServers?.jaeger;
 			if (jaegerEntry?.type === "http" && typeof jaegerEntry.url === "string") {
 				try {
-					const { daemonStatus } = await import("../../lib/telemetry/daemon.js");
-					const status = await daemonStatus();
-					if (status.running) {
-						const expectedUrl = `http://localhost:${status.mcpPort}/mcp`;
-						if (jaegerEntry.url !== expectedUrl) {
-							const { writeFileSync } = await import("node:fs");
-							mcpConfig.mcpServers.jaeger = { type: "http", url: expectedUrl };
-							writeFileSync(mcpJsonPath, `${JSON.stringify(mcpConfig, null, 2)}\n`);
-							console.info(`  synced: jaeger MCP url → ${expectedUrl}`);
-							mcpChanged = true;
-						}
+					const { resolveLocalDaemonHere, induskHome } = await import(
+						"../../lib/telemetry/status.js"
+					);
+					// A daemon whose record is gone is found first, so its port can be read.
+					await resolveLocalDaemonHere("update");
+					const { mcpPortOf } = await import("../../lib/telemetry/daemon-address.js");
+					const { realDaemonReads } = await import("../../lib/telemetry/daemon-reads.js");
+					const { upsertJaegerEntry } = await import("../../lib/mcp-config.js");
+					const port = mcpPortOf(realDaemonReads(induskHome()));
+					// A port the finder could not read from a socket is never written into an entry.
+					if (port !== null && upsertJaegerEntry(projectRoot, port)) {
+						console.info(`  synced: jaeger MCP url → http://localhost:${port}/mcp`);
+						mcpChanged = true;
 					}
 				} catch {
 					// Daemon not running, or write failed — don't block update.

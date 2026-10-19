@@ -181,6 +181,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/reference/telemetry/overview" },
 						{ text: "CLI Reference", link: "/reference/telemetry/cli" },
+						{ text: "The signal helper", link: "/reference/telemetry/signal-helper" },
 					],
 				},
 				{
@@ -217,11 +218,14 @@ const config = defineConfig({
 					text: "Decisions",
 					items: [
 						{ text: "Overview", link: "/decisions/" },
+						{ text: "Init Sets Up Telemetry — the scaffold where the app runs, named, sent to the daemon", link: "/decisions/init-sets-up-telemetry" },
+						{ text: "The Daemon Is Found, Not Guessed — one address, one daemon, a record that is rebuilt", link: "/decisions/daemon-found-not-guessed" },
 						{ text: "Display Names — promises in words, plans by title, with their dates", link: "/decisions/display-names" },
 						{ text: "Plan Cockpit — the admin as the promise dashboard, the promise page and the plan page", link: "/decisions/plan-cockpit" },
 						{ text: "UI Promises — mockups a person approves, held by value", link: "/decisions/ui-promises" },
 						{ text: "Brief as the Contract — looks in the brief, a plan that starts as a conversation", link: "/decisions/brief-as-the-contract" },
 						{ text: "Cockpit Redraw — the nav from the original cockpit, a width you can drag, re-approval a person's", link: "/decisions/cockpit-redraw" },
+						{ text: "A Brief Is Planned Unasked — accept the brief, approve the plan once, review the build", link: "/decisions/a-brief-is-planned-unasked" },
 						{ text: "Plan Stories — plans read by their titles, a master plan that tells its story", link: "/decisions/plan-stories" },
 						{ text: "Storybook Components — each component once, a story per state", link: "/decisions/storybook-components" },
 						{ text: "Component Content — a placed component takes its own words", link: "/decisions/component-content" },
@@ -273,6 +277,10 @@ const config = defineConfig({
 						{ text: "Server Provisioning", link: "/decisions/server-provisioning" },
 						{ text: "VS Code Extension", link: "/decisions/vscode-extension" },
 						{ text: "Test Kinds", link: "/decisions/test-kinds" },
+						{
+							text: "Tests Never Make Us Wait",
+							link: "/decisions/tests-never-make-us-wait",
+						},
 						{ text: "Planner Promises", link: "/decisions/planner-promises" },
 						{ text: "Plans Are Promises", link: "/decisions/plans-are-promises" },
 						{ text: "Sessions per Plan", link: "/decisions/sessions-per-plan" },

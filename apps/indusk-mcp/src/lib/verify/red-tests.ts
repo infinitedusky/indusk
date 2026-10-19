@@ -1,7 +1,6 @@
-import { execFile } from "node:child_process";
 import { access, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { promisify } from "node:util";
+import { execRunner, type Runner, runFiles } from "../tests/run-files.js";
 import type { Trajectory, TrajectoryRow } from "../trajectory/parser.js";
 import type { VerifyFinding } from "./verify.js";
 
@@ -21,8 +20,6 @@ import type { VerifyFinding } from "./verify.js";
  * knowledge into core, which is the extensions' job (maxim 7). If file-level
  * attribution proves too coarse, tags come back as an extension capability.
  */
-
-const execFileAsync = promisify(execFile);
 
 /** Rows whose claim we are entitled to check — they assert they already pass. */
 const CLAIMS_GREEN: ReadonlySet<string> = new Set(["passing"]);
@@ -109,7 +106,10 @@ export async function detectRedTests(options: {
 	trajectory: Trajectory;
 	phase: number;
 	fullSuite?: boolean;
+	/** Starts a command; tests hand in a fake. Defaults to a real process. */
+	run?: Runner;
 }): Promise<RedTestResult> {
+	const run = options.run ?? execRunner;
 	// Rows this phase is accountable for that claim to be green already.
 	const inScope = options.trajectory.rows.filter(
 		(row) => row.passesAt <= options.phase && CLAIMS_GREEN.has(row.state),
@@ -144,7 +144,7 @@ export async function detectRedTests(options: {
 	if (checkable.length === 0) return { findings: [], unverifiedRows };
 
 	if (options.fullSuite) {
-		const failed = await runFails(options.root, command, []);
+		const failed = await runFails(run, options.root, command, []);
 		const findings: VerifyFinding[] = failed
 			? checkable.map((row) => ({
 					kind: "red-test" as const,
@@ -155,12 +155,17 @@ export async function detectRedTests(options: {
 		return { findings, unverifiedRows };
 	}
 
-	// One invocation per distinct file, however many rows point at it.
+	// Each distinct file is run once, however many rows point at it, the way the
+	// plan's test set runs it: in its own package, a system-tier file under that
+	// package's system config. The verdict is the exit code or the report file.
 	const files = [...new Set(checkable.flatMap((row) => row.test ?? []))];
-	const failedFiles = new Set<string>();
-	for (const file of files) {
-		if (await runFails(options.root, command, [file])) failedFiles.add(file);
-	}
+	const ran = await runFiles({
+		root: options.root,
+		command,
+		files: files.map((path) => ({ path, reason: "a passing row's test" })),
+		run,
+	});
+	const failedFiles = new Set(ran.filter((r) => !r.passed).map((r) => r.path));
 
 	const findings: VerifyFinding[] = [];
 	for (const row of checkable) {
@@ -209,14 +214,12 @@ async function runnableRefs(root: string, refs: string[]): Promise<string[]> {
 }
 
 /** True when the command exits non-zero — the whole verdict, runner-agnostic. */
-async function runFails(root: string, command: TestCommand, extra: string[]): Promise<boolean> {
-	try {
-		await execFileAsync(command.command, [...command.args, ...extra], {
-			cwd: root,
-			maxBuffer: 32 * 1024 * 1024,
-		});
-		return false;
-	} catch {
-		return true;
-	}
+async function runFails(
+	run: Runner,
+	root: string,
+	command: TestCommand,
+	extra: string[],
+): Promise<boolean> {
+	const result = await run(command.command, [...command.args, ...extra], root);
+	return result.code !== 0;
 }

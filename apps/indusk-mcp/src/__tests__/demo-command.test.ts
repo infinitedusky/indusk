@@ -51,9 +51,9 @@ async function post(path: string, body: unknown): Promise<Response> {
 	});
 }
 
-/** When the newest "last seen upheld" in a status read happened, or 0. */
+/** When the newest "last seen holding" in a status read happened, or 0. */
 function lastUpheldAt(out: string): number {
-	const m = out.match(/last seen upheld (\S+)/);
+	const m = out.match(/last seen holding (\S+)/);
 	return m?.[1] ? Date.parse(m[1]) : 0;
 }
 
@@ -95,28 +95,28 @@ describe.skipIf(SHOULD_SKIP)(
 		it("A4 — the page starts, and a lapsed hold reads as the promise held", async () => {
 			expect(page, `indusk demo printed no seat page:\n${output}`).toMatch(/^http/);
 			expect((await post("/hold", { seat: 1, who: "ann" })).status).toBe(200);
-			const out = await statusUntil((s) => /last seen upheld/.test(s), 30_000);
+			const out = await statusUntil((s) => /last seen holding/.test(s), 30_000);
 			expect(out).toContain(PROMISE);
-			expect(out).toMatch(/last seen upheld/);
+			expect(out).toMatch(/last seen holding/);
 		}, 60_000);
 
 		it("A7 — with the switch on, a late release reads broken with its trace; off, it is still reported broken", async () => {
 			expect(page, `indusk demo printed no seat page:\n${output}`).toMatch(/^http/);
 			expect((await post("/fault", { on: true })).status).toBe(200);
 			expect((await post("/hold", { seat: 2, who: "bob" })).status).toBe(200);
-			const broken = await statusUntil((s) => /\b[1-9]\d* violations?\b/.test(s), 30_000);
-			expect(broken).toMatch(/\b[1-9]\d* violations?\b/);
-			expect(broken, "the violation names its trace").toMatch(/\b[0-9a-f]{32}\b.*seat 2/);
+			const broken = await statusUntil((s) => /\b[1-9]\d* breaks?\b/.test(s), 30_000);
+			expect(broken).toMatch(/\b[1-9]\d* breaks?\b/);
+			expect(broken, "the break names its trace").toMatch(/\b[0-9a-f]{32}\b.*seat 2/);
 
-			// A promise that says "never" is broken by one violation however many
+			// A promise that says "never" is broken by one break however many
 			// held checks follow (Sandy, in the live check): with the fault stopped
-			// and releases on time again, the violation is still reported.
+			// and releases on time again, the break is still reported.
 			const brokenAt = Date.now();
 			expect((await post("/fault", { on: false })).status).toBe(200);
 			expect((await post("/hold", { seat: 3, who: "cy" })).status).toBe(200);
 			const after = await statusUntil((s) => lastUpheldAt(s) > brokenAt, 30_000);
 			expect(lastUpheldAt(after), "the next release was on time").toBeGreaterThan(brokenAt);
-			expect(after, "the break is still reported").toMatch(/\b[1-9]\d* violations?\b/);
+			expect(after, "the break is still reported").toMatch(/\b[1-9]\d* breaks?\b/);
 			expect(after).toMatch(/\b[0-9a-f]{32}\b.*seat 2/);
 		}, 90_000);
 	},

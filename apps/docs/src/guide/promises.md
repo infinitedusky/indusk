@@ -167,8 +167,33 @@ The file shapes, every refusal and the exit codes are in the
 ## Marking a behaviour promise
 
 A `behaviour` promise is broken by inputs nobody chose, so the running system
-has to say when it upholds or breaks one. It says so with plain
-OpenTelemetry, on the span that does the work:
+has to say when it upholds or breaks one. A project InDusk scaffolds carries a
+small file for exactly this, `signal.ts` (`indusk_signal.py` in Python), and one
+call from the place the behaviour happens says it:
+
+```ts
+import { signal } from "./signal";
+
+signal.upheld({ promise: "seat-never-double-booked" });
+```
+
+and, when the promise breaks:
+
+```ts
+signal.broken({
+  promise: "seat-never-double-booked",
+  symptom: "seat 4 held by two players",
+});
+```
+
+Both take an optional `clause`, a `value` and the `bound` it is held to. The
+file is yours, imports only OpenTelemetry's API, and is refreshed by
+`indusk update` while you leave it as it is. See
+[the signal helper](/reference/telemetry/signal-helper) for the calls, the keys
+and what it does for a test run.
+
+What the helper writes is plain OpenTelemetry, on one short span, so an app
+that does not use it can write the same thing itself:
 
 ```ts
 span.setAttribute("indusk.promise", "seat-never-double-booked");
@@ -178,7 +203,7 @@ span.setAttribute("indusk.promise.outcome", "upheld");
 and, when the promise breaks:
 
 ```ts
-span.setAttribute("indusk.promise.outcome", "violated");
+span.setAttribute("indusk.promise.outcome", "broken");
 span.addEvent("indusk.promise.violated", {
   "indusk.promise.symptom": "seat 4 held by two players",
 });

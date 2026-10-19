@@ -225,37 +225,6 @@ const SIMPLE_ESLINT_RE = /^(npx\s+)?eslint\b/;
 const SIMPLE_NEXT_LINT_RE = /^(npx\s+)?next\s+lint\b/;
 const SIMPLE_PRETTIER_RE = /^(npx\s+)?prettier\b/;
 
-/** What each Node scaffold file is, in the line `init` prints about it. */
-const NODE_TEMPLATE_PURPOSE: Record<string, string> = {
-	"instrumentation.ts": "OpenTelemetry Node SDK",
-	"filtering-exporter.ts": "OpenTelemetry span exporter, category filter",
-	"logger.ts": "pino logger — OpenTelemetry log transport",
-};
-
-/** The packages `templates/instrumentation.web.ts` imports, as one install argument list. */
-const BROWSER_OTEL_PACKAGES = [
-	"@opentelemetry/sdk-trace-web",
-	"@opentelemetry/sdk-trace-base",
-	"@opentelemetry/exporter-trace-otlp-http",
-	"@opentelemetry/resources",
-	"@opentelemetry/semantic-conventions",
-	"@opentelemetry/instrumentation",
-	"@opentelemetry/instrumentation-fetch",
-	"@opentelemetry/instrumentation-xml-http-request",
-	"@opentelemetry/instrumentation-document-load",
-	"@opentelemetry/instrumentation-user-interaction",
-].join(" ");
-
-/** What a browser-instrumented project must set for a click's trace to reach an API on another origin. */
-function printPropagationInstructions(setting: string): void {
-	console.info(
-		`  cross-origin API: set ${setting} to the API's origin(s), comma-separated (a * entry is a pattern, e.g. https://*.dev.example.com); same-origin requests need nothing`,
-	);
-	console.info(
-		"  cross-origin API: the API must allow the traceparent header in its CORS settings (Access-Control-Allow-Headers)",
-	);
-}
-
 function isCompoundScript(value: string): boolean {
 	return value.includes("&&") || value.includes("||") || value.includes(";");
 }
@@ -484,8 +453,22 @@ export function writeGitInfoExclude(projectRoot: string): void {
 	console.info("  updated: .git/info/exclude (InDusk local mode entries)");
 }
 
+/**
+ * Enable the otel extension for a project the scaffold just instrumented. The extension
+ * is enabled by detecting an instrumentation file, and that detection runs before the
+ * scaffold now does; an opt-out in `disabled_extensions` still holds.
+ */
+async function enableOtelForScaffold(projectRoot: string): Promise<void> {
+	const { extensionsEnable } = await import("./extensions.js");
+	const { isEnabled } = await import("../../lib/extension-loader.js");
+	const { isExtensionExplicitlyDisabled } = await import("../../lib/config.js");
+	if (isEnabled(projectRoot, "otel") || isExtensionExplicitlyDisabled(projectRoot, "otel")) return;
+	await extensionsEnable(projectRoot, ["otel"]);
+	console.info("    (detected: instrumentation scaffolded)");
+}
+
 export async function init(projectRoot: string, options: InitOptions = {}): Promise<void> {
-	const { force = false, local = false, noIndex = false, workbench = false } = options;
+	const { force = false, local = false, workbench = false } = options;
 	const projectName = basename(projectRoot);
 	const modeLabel = [local ? "--local" : "", workbench ? "--workbench" : ""]
 		.filter(Boolean)
@@ -900,138 +883,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	}
 
-	// 7. Scaffold OpenTelemetry instrumentation (skip in local mode)
-	const isInduskMcp = existsSync(join(projectRoot, "templates/instrumentation.ts"));
-	if (local) {
-		console.info("\n[OpenTelemetry]");
-		console.info("  skip: local mode (team owns OTel setup)");
-	} else if (isInduskMcp) {
-		console.info("\n[OpenTelemetry]");
-		console.info("  skip: this is the indusk-mcp package (templates are source, not scaffolded)");
-	} else {
-		console.info("\n[OpenTelemetry]");
-		const otelTemplates = ["instrumentation.ts", "filtering-exporter.ts", "logger.ts"];
-		const isNextJs =
-			existsSync(join(projectRoot, "next.config.js")) ||
-			existsSync(join(projectRoot, "next.config.ts")) ||
-			existsSync(join(projectRoot, "next.config.mjs"));
-		const isPython =
-			existsSync(join(projectRoot, "requirements.txt")) ||
-			existsSync(join(projectRoot, "pyproject.toml"));
-		const isReactSPA =
-			!isNextJs &&
-			(existsSync(join(projectRoot, "vite.config.ts")) ||
-				existsSync(join(projectRoot, "vite.config.js")));
-
-		if (isPython) {
-			const pyTemplate = "instrumentation.py";
-			const targetFile = join(projectRoot, pyTemplate);
-			if (existsSync(targetFile) && !force) {
-				console.info(`  skip: ${pyTemplate} (already exists)`);
-			} else {
-				cpSync(join(packageRoot, "templates", pyTemplate), targetFile);
-				console.info(`  create: ${pyTemplate} (OpenTelemetry Python SDK)`);
-				console.info(
-					"  install: pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp",
-				);
-				console.info("  run: opentelemetry-instrument python your_app.py");
-			}
-		} else if (isNextJs) {
-			// Next.js — use @vercel/otel
-			const instrTarget = join(projectRoot, "instrumentation.ts");
-			if (existsSync(instrTarget) && !force) {
-				console.info("  skip: instrumentation.ts (already exists)");
-			} else {
-				cpSync(join(packageRoot, "templates/instrumentation.next.ts"), instrTarget);
-				const content = readFileSync(instrTarget, "utf-8");
-				writeFileSync(instrTarget, content.replace('"unknown-service"', `"${projectName}"`));
-				console.info("  create: instrumentation.ts (Next.js — @vercel/otel)");
-			}
-
-			// Logger
-			const loggerTarget = join(projectRoot, "src/logger.ts");
-			if (existsSync(loggerTarget) && !force) {
-				console.info("  skip: src/logger.ts (already exists)");
-			} else {
-				const loggerDir = join(projectRoot, "src");
-				mkdirSync(loggerDir, { recursive: true });
-				cpSync(join(packageRoot, "templates/logger.ts"), loggerTarget);
-				console.info("  create: src/logger.ts (pino logger — OpenTelemetry log transport)");
-			}
-
-			// Client-side browser instrumentation
-			const webInstrTarget = join(projectRoot, "src/instrumentation.web.ts");
-			if (existsSync(webInstrTarget) && !force) {
-				console.info("  skip: src/instrumentation.web.ts (already exists)");
-			} else {
-				const srcDir = join(projectRoot, "src");
-				mkdirSync(srcDir, { recursive: true });
-				cpSync(join(packageRoot, "templates/instrumentation.web.ts"), webInstrTarget);
-				const content = readFileSync(webInstrTarget, "utf-8");
-				writeFileSync(webInstrTarget, content.replace('"unknown-service"', `"${projectName}"`));
-				console.info("  create: src/instrumentation.web.ts (browser — OTel Web SDK)");
-			}
-
-			console.info(
-				`  install: pnpm add @vercel/otel pino pino-opentelemetry-transport ${BROWSER_OTEL_PACKAGES}`,
-			);
-			console.info("  wire (server): Next.js loads instrumentation.ts automatically");
-			console.info(
-				"  wire (client): import './instrumentation.web' in your root client component or layout",
-			);
-			printPropagationInstructions("NEXT_PUBLIC_OTEL_PROPAGATE_TO");
-		} else if (isReactSPA) {
-			// React SPA (Vite) — browser instrumentation via the OpenTelemetry Web SDK
-			const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;
-			const instrTarget = join(srcDir, "instrumentation.ts");
-			if (existsSync(instrTarget) && !force) {
-				console.info("  skip: instrumentation.ts (already exists)");
-			} else {
-				cpSync(join(packageRoot, "templates/instrumentation.web.ts"), instrTarget);
-				const content = readFileSync(instrTarget, "utf-8");
-				writeFileSync(instrTarget, content.replace('"unknown-service"', `"${projectName}"`));
-				console.info("  create: src/instrumentation.ts (React SPA — OpenTelemetry Web SDK)");
-			}
-
-			console.info(`  install: pnpm add ${BROWSER_OTEL_PACKAGES}`);
-			console.info("  wire: import './instrumentation' at the top of your main.tsx or App.tsx");
-			printPropagationInstructions("VITE_OTEL_PROPAGATE_TO");
-		} else {
-			// Node.js — full SDK with auto-instrumentation
-			const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;
-
-			for (const template of otelTemplates) {
-				const targetFile = join(srcDir, template);
-				if (existsSync(targetFile) && !force) {
-					console.info(`  skip: ${template} (already exists)`);
-					continue;
-				}
-				cpSync(join(packageRoot, "templates", template), targetFile);
-				console.info(`  create: ${template} (${NODE_TEMPLATE_PURPOSE[template]})`);
-			}
-
-			// Set service name in instrumentation.ts
-			const instrPath = join(srcDir, "instrumentation.ts");
-			if (existsSync(instrPath)) {
-				const content = readFileSync(instrPath, "utf-8");
-				writeFileSync(instrPath, content.replace('"unknown-service"', `"${projectName}"`));
-			}
-
-			const packages = [
-				"@opentelemetry/sdk-node",
-				"@opentelemetry/auto-instrumentations-node",
-				"@opentelemetry/exporter-trace-otlp-http",
-				"@opentelemetry/sdk-trace-base",
-				"@opentelemetry/resources",
-				"@opentelemetry/semantic-conventions",
-				"@opentelemetry/core",
-				"pino",
-				"pino-opentelemetry-transport",
-			];
-			console.info(`  install: pnpm add ${packages.join(" ")}`);
-			console.info("  wire: node --import ./src/instrumentation.ts src/index.ts");
-		}
-	} // end isInduskMcp else
+	// 7. (The OpenTelemetry scaffold runs after the config and the extensions — see below.)
 
 	// 8. Install gate enforcement + eval-trigger hooks. Discover hook files
 	// from the package source via globSync rather than maintaining a hardcoded
@@ -1283,7 +1135,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				}
 			: {}),
 	};
-	writeConfig(projectRoot, config);
+	// An opt-out written before init (the new-project flow's declined telemetry) is the
+	// person's decision: kept, never replaced by init's fresh config.
+	const { readConfig } = await import("../../lib/config.js");
+	const priorDisabled = readConfig(projectRoot)?.disabled_extensions;
+	writeConfig(projectRoot, {
+		...config,
+		...(Array.isArray(priorDisabled) ? { disabled_extensions: priorDisabled } : {}),
+	});
 
 	// Workbench mode: explicitly enable the worktree extension AFTER the
 	// config write so the on_enable hook sees worktree.shape="workbench"
@@ -1296,6 +1155,23 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	}
 	console.info(`\n[Config]`);
 	console.info(`  create: .indusk/config.json (mode: ${config.mode})`);
+
+	// 12.4. Each declared code repo gets its own `.mcp.json`, never over one it has.
+	{
+		const { ensureCodeRepoMcpJson } = await import("../../lib/mcp-config.js");
+		for (const file of ensureCodeRepoMcpJson(projectRoot)) {
+			console.info(`  create: ${file} (indusk server, for the code repo)`);
+		}
+	}
+
+	// 12.5. Scaffold OpenTelemetry into the app — after the config (the declared repos,
+	// `disabled_extensions`) and the extensions are written, through the one scaffold
+	// module `update` calls too. Each declared code repo, else the project root.
+	{
+		const { applyScaffold } = await import("../../lib/scaffold/apply.js");
+		const scaffold = applyScaffold(projectRoot, { force, local });
+		if (scaffold.created.length > 0) await enableOtelForScaffold(projectRoot);
+	}
 
 	// git-only-substrate Phase 6 (falsification fix H1): warn the user when
 	// the project root is not a git repository. As of 1.31.0 git is the only
@@ -1343,8 +1219,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info("\nDone!");
 	console.info("\n⚠  Restart Claude Code to load the updated MCP server and skills.");
 	console.info("\nNext steps:");
-	console.info("  1. Set up infrastructure (if not done): indusk infra start");
-	console.info("  2. Restart Claude Code — /catchup will auto-orient the agent");
-	console.info("  3. Edit CLAUDE.md with your project details");
-	console.info("  4. Start planning: /planner your-first-feature");
+	console.info("  1. Restart Claude Code — /catchup will auto-orient the agent");
+	console.info("  2. Edit CLAUDE.md with your project details");
+	console.info("  3. Start planning: /planner your-first-feature");
+	console.info(
+		"  4. In VS Code or Cursor: indusk editor install (promise markers and the Promises panel)",
+	);
 }

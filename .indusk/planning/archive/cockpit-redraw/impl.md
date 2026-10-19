@@ -11,7 +11,7 @@ gate_policy: ask
 approved_brief: "e738be9154dc4042dd598b3a82e9cc55e33f5f46df5136e97dfa6c2b2a542dc3"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-13T23:53:56.059Z"
-accepted: 2026-10-14T22:33:34.824Z
+accepted: 2026-10-17T02:19:20.467Z
 accepted_by: person
 ---
 
@@ -63,7 +63,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 | A16 | A plan whose only wait is an amendment (no session question, no stopped build) reports `plan.needs-you`, the state whose mockup draws the amendment card, not `plan.working` | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/lib/look-state.test.ts |
 | A17 | `buildGroups`, moved to `lib/plan-groups.ts`, returns every plan passed in — inside a Path or in `rest` — for nested Paths, a declared cycle and a child declared under two parents; the PlanList tests pass unchanged | Build Phase 5 | Build Phase 5 | passing | unit | promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-groups.test.ts |
 | A18 | A look whose page answers 404 (its plan is not in the project the check runs against) is recorded unchecked, naming the 404, and the check measures every other look; a failure that is neither a 404 nor a timeout (connection refused, a 500) still ends the run | Build Phase 6 | Build Phase 6 | passing | unit | regression: the audit's finding that `indusk looks check admin` against the person's own project stops at the first `looks-fixture-*` path | apps/indusk-mcp/src/__tests__/looks-check-timeout.test.ts |
-| A19 | a-plan-page-shows-the-parts-of-its-brief holds again after i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief: the test that reproduces it, named by its root cause, passes | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-plan-page-shows-the-parts-of-its-brief |  |
+| A19 | a-plan-page-shows-the-parts-of-its-brief holds again after i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief: the test that reproduces it, named by its root cause, passes | Build Phase 7 | Build Phase 7 | passing | contract | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/__tests__/cockpit-redraw.contract.test.ts, apps/indusk-admin/src/__tests__/plan-parts.contract.test.ts |
 
 ### Deferred Verification
 
@@ -360,17 +360,17 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 
 ### Build Phase 7: Maintenance — i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief.md`)
+- [x] Fix: a code site, a widened test, or a revised promise
 
 #### Build Phase 7 Verification
 
-- [ ] A19: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A19: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
 
 #### Build Phase 7 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — none: the check's refusal already names the fix, and `startNextBuilt`'s description says when to use it
 
 #### Build Phase 7 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section

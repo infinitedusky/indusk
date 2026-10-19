@@ -2,7 +2,7 @@
 id: i-2026-10-16-the-demo-break-is-caught-locally
 promise: the-demo-break-is-caught-locally
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -11,6 +11,7 @@ tests:
   - "apps/indusk-mcp/src/__tests__/demo-command.test.ts > indusk demo — the seat-holds example, its promise held and broken > A7 — with the switch on, a late release reads broken with its trace; off, it is still reported broken"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:12:10Z'
 ---
 
 ## Symptom
@@ -1206,8 +1207,8 @@ Commits since the last green slow run (c804aaf) touching `apps`, `packages`, `ex
 
 ## Root cause
 
-_Unwritten — a person writes this._
+The promise held; the test was stale. one-promise-language (closed 2026-10-16) changed `indusk promises status` to print "last seen holding" and "N breaks" (`apps/indusk-mcp/src/lib/promises/status.ts`), but `demo-command.test.ts` A4 and A7 still matched "last seen upheld" and "N violations". The file is in the system tier, which one-promise-language's phases did not run, so the first run to see it was the 1.71.0 release's slow tests. Re-run on 2026-10-17, the demo's output read `no breaks` / `last seen holding`: the behaviour was upheld throughout.
 
 ## Fix
 
-_Not yet fixed._
+2026-10-17 — `demo-command.test.ts` A4 and A7 match the words `status` prints today ("last seen holding", "N break(s)"); both pass against a fresh `indusk demo`. No code change.

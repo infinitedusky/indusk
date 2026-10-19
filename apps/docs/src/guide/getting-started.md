@@ -10,7 +10,7 @@ Set up the InDusk development system in a new or existing project.
 
 - **Node 22+** — Tailwind 4 requires it
 - **pnpm** — package manager
-- **Docker** — OrbStack recommended on macOS, Docker Desktop on Windows/Linux
+- **Docker** (only for `indusk server deploy --build-from`) — OrbStack recommended on macOS, Docker Desktop on Windows/Linux
 
 ## Quick Start
 
@@ -44,7 +44,7 @@ See [Local Mode](./local-mode) for details on using InDusk without touching comm
 - `.mcp.json` — MCP server config (InDusk, plus whatever your enabled extensions register)
 - `.vscode/settings.json` — Biome integration (skipped in local mode)
 - `biome.json` — base quality config (`.indusk/biome.json` in local mode)
-- `instrumentation.ts` — OpenTelemetry auto-instrumentation (skipped in local mode)
+- OpenTelemetry instrumentation in the app's own folder, with `telemetry-settings.ts` and the `signal` helper (skipped in local mode); the app reports to the local daemon from its first run
 - `.indusk/extensions/` — extension manifests for the extensions you enable
 - `.claude/hooks/` — the gate hooks that enforce plan structure at write time
 
@@ -122,12 +122,14 @@ Each check is a shell command declared in the extension's manifest, so the faili
 
 ### Telemetry: the daemon looks up but no traces arrive
 
-Usually a stray daemon holding the port your exporter targets. A telemetry process whose `--config` path no longer exists is an orphan — from a deleted temp home or worktree — and it answers on the port without being an OTLP receiver.
+Usually a stray daemon: an InDusk Jaeger or collector of this home that the record does not name, left by a start that did not know the daemon was running (or an orphan, whose home was deleted underneath it). `status` lists them, with the time each started and the ports it holds.
 
 ```bash
-indusk telemetry reap --dry-run   # what is orphaned
-indusk telemetry reap             # kill them
-indusk telemetry status           # the real daemon's ports
+indusk telemetry status           # the real daemon's ports; finds a daemon whose record is gone
+indusk telemetry reap --dry-run   # which strays of this home, and which orphans, would be stopped
+indusk telemetry reap             # stop them (never the recorded daemon, another live home's, or a stranger's)
 ```
 
-Since 1.36.2, `indusk telemetry start` refuses to bind a different port than you asked for rather than silently choosing a random one, which is what made this failure invisible.
+If the record (`~/.indusk/telemetry.json`) went missing while the daemon kept running, nothing needs repairing by hand (the same holds for a record that names only dead processes): the next command that looks (`status`, a promise reader, the evaluator) finds the daemon from the process list and its listening sockets and writes the record again.
+
+The daemon runs on its own ports, chosen once and stored (`indusk telemetry address` prints them: `24318` for traces, `24319` for logs, `24316` for the interface and `24317` for MCP when the block was free). `indusk telemetry start` takes over a daemon that is already running and never starts a second; a port that something else holds is refused with the port, the process and its command named, never silently replaced by a random one, which is what made this failure invisible.

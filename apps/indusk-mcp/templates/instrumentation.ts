@@ -4,14 +4,16 @@
  * This file sets up automatic tracing for HTTP, database, and framework calls.
  * Load it before your application code:
  *
- *   node -r ./instrumentation.ts src/index.ts
+ *   node --import ./src/instrumentation.ts src/index.ts
  *
- * Or for Next.js, this file is automatically loaded via the instrumentation hook.
+ * Where spans go, the service name and the resource come from ./telemetry-settings:
+ * with nothing set, the local InDusk daemon (`indusk telemetry address`).
  *
- * Configuration via environment variables:
- *   OTEL_SERVICE_NAME          — service name (defaults to "unknown-service")
- *   OTEL_EXPORTER_OTLP_ENDPOINT — OTLP backend URL (if not set, uses console exporter)
- *   OTEL_EXPORTER_OTLP_HEADERS  — auth headers for the backend (e.g., "Authorization=Bearer xxx")
+ * Configuration via environment variables (each wins over the settings file):
+ *   OTEL_SERVICE_NAME           — service name
+ *   OTEL_EXPORTER_OTLP_ENDPOINT — OTLP collector URL
+ *   OTEL_EXPORTER_OTLP_HEADERS  — auth headers for the collector (e.g., "Authorization=Bearer xxx")
+ *   OTEL_RESOURCE_ATTRIBUTES    — e.g. "deployment.environment=production"
  *   OTEL_ENABLED_CATEGORIES     — comma-separated categories to export (default: all)
  */
 
@@ -19,31 +21,19 @@ import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentation
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import {
-	BatchSpanProcessor,
-	ConsoleSpanExporter,
-	SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { FilteringExporter } from "./filtering-exporter";
+import { telemetrySettings } from "./telemetry-settings";
 
-// Determine the span exporter based on whether an OTLP endpoint is configured
-function createSpanProcessor() {
-	if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
-		// OTLP endpoint configured — send traces to backend, filtered by category
-		const otlpExporter = new OTLPTraceExporter();
-		const filtered = new FilteringExporter(otlpExporter);
-		return new BatchSpanProcessor(filtered);
-	}
-	// No backend — use console exporter for local development
-	return new SimpleSpanProcessor(new ConsoleSpanExporter());
-}
+const settings = telemetrySettings(process.env);
 
 const sdk = new NodeSDK({
-	resource: resourceFromAttributes({
-		[ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? "unknown-service",
-	}),
-	spanProcessors: [createSpanProcessor()],
+	resource: resourceFromAttributes(settings.resource),
+	spanProcessors: [
+		new BatchSpanProcessor(
+			new FilteringExporter(new OTLPTraceExporter({ url: settings.tracesUrl })),
+		),
+	],
 	instrumentations: [
 		getNodeAutoInstrumentations({
 			// Disable fs instrumentation — too noisy, not useful for most apps

@@ -70,6 +70,12 @@ export interface ApprovalEntry {
 	 * 6, which then binds nothing it can be held to and reads proposed.
 	 */
 	declarationsHash?: string;
+	/**
+	 * The app's element rules it was drawn under (`LooksApp.baseRulesHash`).
+	 * Absent on an entry from before it was kept, which binds nothing of them
+	 * and is read as before — absence is a rule, not a migration.
+	 */
+	baseRulesHash?: string;
 	/** Who approved it. */
 	by: string;
 	/** When, as an ISO date-time. */
@@ -123,6 +129,8 @@ export interface StoryApprovalEntry {
 	stylesheetHash?: string;
 	foundationHash: string;
 	declarationsHash?: string;
+	/** The app's element rules it was drawn under; see `ApprovalEntry.baseRulesHash`. */
+	baseRulesHash?: string;
 	by: string;
 	at: string;
 	/** The plan whose checkout the approval was made in; see `ApprovalEntry.plan`. */
@@ -165,7 +173,7 @@ function isStoryEntry(v: unknown): v is StoryApprovalEntry {
 		["story", "snapshotHash", "foundationHash", "by", "at"].every(
 			(k) => typeof o[k] === "string",
 		) &&
-		["declarationsHash", "stylesheetHash", "plan"].every(
+		["declarationsHash", "stylesheetHash", "baseRulesHash", "plan"].every(
 			(k) => o[k] === undefined || typeof o[k] === "string",
 		)
 	);
@@ -177,7 +185,7 @@ function isEntry(v: unknown): v is ApprovalEntry {
 	return (
 		o.kind === undefined &&
 		FIELDS.every((k) => typeof o[k] === "string") &&
-		["declarationsHash", "componentsHash", "plan"].every(
+		["declarationsHash", "componentsHash", "baseRulesHash", "plan"].every(
 			(k) => o[k] === undefined || typeof o[k] === "string",
 		) &&
 		(o.components === undefined ||
@@ -190,12 +198,35 @@ function isEntry(v: unknown): v is ApprovalEntry {
 /** The components hash of a mockup that composes none: what an entry without one binds. */
 const NO_COMPONENTS = componentsHashOf([]);
 
-/** Whether an entry, a mockup's or a story's, was made on the foundation and the declarations as they are now. */
+/**
+ * What an approval is bound to, as the app has it now: the foundation, the
+ * declarations the check trusts and, once the catalog keeps them, the element
+ * rules the look is drawn under. The writer (`approve.ts`) spreads this into an
+ * entry and `boundToNow` reads it back, so a new binding is one edit on each
+ * side. The cockpit sends none of it — it draws what the checkout holds — so
+ * the writer reads it from the app under the record's lock.
+ */
+export const bindingOf = (
+	app: LooksApp,
+): Pick<ApprovalEntry, "foundationHash" | "declarationsHash" | "baseRulesHash"> => ({
+	foundationHash: app.foundation.hash,
+	declarationsHash: app.declarationsHash,
+	...(app.baseRulesHash === undefined ? {} : { baseRulesHash: app.baseRulesHash }),
+});
+
+/**
+ * Whether an entry, a mockup's or a story's, was made on the foundation, the
+ * declarations and the element rules as they are now. An entry that recorded no
+ * element rules binds none and holds, as before the field existed — absence is
+ * a rule, not a migration.
+ */
 export const boundToNow = (
 	app: LooksApp,
-	e: Pick<ApprovalEntry, "foundationHash" | "declarationsHash">,
+	e: Pick<ApprovalEntry, "foundationHash" | "declarationsHash" | "baseRulesHash">,
 ): boolean =>
-	e.foundationHash === app.foundation.hash && e.declarationsHash === app.declarationsHash;
+	e.foundationHash === app.foundation.hash &&
+	e.declarationsHash === app.declarationsHash &&
+	(e.baseRulesHash === undefined || e.baseRulesHash === app.baseRulesHash);
 
 /** Where an app's record is, relative to the project root. */
 export const approvalsPath = (app: string) => join(MOCKUPS_DIR, app, APPROVALS_FILE);

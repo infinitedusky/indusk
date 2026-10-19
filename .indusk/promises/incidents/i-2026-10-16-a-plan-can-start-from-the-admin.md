@@ -2,7 +2,7 @@
 id: i-2026-10-16-a-plan-can-start-from-the-admin
 promise: a-plan-can-start-from-the-admin
 source: release
-status: open
+status: fixed
 date: '2026-10-16'
 opened: '2026-10-16T20:17:58Z'
 last_seen: '2026-10-16T20:17:58Z'
@@ -10,6 +10,7 @@ tests:
   - "apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts > A5 — Claude Code still speaks the three exchanges > a write is asked about in a planning session, and a denial is heard"
 release:
   - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:30:03Z'
 ---
 
 ## Symptom
@@ -1212,8 +1213,8 @@ Commits since the last green slow run (c804aaf) touching `apps`, `packages`, `ex
 
 ## Root cause
 
-_Unwritten — a person writes this._
+The promise held; two things failed the test, neither the code under it. (1) The machine: `~/package.json` pinned `@anthropic-ai/claude-code@^1.0.128`, and vitest's PATH walks every parent's `node_modules/.bin`, so the session started that 1.0.128 `claude`, which maps `sonnet` to the retired `claude-sonnet-4-20250514` and got a 404 — all three exchanges failed. (2) The test was stale: since brief-as-the-contract (2026-10-13) a planning session runs with `acceptEdits` (`apps/indusk-mcp/src/lib/session/protocol.ts`), so a write inside its own folder is allowed unasked; the test wrote inside it and waited for an ask that, by design, never comes.
 
 ## Fix
 
-_Not yet fixed._
+2026-10-17 — (1) the home-folder `claude-code` updated to 2.1.302 (Sandy's machine, no repo change). (2) `session-protocol-contract.test.ts` A5 asks for a write to a folder outside the session's, the case that still reaches the person. All three exchanges pass.

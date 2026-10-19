@@ -2,14 +2,19 @@
  * OpenTelemetry Browser Instrumentation
  *
  * Captures page loads, HTTP requests (fetch/XHR), and user interactions
- * from the browser and sends them to any OTLP-compatible backend.
+ * from the browser and sends them to an OTLP collector.
  *
  * Import this as early as possible in your app (main.tsx or App.tsx):
  *   import './instrumentation';
  *
- * Configuration via environment variables (use VITE_ or NEXT_PUBLIC_ prefix):
+ * Where spans go, the service name and the resource come from ./telemetry-settings:
+ * with nothing set, the local InDusk daemon (`indusk telemetry address`).
+ *
+ * Configuration via environment variables (use VITE_ or NEXT_PUBLIC_ prefix; each wins
+ * over the settings file):
  *   VITE_OTEL_SERVICE_NAME            — service name
- *   VITE_OTEL_EXPORTER_OTLP_ENDPOINT — OTLP backend URL
+ *   VITE_OTEL_EXPORTER_OTLP_ENDPOINT — OTLP collector URL
+ *   VITE_OTEL_RESOURCE_ATTRIBUTES    — e.g. "deployment.environment=production"
  *   VITE_OTEL_EXPORTER_OTLP_HEADERS  — auth headers (e.g., "Authorization=Bearer xxx")
  *   VITE_OTEL_PROPAGATE_TO           — origins your API lives on, comma-separated
  *                                      (e.g., "http://localhost:3000,https://*.dev.example.com")
@@ -38,34 +43,41 @@ import { FetchInstrumentation } from "@opentelemetry/instrumentation-fetch";
 import { UserInteractionInstrumentation } from "@opentelemetry/instrumentation-user-interaction";
 import { XMLHttpRequestInstrumentation } from "@opentelemetry/instrumentation-xml-http-request";
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import {
-	BatchSpanProcessor,
-	ConsoleSpanExporter,
-	SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { telemetrySettings } from "./telemetry-settings";
 
 // Next.js inlines `process.env.NEXT_PUBLIC_*` at build time; a Vite page has no `process`.
 const hasProcess = typeof process !== "undefined";
 
-const endpoint =
-	import.meta.env?.VITE_OTEL_EXPORTER_OTLP_ENDPOINT ??
-	(hasProcess ? process.env.NEXT_PUBLIC_OTEL_EXPORTER_OTLP_ENDPOINT : undefined) ??
-	"";
+const viteEnv = import.meta.env ?? {};
+
+// The settings read the OTEL_* names; in a page they arrive under the bundler's prefix.
+// Each NEXT_PUBLIC_ name is spelled out, because Next.js inlines only literal reads.
+const settings = telemetrySettings({
+	OTEL_EXPORTER_OTLP_ENDPOINT:
+		viteEnv.VITE_OTEL_EXPORTER_OTLP_ENDPOINT ??
+		(hasProcess ? process.env.NEXT_PUBLIC_OTEL_EXPORTER_OTLP_ENDPOINT : undefined),
+	OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:
+		viteEnv.VITE_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ??
+		(hasProcess ? process.env.NEXT_PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT : undefined),
+	OTEL_SERVICE_NAME:
+		viteEnv.VITE_OTEL_SERVICE_NAME ??
+		(hasProcess ? process.env.NEXT_PUBLIC_OTEL_SERVICE_NAME : undefined),
+	OTEL_RESOURCE_ATTRIBUTES:
+		viteEnv.VITE_OTEL_RESOURCE_ATTRIBUTES ??
+		(hasProcess ? process.env.NEXT_PUBLIC_OTEL_RESOURCE_ATTRIBUTES : undefined),
+	MODE: viteEnv.MODE,
+	NODE_ENV: hasProcess ? process.env.NODE_ENV : undefined,
+});
 
 const headers =
-	import.meta.env?.VITE_OTEL_EXPORTER_OTLP_HEADERS ??
+	viteEnv.VITE_OTEL_EXPORTER_OTLP_HEADERS ??
 	(hasProcess ? process.env.NEXT_PUBLIC_OTEL_EXPORTER_OTLP_HEADERS : undefined) ??
 	"";
 
-const serviceName =
-	import.meta.env?.VITE_OTEL_SERVICE_NAME ??
-	(hasProcess ? process.env.NEXT_PUBLIC_OTEL_SERVICE_NAME : undefined) ??
-	"unknown-service";
-
 const propagateTo =
-	import.meta.env?.VITE_OTEL_PROPAGATE_TO ??
+	viteEnv.VITE_OTEL_PROPAGATE_TO ??
 	(hasProcess ? process.env.NEXT_PUBLIC_OTEL_PROPAGATE_TO : undefined) ??
 	"";
 
@@ -143,22 +155,13 @@ function entrySource(entry: string): string {
 	return `${literal(`${scheme}://${host}`.toLowerCase())}${optionalPort ? `(?::${port[1]})?` : ""}${literal(rest)}`;
 }
 
-const spanProcessors = [
-	endpoint
-		? new BatchSpanProcessor(
-				new OTLPTraceExporter({
-					url: `${endpoint}/v1/traces`,
-					headers: parseHeaders(headers),
-				}),
-			)
-		: new SimpleSpanProcessor(new ConsoleSpanExporter()),
-];
-
 const provider = new WebTracerProvider({
-	resource: resourceFromAttributes({
-		[ATTR_SERVICE_NAME]: serviceName,
-	}),
-	spanProcessors,
+	resource: resourceFromAttributes(settings.resource),
+	spanProcessors: [
+		new BatchSpanProcessor(
+			new OTLPTraceExporter({ url: settings.tracesUrl, headers: parseHeaders(headers) }),
+		),
+	],
 });
 
 provider.register();

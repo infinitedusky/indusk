@@ -525,15 +525,50 @@ export function healthRows(
 	return out;
 }
 
+// promise: a-promise-reads-the-same-on-its-plan-page
+/**
+ * Each promise's health from the alarm source, by name: the one answer the
+ * sidebar's red dot and a plan's page both read, so neither decides its own.
+ * A promise telemetry says nothing about (state, structure) has no entry.
+ * `extra` are promises the plans' own checkouts register: each the trunk
+ * (`registry`) gives no health — absent there, or there as a state promise —
+ * reads through the same rule, with the trunk's incidents and the same alarm
+ * source, so no signal is never the enforced green. A trunk answer is never
+ * replaced, so a branch's edit cannot quiet a trunk break.
+ */
+export function planPromiseHealth(
+	registry: Registry,
+	reads: SourceHealthRead[],
+	extra: PromiseEntry[] = [],
+): Record<string, PromiseHealth> {
+	const read = alarmRead(reads) ?? null;
+	const rows = healthRows(registry, read);
+	for (const p of extra) {
+		if (rows[p.name]) continue;
+		const row = healthOf(p, read, registry.incidents);
+		if (row) rows[p.name] = row;
+	}
+	return Object.fromEntries(Object.entries(rows).map(([name, row]) => [name, row.health]));
+}
+
 /**
  * Plans holding a red promise in the alarm source — the sidebar's roll-up
  * (A23). A promise red only locally, beside a production that holds it, is
- * work in progress and does not mark its plan (promise-sources A6).
+ * work in progress and does not mark its plan (promise-sources A6). `extra`
+ * are the plans' checkouts' promises, as a plan's page reads them, so a break
+ * red on a plan's page is red here; a promise's owner is the trunk's, else
+ * the checkout's.
  */
-export function redPlans(registry: Registry, reads: SourceHealthRead[]): Set<string> {
-	const rows = healthRows(registry, alarmRead(reads) ?? null);
+export function redPlans(
+	registry: Registry,
+	reads: SourceHealthRead[],
+	extra: PromiseEntry[] = [],
+): Set<string> {
+	const health = planPromiseHealth(registry, reads, extra);
+	const owners = new Map(extra.map((p) => [p.name, p.owner]));
+	for (const p of registry.promises) owners.set(p.name, p.owner);
 	return new Set(
-		registry.promises.filter((p) => rows[p.name]?.health === "red").map((p) => p.owner),
+		[...owners].filter(([name]) => health[name] === "red").map(([, owner]) => owner),
 	);
 }
 
@@ -541,7 +576,7 @@ export function redPlans(registry: Registry, reads: SourceHealthRead[]): Set<str
  * The rule a source's chip is judged by: `newest` for local when the project
  * also has production, `incidents` otherwise (ADR D3).
  */
-export function ruleFor(read: SourceHealthRead, reads: SourceHealthRead[]): HealthRule {
+export function ruleFor(read: { name: SourceName }, reads: { name: SourceName }[]): HealthRule {
 	return read.name === "local" && reads.some((r) => r.name === "production")
 		? "newest"
 		: "incidents";
