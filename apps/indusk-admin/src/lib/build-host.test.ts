@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 interface Held {
   briefStatus: string | null;
+  acceptedAt: string | null;
   unapprovedLooks: string[];
 }
 
@@ -77,9 +78,16 @@ import { startBuild, startPlanning } from "./build-host";
 
 const PROJECT = "seats";
 const PLAN = "plan-from-brief";
+const ACCEPTED_AT = "2026-10-19T12:00:00.000Z";
+const BEGAN_BEFORE = "2026-10-19T11:00:00.000Z";
+const BEGAN_AFTER = "2026-10-19T13:00:00.000Z";
 
 beforeEach(() => {
-  held = { briefStatus: "accepted", unapprovedLooks: [] };
+  held = {
+    briefStatus: "accepted",
+    acceptedAt: ACCEPTED_AT,
+    unapprovedLooks: [],
+  };
   runs = 0;
   open.length = 0;
   admitted.clear();
@@ -195,6 +203,7 @@ describe("A19 — the end of a planning conversation asks for the planning run",
         planningConversationEnded?: (
           project: string,
           plan: string,
+          startedAt: string,
         ) => Promise<unknown>;
       }
     ).planningConversationEnded;
@@ -204,16 +213,16 @@ describe("A19 — the end of a planning conversation asks for the planning run",
   });
 
   it("A19 starts the run for an accepted brief whose looks are all approved", async () => {
-    await ended()?.(PROJECT, PLAN);
+    await ended()?.(PROJECT, PLAN, BEGAN_BEFORE);
     expect(runs).toBe(1);
   });
 
   it("A19 starts nothing for a draft brief or a look still unapproved", async () => {
     held.briefStatus = "draft";
-    await ended()?.(PROJECT, PLAN);
+    await ended()?.(PROJECT, PLAN, BEGAN_BEFORE);
     held.briefStatus = "accepted";
     held.unapprovedLooks = ["seat-picker is still proposed"];
-    await ended()?.(PROJECT, PLAN);
+    await ended()?.(PROJECT, PLAN, BEGAN_BEFORE);
     expect(typeof ended()).toBe("function");
     expect(runs).toBe(0);
   });
@@ -221,7 +230,38 @@ describe("A19 — the end of a planning conversation asks for the planning run",
   it("A19 never throws when the ask is declined or refused", async () => {
     expect(typeof ended()).toBe("function");
     await startPlanning(PROJECT, PLAN);
-    await expect(ended()?.(PROJECT, PLAN)).resolves.not.toThrow();
+    await expect(ended()?.(PROJECT, PLAN, BEGAN_BEFORE)).resolves.not.toThrow();
+  });
+});
+
+describe("T22 — only the conversation that accepted the brief starts the run", () => {
+  const ended = () =>
+    (
+      host as unknown as {
+        planningConversationEnded: (
+          project: string,
+          plan: string,
+          startedAt: string,
+        ) => Promise<unknown>;
+      }
+    ).planningConversationEnded;
+
+  // clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance
+  // promise: an-accepted-brief-is-planned-unasked
+  it("T22 starts nothing when the brief was accepted before the conversation began", async () => {
+    await ended()(PROJECT, PLAN, BEGAN_AFTER);
+    expect(runs).toBe(0);
+  });
+
+  it("T22 starts nothing for a brief accepted by hand, with no acceptance time", async () => {
+    held.acceptedAt = null;
+    await ended()(PROJECT, PLAN, BEGAN_BEFORE);
+    expect(runs).toBe(0);
+  });
+
+  it("T22 starts the run when the brief was accepted during the conversation", async () => {
+    await ended()(PROJECT, PLAN, BEGAN_BEFORE);
+    expect(runs).toBe(1);
   });
 });
 
