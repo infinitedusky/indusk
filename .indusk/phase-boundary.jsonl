@@ -429,3 +429,12 @@
 {"plan":"archived-plans-are-found","phase":2,"kind":"build","sha":"0affdff1711251d5b8c7b6e69a9e48b2576467a1","timestamp":"2026-10-18T22:50:41.831Z"}
 {"plan":"a-plan-runs-what-must-not-break","phase":1,"kind":"test","sha":"91b34545e10045d3ba18d065b8372c9a90a886c7","timestamp":"2026-10-19T00:01:21.447Z"}
 {"plan":"a-plan-runs-what-must-not-break","phase":1,"kind":"build","sha":"102b1f6d9118811b4304538eaeddc4855ef26dd2","timestamp":"2026-10-19T00:04:25.545Z"}
+{"plan":"a-brief-is-planned-unasked","phase":1,"kind":"test","sha":"a019cc15955ca062b38df5ad2463692233827b80","timestamp":"2026-10-19T00:31:47.581Z"}
+{"plan":"a-brief-is-planned-unasked","phase":1,"kind":"build","sha":"1b16f0d8c7f901c83ec975d379443c1ecbda5f50","timestamp":"2026-10-19T00:34:04.634Z"}
+{"plan":"a-brief-is-planned-unasked","phase":2,"kind":"build","sha":"d0ad5f55449e5e9e3e9cf10c37ffaf052d2a7062","timestamp":"2026-10-19T00:37:36.455Z"}
+{"plan":"a-brief-is-planned-unasked","phase":3,"kind":"build","sha":"bfa4a49cb3a02ce0e8e0a864229b50de03d09b28","timestamp":"2026-10-19T00:41:53.158Z"}
+{"plan":"a-brief-is-planned-unasked","phase":4,"kind":"build","sha":"2e815f4e4aaa86a3a07f1de07b67ad7e16259887","timestamp":"2026-10-19T00:46:58.369Z"}
+{"plan":"a-brief-is-planned-unasked","phase":5,"kind":"build","sha":"6eeab3547e6c8691a97ae5c360de4f8e6890d971","timestamp":"2026-10-19T01:44:13.041Z"}
+{"plan":"a-brief-is-planned-unasked","phase":6,"kind":"build","sha":"cd9766d752b00ab8a682b63b736f80562276a612","timestamp":"2026-10-19T02:07:36.725Z"}
+{"plan":"a-brief-is-planned-unasked","phase":7,"kind":"build","sha":"bf5fff04a6e6c4a7458cdf0862dde5cbed20f824","timestamp":"2026-10-19T02:11:39.684Z"}
+{"plan":"a-brief-is-planned-unasked","phase":8,"kind":"build","sha":"18c751d69","timestamp":"2026-10-19T02:25:16.475Z"}

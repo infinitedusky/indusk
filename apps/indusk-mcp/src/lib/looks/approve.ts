@@ -3,6 +3,7 @@ import { userInfo } from "node:os";
 import { dirname, join } from "node:path";
 import { withLock } from "../agents/lock.js";
 import { commitNote, currentMdPath, type NoteCommit, oneLine } from "../bookkeeping/notes.js";
+import { planningStepRefusal } from "../build/step-env.js";
 import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
 import {
@@ -118,6 +119,8 @@ export async function approve(
 	by: string,
 	seen: Seen = {},
 ): Promise<ApproveResult> {
+	const refused = planningStepRefusal(`approving ${appName}'s ${name}`);
+	if (refused) return { approved: false, reason: refused };
 	const opened = await openApp(checkout, appName, by, {
 		noOne: "an approval needs who gave it",
 		act: "approve",

@@ -17,7 +17,9 @@ import { phaseModel } from "../../lib/models/phase-model.js";
 import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import { type Amendment, AmendmentsUnreadable, amendmentsOf } from "../../lib/plans/amendments.js";
+import { askAdminToPlan } from "../../lib/plans/ask-admin.js";
 import {
+	acceptBrief,
 	acceptPlan,
 	approvePlan,
 	landPlan,
@@ -147,6 +149,14 @@ export function plansAccept(cwd: string, name: string, auto: boolean): Promise<v
 	return planVerb(async () => {
 		const a = await acceptPlan(cwd, name, auto ? "auto" : "person");
 		return `Accepted ${a.plan} at ${a.accepted}${a.acceptedBy === "auto" ? ", by its workflow" : ""}.`;
+	});
+}
+
+/** `indusk plans accept-brief <name>` — the brief is settled and the plan can be written from it. */
+export function plansAcceptBrief(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const a = await acceptBrief(cwd, name);
+		return `Accepted the brief of ${a.plan}.\n${await askAdminToPlan(cwd, a.plan)}`;
 	});
 }
 

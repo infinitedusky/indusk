@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { planningConversationEnded } from "@/lib/build-host";
 import {
   adminOnly,
   planLocation,
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
   const manager = sessionManager();
+  const { project, plan } = body;
   const running = manager.forPlan(body.project, body.plan, body.kind);
   if (running && !manager.isWatched(running.id)) {
     return Response.json({ id: running.id, attached: true });
@@ -79,6 +81,14 @@ export async function POST(request: NextRequest): Promise<Response> {
       project: body.project,
       plan: body.plan,
       onEvent: () => {},
+      // The brief is accepted from inside a planning conversation, where the
+      // planning run is held back; the conversation's end asks for it.
+      ...(body.kind === "planning"
+        ? {
+            onEnd: (startedAt) =>
+              void planningConversationEnded(project, plan, startedAt),
+          }
+        : {}),
     });
     return Response.json(
       { id, pid: session.pid, cwd: where.cwd },

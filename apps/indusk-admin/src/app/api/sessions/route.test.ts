@@ -24,6 +24,9 @@ vi.mock("@/lib/session-host", () => ({
   sessionManager: () => manager,
 }));
 
+const ended = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/build-host", () => ({ planningConversationEnded: ended }));
+
 import type { NextRequest } from "next/server";
 import { POST } from "./route";
 
@@ -78,5 +81,29 @@ describe("POST /api/sessions while a session is running", () => {
     const r = await post("another-plan");
     expect(r.status).toBe(201);
     expect(manager.start).toHaveBeenCalled();
+  });
+});
+
+describe("a planning conversation's end asks for the planning run (a-brief-is-planned-unasked T19)", () => {
+  beforeEach(() => {
+    ended.mockReset();
+    manager.forPlan.mockReturnValue(undefined);
+  });
+
+  it("hands the manager an end that asks for that plan's run", async () => {
+    await post("another-plan");
+    const opts = manager.start.mock.calls[0][0];
+    expect(opts.onEnd).toBeTypeOf("function");
+    opts.onEnd("2026-10-19T11:00:00.000Z");
+    expect(ended).toHaveBeenCalledWith(
+      "dusk",
+      "another-plan",
+      "2026-10-19T11:00:00.000Z",
+    );
+  });
+
+  it("asks nothing at the end of a build session", async () => {
+    await post("another-plan", "build");
+    expect(manager.start.mock.calls[0][0].onEnd).toBeUndefined();
   });
 });

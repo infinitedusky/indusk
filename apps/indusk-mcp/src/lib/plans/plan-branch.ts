@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
-import { currentBuildStep } from "../build/step-env.js";
+import { currentBuildStep, planningStepRefusal } from "../build/step-env.js";
 import { git, headSha } from "../git.js";
 import { currentTrunkBranch } from "../trunk-branch.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
@@ -42,6 +42,12 @@ export function refuseInsideBuildStep(verb: string, plan: string): void {
 			`${plan} is not ${verb} from inside a build step (${step}): a build stops at review, and acceptance is the person's`,
 		);
 	}
+}
+
+/** Approving is the person's: refused inside a planning step, naming it (a-brief-is-planned-unasked, never-approves). */
+export function refuseInsidePlanningStep(what: string): void {
+	const reason = planningStepRefusal(what);
+	if (reason) throw new PlanCommandRefusal(reason);
 }
 
 /** The plan's worktree and the trunk it lands on, or a refusal saying which is missing. */

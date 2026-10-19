@@ -12,6 +12,7 @@ import {
 	PlanCommandRefusal,
 	planBranch,
 	refuseDirtyTrunk,
+	refuseInsidePlanningStep,
 	setFrontmatterKeys,
 	setImplKeys,
 } from "./plan-branch.js";
@@ -38,6 +39,7 @@ export interface ApprovedPlan {
 }
 
 export async function approvePlan(anyCheckout: string, plan: string): Promise<ApprovedPlan> {
+	refuseInsidePlanningStep(`approving ${plan}`);
 	const wp = await workbenchPlan(anyCheckout, plan);
 	if (wp) return approveWorkbenchPlan(wp);
 	const pb = await planBranch(anyCheckout, plan);
