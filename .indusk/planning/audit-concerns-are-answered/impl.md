@@ -12,7 +12,7 @@ gate_policy: ask
 approved_brief: "039c825041a95b4f5e214b2fe371d82f4ea93772b2daf9ec3796392d91480085"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T14:45:43.819Z"
-accepted: 2026-10-19T14:01:50.024Z
+accepted: 2026-10-19T16:22:40.954Z
 accepted_by: person
 ---
 
