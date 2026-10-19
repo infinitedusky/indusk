@@ -842,6 +842,46 @@ This phase tests the finished plan against signals and breaks shaped differently
 
 Looked at and held: closing and landing pick the same promises (both by `owner === plan`); a clause row with no test file is refused before the tests half (`clauseRefusal`'s "its rows name no test file"); a stopped daemon gives no window marks, so a clause reads no signal rather than its cached past; the store's cache is dropped on a failed read; the project filter keeps the incident verdict's project-less spans and drops other projects' closes, so dusk's close reads its own; the incident frontmatter cannot gain a key from a span's clause (`clauseScalar`); the live check cannot be satisfied by an earlier run. Considered and not authored: a clause named like a YAML literal (`true`, `null`) written plain would parse as that literal — the registry allows the names, but none exists and the risk is a mislabelled frontmatter field, not a lost break; the close's own signal for `verified-before-release` can only report upheld, because a close that accepted a refused clause is unreachable — the one real path to shipping on an unrun test found here is the skipped file, fixed above. Not hunted: the editor's health line (decision D-2, out of scope), the command tracer's export failures (library behaviour, D-13), the Python helper beyond its keys (the scaffold plan's), and the promise page's rendering beyond the data it receives (the brief's Looks is "None").
 
+### Build Phase 8: Cleanup — the clause test-file readers leave the closing rule
+
+**Tier**: med — the work step's default
+
+The closing rule in `confirm.ts` grew three functions that each open a clause's test file behind the same "is this a readable file" guard, then ask it something different (does it name the promise, does it name the clause, does it assert anything). They are one job — reading a clause test file — and a different reason to change from the closing rule's judging and writing. Once this phase closes they live in one module of their own and behave exactly as before.
+
+- [x] Move the readers of a clause's test file out of the closing rule into a module of their own, so the closing rule only judges.
+  <details><summary>Technical</summary>
+
+  Extract `carriesToken`, `namesClause`, `assertsSomething`, `ASSERTION_CALL` and `withoutCommentsOrImports` (`confirm.ts` lines 51–100) into `lib/promises/clause-test-file.ts`, with one private `readTestFile(codeRoot, rel)` returning the text or `null` for the repeated guard (`isUsableRelPath && existsSync && statSync.isFile`) — the rule of three: the guard is written three times in this one file. Each export keeps its signature and its "missing is the token check's refusal" results. `confirm.ts` imports them; `judge` and `clauseTokenRefusals` are unchanged. Basis: one reason to change per module; `confirm.ts` is 492 lines and Build Phase 4's Shape step passed this decision to `/cleanup`.
+
+  </details>
+- [x] Review the other large changed files and leave them as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed, left as-is: `telemetry.ts` (490 lines: Jaeger endpoint, trace types, `parseMarkedSpan` and the window reads are one reader; its small helpers `tag`, `pointerIn`, `numberTag` were already unified in Build Phase 7, and a split would separate the parser from the types it fills); `registry.ts` (563 lines, mostly pre-existing, this plan added 7); `bin/commands/promises.ts` (527, one CLI file per command family by the package's convention, status's signal already moved to `status-signal.ts`); `incidents.ts` (398, `recordViolations`/`openIncident`/`extendIncident` are one incident lifecycle); `standing.ts`, `clause-standing.ts`, `clause-proof.ts` (each one concern, `reportsOfClause` already the single mapping); `new-project/create.ts`, `eval/otel.ts`, `always-on/pass.ts`, `check.ts`, `sources.ts` (touched by a line or a few for the word cleanup, not grown by this plan). `listOversizedChangedFiles` returned an empty list at the 400-line cap, so these were chosen by `wc -l` over the diff's non-test files.
+
+  </details>
+
+#### Build Phase 8 Verification
+
+- [x] Closing refuses and accepts exactly the clause test files it did before.
+  <details><summary>Technical</summary>
+
+  (no new trajectory row — structure-preserving, existing coverage: A1, A3, A29 and A37.) `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/clause-test-asserts.test.ts src/lib/promises/clause-tests-run.test.ts src/lib/promises/confirm-signal.test.ts`, then `vitest related src/lib/promises/confirm.ts`; `tsc --noEmit` and biome clean. Result: 3 files / 19 tests and 9 related files / 43 tests pass, `tsc` clean; biome is clean on the two touched files (it flags a pre-existing format nit in `health.ts`, not this phase's).
+
+  </details>
+
+#### Build Phase 8 Context
+
+- [x] (none needed — internal decomposition; the promises area's CLAUDE.md names behaviour and guards, not file layout, and the guards' tests keep their names)
+
+#### Build Phase 8 Document
+
+- [x] (none needed — internal decomposition; no command, refusal text or page changes)
+
+#### Build Phase 8 Cleanup Summary
+
+Looked at: the 31 non-test source files this plan changed (`wc -l` over the diff against the merge base), the helpers repeated across them (`tag`/`pointerIn`/`numberTag`, the readable-file guard, the report mapping), and the Shape notes of Build Phases 4 and 7. One extraction warranted; the rest left with reasons above. Not looked at: test files (their size follows the rows they prove) and docs pages.
+
 ## Files Affected
 
 | File | Change |
