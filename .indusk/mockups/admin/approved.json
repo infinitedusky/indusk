@@ -8280,6 +8280,16 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-19T14:34:49.445Z",
 			"plan": "decisions-as-questions"
+		},
+		{
+			"mockup": "question-row.expensive",
+			"mockupHash": "052886ce4e71f82acd596a5748bf20cfd6ae83ae233a64b6743ad2b08fb6ee09",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-19T14:34:50.353Z",
+			"plan": "decisions-as-questions"
 		}
 	]
 }
