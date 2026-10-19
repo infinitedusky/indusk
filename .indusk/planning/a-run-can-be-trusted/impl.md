@@ -1210,7 +1210,7 @@ This phase tests the finished plan against the cases where what it shows or repo
 
 #### Build Phase 7 Context
 
-- [ ] Add to the hooks' rules that the witness compares the checkout the guard recorded, and that edits by the editing tools are recorded so they are not blamed on a shell command.
+- [x] Add to the hooks' rules that the witness compares the checkout the guard recorded, and that edits by the editing tools are recorded so they are not blamed on a shell command.
   <details><summary>Technical</summary>
 
   Destination: `apps/indusk-mcp/hooks/CLAUDE.md`, the `plan-write-guard.js` entry — "the witness snapshots the root the guard recorded, never one read from the after payload's `cwd`; it also records Edit and Write tool writes under plan folders, and the drain leaves those out of a shell command's changes". Guard: `plan-write-guard.contract.test.ts` (A99) and `clause-verdicts.test.ts` (A100).

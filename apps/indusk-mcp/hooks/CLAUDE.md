@@ -107,10 +107,11 @@ are about keeping the two lanes in step.
   mentions, fd redirects, `indusk` commands and the git commands that move
   between committed states, and allows anything it cannot parse. It records
   decisions, never verdicts, through `_clause-verdicts.js`; `plan-write-witness.js`
-  (PostToolUse) records what the plan folders hold after, and the package's
-  drain judges both with the disk and `shell-quote`. A hook test that runs it
-  sets `INDUSK_HOME`, or the decision lands in the real home. Guarded by
-  `plan-write-guard.test.ts` and `plan-write-guard.contract.test.ts`.
+  (PostToolUse) snapshots the root the guard recorded, never the after payload's
+  `cwd`, and records Edit/Write writes under plan folders, which the drain
+  (disk + `shell-quote`) leaves out of a shell command's changes. A hook test
+  sets `INDUSK_HOME`. Guarded by `plan-write-guard.test.ts`,
+  `plan-write-guard.contract.test.ts` (A99), `clause-verdicts.test.ts` (A100).
 - **`break-inbox.js` runs on every prompt** (`UserPromptSubmit`, no matcher):
   it reads two small files in the project's home (`projectHome` from
   `_hook-paths.js`) and exits; it never blocks and never grows a second read.
