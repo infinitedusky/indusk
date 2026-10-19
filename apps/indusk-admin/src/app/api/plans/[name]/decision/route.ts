@@ -5,9 +5,8 @@ import {
   type WaitingOn,
 } from "@infinitedusky/indusk-mcp/plans/waiting";
 import {
-  applyAnswer,
+  answerQuestionRecord,
   readQuestions,
-  recordQuestion,
 } from "@infinitedusky/indusk-mcp/questions";
 import type { NextRequest } from "next/server";
 import { resumeAfterQuestion, startRelease } from "@/lib/build-host";
