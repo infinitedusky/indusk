@@ -14,6 +14,8 @@ gate_policy: ask
 approved_brief: "4185817c416778284c5cf8d1b9c1c31772a63b7bf55a15df86a11e7ec7702c85"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T17:32:27.817Z"
+accepted: 2026-10-19T17:56:39.797Z
+accepted_by: person
 ---
 
 # A brief is accepted on current main — Impl
