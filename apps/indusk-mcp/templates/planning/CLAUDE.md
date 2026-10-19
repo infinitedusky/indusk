@@ -135,6 +135,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   full shape and a before-and-after example are in `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`
 - `validate-impl-structure.js` re-validates the whole file when an edit's
   `new_string` contains a phase header — scope edits to checklist items.
+- **A shell command that writes a plan document is refused**: change a plan
+  document with the Edit tool or the `indusk` command for it (archive a plan
+  with `indusk plans archive <plan>`); reading one from the shell is fine.
+  — guarded by `plan-write-guard.test.ts`
 - Verification items are runnable commands with expected output, never "verify
   it works". Checking off a Verification item does not update a row's `State`
   column — do both in one edit.

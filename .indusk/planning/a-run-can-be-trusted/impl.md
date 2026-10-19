@@ -751,7 +751,7 @@ This phase adds a hook on the shell tool that reads each command and refuses one
 
 #### Build Phase 3 Context
 
-- [ ] Record the hook and its single matcher in the hooks rules.
+- [x] Record the hook and its single matcher in the hooks rules.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/hooks/CLAUDE.md`: "`plan-write-guard.js` is registered under Bash only — it guards a shell path, Edit/Write already pass the plan's checks; it reads command text, never a script, as `looks-approval-guard.js` does; it records decisions, never verdicts, through `_clause-verdicts.js`, and `plan-write-witness.js` (PostToolUse) records what changed, so the package judges both" — and update the `_`-prefixed module count line. Planning template: `apps/indusk-mcp/templates/planning/CLAUDE.md` gains "A shell command that writes a plan document is refused; use the Edit tool or the `indusk` command — guarded by `plan-write-guard.test.ts`" (never edit `.indusk/planning/CLAUDE.md`).
