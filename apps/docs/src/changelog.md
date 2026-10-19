@@ -6,6 +6,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Added
 
+- **A plan is read cold before approval, and every audit concern is answered** (audit-concerns-are-answered): `/audit <plan> --before-approval` has a fresh reader read a plan's documents and write `plan-review.md`; an unattended planning run does it as its last step (`plan-review`) and stops for approval carrying each dismissal. The audit now runs when the build phases close, before falsification: the reader writes what would show each finding breaking, the plan's agent answers each with a fix, a signal or a reason, an answer that would change the brief stops the build for re-approval (`amendment`), and `indusk plans audit-answers` shows the person every dismissal. New: [`plans audit-answers`](/reference/cli/plans#plans-audit-answers-name-plan-review), [`plans review-inputs`](/reference/cli/plans#plans-review-inputs-name). See [the decision](/decisions/audit-concerns-are-answered).
 - **A plan says how long it took** (a-plan-says-how-long-it-took): `indusk plans time <name>` prints a plan's phases, unattended steps and test runs with their durations, and its total from the brief's acceptance to landing. Steps and test runs are now recorded on this machine, and a record that cannot be written only warns. See [`plans time`](/reference/cli/plans-time) and [the decision](/decisions/plan-timing).
 
 ### Changed

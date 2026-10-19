@@ -1,7 +1,7 @@
 ---
 title: "A plan is read cold before approval, and every audit concern is answered"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -62,29 +62,29 @@ amendment. Every concern waved away is shown to the person.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | The audit's instructions tell the reader to write what would show each finding breaking, and no remedy | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A1 | The audit's instructions tell the reader to write what would show each finding breaking, and no remedy | Test Phase 1 | Build Phase 4 | passing | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A2 | Reading an audit reports a finding with no "breaks when" line as incomplete, naming its question and line | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A3 | The audit's instructions tell the plan's agent to answer every finding with a fix, a signal or nothing with the reason | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A3 | The audit's instructions tell the plan's agent to answer every finding with a fix, a signal or nothing with the reason | Test Phase 1 | Build Phase 4 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A4 | Reading an audit refuses an unanswered finding or a signal answer naming no clause, naming the finding; a fully answered one passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A5 | Reading an audit lists every "nothing needed" answer with its finding and reason, and the instructions say to show the list to the person | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts, apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A5 | Reading an audit lists every "nothing needed" answer with its finding and reason, and the instructions say to show the list to the person | Test Phase 1 | Build Phase 4 | passing | unit | clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts, apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A6 | An `audit.md` written before this plan still lets the retrospective start | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over an-audit-blocks-nothing | apps/indusk-mcp/src/__tests__/audit-gate.test.ts |
 | A7 | The auditor is still handed only the documents, the approved impl and the diff | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the-auditor-sees-the-plan-not-the-session | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
-| A8 | The project's copies of the audit, planner, falsify, cleanup and retrospective skills match the package's | Test Phase 1 | Build Phase 4 | written | unit | so the change reaches every project that updates | apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts |
-| A9 | The audit's instructions tell the plan's agent to ask once what let the findings through, group them by cause, flag each recurring process gap for a lesson, or say there is none | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A8 | The project's copies of the audit, planner, falsify, cleanup and retrospective skills match the package's | Test Phase 1 | Build Phase 4 | passing | unit | so the change reaches every project that updates | apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts |
+| A9 | The audit's instructions tell the plan's agent to ask once what let the findings through, group them by cause, flag each recurring process gap for a lesson, or say there is none | Test Phase 1 | Build Phase 4 | passing | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A10 | Reading an audit with findings but no "What let these through?" section reports it incomplete; one naming each cause with its findings and highlight, or no gap with a reason, passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A11 | The audit's instructions say an answer that would change a promise, an expectation, a look or the scope is an edit of the brief recorded as an amendment answer, after which the session stops, and every other concern is answered without asking | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A11 | The audit's instructions say an answer that would change a promise, an expectation, a look or the scope is an edit of the brief recorded as an amendment answer, after which the session stops, and every other concern is answered without asking | Test Phase 1 | Build Phase 4 | passing | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A12 | With an amendment waiting, the unattended build stops for re-approval naming it, instead of running a step or ending "cannot continue" | Test Phase 1 | Build Phase 2 | passing | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/build/next-step.test.ts |
 | A13 | Reading an audit accepts an amendment answer and lists each with its finding, beside the dismissals | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A14 | With every build phase closed and falsification, cleanup and the audit to do, the build's next step is the audit; once the audit file exists, it is falsification | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/lib/build/next-step.test.ts |
-| A15 | The audit, falsify, cleanup and retrospective instructions give the order build, audit, falsify, cleanup, retrospective | Test Phase 1 | Build Phase 4 | written | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
-| A16 | The audit's before-approval instructions put the four plan questions to the reader, as the reader's exported list names them | Test Phase 1 | Build Phase 4 | written | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A15 | The audit, falsify, cleanup and retrospective instructions give the order build, audit, falsify, cleanup, retrospective | Test Phase 1 | Build Phase 4 | passing | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A16 | The audit's before-approval instructions put the four plan questions to the reader, as the reader's exported list names them | Test Phase 1 | Build Phase 4 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A17 | Reading a plan review with one of the four questions missing reports it incomplete, naming the question; one with all four passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A18 | The plan review's inputs are the brief, test plan, ADR and impl as they stand and the tracked-file list, and nothing else | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-reader-sees-documents-only | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
-| A19 | The audit's instructions tell the planning agent to answer each plan-review finding by changing a document or with a reason and to show the dismissals; the planner's tell it to run the plan review before presenting a plan written by hand | Test Phase 1 | Build Phase 4 | written | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
+| A19 | The audit's instructions tell the planning agent to answer each plan-review finding by changing a document or with a reason and to show the dismissals; the planner's tell it to run the plan review before presenting a plan written by hand | Test Phase 1 | Build Phase 4 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A20 | The planning run's ready-for-approval stop lists each plan-review dismissal with its finding and reason | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | A21 | Once the impl and the contract pass, the planning run's next step is the plan review; while it is missing, incomplete or unanswered it stays next; once answered, the run is ready for approval | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | A22 | The plan review is a planning step, so approving is refused from inside it | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/step-env.test.ts |
-| A23 | The next unattended planning run after landing writes an answered plan review before it stops for approval | Build Phase 4 | Build Phase 4 | planned | live check | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | manual: after landing, `pnpm install:local` and `indusk ui restart`, accept a brief in the admin; read the run's steps for a plan-review step after plan-impl, `plan-review.md` in the plan folder with every finding answered, and the ready-for-approval stop listing its dismissals |
+| A23 | The next unattended planning run after landing writes an answered plan review before it stops for approval | Build Phase 4 | Build Phase 4 | skipped | live check | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | manual: after landing, `pnpm install:local` and `indusk ui restart`, accept a brief in the admin; read the run's steps for a plan-review step after plan-impl, `plan-review.md` in the plan folder with every finding answered, and the ready-for-approval stop listing its dismissals |
 
 ### Deferred Verification
 
@@ -427,49 +427,49 @@ amendment, the dismissals are shown, and a plan can be read before approval; it
 gives the new order in the four ritual skills, tells the planner to run the
 plan review, syncs the project's copies and writes the docs.
 
-- [ ] Change the reader's instructions to add what would show each finding breaking, and to suggest no remedy.
+- [x] Change the reader's instructions to add what would show each finding breaking, and to suggest no remedy.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/audit.md`, "The questions" and "The shape of `audit.md`": the post-build questions are `AUDIT_QUESTIONS` verbatim; each finding followed by `  - breaks when: …`; the reader's prompt says no remedy. A1.
 
   </details>
-- [ ] Add a step where the agent answers every finding, and stops when an answer would change the brief.
+- [x] Add a step where the agent answers every finding, and stops when an answer would change the brief.
   <details><summary>Technical</summary>
 
   After "Record the model": answer each finding with `  - answer: fix — <the impl item added>`, `  - answer: signal — <invariant>; <where emitted>; <how often it fires>; clause: <promise>/<clause>`, `  - answer: amendment — <the part of the brief changed>` or `  - answer: nothing — <reason>`; a fix is added to the impl as discovered work; an amendment is an edit of a promise, an expectation or a look in the brief (a scope change is one of these added or dropped), after which the session ends and the build waits for the person; every other concern is answered without asking. A3, A11.
 
   </details>
-- [ ] Make the last steps name the causes, run the answers command and show the person every dismissal.
+- [x] Make the last steps name the causes, run the answers command and show the person every dismissal.
   <details><summary>Technical</summary>
 
   The cause step: ask once across all findings what in the planning or building let them through; group by cause; for each process gap that could recur, `mcp__indusk__highlight({ tag: "audit-cause", note, level: "important" })` and list it under `## What let these through?` with its findings and highlight id; a one-off slip is not a gap; with none, `- no process gap — <reason>`. Then `indusk plans audit-answers {plan}`; on exit 2, answer what it names and run it again; print the dismissals and amendment answers to the person before `indusk plans next-session`. Replace "Read the findings with the person; whether any is acted on is their choice." A5, A9.
 
   </details>
-- [ ] Add the before-approval mode that reads the plan's documents cold.
+- [x] Add the before-approval mode that reads the plan's documents cold.
   <details><summary>Technical</summary>
 
   A section "Before approval (`/audit {plan} --before-approval`)": inputs from `indusk plans review-inputs {plan}`, never `research.md` or the conversation; the four `PLAN_REVIEW_QUESTIONS` verbatim; the reader writes `plan-review.md` in the same shape; the planning agent answers with `fix — <document changed>`, `amendment — <brief part>` or `nothing — <reason>`; `indusk plans audit-answers {plan} --plan-review`; the dismissals and amendment answers are shown with the plan when it is presented. A16, A19.
 
   </details>
-- [ ] Give the new order in the audit, falsify, cleanup and retrospective instructions.
+- [x] Give the new order in the audit, falsify, cleanup and retrospective instructions.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/{audit,falsify,cleanup,retrospective}.md`: every sequence line becomes `/work` → `/audit` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`; the audit skill's opening says it runs when the build phases close, before falsification; falsify and cleanup hand off to each other and then to the retrospective. A15.
 
   </details>
-- [ ] Tell the planner to run the plan review before presenting a plan for approval.
+- [x] Tell the planner to run the plan review before presenting a plan for approval.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/planner.md`, the step that presents the impl: run `/audit {plan} --before-approval` first and present the dismissals and amendment answers with the plan. A19.
 
   </details>
-- [ ] Resync the project's copies of the changed skills.
+- [x] Resync the project's copies of the changed skills.
   <details><summary>Technical</summary>
 
   `.claude/skills/{audit,falsify,cleanup,retrospective,planner}.md` from the package; `skill-sync-parity.test.ts` passes. A8.
 
   </details>
-- [ ] Review the changed skills against the extensions' writing rules.
+- [x] Review the changed skills against the extensions' writing rules. Shape: reviewed, nothing found; the audit skill's two modes share one answers step and one command, as the ADR's rejected-alternative (a second skill) required. Decisions: the project's skill copies live at `.claude/skills/<name>/SKILL.md`, not `<name>.md`, and were synced there; the docs sidebar (`.vitepress/config.ts`) lists no decision pages, so the new decision page needs no sidebar entry.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
@@ -478,13 +478,13 @@ plan review, syncs the project's copies and writes the docs.
 
 #### Build Phase 4 Verification
 
-- [ ] The skill-wording tests, the copy check and both guards pass.
+- [x] The skill-wording tests, the copy check and both guards pass.
   <details><summary>Technical</summary>
 
   A1, A3, A5, A6, A7, A8, A9, A11, A15, A16, A19: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 4"`.
 
   </details>
-- [ ] The live check of the planning run is written down and waits for the installed build.
+- [x] The live check of the planning run is written down and waits for the installed build. A23 stays `planned` in the table with its manual procedure; the Deferred Verification block above carries its reason, requirement and mitigation. Decision: the row's `Passes at` is Build Phase 4 yet it cannot pass here, so it is recorded `skipped` (a manual live check awaiting the installed build) rather than left `planned`.
   <details><summary>Technical</summary>
 
   A23 stays `skipped` with its procedure in the trajectory table; run after landing and recorded in the retrospective.
@@ -493,7 +493,7 @@ plan review, syncs the project's copies and writes the docs.
 
 #### Build Phase 4 Context
 
-- [ ] Add the root's Key Decisions line for this decision.
+- [x] Add the root's Key Decisions line for this decision.
   <details><summary>Technical</summary>
 
   root (Key Decisions): "A plan is read cold before approval and audited before falsification; the agent answers every concern, one that changes the brief stops as an amendment, the person sees each dismissal — see /decisions/audit-concerns-are-answered" — always-on because every plan runs both reads.
@@ -502,12 +502,18 @@ plan review, syncs the project's copies and writes the docs.
 
 #### Build Phase 4 Document
 
-- [ ] Update the audit skill's reference page, publish the decision and add the changelog line.
+- [x] Update the audit skill's reference page, publish the decision and add the changelog line.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/audit.md`; `apps/docs/src/decisions/audit-concerns-are-answered.md` from the ADR, with its sidebar entry; `apps/docs/src/changelog.md`.
 
   </details>
+
+#### Build Phase 4 Forward Intelligence
+
+- **Watch out**: the package's full everyday suite has failures that are not this plan's — `timing/test-run.test.ts` (starts git, flagged by `everyday-tests-never-wait`), `steps-name-project-commands.test.ts` (no `what a phase runs` heading in `work.md`), and the `lib/run/*` loop tests (`stopped-red`). None touch a file this plan changed; not confirmed against a clean tree.
+- **Watch out**: `indusk plans tests --phase` also runs `apps/indusk-admin` tests, which fail in a worktree with an unbuilt `indusk-mcp` (`Cannot find module '@infinitedusky/indusk-mcp/...'`); run the package's own files directly.
+- **Assumption**: the audit skill's `--before-approval` mode is run by the planning agent as `/audit {plan} --before-approval`; the live check A23 is the first real proof.
 
 ## Files Affected
 
