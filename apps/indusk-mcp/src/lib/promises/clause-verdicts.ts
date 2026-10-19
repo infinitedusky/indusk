@@ -338,6 +338,28 @@ function planOfDecision(d: DecisionLine, after?: Snapshot): string {
 	return "unknown";
 }
 
+/**
+ * Replace the decision file with the lines kept and every line a hook
+ * appended after `readText` was read (they follow it in the file), by
+ * temporary file and rename; remove the file when nothing is left.
+ */
+export function rewriteDecisionFile(
+	path: string,
+	readText: string,
+	keep: readonly PlanWriteLine[],
+): void {
+	const appended = readFileSync(path, "utf-8").slice(readText.length);
+	const kept = keep.map((l) => `${JSON.stringify(l)}\n`).join("");
+	const rest = `${kept}${appended}`;
+	if (rest === "") {
+		rmSync(path, { force: true });
+		return;
+	}
+	const tmp = `${path}.${process.pid}.tmp`;
+	writeFileSync(tmp, rest);
+	renameSync(tmp, path);
+}
+
 export interface DrainOptions {
 	/** The project's home; default `bookkeepingRoots(root).home`. */
 	home?: string;
@@ -410,16 +432,7 @@ export async function drainPlanWriteDecisions(
 			);
 			sent++;
 		}
-		// Lines a hook appended while this ran are after the text read above.
-		const appended = readFileSync(path, "utf-8").slice(text.length);
-		const rest = `${keep.map((l) => JSON.stringify(l)).join("\n")}${keep.length ? "\n" : ""}${appended}`;
-		if (rest === "") {
-			rmSync(path, { force: true });
-		} else {
-			const tmp = `${path}.${process.pid}.tmp`;
-			writeFileSync(tmp, rest);
-			renameSync(tmp, path);
-		}
+		rewriteDecisionFile(path, text, keep);
 		return { sent, kept: keep.length };
 	} catch {
 		return { sent: 0, kept: 0 };

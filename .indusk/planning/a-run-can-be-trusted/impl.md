@@ -717,6 +717,18 @@ This phase adds a hook on the shell tool that reads each command and refuses one
   `apps/indusk-mcp/vitest.tiers.ts`: add `src/__tests__/plan-write-guard.contract.test.ts` and `src/__tests__/impl-clause-signals.contract.test.ts` to `SYSTEM` (and, if their own phases have not already, `run-liveness.contract.test.ts` and `accept-brief-signals.contract.test.ts`) (they run a hook as a process, as Claude Code runs it; `everyday-tests-never-wait` fails them otherwise); landing runs both tiers.
 
   </details>
+- [x] Shape — give the drain's rewrite of the decision file a name of its own.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/promises/clause-verdicts.ts`: `drainPlanWriteDecisions` ends with an inline block that keeps the unsent lines and the lines a hook appended meanwhile, and replaces the file by rename or removes it. It becomes `rewriteDecisionFile(path, readText, keep)` (rule: an inline block that does a job should be a named function; the race it handles — a hook appending while the drain runs — is the part a test should be able to reach).
+
+  </details>
+- [x] Shape — review the guard's per-segment rule and the parser's reading, and leave them as they are.
+  <details><summary>Technical</summary>
+
+  `judgeSegment` in `hooks/plan-write-guard.js` is one ordered list of verb rules (redirects first, then `cd`, `indusk`, each writer), with `find`, `git` and the interpreters already their own functions; splitting the rest would scatter one decision table. `lex` is long but does one job (shell text to tokens, here-documents and substitutions included). `parserReadsWrite` in `clause-verdicts.ts` is the same table read independently through `shell-quote`, deliberately not shared with the guard (Decision 8: the judge must not reuse the rule it judges). Whether the guard file (about 800 lines) should split into a lexer module is a cross-file question for `/cleanup`.
+
+  </details>
 
 #### Build Phase 3 Verification
 

@@ -11,6 +11,7 @@ import {
 	drainPlanWriteDecisions,
 	judgeDecision,
 	type PlanWriteLine,
+	rewriteDecisionFile,
 } from "./clause-verdicts.js";
 
 /**
@@ -192,5 +193,28 @@ describe("A78, A79 — the drain reports each judged decision and removes what i
 			kept: 0,
 		});
 		expect(existsSync(join(home, DECISIONS_FILE))).toBe(false);
+	});
+});
+
+describe("rewriting the decision file keeps what a hook appended while the drain ran", () => {
+	let home: string;
+	beforeEach(() => {
+		home = mkdtempSync(join(tmpdir(), "clause-verdicts-rewrite-"));
+	});
+	afterEach(() => rmSync(home, { recursive: true, force: true }));
+
+	it("writes the kept lines, then the appended ones; removes the file when nothing is left", () => {
+		const path = join(home, DECISIONS_FILE);
+		const read = `${JSON.stringify(decision({ toolUseId: "old" }))}\n`;
+		writeFileSync(path, read);
+		appendDecision(home, decision({ toolUseId: "late" }));
+		rewriteDecisionFile(path, read, [decision({ toolUseId: "kept" })]);
+		const ids = readFileSync(path, "utf8")
+			.trim()
+			.split("\n")
+			.map((l) => JSON.parse(l).toolUseId);
+		expect(ids).toEqual(["kept", "late"]);
+		rewriteDecisionFile(path, readFileSync(path, "utf8"), []);
+		expect(existsSync(path)).toBe(false);
 	});
 });
