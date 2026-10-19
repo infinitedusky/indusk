@@ -58,6 +58,7 @@ Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the
 Refuses:
 
 - a brief the check refuses, with the check's message;
+- a plan whose plan review is not ready, naming which: no `plan-review.md`; one written for other documents than stand now (**stale** — its `read:` frontmatter is not the hash of the brief, test plan, ADR and impl as they are); or one that leaves a finding unanswered. Run `/audit <name> --before-approval` and answer every finding. The admin offers Approve on exactly the same reading — the package's `readPlanReview`, the one reader of a plan review — so the button and the command never disagree;
 - a branch that already changes anything outside `.indusk/`, naming the files — it is past approval;
 - uncommitted changes in the worktree;
 - uncommitted changes on the trunk on any path the merge would bring in (never stashed), other than InDusk's bookkeeping.
