@@ -45,6 +45,14 @@ one of these.
    already running finish as normal, and merge the fix before they merge into
    their plan.
 
+4. **The trunk moves while work is in flight.** A plan lands on the trunk.
+   Within five minutes every other open plan's branch has merged it. A phase
+   that is running is not interrupted: it merges the trunk when it finishes,
+   before it merges into its plan. If a merge conflicts, an agent resolves it
+   and keeps the result only if the plan's tests pass; if it cannot, the
+   conflict becomes a question naming the files, and only that plan's affected
+   phases go on hold.
+
 **The rule under all of them: nothing stops, and a hold is cheap.** A running
 phase always finishes. A phase can be put on hold (an expensive question, an
 amendment); it is set aside and gives up its turn on its files, so phases
@@ -59,7 +67,7 @@ that touches its files, and carries on from where it stopped.
    - Measure: for Homework Gate's first milestone, the time from its first plan's approval to its last plan's landing, against the sum of its phases' own durations and against its longest dependent chain, read from phase start and end times.
    - Look: when that milestone's last plan lands.
 2. **Merging at phase boundaries rarely needs a person.**
-   - Measure: of the merges the runner makes (phase start, phase into plan, main cascade, before landing), the share that conflicts, and of those the share an agent resolved with the plan's tests passing, read from the runner's record.
+   - Measure: of the merges the runner makes (phase start, phase into plan, trunk cascade, before landing), the share that conflicts, and of those the share an agent resolved with the plan's tests passing, read from the runner's record.
    - Look: after the first twenty phases run in parallel.
 
 ## Promises
@@ -72,23 +80,23 @@ that touches its files, and carries on from where it stopped.
    - **`graph-is-current`** (limit). When a phase ends, a plan is approved or a plan lands, the graph is read again before any next phase starts.
    - **`within-the-cap`** (rests on `sessions-are-capped`).
    - **`reviews-are-phases`** (limit). The phases falsify, cleanup, the audit and an incident write are build phases of the graph like any other, with the same dependencies, files and order; the steps that write them are not phases (Sandy, 2026-10-16).
-2. **`a-phase-builds-on-its-own-branch`** (state). Each phase works in its own worktree off its plan's branch, merges in what came before it when it starts, and merges into the plan's branch only when its check is green; only the plan's branch reaches main, once its promises are verified.
+2. **`a-phase-builds-on-its-own-branch`** (state). Each phase works in its own worktree off its plan's branch, merges in what came before it when it starts, and merges into the plan's branch only when its check is green; only the plan's branch reaches the trunk, once its promises are verified.
    - **`own-worktree`** (limit). Every running phase has its own worktree and branch, cut from its plan's branch.
    - **`starts-from-its-dependencies`** (limit). A phase starts with every finished phase it depends on merged into its worktree.
    - **`starts-from-the-work-it-waited-for`** (limit). A phase that waited on another plan's phase for a file starts with that phase's finished work merged into its worktree, landed or not.
    - **`green-before-merging`** (limit). A phase merges into its plan's branch only when the check it ends with is green.
-   - **`only-the-plan-lands`** (limit). Nothing reaches main from a phase's branch; only a plan's branch, once its promises are verified.
+   - **`only-the-plan-lands`** (limit). Nothing reaches the trunk from a phase's branch; only a plan's branch, once its promises are verified.
 3. **`earlier-plans-go-first`** (state). When phases of different plans are ready and want the same file, the phase of the plan that comes first runs next: earlier in the plan tree, read top-down from the root master through each parent's ordered children; a plan with no place in the tree comes after every plan that has one, and among those the one approved earlier — to go ahead, a plan is given a place (Sandy, 2026-10-16).
    - **`earliest-next`** (limit). Of ready phases that want a file a running phase holds, the earliest plan's runs next when that file is free.
    - **`a-broken-promise-jumps-the-line`** (limit). A phase that fixes a broken promise — a Maintenance phase for an open incident — runs before every other ready phase that wants its files, whatever its plan's place (Sandy, 2026-10-16).
    - **`never-interrupted`** (limit). A running phase is never stopped to let an earlier plan's phase in; the earlier one goes next.
-4. **`main-cascades`** (behaviour). When anything lands on main, every open plan's branch merges it, and a running phase's worktree merges it when that phase ends; a conflict is resolved by an agent with the plan's tests as the check, or becomes a question when it cannot be.
-   - **`branches-follow-main`** (split). Within five minutes of a landing, every open plan's branch with no running phase has merged it.
-   - **`phase-merges-at-its-end`** (limit). A running phase merges main when it ends, before its plan's next phase starts.
+4. **`trunk-cascades`** (behaviour). When anything lands on the trunk (the branch the project's main checkout is on: `main` here, each repo's own in a workbench), every open plan's branch merges it, and a running phase's worktree merges it when that phase ends; a conflict is resolved by an agent with the plan's tests as the check, or becomes a question when it cannot be.
+   - **`branches-follow-the-trunk`** (split). Within five minutes of a landing, every open plan's branch with no running phase has merged it.
+   - **`phase-merges-at-its-end`** (limit). A running phase merges the trunk when it ends, before it merges into its plan.
    - **`agent-resolves-first`** (limit). A conflicting merge is resolved by an agent and kept only with the plan's tests passing; otherwise it becomes a question naming the files.
 5. **`landing-follows-what-it-pulled`** (state). A plan whose phase pulled another plan's unlanded work cannot land before that plan, and merges that work again before it lands.
    - **`lands-after`** (limit). A plan holding another plan's unlanded work is refused landing, naming that plan, until it has landed.
-   - **`merges-again-before-landing`** (limit). Before it lands, such a plan merges main with the other plan's landed work in it.
+   - **`merges-again-before-landing`** (limit). Before it lands, such a plan merges the trunk with the other plan's landed work in it.
 
 ### Existing promises
 
