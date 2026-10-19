@@ -19,13 +19,13 @@ This plan was written unattended (`INDUSK_GATE_POLICY=auto`): nobody could be as
 1. **`research.md` does not exist for this plan.** The workflow is `bugfix` (brief + test plan + impl), which does not require one; the brief names each failure and the day it broke. Nothing was skipped that the workflow asks for.
 2. **Tests use real git in temporary repositories and a temporary home, not mocks.** Whether a branch has landed on main, and where a run's record is written, are facts git and the filesystem decide. Each such test builds a fresh temp project and `INDUSK_HOME`, starts no server or daemon, and is fast, so everything proving a clause is `unit` or `contract` and runs at landing, never the slow tier (`/decisions/tests-never-make-us-wait`).
 3. **Only `unit` and `contract` rows may prove a clause; `live check`, `smoke` and `promise` rows never do.** Landing runs the first two and close reads them; the other three run only after landing, and a skipped row blocks its clause at close (the second clause of `a-plan-with-clauses-carries-its-signals`). Every after-landing check in this plan is therefore listed under "Not for a promise", with the reason it proves no clause. This is the rule the plan makes, applied to itself.
-4. **A dead run is told by process identity, never by a bare pid.** A run's record keeps the process it started; a run reads as stopped when that process is gone or is no longer the process that was started (a recycled pid), through the package's existing process-identity reader (`lib/process-identity.ts`, `/CLAUDE.md` single-definition pin). No second way of asking "is it alive" is written. Tests inject the reader's answer rather than start and kill processes.
+4. **A dead run is told by process identity, never by a bare pid.** A run's record keeps the process it started — the step session's own `claude` child, with its own start time, never the admin daemon's pid; a run reads as stopped when that process is gone or is no longer the process that was started (a recycled pid), through the package's existing process-identity reader (`lib/process-identity.ts`, `/CLAUDE.md` single-definition pin). No second way of asking "is it alive" is written. Most tests inject the reader's answer; one row (A73) starts a real child process and checks it alive, then dead, with the real reads, since injected reads cannot show a start-time mismatch.
 5. **A run's record lives in machine state, not in the plan.** It is operational state about a process, not a plan document, so it goes in the project's machine-state directory (`indusk eval home`'s directory, `/decisions/bookkeeping-lives-where-it-is-read`), written whole by temporary file and rename, so a crash mid-write never leaves a half record. A record that cannot be read reads as "unknown", never as running and never as a crash of the admin page.
 6. **"The phase the plan is on" is read from the plan, every time it is shown.** The controls call the one existing active-phase reader over the plan's own documents; the phase the session was started with is kept only as history. A plan with no readable phase names no phase rather than a wrong one.
-7. **A release reads released when `plans land` has put the plan on main, and not otherwise.** The test is git's: the plan's landing commit is an ancestor of main. A release step that exits 0 while the plan is not on main reads stopped, with the reason `plans land` gave (the refusal text), so the second incident (a release that reported "released" after `plans land` refused it) cannot read as success.
-8. **The shell refusal reads the command's text, not what an opaque script would do.** It refuses a command that writes, moves or deletes a path under a plan's folder (`.indusk/planning/<plan>/`, including `archive/<plan>/`) by any of: a redirect (`>`, `>>`, `>|`, `&>`) to such a path, `tee`, `sed -i`/`perl -pi`, `mv`, `cp` or `install` into it, `rm`, `truncate`, `dd of=`, `git mv`, `git rm`, `git checkout --`/`git restore` of such a path, and an inline interpreter (`node -e`, `python -c`) whose text names such a path with a write call. The refusal names the file and says to use the Edit tool or the `indusk` command for that document. It does **not** refuse `indusk` commands or other git commands: they write through the checks themselves. A script file that writes a plan document without its text naming one is out of reach of a command-text rule; it is recorded as an untestable assertion (U1) with its compensating control. This is the plan's one honest gap, stated rather than hidden.
+7. **A release reads released when `plans land` has put the plan on main, and not otherwise.** The test is git's, read from main: the landing merge (`Merge plan/<plan>: <plan> landed`) is on main, or the plan's archive folder is. Never branch containment: `plans land` deletes the branch, and a branch just made from main is already an ancestor of it. A release step that exits 0 while the plan is not on main reads stopped, with the reason `plans land` gave (the refusal text), so the second incident (a release that reported "released" after `plans land` refused it) cannot read as success.
+8. **The shell refusal reads the command's text, not what an opaque script would do.** It refuses a command that writes, moves or deletes a path under a plan's folder (`.indusk/planning/<plan>/`, including `archive/<plan>/`) by any of: a redirect (`>`, `>>`, `>|`, `&>`) to such a path, `tee`, `sed -i`/`perl -pi`, `mv`, `cp` or `install` into it, `rm`, `truncate`, `dd of=`, `git mv`, `git rm`, `git checkout --`/`git restore` of such a path, and an inline interpreter (`node -e`, `python -c`) whose text names such a path with a write call. It also follows `cd` and the shell's working directory to resolve relative paths, reads the text of `bash -c`/`sh -c`, and refuses `sed --in-place`, `perl -i`, `python3 -c`, `find … -delete`/`-exec rm` and `git apply`/`patch` naming a plan path. The refusal names the file and says to use the Edit tool or the `indusk` command for that document; a `mv` of a whole plan folder names `indusk plans archive`, the package command the retrospective archives with. It does **not** refuse `indusk` commands, or the git commands that move a checkout between committed states (`merge`, `pull`, `checkout <branch>`, `switch`, `reset --hard`, `stash pop`), which write no new plan-document text. A script file that writes a plan document without its text naming one is out of reach of a command-text rule; it is recorded as an untestable assertion (U1), and the on-disk comparison behind the clause's signal reports it broken.
 9. **A command that merely mentions a plan path is not a write to it.** `git commit -m "fix .indusk/planning/x/impl.md"`, `echo "see .indusk/planning/x/impl.md" > /tmp/note`, `cat .indusk/planning/x/impl.md > /tmp/copy` and `2>&1`/`>/dev/null` add-ons are reads of, or text about, a plan document; refusing them would make the limit clause false.
-10. **Signals are reported through the commands' one tracer, as the audit's and the amendment stop's are** (`clause-signal.ts`, best-effort, never failing the command). The decision point reports its clause: `upheld` when the rule held on a run that should have triggered it, `broken` when it let one through. `otel.role` is `library`, there is no production marker, and none of these is something that happens on a schedule, so no clause declares `expect_every`. Each clause's signal below says what is read and what upheld looks like.
+10. **Signals are reported through the commands' one tracer, as the audit's and the amendment stop's are** (`clause-signal.ts`, best-effort, never failing the command). The decision point reports its clause: `upheld` when the rule held on a run that should have triggered it, `broken` when it let one through. A signal is judged against a source independent of the code it judges (the process table, git, the files on disk, the daemon's reports), so it can report broken. `otel.role` is `library`, there is no production marker, and none of these is something that happens on a schedule, so no clause declares `expect_every`. Each clause's signal below says what is read and what upheld looks like.
 11. **The recorder's landing test waits for the incident it expects, not for a minute.** The test already starts a real Jaeger, an always-on server and the admin; the failure came from a fixed one-minute wait while other builds ran. The rule it should hold: the admin has scanned after the mark and the test then judges what it found. The wait ends when the incident appears, or when the admin's own scan has finished after the break was loaded and found none (then it fails naming the break); a generous upper bound exists only so a hung admin ends the test. How the admin's scan is observed is the ADR's question, not this plan's; the assertions below are behavioral. The test stays in the system tier (it starts daemons) and is made patient, not weaker: it still asserts exactly one committed incident with the same subject and a clean tree.
 12. **The approval offer and the approve command ask one reading of the plan review.** "Written for the documents as they stand" is the review's recorded hash of the documents compared with the documents now (`planReviewHash`, already used by the planning run's stop). The admin's offer of approval and `plans approve` both ask the same reader, so they cannot disagree; the test pins that they share it.
 13. **The two landed plans' clauses are fixed by code, not by hand-marking.** `the-two-landed-plans-report` is made true by the code that keeps each clause (`bringTrunkIntoPlan`, `accept-brief`, and the admin's planning start) reporting through the tracer; the plan `a-brief-is-accepted-on-current-main` then closes by the ordinary `confirm`. No signal is written by hand, and no clause is marked upheld without a run.
@@ -60,11 +60,13 @@ Every build, planning run and release the admin starts keeps a record on disk of
 |----|-----------------------------------|-------|
 | A7 | A run whose recorded process is gone and which wrote no stop reads as stopped, and the sentence says it died (not that it finished). | unit |
 | A8 | A run whose recorded pid is now a different program (a recycled pid) reads as stopped as well, never as running. | unit |
-| A9 | A run whose process is alive and recorded still reads as running; a dead-run check never stops a live run. | unit |
-| A10 | The admin restarted while a build's process is still alive: the run still reads as running after the restart (the restart loses nothing and does not call it dead). | unit |
+| A9 | A run whose step-session process is alive with its recorded start time still reads as running, however long after the admin started; a dead-run check never stops a live run. | unit |
+| A10 | The admin restarted while a build's step-session process is still alive: the run still reads as running after the restart, judged by that process, never by the admin's own (the restart loses nothing and does not call it dead). | unit |
 | A11 | Build on a dead run starts again from where the plan stands: a plan whose build died in the second phase starts the step its documents say is next, not the first and not the step the dead session began with, and it does not need the person to clear anything first. | unit |
 | A12 | Build is not refused as "already running" by a dead run's record, and it is still refused while a live run of the same plan and kind exists (a second start of the same owner). | unit |
 | A13 | A dead planning run restarts at the planning step the documents say is next, never at the release and never at a build step before the plan is approved. | unit |
+| A73 | A real child process recorded as a run's process (pid, program and start time read from the process table after it started) reads running while it lives, minutes after any other start time, and stopped once killed. | contract |
+| A74 | Build pressed on a plan whose dead run was a planning run starts the planning run again at its next planning step, never the build. | unit |
 
 ### `shows-where-it-is` — the build controls name the phase the plan is on, read from the plan, not the step the session started with
 
@@ -79,14 +81,15 @@ Every build, planning run and release the admin starts keeps a record on disk of
 
 ### `released-only-when-landed` — a release reads released only when the plan has landed on main; otherwise it reads stopped with the reason
 
-- Signal: the release's state on the plan page and in its record. Upheld when every release reading `released` has the plan's landing commit on main, and a release whose landing was refused reads stopped with the refusal's words; broken reports the plan and the release that read released while not on main. Measure: `git merge-base --is-ancestor <landing commit> main` exits 0 for every release the admin marks released.
+- Signal: the release's state on the plan page and in its record. Upheld when every release reading `released` has the plan's landing commit on main, and a release whose landing was refused reads stopped with the refusal's words; broken reports the plan and the release that read released while not on main. Measure: `git log main --merges --format=%s` holds `Merge plan/<plan>: <plan> landed` for every release the admin marks released.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-----------|
 | A18 | A release whose step ended cleanly while `plans land` refused the plan (so it is not on main) reads stopped, with the refusal's reason on the page; it never reads released. | unit |
 | A19 | A release whose plan is on main reads released, whether the release was run now or found after an admin restart. | unit |
 | A20 | A release whose process died before landing reads stopped saying it died, and Build restarts it at the step the plan is at; never "released". | unit |
-| A21 | A release in a real temporary repository: the plan's branch merged to the trunk reads released; the same branch not merged reads stopped. | unit |
+| A21 | A release in a real temporary repository: a plan landed through the package's landing (its branch deleted afterwards) reads released and complete, found by its landing merge or archive folder on the trunk; the same plan before landing reads stopped. | unit |
+| A87 | A plan branch just made from main with no commits of its own, and any branch with no landing merge, never reads complete. | unit |
 
 ### `says-what-is-true` — the plan page and its nav row state the plan's situation in words, read from its record and its files
 
@@ -109,7 +112,8 @@ Added 2026-10-19 (Sandy).
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-----------|
-| A72 | A plan's planning steps read Research, Brief, Test plan, Decision, Impl, Planning audit; the audit reads in progress while the plan-review step runs, to do when the review is missing or unanswered and nothing runs, and done once it is answered. | unit |
+| A72 | A plan's planning steps read Research, Brief, Test plan, Decision, Impl, Planning audit; the audit reads in progress while the plan-review step runs, to do when the review is missing or unanswered and nothing runs, and done once it is answered; while the audit is open the plan is at the Planning audit, and the Impl step does not ask for approval. | unit |
+| A88 | A plan whose review is stale for the documents shows the Planning audit to do and its Impl step not asking for approval. | unit |
 
 ### `always-a-next-step` — every plan that is not closed shows its next step and who takes it
 
@@ -129,6 +133,8 @@ Added 2026-10-19 (Sandy): "there has to be an understood state and next step if 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-----------|
 | A69 | An accepted plan with no release process running, after an admin restart, reads landed, stopped or waiting — never "release in progress". | unit |
+| A81 | A planning step, and the Planning audit step, read in progress only while a live planning process runs for the plan; with none, the step the plan is at reads to do. | unit |
+| A82 | A building or releasing plan whose process is gone never reads building or releasing, and its Build step and release indicator neither read in progress nor pulse. | unit |
 
 ## `a-plan-document-is-written-through-its-checks`
 
@@ -136,13 +142,13 @@ A shell command that writes a plan document is refused, so every change to a pla
 
 ### `shell-write-refused` — a shell command that writes, moves or deletes a file under a plan's folder is refused, naming the file and the tool to use instead
 
-- Signal: the refusal the agent receives from the shell tool and the break it leaves. Upheld when each writing form against a plan-folder path is answered with a refusal naming that file and the tool to use, and no file changed; broken reports the plan and the command form that wrote. Measure: for each form in Decision 8, the hook exits with a refusal and `git status --porcelain` is unchanged.
+- Signal: the decisions the guard records and the plan folders on disk before and after each shell command, judged by the package, never by the guard. Upheld when a refused command is one a real shell parser reads as a write to a plan path; broken reports the file and the command when an allowed command left a plan document changed on disk. Measure: for each form in Decision 8, the hook exits with a refusal and `git status --porcelain` is unchanged.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A22 | A shell redirect (`>`, `>>`, `&>`) or `tee` into a plan's `impl.md` is refused naming `impl.md` and saying to use the Edit tool; the file is unchanged. | unit |
 | A23 | `sed -i` (and `perl -pi`) on a plan document is refused; the checkbox is not ticked and the refusal names the file and the tool — the way a build session ticked Build Phase 3 off while an amendment waited. | unit |
-| A24 | `mv`, `cp` or `install` into a plan's folder, and `rm` or `truncate` of a plan document, is refused naming the file. | unit |
+| A24 | `mv`, `cp` or `install` into a plan's folder, and `rm` or `truncate` of a plan document, is refused naming the file; a `mv` of a whole plan folder names `indusk plans archive` as the command to use. | unit |
 | A25 | `git mv`, `git rm`, and `git checkout --` or `git restore` of a plan document are refused as well; a plain `git add` or `git commit` of one is not (see A32). | unit |
 | A26 | An inline interpreter (`node -e`, `python -c`) whose text names a plan-folder path with a write call is refused; one that names no plan path is not looked at. | unit |
 | A27 | The refusal covers a plan under `archive/` as well, and any document in the folder (`brief.md`, `test-plan.md`, `adr.md`, `impl.md`, promises' plan files), not only the impl. | unit |
@@ -150,10 +156,15 @@ A shell command that writes a plan document is refused, so every change to a pla
 | A29 | The refusal is a refusal of the shell command, not a crash: a malformed or empty command, and an unparsable one, do not break the shell tool and do not refuse a read. | contract |
 | A30 | The hook runs as Claude Code runs it: given the real tool-call payload of the shell tool, it answers with the refusal in the form Claude Code reads, and exits so the command does not run; a write to a plan path really leaves the file unchanged. | contract |
 | A31 | `indusk` commands that change a plan document (`plans accept-brief`, `plans approve`, `promises declare`) are not refused: they write through the checks themselves. | unit |
+| A75 | A write to a relative path after `cd` into a plan folder, or to a bare file name while the shell's working directory is a plan folder, is refused naming the file. | unit |
+| A76 | The text of `bash -c` and `sh -c` is read as a command; `python3 -c`, `perl -i -pe`, `sed --in-place` and `find` with `-delete` or `-exec rm` over a plan path are refused. | unit |
+| A77 | `git apply` or `patch` naming a plan path is refused; `git merge`, `git pull`, `git checkout <branch>`, `git switch`, `git reset --hard` and `git stash pop` are allowed, since they move between committed states. | unit |
+| A78 | The package reports a refused command a real shell parser reads as a write to a plan path as this clause upheld, and an allowed command after which a plan document changed on disk as broken, naming the file and the command. | unit |
+| A80 | `indusk plans archive <plan>` moves the plan's folder into the archive through git and is not refused, and the retrospective's archival step uses it. | unit |
 
 ### `reads-pass` — a shell command that only reads a plan document is never refused
 
-- Signal: the shell tool's answer to reading commands. Upheld when no read-only command against a plan-folder path is ever refused; broken reports the command refused and the plan. Measure: every command in the read corpus below (A32–A34) is answered as allowed.
+- Signal: the guard's recorded decisions, judged by the package with a real shell parser and the plan folders on disk. Upheld when an allowed command that named a plan path changed nothing; broken reports the command and the plan when a refused command is one the parser reads as only reading. Measure: every command in the read corpus below (A32–A34) is answered as allowed.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
@@ -161,6 +172,7 @@ A shell command that writes a plan document is refused, so every change to a pla
 | A33 | A command that names a plan path only as text — a commit message, an `echo` to a file outside plan folders, `cat impl.md > /tmp/copy`, `grep x impl.md > /tmp/hits` — is allowed: the write is not under a plan's folder. | unit |
 | A34 | `2>&1`, `>/dev/null`, `2>/dev/null` and a here-document whose body mentions a plan path are not read as writes to it. | unit |
 | A35 | Writing outside plan folders (`.claude`, source files, `.indusk/current.md`, `.indusk/planning/master.md`) is not refused: guarding writes outside plan folders is not promised. | unit |
+| A79 | The package reports a refused command a real shell parser reads as only reading as this limit broken, naming the command, and an allowed command that changed nothing on disk as upheld. | unit |
 
 ## `a-plan-with-clauses-carries-its-signals`
 
@@ -178,6 +190,9 @@ An impl for a brief that states clauses is refused unless a phase reports each s
 | A39 | A signal task is found by the clause's name in a task line or its folded technical detail alike, but not in prose outside a task and not inside a code fence. | unit |
 | A40 | A brief that does not state clauses (no `clauses: required`) is not asked for signals; an impl saved before this rule, edited in a way that adds no clause, is not refused for it. | unit |
 | A41 | The refusal reaches the person as the save check's message when the impl is written by the agent, and when the planning run writes it; nothing is saved over it. | contract |
+| A83 | A task that names a clause and the word signal but no source file that reports it does not count as the clause's signal task. | unit |
+| A84 | Confirming the promises of a plan written with clauses reports this clause broken for each split or limit clause still without a report, naming it. | unit |
+| A85 | This plan's own brief and impl pass the two rules when the rules are run on them directly, whatever the impl's status. | unit |
 
 ### `a-live-check-proves-no-clause` — saving an impl whose row runs only after landing and names a clause is refused, since a skipped row blocks the clause at close
 
@@ -200,8 +215,9 @@ An impl for a brief that states clauses is refused unless a phase reports each s
 | A47 | A conflicting acceptance, refused with the brief still a draft, reports `a-conflict-refuses` as upheld; one that let a half-merge through reports it broken. | unit |
 | A48 | An acceptance on a branch behind main with no conflict, which asks nothing and tells the person nothing to merge, reports `the-person-never-merges` as upheld; a refusal that tells the person to merge main reports it broken. | unit |
 | A49 | A report that cannot be sent (no daemon running) never fails the acceptance or the planning start: the command's result is unchanged. | unit |
+| A86 | `indusk plans accept-brief` run as a process on a branch behind main, against a local Jaeger, delivers the `main-is-merged-first` span before the process exits. | contract |
 
-The live confirmation that plan then closes is a check after landing (L2, below), never a row for these clauses.
+A46–A48 read the spans through the package's in-memory capture tracer, not a mock of the writer. The live confirmation that plan then closes is a check after landing (L2, below), never a row for these clauses; it makes one real conflicting acceptance first, since `a-conflict-refuses` reports only when an acceptance meets a conflict.
 
 ## Existing promises
 
@@ -211,7 +227,7 @@ A plan is offered for approval only when its impl is written, no session is stil
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A50 | A plan whose plan review was written for the documents as they stood, and whose documents have since changed, is not offered for approval; it is listed as needing its plan review. | unit |
+| A50 | A plan whose plan review was written for the documents as they stood, and whose documents have since changed, is not offered for approval by the admin's waiting list (read through the admin's planning reader); it is listed as needing its plan review. | unit |
 | A51 | A plan whose review is current for the documents and has every finding answered is offered for approval. | unit |
 | A52 | A plan whose impl is written, with no plan review at all and no run still writing it, is listed as needing its plan review, not as waiting on a session. | unit |
 | A53 | A plan whose review has an unanswered finding is not offered, as before. | unit |
@@ -250,10 +266,12 @@ The tests landing runs pass or fail for what they test, not for how busy the mac
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A59 | With the admin slow to scan because the machine is busy, the production break is still recorded and committed, and the test passes: it waits for the incident, not for the sixty seconds. | contract |
+| A59 | With the admin's scan delayed past the old minute (the daemon paused, then resumed, adding no load to the machine), the production break is still recorded and committed, and the test passes: it waits for the incident, not for the sixty seconds. | contract |
 | A60 | With a break the admin never records, the test fails (it does not hang and does not pass), and says which break it waited for. | unit |
 | A61 | The patient test asserts what the old one did: exactly one incident, committed by the admin with the same subject, with a clean working tree. | contract |
-| A62 | The waiting rule decides from the clock and the reads it is given: an incident that appears after the old fixed minute but before the admin's scan ends passes; none after the scan ends fails. | unit |
+| A62 | The waiting rule decides from the clock and the reads it is given: an incident that appears after the old fixed minute but before the admin's scan ends passes; none after a scan that ended cleanly fails; a scan that threw is not a finished scan. | unit |
+| A89 | The recorder loop writes each pass's start, end and outcome to its scan record, and a pass that throws is recorded as not finished. | unit |
+| A90 | Landing reports this clause from its clause-test results: upheld when the recorder test passed, broken naming the landing when it failed. | unit |
 
 ## Not for a promise
 
@@ -261,8 +279,8 @@ Assertions that prove no clause, each with why it is still worth a test. Every c
 
 | ID | Assertion (user-visible behavior) | Level | Why |
 |----|-----------------------------------|-------|-----|
-| L1 | After landing, on the installed admin, a build started on a scratch plan and killed by hand reads stopped on the plan page with its reason within a page load, and Build starts it again from the phase the plan is on. | live check | The whole story on the real admin; it can only run once the admin has this plan's code, so by Decision 3 it proves no clause. |
-| L2 | After landing, `indusk promises confirm a-brief-is-accepted-on-current-main` succeeds and that plan closes. | live check | The outcome `the-two-landed-plans-report` exists for; runs only after landing, so it proves no clause. |
+| L1 | After landing, on the installed admin, a build started on a scratch plan whose step session is killed by hand reads stopped on the plan page with its reason within a page load, and Build starts it again from the phase the plan is on. | live check | The whole story on the real admin; it can only run once the admin has this plan's code, so by Decision 3 it proves no clause. Liveness against real processes and start times is proved at landing by A73. |
+| L2 | After landing, one real conflicting acceptance on a scratch plan, then `indusk promises confirm a-brief-is-accepted-on-current-main` succeeds and that plan closes. | live check | The outcome `the-two-landed-plans-report` exists for; runs only after landing, so it proves no clause. Span delivery from a real process is proved at landing by A86. |
 | L3 | After landing, in a real session, a shell command that tries to tick a box in a plan's impl is refused with the file and the tool named. | live check | The real Claude Code session against the installed hook; the contract rows (A29, A30) prove the clause at landing. |
 | A63 | Existing guard tests for the shell guard's registration: the new hook is listed where the project's hooks are installed (`.claude/settings.json`) and synced byte for byte from the package (`skill-sync-parity`). | unit | A regression guard: a hook that is not registered refuses nothing, and no clause test would see it. |
 | A64 | A promise record written by the admin leaves the working tree of the plan clean: a run's record is machine state outside the repository, never a file git shows as changed. | unit | A regression guard on Decision 5, keeping bookkeeping out of plan documents. |
@@ -271,12 +289,12 @@ Assertions that prove no clause, each with why it is still worth a test. Every c
 
 | ID | Assertion | Reason untestable | Compensating control |
 |----|-----------|-------------------|----------------------|
-| U1 | A script file whose text does not name a plan-folder path can still write one (`./tidy.sh` that loops over `.indusk/planning/*`). | A rule that reads the command cannot read the script; reading every script is not promised, and a path built at run time defeats any text rule. | Every plan document that changes is read by the gates that run later regardless of how it was written: the phase-boundary check (`check-gates.js`) refuses a box ticked without its gates, and `indusk verify` detects a premature checkoff; the change also shows in the diff the audit reads. |
+| U1 | A script file whose text does not name a plan-folder path can still write one (`./tidy.sh` that loops over `.indusk/planning/*`). | A rule that reads the command cannot read the script; reading every script is not promised, and a path built at run time defeats any text rule. | The on-disk comparison before and after each shell command reports such a write as `shell-write-refused` broken, naming the file and the command (A78). Every plan document that changes is read by the gates that run later regardless of how it was written: the phase-boundary check (`check-gates.js`) refuses a box ticked without its gates, and `indusk verify` detects a premature checkoff; the change also shows in the diff the audit reads. |
 | U2 | Whether the stop sentence for a dead run reads clearly to the person. | Wording is a person's judgement. | The brief's look `plan.working` is held by its approved mockup, and the person approves the look at the plan's approval. |
 
 ## Notes
 
-- **Signals need a report each**: ten split and limit clauses (four on `a-run-is-read-from-its-record`, two on `a-plan-document-is-written-through-its-checks`, three on `a-plan-with-clauses-carries-its-signals`, one on `landing-tests-hold-under-load`) and the impl must name each clause's signal in a task. `landing-tests-hold-under-load`'s signal is the test's own result across landings, read by the landing; it reports through the existing landing-test record, not a new mark.
+- **Signals need a report each**: ten split and limit clauses (four on `a-run-is-read-from-its-record`, two on `a-plan-document-is-written-through-its-checks`, three on `a-plan-with-clauses-carries-its-signals`, one on `landing-tests-hold-under-load`) and the impl must name each clause's signal in a task. `landing-tests-hold-under-load`'s signal is the recorder test's result at each landing whose clause tests include it, reported by `plans land` itself (a real command run, so its span is kept); no landing-test record existed before this plan, so the report is new (A90).
 - **Levels chosen to revisit**: A29, A30, A41, A59 and A61 are `contract` because they run a real hook payload, a real save check or a real admin and Jaeger; they sit in the system tier at landing (`vitest.tiers.ts`), where a test that starts a process belongs. If A59 proves too slow for landing, the ADR may move the real-daemon part to a contract and keep the waiting rule (A62) as the unit that proves the clause.
 - **Looks**: the brief's `plan.working` look changes no component; the stop sentence's wording is carried by the existing look and U2.
 - **Open decision for the person**: Decision 8's list of refused forms is the author's; a form the person wants refused or allowed beyond it is a change to this list before the impl's shell-guard rows are written.
