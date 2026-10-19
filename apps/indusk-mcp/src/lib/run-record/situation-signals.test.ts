@@ -4,6 +4,7 @@
 // clause: a-run-is-read-from-its-record/always-a-next-step
 // clause: a-run-is-read-from-its-record/the-planning-audit-is-a-step
 import { describe, expect, it } from "vitest";
+import { PLAN_REVIEW_QUESTIONS } from "../audit/answers.js";
 import type { PsRow } from "../process-identity.js";
 import { captureTracer, outcomesByClause } from "../promises/capture-tracer.js";
 import {
@@ -114,29 +115,87 @@ describe("always-a-next-step", () => {
 });
 
 describe("the-planning-audit-is-a-step", () => {
+	const HASH = "b".repeat(64);
+	const answered = (read: string) =>
+		[
+			"---",
+			`read: ${read}`,
+			"---",
+			"",
+			...PLAN_REVIEW_QUESTIONS.flatMap((q) => [`## ${q}`, "", "- Nothing.", ""]),
+		].join("\n");
+
+	it("reads a review written for other documents as open, so a step shown done over it is broken", () => {
+		expect(
+			judgePlanningAudit({
+				plan: "p",
+				shown: "done",
+				implStatus: "draft",
+				reviewText: answered("c".repeat(64)),
+				documentsHash: HASH,
+			})?.broken,
+		).toMatch(/p shows the Planning audit done but plan-review.md on disk says open/);
+		expect(
+			judgePlanningAudit({
+				plan: "p",
+				shown: "done",
+				implStatus: "draft",
+				reviewText: answered(HASH),
+				documentsHash: HASH,
+			})?.broken,
+		).toBeUndefined();
+	});
+
 	it("is upheld when the step state matches what plan-review.md says on disk", () => {
 		// no file and a draft impl: the audit is open, so a step reading "not-yet" is true
 		expect(
-			judgePlanningAudit({ plan: "p", shown: "not-yet", implStatus: "draft", reviewText: null })
-				?.broken,
+			judgePlanningAudit({
+				plan: "p",
+				shown: "not-yet",
+				implStatus: "draft",
+				reviewText: null,
+				documentsHash: HASH,
+			})?.broken,
 		).toBeUndefined();
 		// an approved impl has done its audit
 		expect(
-			judgePlanningAudit({ plan: "p", shown: "done", implStatus: "approved", reviewText: null })
-				?.broken,
+			judgePlanningAudit({
+				plan: "p",
+				shown: "done",
+				implStatus: "approved",
+				reviewText: null,
+				documentsHash: HASH,
+			})?.broken,
 		).toBeUndefined();
 	});
 
 	it("is broken, naming the plan and the state shown, when they differ or the step is missing", () => {
 		expect(
-			judgePlanningAudit({ plan: "p", shown: "done", implStatus: "draft", reviewText: null })
-				?.broken,
+			judgePlanningAudit({
+				plan: "p",
+				shown: "done",
+				implStatus: "draft",
+				reviewText: null,
+				documentsHash: HASH,
+			})?.broken,
 		).toMatch(/p shows the Planning audit done but plan-review.md on disk says open/);
 		expect(
-			judgePlanningAudit({ plan: "p", shown: null, implStatus: "draft", reviewText: null })?.broken,
+			judgePlanningAudit({
+				plan: "p",
+				shown: null,
+				implStatus: "draft",
+				reviewText: null,
+				documentsHash: HASH,
+			})?.broken,
 		).toMatch(/shows no Planning audit step/);
 		expect(
-			judgePlanningAudit({ plan: "p", shown: null, implStatus: null, reviewText: null }),
+			judgePlanningAudit({
+				plan: "p",
+				shown: null,
+				implStatus: null,
+				reviewText: null,
+				documentsHash: HASH,
+			}),
 		).toBeNull();
 	});
 });

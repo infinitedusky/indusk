@@ -55,6 +55,7 @@ export {
 	judgeReleased,
 	judgeSaysWhatIsTrue,
 	judgeShowsWhereItIs,
+	readDocumentsHash,
 	readReviewText,
 	reportNextStep,
 	reportPlanningAudit,

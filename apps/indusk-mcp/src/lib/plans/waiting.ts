@@ -17,10 +17,13 @@ import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
  *   - **approval** — its impl is a draft, every other document its type
  *     requires is accepted, no session's turn is still open on it (an idle
  *     session waiting for the person is not writing), no planning run for it
- *     is going, and its plan review is written with every finding answered:
- *     approving a plan its author has not finished would approve half of it.
- *   - **plan-review** — the same plan, but `plan-review.md` is missing or
- *     leaves a finding unanswered. It waits at Impl; its words are to the
+ *     is going, and its plan review is written for the documents as they stand
+ *     with every finding answered (`readPlanReview`, the one reader `plans
+ *     approve` asks too): approving a plan its author has not finished would
+ *     approve half of it.
+ *   - **plan-review** — the same plan, but `plan-review.md` is missing, was
+ *     written for other documents than stand now (stale), or leaves a finding
+ *     unanswered. It waits at Impl; its words are to the
  *     plan's agent, never an approval. While the admin's planning run for the
  *     plan is going nothing is listed; when that run stopped short of
  *     approval, the decision says why. After an admin restart the run is
@@ -115,7 +118,7 @@ export interface Waiting {
 export const APPROVAL_DECISION =
 	"The plan is written. Approve it, so its documents and promises reach main and its build can start?";
 export const PLAN_REVIEW_DECISION =
-	"The plan needs its plan review: plan-review.md, written with every finding answered, before it can be approved.";
+	"The plan needs its plan review: plan-review.md, written for the documents as they stand with every finding answered, before it can be approved.";
 export const REVIEW_DECISION =
 	"The build is done and waits for your review. Accept it, so the release runs?";
 

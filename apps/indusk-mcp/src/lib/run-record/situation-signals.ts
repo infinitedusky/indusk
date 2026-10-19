@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Tracer } from "@opentelemetry/api";
 import { isAnswered } from "../audit/answers.js";
+import { planReviewHash } from "../audit/review-hash.js";
 import { planReviewAnswers } from "../plans/plan-review.js";
 import type { PsRow } from "../process-identity.js";
 import { type ClauseVerdict, writeClauseSignals } from "../promises/clause-signal.js";
@@ -179,17 +180,28 @@ export const reportNextStep = (
 
 /**
  * the-planning-audit-is-a-step: the step's state matches `plan-review.md` read from disk now:
- * done when the impl is approved or the review is written with every finding answered, else
- * not done (nothing about the hash yet: Build Phase 5 teaches the step to read a stale review).
+ * done when the impl is approved, or the review records the hash of the four documents as
+ * they stand (`read:`, matched here by its own pattern, not the plan-review reader) and
+ * answers every finding; else not done. A review written for other documents is open
+ * (a-run-can-be-trusted, Build Phase 5).
  */
 export function expectedAudit(input: {
 	implStatus: string | null;
 	reviewText: string | null;
+	/** `planReviewHash` of the plan's four documents read from disk now. */
+	documentsHash: string;
 }): "done" | "open" {
 	if (input.implStatus !== null && input.implStatus !== "draft") return "done";
-	return input.reviewText !== null && isAnswered(planReviewAnswers(input.reviewText))
-		? "done"
-		: "open";
+	if (input.reviewText === null) return "open";
+	if (recordedRead(input.reviewText) !== input.documentsHash) return "open";
+	return isAnswered(planReviewAnswers(input.reviewText)) ? "done" : "open";
+}
+
+/** The `read:` line of a review's frontmatter, by pattern; null when there is none. */
+function recordedRead(text: string): string | null {
+	const front = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1];
+	if (front === undefined) return null;
+	return /^read:\s*["']?([0-9a-f]{64})["']?\s*$/m.exec(front)?.[1] ?? null;
 }
 
 export function judgePlanningAudit(input: {
@@ -198,6 +210,7 @@ export function judgePlanningAudit(input: {
 	shown: string | null;
 	implStatus: string | null;
 	reviewText: string | null;
+	documentsHash: string;
 }): ClauseVerdict | null {
 	if (input.implStatus === null) return null;
 	if (input.shown === null)
@@ -217,7 +230,21 @@ export function judgePlanningAudit(input: {
 
 /** The plan-review.md text of a plan folder, straight from disk; null when absent. */
 export function readReviewText(planDir: string): string | null {
-	const path = join(planDir, "plan-review.md");
+	return readText(join(planDir, "plan-review.md"));
+}
+
+/** `planReviewHash` of a plan folder's four documents, read straight from disk. */
+export function readDocumentsHash(planDir: string): string {
+	const at = (file: string) => readText(join(planDir, file));
+	return planReviewHash({
+		brief: at("brief.md"),
+		testPlan: at("test-plan.md"),
+		adr: at("adr.md"),
+		impl: at("impl.md"),
+	});
+}
+
+function readText(path: string): string | null {
 	try {
 		return existsSync(path) ? readFileSync(path, "utf-8") : null;
 	} catch {

@@ -14,6 +14,7 @@ import {
 	PLAN_DIR,
 } from "./helpers/brief-app.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { approveWithReview } from "./helpers/plan-review-fixture.js";
 import { git } from "./helpers/test-git.js";
 
 /**
@@ -42,7 +43,7 @@ describe.skipIf(SHOULD_SKIP)("approval and the looks a brief names", () => {
 		app.writePlan({ brief: "looks-listed", impl: "internal" });
 		const before = app.project.mainSha();
 
-		const refused = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const refused = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 		expect(refused.code, out(refused)).not.toBe(0);
 		expect(out(refused)).toContain("home.full");
 		expect(app.project.mainSha()).toBe(before);
@@ -54,7 +55,7 @@ describe.skipIf(SHOULD_SKIP)("approval and the looks a brief names", () => {
 			const person = await approve(app.wt, APP, look, "sandy");
 			expect(person.approved, JSON.stringify(person)).toBe(true);
 		}
-		const approved = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const approved = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 		expect(approved.code, out(approved)).toBe(0);
 	});
 });
@@ -67,7 +68,7 @@ describe.skipIf(SHOULD_SKIP)("a workbench plan is held to its looks as a normal 
 			const rootHead = () => git(bench.root, ["rev-parse", "HEAD"]);
 			const before = rootHead();
 
-			const refused = runCli(bench.root, ["plans", "approve", PLAN]);
+			const refused = approveWithReview(bench.root, PLAN, join(bench.root, PLAN_DIR));
 			expect(refused.code, out(refused)).not.toBe(0);
 			expect(out(refused)).toContain("home.full");
 			expect(rootHead()).toBe(before);
@@ -76,7 +77,7 @@ describe.skipIf(SHOULD_SKIP)("a workbench plan is held to its looks as a normal 
 				const person = await approve(bench.root, APP, look, "sandy");
 				expect(person.approved, JSON.stringify(person)).toBe(true);
 			}
-			const approved = runCli(bench.root, ["plans", "approve", PLAN]);
+			const approved = approveWithReview(bench.root, PLAN, join(bench.root, PLAN_DIR));
 			expect(approved.code, out(approved)).toBe(0);
 
 			// A look the plan makes is redrawn after approval, so it reads proposed
@@ -106,7 +107,7 @@ describe.skipIf(SHOULD_SKIP)("a look the brief names must be drawn", () => {
 		}
 		const before = app.project.mainSha();
 
-		const refused = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const refused = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 		expect(refused.code, out(refused)).not.toBe(0);
 		expect(out(refused)).toContain("seat.picker");
 		expect(app.project.mainSha()).toBe(before);
@@ -119,7 +120,7 @@ describe.skipIf(SHOULD_SKIP)("approval is of the brief", () => {
 		const brief = join(app.wt, PLAN_DIR, "brief.md");
 		const approvedText = readFileSync(brief, "utf-8");
 
-		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 		expect(r.code, out(r)).toBe(0);
 
 		const recorded = () =>
