@@ -816,13 +816,13 @@ blocker: two of the four clauses of `a-clause-is-proved-twice` have no real repo
 
 #### Build Phase 7 Context
 
-- [ ] Correct the promises area's rules: an incident is opened per clause, the readers take the pointer and the measurement from the span, and a skipped clause test is not passing.
+- [x] Correct the promises area's rules: an incident is opened per clause, the readers take the pointer and the measurement from the span, and a skipped clause test is not passing.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: extend the incident entry (an open incident is matched on promise and clause; guard `incident-per-clause.test.ts`), the reader entry (the pointer from the event or the span, `value`/`bound` read and carried, the test-run mark from the span or its resource; guard `clause-measured.test.ts`, `signal-test-run.test.ts`), and the closing entry (a file with no test run is refused; `promises status` writes `no-signal-is-not-holding`; guard `clause-test-runner.test.ts`, `status-signal.test.ts`).
 
   </details>
-- [ ] Say in the admin's rules that a clause with no signal makes the promise's dot grey.
+- [x] Say in the admin's rules that a clause with no signal makes the promise's dot grey.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`, the promise-words entry: an enforced promise whose package `signal` is `no-signal` is the grey dot as well; guard `promise-dashboard.test.ts`.
