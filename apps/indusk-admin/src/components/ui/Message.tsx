@@ -91,7 +91,7 @@ export function Message({
     <div
       data-component="message"
       data-state={state}
-      className={`grid measure-message gap-2 rounded-xl px-4 py-3 [&_ol]:grid [&_ol]:list-decimal [&_ol]:gap-1 [&_ol]:pl-5 ${SHAPE[state]} ${className}`}
+      className={`grid measure-message gap-2 rounded-xl px-4 py-3 wrap-anywhere [&_ol]:grid [&_ol]:list-decimal [&_ol]:gap-1 [&_ol]:pl-5 ${SHAPE[state]} ${className}`}
       {...rest}
     >
       {DOT[state] ? (

@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { copyFileSync, existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { daemonAddress } from "./telemetry/daemon-address.js";
 import { induskHome } from "./telemetry/status.js";
+import { declaredRepoDirs } from "./worktree/repos.js";
 
 /**
  * A project's `.mcp.json` — the per-machine list of MCP servers Claude Code
@@ -79,6 +80,26 @@ export function ensureMcpJson(
 	if (address !== null) mcpServers.jaeger = { type: "http", url: address.mcp };
 	writeMcpJson(projectPath, { mcpServers });
 	return "created";
+}
+
+/**
+ * Give each declared code repo of a workbench its own `.mcp.json` when it has none, the
+ * way a checkout gets one, so the evaluator that runs in the repo can reach the server.
+ * A repo whose checkout is not there is passed over; one with a file is never touched.
+ * Returns the created files, relative to the project root.
+ */
+export function ensureCodeRepoMcpJson(
+	projectRoot: string,
+	opts: { globalBinary?: boolean } = {},
+): string[] {
+	const created: string[] = [];
+	for (const repo of declaredRepoDirs(projectRoot)) {
+		if (!existsSync(repo.dir) || !statSync(repo.dir).isDirectory()) continue;
+		if (ensureMcpJson(repo.dir, opts) === "created") {
+			created.push(join(relative(projectRoot, repo.dir), MCP_JSON));
+		}
+	}
+	return created;
 }
 
 /**

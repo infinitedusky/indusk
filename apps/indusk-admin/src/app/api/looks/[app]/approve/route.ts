@@ -5,6 +5,7 @@ import {
   type Seen,
 } from "@infinitedusky/indusk-mcp/looks/approve";
 import type { NextRequest } from "next/server";
+import { startPlanning } from "@/lib/build-host";
 import { refuse } from "@/lib/session-host";
 import { type LooksBody, readLooksRequest } from "../request";
 
@@ -148,6 +149,28 @@ function requestsOf(body: ApproveBody): Request[] | null {
   return [...storyRequests, ...mockupRequests];
 }
 
+/**
+ * Ask the host for the plan's planning run (a-brief-is-planned-unasked). The
+ * approval is already recorded and stands whatever this answers: a run that
+ * cannot start is said, never thrown.
+ */
+async function planningAfterApproval(
+  project: string,
+  plan: string | null,
+): Promise<{ started: boolean; why?: string } | null> {
+  if (!plan) return null;
+  try {
+    const run = await startPlanning(project, plan);
+    if (run.started) return { started: true };
+    return { started: false, ...(run.stop ? { why: whyNot(run.stop) } : {}) };
+  } catch (err) {
+    return { started: false, why: (err as Error).message };
+  }
+}
+
+const whyNot = (stop: { step: string; why?: string }): string =>
+  stop.why ?? stop.step;
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ app: string }> },
@@ -178,15 +201,22 @@ export async function POST(
       ...(await approve(checkout.root, app, name, by, seen)),
     });
   }
+  // The plan whose worktree recorded this approval may now have its last look
+  // approved: ask for its planning run. Only that plan — an approval is written
+  // in one checkout, and no other plan's worktree holds it — so nothing else is
+  // read. Asked of a run that is not yet due, the host starts nothing.
+  const planning = results.some((r) => r.approved)
+    ? await planningAfterApproval(body.project, checkout.plan)
+    : null;
   if (!body.mockups && !body.stories) {
     const [only] = results;
     if (!only?.approved) return refuse(409, only?.reason ?? "refused");
-    return Response.json({ entry: only.entry, commit: only.commit });
+    return Response.json({ entry: only.entry, commit: only.commit, planning });
   }
   // A group approval answers for each mockup: one refused does not undo the
   // ones recorded, and the page says which.
   return Response.json(
-    { results },
+    { results, planning },
     { status: results.some((r) => r.approved) ? 200 : 409 },
   );
 }

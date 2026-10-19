@@ -1,0 +1,3 @@
+# Two views that must agree share one input reader as well as one rule — a shared rule fed different lists still disagrees
+
+In plan-page-promise-health the nav's red dot and the plan page shared one rule (planPromiseHealth) yet disagreed because they were handed different promise lists: the plan page added branch-only worktree promises. Fixed with a shared worktreePromises reader (row A7). When two surfaces must report the same state, share the function that gathers the input, not only the function that judges it, and add a row asserting they agree on a fixture where the inputs could differ. Source: highlight h-20261017-016.

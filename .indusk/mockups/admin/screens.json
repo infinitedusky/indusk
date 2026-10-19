@@ -2,6 +2,7 @@
 	"url": "http://localhost:3939",
 	"serve": "pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940",
 	"sources": ["apps/indusk-admin/src"],
+	"exclude": ["apps/indusk-admin/src/lib", "apps/indusk-admin/src/app/api", "apps/indusk-admin/src/instrumentation.ts"],
 	"ignore": ["nextjs-portal"],
 	"screens": [
 		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },

@@ -136,9 +136,21 @@ also how a plan decides what telemetry it needs.
 Each promise is one plain sentence about what will be true, with a name and a
 kind (`behaviour`, `state` or `structure`). The agent writes each to the
 registry with `indusk promises declare` when you accept the brief; nobody
-types a registry file. One you then drop or rename is taken back with
+types a registry file. Accepting is `indusk plans accept-brief <plan>`: it runs the
+contract check, refuses with its message if the brief and the registry disagree,
+and otherwise sets the brief accepted, then asks the running admin to write the rest
+of the plan. One you then drop or rename is taken back with
 `indusk promises withdraw`. A promise starts `declared` and becomes `enforced` when the
 plan closes with a passing test that names it.
+
+#### After the brief is accepted
+
+With the admin running (`indusk ui start`), accepting a brief starts an unattended
+session that writes the plan's test plan, its ADR when the workflow has one, and its
+impl, each checked before the next. It waits while a look the brief names is not
+approved, and starts when the last one is. A brief is usually accepted from inside the planning conversation, so the run holds back while that conversation is open: the agent tells you the brief is accepted and ends the conversation, and the run starts as the conversation ends. Only the conversation that accepted the brief starts it: the brief records `accepted_at`, and a conversation that began after that moment, or a brief accepted by hand with none, starts nothing when it ends (you can still ask it to plan by hand). It stops at your approval and never
+approves for you. Approving the plan, in the admin, starts the build, which runs to
+review as it always has. See `/decisions/a-brief-is-planned-unasked`.
 
 ### Existing promises
 

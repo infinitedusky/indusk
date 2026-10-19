@@ -17,7 +17,9 @@ import { phaseModel } from "../../lib/models/phase-model.js";
 import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import { type Amendment, AmendmentsUnreadable, amendmentsOf } from "../../lib/plans/amendments.js";
+import { askAdminToPlan } from "../../lib/plans/ask-admin.js";
 import {
+	acceptBrief,
 	acceptPlan,
 	approvePlan,
 	landPlan,
@@ -25,6 +27,8 @@ import {
 	reapprovePlan,
 	startPlan,
 } from "../../lib/plans/index.js";
+import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
+import { planTimeText } from "../../lib/timing/view.js";
 import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
 /** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
@@ -146,6 +150,14 @@ export function plansAccept(cwd: string, name: string, auto: boolean): Promise<v
 	return planVerb(async () => {
 		const a = await acceptPlan(cwd, name, auto ? "auto" : "person");
 		return `Accepted ${a.plan} at ${a.accepted}${a.acceptedBy === "auto" ? ", by its workflow" : ""}.`;
+	});
+}
+
+/** `indusk plans accept-brief <name>` — the brief is settled and the plan can be written from it. */
+export function plansAcceptBrief(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const a = await acceptBrief(cwd, name);
+		return `Accepted the brief of ${a.plan}.\n${await askAdminToPlan(cwd, a.plan)}`;
 	});
 }
 
@@ -344,4 +356,55 @@ export function plansArchiveDead(projectRoot: string, opts: PlansArchiveDeadOpti
 			console.info(`  - ${s.name}: ${s.reason}`);
 		}
 	}
+}
+
+/**
+ * `indusk plans time <name>` — a plan's phases, unattended steps and test runs
+ * with their durations, and its total from the brief's acceptance to landing.
+ *
+ * promise: a-plan-says-how-long-it-took
+ */
+export function plansTime(root: string, name: string): Promise<void> {
+	return planVerb(() => planTimeText(root, name));
+}
+
+/**
+ * `indusk plans tests <name> --phase <ref> | --landing [--list]` — run the plan's
+ * test set: its rows' tests, the tests its changes reach and, at landing, the
+ * tests of the promises its brief lists as Must not break. Exit 1 when any fails.
+ *
+ * promise: a-plan-runs-its-tests-and-what-must-not-break
+ */
+export function plansTests(
+	root: string,
+	name: string,
+	opts: { phase?: string; landing?: boolean; list?: boolean },
+): Promise<void> {
+	return planVerb(async () => {
+		if (opts.landing === true && opts.phase !== undefined) {
+			throw new PlanCommandRefusal("--phase and --landing are alternatives; give one");
+		}
+		let scope: Parameters<typeof plansTestsOutcome>[1]["scope"];
+		if (opts.landing === true) {
+			scope = { landing: true };
+		} else if (opts.phase !== undefined) {
+			const ref = parsePhaseRef(
+				/^\d+$/.test(opts.phase.trim()) ? `Phase ${opts.phase.trim()}` : opts.phase,
+			);
+			if (!ref) {
+				throw new PlanCommandRefusal(
+					`--phase must name a phase, like "Build Phase 1", "Test Phase 1" or "1"; got "${opts.phase}"`,
+				);
+			}
+			scope = { phase: ref };
+		} else {
+			throw new PlanCommandRefusal("name what to run: --phase <ref> or --landing");
+		}
+		const outcome = await plansTestsOutcome(root, { plan: name, scope, list: opts.list === true });
+		if (outcome.exitCode !== 0) {
+			console.info(outcome.text);
+			process.exit(outcome.exitCode);
+		}
+		return outcome.text;
+	});
 }

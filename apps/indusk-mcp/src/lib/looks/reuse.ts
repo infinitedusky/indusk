@@ -18,7 +18,7 @@ import type { LooksApp } from "./mockups.js";
  * rendered from the sources as they are now, and an uncomposed screen never
  * is. Pure: the caller hands every fact in, and the browser never decides.
  *
- * promise: a-look-check-costs-what-changed
+ * promise: a-look-check-runs-what-changed
  * promise: tokens-are-held-exactly
  */
 

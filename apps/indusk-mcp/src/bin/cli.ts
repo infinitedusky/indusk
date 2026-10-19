@@ -1060,6 +1060,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("accept-brief <name>")
+	.description(
+		"Accept a plan's draft brief once its contract check passes — the brief is settled and the plan can be written from it",
+	)
+	.action(async (name: string) => {
+		const { plansAcceptBrief } = await import("./commands/plans.js");
+		await plansAcceptBrief(process.cwd(), name);
+	});
+
+plansCmd
 	.command("model <name>")
 	.description(
 		"The tier and model a phase is built on, or a step runs on — `<tier> <model>`, or `session` when the project names no model for it",
@@ -1072,6 +1082,32 @@ plansCmd
 	.action(async (name: string, opts: { phase?: string; step?: string }) => {
 		const { plansModel } = await import("./commands/plans.js");
 		await plansModel(process.cwd(), name, opts);
+	});
+
+plansCmd
+	.command("tests <name>")
+	.description(
+		"Run a plan's own tests: its rows' tests, the tests its changes reach and, at landing, the tests of the promises its brief lists as Must not break — each file printed with its reason; exit 1 when any fails",
+	)
+	.option("--phase <ref>", 'A phase: "Build Phase 1", "Test Phase 1" or a bare build number')
+	.option(
+		"--landing",
+		"The whole plan: every row, what its branch changed, and the Must-not-break promises",
+	)
+	.option("--list", "Print the rows' and Must-not-break promises' files and run nothing")
+	.action(async (name: string, opts: { phase?: string; landing?: boolean; list?: boolean }) => {
+		const { plansTests } = await import("./commands/plans.js");
+		await plansTests(rootOrExit(), name, opts);
+	});
+
+plansCmd
+	.command("time <name>")
+	.description(
+		"How long a plan took: its phases, unattended steps and test runs with their durations, and a total from the brief's acceptance to the plan's landing — what has no record is named, never hidden",
+	)
+	.action(async (name: string) => {
+		const { plansTime } = await import("./commands/plans.js");
+		await plansTime(rootOrExit(), name);
 	});
 
 plansCmd
@@ -1235,10 +1271,19 @@ looksCmd
 		"check just these looks, a screen state (home.empty) or a story (badge.ok); repeatable or comma-separated",
 	)
 	.option("--all", "open every look, even one unchanged since it last held")
-	.action(async (app: string, opts: { url?: string; only?: string[]; all?: boolean }) => {
-		const { looksCheck } = await import("./commands/looks.js");
-		await looksCheck(rootOrExit(), app, opts);
-	});
+	.option(
+		"--changed <ref>",
+		"open only the looks drawn from files changed since <ref>, and report every other look from its last held result",
+	)
+	.action(
+		async (
+			app: string,
+			opts: { url?: string; only?: string[]; all?: boolean; changed?: string },
+		) => {
+			const { looksCheck } = await import("./commands/looks.js");
+			await looksCheck(rootOrExit(), app, opts);
+		},
+	);
 
 looksCmd
 	.command("stories <app>")
@@ -1376,6 +1421,11 @@ promisesCmd
 	.requiredOption("--plan <plan>", "the plan changing it")
 	.requiredOption("--statement <sentence>", "the promise as it now reads")
 	.requiredOption("--reason <reason>", "why it changed")
+	.option(
+		"--clause <spec>",
+		"a clause of the promise, repeatable, replacing its clauses: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`; without it the clauses stay",
+		(spec: string, all: string[] = []) => [...all, spec],
+	)
 	.action(async function (this: Command, name: string) {
 		const { promisesChange } = await import("./commands/promises.js");
 		promisesChange(rootOrExit(), name, this.opts());

@@ -83,6 +83,9 @@ const PRE_EXISTING_FAILURES = [
 	// falsification's fence rule is what surfaced it. Archived, so recorded.
 	"archive/handoff-multi-agent-section-shape",
 	"archive/mcp-dev-system",
+	// Its Phase 1 Verification cites A14 and A22, rows its trajectory never had
+	// (refused since it landed at `b588de780`). Archived, so recorded not repaired.
+	"archive/nav-row-legible",
 	"archive/react-native-support",
 	"archive/stale-indusk-docs-path",
 	"archive/untrack-mcp-json",

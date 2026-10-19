@@ -10,7 +10,7 @@ Set up the InDusk development system in a new or existing project.
 
 - **Node 22+** — Tailwind 4 requires it
 - **pnpm** — package manager
-- **Docker** — OrbStack recommended on macOS, Docker Desktop on Windows/Linux
+- **Docker** (only for `indusk server deploy --build-from`) — OrbStack recommended on macOS, Docker Desktop on Windows/Linux
 
 ## Quick Start
 
@@ -44,7 +44,7 @@ See [Local Mode](./local-mode) for details on using InDusk without touching comm
 - `.mcp.json` — MCP server config (InDusk, plus whatever your enabled extensions register)
 - `.vscode/settings.json` — Biome integration (skipped in local mode)
 - `biome.json` — base quality config (`.indusk/biome.json` in local mode)
-- `instrumentation.ts` — OpenTelemetry auto-instrumentation (skipped in local mode)
+- OpenTelemetry instrumentation in the app's own folder, with `telemetry-settings.ts` and the `signal` helper (skipped in local mode); the app reports to the local daemon from its first run
 - `.indusk/extensions/` — extension manifests for the extensions you enable
 - `.claude/hooks/` — the gate hooks that enforce plan structure at write time
 

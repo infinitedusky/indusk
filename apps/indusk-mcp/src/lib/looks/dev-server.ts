@@ -10,7 +10,7 @@ import { assetUrlsOf } from "./mockups.js";
  * server (A34). A framework's marker is added here, not worked around with
  * `--url`.
  *
- * promise: a-look-check-costs-what-changed
+ * promise: a-look-check-runs-what-changed
  */
 
 /** What a development server loads on every page, in the order they are looked for. */

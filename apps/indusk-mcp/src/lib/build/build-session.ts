@@ -8,7 +8,7 @@ import {
 import type { StartedEvent } from "../session/start.js";
 import type { ShortenReason } from "./next-step.js";
 import type { BuildStepName } from "./runner.js";
-import { BUILD_STEP_ENV } from "./step-env.js";
+import { BUILD_STEP_ENV, type PlanningStep } from "./step-env.js";
 
 /**
  * One step of a build as a session of the developer's own `claude`
@@ -19,10 +19,13 @@ import { BUILD_STEP_ENV } from "./step-env.js";
  * are; any other failure is the step's error.
  */
 
+/** Every step a session can run: a build's, or a planning run's. */
+export type SessionStepName = BuildStepName | PlanningStep;
+
 export const GATE_POLICY_FOR_BUILDS = { INDUSK_GATE_POLICY: "auto" } as const;
 
 /** A step's environment: unattended, and marked as a build step unless it is the release (A35). */
-export function stepEnv(step: BuildStepName): Record<string, string> {
+export function stepEnv(step: SessionStepName): Record<string, string> {
 	return {
 		...GATE_POLICY_FOR_BUILDS,
 		...(step === "retrospective" ? {} : { [BUILD_STEP_ENV]: step }),
@@ -33,7 +36,7 @@ const UNATTENDED =
 	"This build runs unattended (INDUSK_GATE_POLICY=auto): nobody will answer a question. Decide on your own judgement and record each decision and its reason in the plan. Skip a gate item only as `(none needed — <why>)`; the person reviewing the build reads every skip.";
 
 /** What each step asks for. The runner decides which step; this only words it. */
-export function stepPrompt(step: BuildStepName, plan: string, reason?: ShortenReason): string {
+export function stepPrompt(step: SessionStepName, plan: string, reason?: ShortenReason): string {
 	switch (step) {
 		case "work":
 			return `/work ${plan}\n\n${UNATTENDED} Work the plan's open phases in order until every one is closed, then stop. Do not run /falsify, /cleanup, /audit or /retrospective.`;
@@ -51,9 +54,52 @@ export function stepPrompt(step: BuildStepName, plan: string, reason?: ShortenRe
 				: "too long";
 			return `The ritual skip in plan \`${plan}\` has a reason that is too long: \`${field}\` in the frontmatter of .indusk/planning/${plan}/impl.md is ${was}. A skip reason is one sentence of at most 120 characters (rituals/reason.ts); the detail belongs in the impl body or the retrospective.\n\nRewrite that one line as one sentence of at most 120 characters that keeps the reason; change nothing else in the plan, commit with a message naming \`${field}\`, and end. ${UNATTENDED} Do not run /falsify, /cleanup or /audit.`;
 		}
+		case "plan-test-plan":
+		case "plan-adr":
+		case "plan-impl":
+			return planningPrompt(step, plan);
 		case "retrospective":
 			return `/retrospective ${plan}\n\nThe plan has been accepted. Run the retrospective to the end; it lands the plan with \`indusk plans land ${plan}\`. ${UNATTENDED}`;
 	}
+}
+
+/** The document each planning step writes, and what its prompt adds to the shared rules. */
+const PLANNING_DOCUMENTS: Record<PlanningStep, { file: string; extra: string }> = {
+	"plan-test-plan": {
+		file: "test-plan.md",
+		extra: "Write one clause plan per promise clause, with a measure for each.",
+	},
+	"plan-adr": {
+		file: "adr.md",
+		extra:
+			"Write the decisions the brief and the test plan need, each with the alternatives rejected.",
+	},
+	"plan-impl": {
+		file: "impl.md",
+		extra:
+			"Write the gates with real items (the impl's `gate_policy` may be `ask`: a gate with no items would stop the build for a person), and set `status: draft` in its frontmatter.",
+	},
+};
+
+/**
+ * A planning step (a-brief-is-planned-unasked, ADR decision 3): one unattended
+ * session that writes one document of the plan. The planner skill is installed
+ * in the session, so the prompt names it rather than repeating it.
+ *
+ * promise: an-accepted-brief-is-planned-unasked
+ */
+function planningPrompt(step: PlanningStep, plan: string): string {
+	const { file, extra } = PLANNING_DOCUMENTS[step];
+	const dir = `.indusk/planning/${plan}`;
+	return `Write the \`${file}\` of plan \`${plan}\` and nothing else.
+
+Read ${dir}/brief.md and ${dir}/research.md, and follow the planner skill's section for ${file}. Write only ${dir}/${file}: no other document, and no code. ${extra}
+
+${UNATTENDED} Record each open decision, with its reason, in the document. When you cannot decide, write a \`blocker: <what you could not decide>\` line in the document and end.
+
+The earlier documents stay exactly as the earlier steps left them: an ADR or test plan still \`proposed\` or \`draft\` is not a reason to stop (the person approves them all once, after the impl), and you change no other document's status, only the status your own document needs.
+
+Never approve anything: do not run \`indusk plans approve\`, approve a look, or build. Commit ${file} on the plan's branch and end.`;
 }
 
 export interface BuildSessionOptions {
@@ -75,7 +121,7 @@ export interface BuildSessionOptions {
 
 /** Run one step to its end. `error` is null when the session finished its work. */
 export async function runStepSession(
-	step: BuildStepName,
+	step: SessionStepName,
 	opts: BuildSessionOptions,
 ): Promise<{ error: string | null }> {
 	const delays =
@@ -91,7 +137,7 @@ export async function runStepSession(
 }
 
 async function oneSession(
-	step: BuildStepName,
+	step: SessionStepName,
 	opts: BuildSessionOptions,
 ): Promise<{ error: string | null; rateLimited: boolean }> {
 	let result: Extract<StartedEvent, { type: "result" }> | undefined;

@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { initEvalOtel, shutdownEvalOtel } from "../../lib/eval/otel.js";
+import { changedSinceRef } from "../../lib/git.js";
 import {
 	type Approval,
 	approvalOf,
@@ -17,6 +18,7 @@ import { generateCss } from "../../lib/looks/foundation.js";
 import { lintApp } from "../../lib/looks/lint.js";
 import { type LooksApp, type Mockup, readApp } from "../../lib/looks/mockups.js";
 import { describe, type LookResult, reportLooks } from "../../lib/looks/report.js";
+import { touchedBy } from "../../lib/looks/touched.js";
 import { markProjectId } from "../../lib/promises/config.js";
 
 /**
@@ -48,8 +50,8 @@ export async function looksLint(projectRoot: string, appName: string): Promise<v
 /**
  * `<screen>.<state>  approved|proposed  …` — the status grammar
  * `looks-cli.test.ts` reads. A proposed mockup is held to its last approved
- * version only while that version's foundation and declarations are the
- * current ones (`boundToNow`); otherwise the line says nothing is held.
+ * version only while that version's foundation, declarations and element rules
+ * are the current ones (`boundToNow`); otherwise the line says nothing is held.
  */
 function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 	if (a.state === "approved") return `${mockup.name}  approved  by ${a.entry.by} at ${a.entry.at}`;
@@ -64,7 +66,7 @@ function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 			: "";
 		return boundToNow(app, a.reference)
 			? `${mockup.name}  proposed  ${changed}held to ${last}`
-			: `${mockup.name}  proposed  ${changed}last approved ${last} on another foundation or declarations — nothing held`;
+			: `${mockup.name}  proposed  ${changed}last approved ${last} on another foundation, declarations or element rules — nothing held`;
 	}
 	return `${mockup.name}  proposed  never approved`;
 }
@@ -167,16 +169,29 @@ function lookLines(r: LookResult): string[] {
  * marked reused. Exit 1 on any broken look, and when nothing was checked or
  * reused: a run that checked nothing must not read as held. `--only` checks
  * just the looks named (a screen state or a story); a name no look has is
- * refused; `--all` opens every look, whatever held.
+ * refused; `--all` opens every look, whatever held. `--changed <ref>` opens
+ * only the looks drawn from files changed since `<ref>` (committed since the
+ * branch left it, or uncommitted) and reports every other look from its last
+ * held result; `--all` and `--only` win over it.
+ *
+ * promise: a-look-check-runs-what-changed
  */
 export async function looksCheck(
 	projectRoot: string,
 	appName: string,
-	opts: { url?: string; only?: string[]; all?: boolean },
+	opts: { url?: string; only?: string[]; all?: boolean; changed?: string },
 ): Promise<void> {
 	try {
 		const app = await readApp(projectRoot, appName);
 		const only = opts.only?.flatMap((n) => n.split(",")).filter((n) => n !== "");
+		const changed = opts.changed
+			? await touchedBy(projectRoot, app, await changedSinceRef(projectRoot, opts.changed))
+			: undefined;
+		if (changed && opts.changed) {
+			console.info(
+				`changed since ${opts.changed}: ${changed.touched.size} of ${changed.total} looks touched`,
+			);
+		}
 		const { results, unchecked, reused, notice } = await checkApp(
 			app,
 			readApprovals(app),
@@ -186,6 +201,7 @@ export async function looksCheck(
 				projectRoot,
 				...(only && only.length > 0 ? { only } : {}),
 				...(opts.all ? { all: true } : {}),
+				...(changed ? { touched: changed.touched } : {}),
 			},
 		);
 		for (const r of results) for (const line of lookLines(r)) console.info(line);

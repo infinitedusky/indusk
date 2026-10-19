@@ -351,17 +351,18 @@ export function promisesDeclare(
 }
 
 /**
- * `indusk promises change <name> --plan --statement --reason`. The promise
+ * `indusk promises change <name> --plan --statement --reason [--clause …]`. The promise
  * keeps its name; the plan takes it over; its History keeps what it read and
- * whose it was.
+ * whose it was. Given clauses replace its clauses; without them they stay.
  */
 export function promisesChange(
 	projectRoot: string,
 	name: string,
-	opts: { plan: string; statement: string; reason: string },
+	opts: { plan: string; statement: string; reason: string; clause?: string[] },
 ): void {
 	writing(() => {
-		changePromise(projectRoot, { name, ...opts });
+		const { clause, ...rest } = opts;
+		changePromise(projectRoot, { name, ...rest, ...(clause ? { clauses: clause } : {}) });
 		return `${name} changed by ${opts.plan}; its History keeps the sentence it replaced. ${AFTER_WRITE}`;
 	});
 }

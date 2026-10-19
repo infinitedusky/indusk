@@ -1,0 +1,3 @@
+# Write the promise's real-surface row in Test Phase 1, and check each row's test covers every case its wording names
+
+plan-page-promise-health's test plan chose not to start the pages ('parts read from a fixture, chips rendered from parts'), leaving the promise's real surface untested until the audit. Separately, row A4 claimed 'added, or changed to behaviour' but its test checked only one case; falsification fixed one case and the audit found the other. Rule: the row for the surface where the promise is felt is written in Test Phase 1, not deferred for being awkward to start; and when writing or reviewing a row, enumerate each case its prose names and confirm the test asserts every one. Source: highlight h-20261017-017 (retro-hindsight).

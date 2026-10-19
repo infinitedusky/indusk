@@ -29,16 +29,22 @@ pointer; the pointer holds the story.
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
   — `promise-health-single-definition.test.ts`; display names and plan dates
-  (`promises/display`: `readPlanName`, the nav's copy, worktree first) — `display-names-single-definition.test.ts`. A git primitive belongs in
-  `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
-  (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
+  (`promises/display`: `readPlanName`, worktree first) — `display-names-single-definition.test.ts`;
+  running test files (`lib/tests/run-files.ts`, used by the plan's test set and
+  phase verification) — `run-files-single-definition.test.ts`. A git primitive
+  belongs in `lib/git.ts` (`cleanup/oversized.ts`'s synchronous `git()` is the
+  one exclusion).
+- A plan's folder has one lookup, `findPlanFolder` (`lib/promises/plan-folder.ts`, beside
+  `planFolderStatus`): planning folder, then `archive/`, null for the archive folder, a file
+  or an unusable name; never a hand-built `.indusk/planning/<plan>` join. Guard: T9,
+  `plan-folder-single-definition.test.ts`.
+- **Code the admin bundles finds shipped files through `induskMcpPackageRoot()` and runs scripts with `process.execPath`, never `"node"`** — Turbopack resolves `spawnSync("node", [path])` and `import.meta.url` paths at build time. — guarded by `read-planning-hook-path.test.ts`.
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
 - **A new status or kind word is registered with every status-keyed detector
   in the commit that introduces it** — today `archive-dead.ts`
-  (`BLOCKING_STATUSES`) and `plan-tools.ts` (`isActivePlanStatus`); `published`
-  went six phases unregistered. — see `/lessons/register-new-vocabulary-with-every-keyed-detector`
+  (`BLOCKING_STATUSES`) and `plan-tools.ts` (`isActivePlanStatus`). — see `/lessons/register-new-vocabulary-with-every-keyed-detector`
 - **A newly tracked InDusk artifact is registered with every "what changed"
   detector AND given a merge strategy in the commit that first writes it** —
   `phantom.ts`'s `isMachineState`, `shape/changed.ts`'s `isNotCode`,
@@ -109,7 +115,9 @@ pointer; the pointer holds the story.
   (`session/rate-limit.ts`), one trunk reader (`trunk-branch.ts`). Every
   request a session makes is recorded by the manager with a `decided` event,
   by rule or by person; a decision is never made off the log. Guarded by
-  `manager.test.ts`. — see `/reference/cli/plans`
+  `manager.test.ts`. The planning loop sits beside it: `nextPlanningStep` (pure),
+  `runPlanning`, and the `plan-*` step prompts in `build-session.ts`; a planning
+  step approves nothing. Guarded by `next-planning-step.test.ts`. The planning reader runs the impl check under the build's gate policy (`GATE_POLICY_FOR_BUILDS`) and tells a check that could not run (`PlanningUnreadable`) from one that refused, keeping its words for the stop. Guarded by `read-planning.test.ts`. — see `/reference/cli/plans`
 - **`lib/audit/`**: the auditor's inputs. The approved impl is found by the
   approval merge's subject (`plan(<plan>): approved`), never by a line in the
   plan; a rewritten history is named by the refusal and answered with
@@ -137,6 +145,16 @@ pointer; the pointer holds the story.
   the derived vitest command never passes `--silent`. Ledger failure-safety is
   the inverse of pending-eval's: append only after a clean verdict. — see
   `/decisions/dawn-verify`
+- **A plan's tests come from one command, never a hand-picked list**:
+  `indusk plans tests <plan> --phase N | --landing` over `planTestSet`
+  (`lib/plans/test-set.ts`), the one definition — a phase gets its rows' files
+  and the brief's Must-not-break promises' `tests:`, a landing every row's
+  files and those same tests, nothing else; no search for tests a change
+  imports is made (choosing by what a test executes is the sampler's).
+  Guarded by `test-set.test.ts` (a later phase's row stays out, nothing
+  reached is added) and
+  `skills-run-the-plan-test-set.test.ts` (no skill says `pnpm test`).
+  — see `/decisions/tests-never-make-us-wait`
 - **The phase-boundary record** (`.indusk/phase-boundary.jsonl`) is generic
   machine state shared by Shape, `verify` and `Challenge`; every changed-file
   scope excludes `.indusk/`; `readBoundaries` throws on a malformed line; the
@@ -161,6 +179,19 @@ pointer; the pointer holds the story.
   fence masks nothing (fails open) so one missing backtick cannot delete every
   phase below it from all three parsers. Falsification log fields are
   single-line; frontmatter regexes for value-bearing keys are line-anchored.
+
+- **Timing never stops the work it records** (`lib/timing/`): every timing write goes through
+  `recordSafely`, which warns once and resolves; the reader skips what it cannot read. The
+  phase-boundary reader's throw is not tolerated by the timing view but caught beside it.
+  Guarded by `timing/phase-close.test.ts` (`clause: a-plan-says-how-long-it-took/a-record-never-blocks`).
+  A new unattended step kind is timed by being run through `timedStep` (`lib/timing/timed-step.ts`), which
+  wraps the runner's `run` function at the admin's call sites; the runners are not edited. Guarded by
+  `timing/timed-step.test.ts` (`clause: a-plan-says-how-long-it-took/steps-are-timed`).
+  `plans time` (`timing/view.ts`) never throws on a record or a plan with none: it prints what exists and
+  names what has no record. Guarded by `timing/view.test.ts` (`clause: a-plan-says-how-long-it-took/one-view`).
+  The view reads a plan where it is written: phase openings from the plan's live worktree, the landing from the
+  code repo (`resolveExecutionRoots`); the log reader checks each kind's fields and skips a record missing them.
+  — see `/decisions/plan-timing`
 
 ## Promises and telemetry
 
@@ -216,21 +247,24 @@ pointer; the pointer holds the story.
   commits in the destination, never pushes by default, pushes last, and never
   lets a git failure escape past a commit it made. — see `/reference/cli/papers`
 - **A look's verdict is decided in `looks/verdict` from values handed to it;
-  the browser only measures** (`looks/check` reads `:root` and computed styles
-  and passes them in). Held or broken, the finding's token or element, and its
-  nearest token are never computed in the browser, the CLI or the admin — a
-  verdict decided where the page runs cannot be read without Chromium. —
-  guarded by `verdict.test.ts`; see `/reference/cli/looks`
-- **The no-raw-value lint is three modules, and a new rule goes in its own**:
-  `lint-values` (the strict list, the stylelint rules, `cssFindings`),
-  `lint-classes` (the Tailwind vocabulary a theme reset changes) and the token
-  checks in `lint`, which also orchestrates; `lint-types` holds the shared
-  shapes so neither imports `lint` back. A rule added to `lint.ts` is the
-  500-line file this split undid — guarded by the file-size attention-focus and
-  `looks-lint-rules.test.ts`; see `/reference/cli/looks`
+  the browser only measures** (`looks/check` passes in `:root` and computed
+  styles): a verdict decided where the page runs cannot be read without
+  Chromium — guarded by `verdict.test.ts`; see `/reference/cli/looks`
+- **A look is touched by its import closure; one that cannot be read touches
+  every look** (`looks/touched`; foundation, stylesheets and styling config
+  touch all). `check --changed` hands `planReuse` that set — guarded by T10 in
+  `touched.test.ts`; see `/reference/cli/looks`
+- **The no-raw-value lint is three modules, a new rule in its own**:
+  `lint-values`, `lint-classes`, and the token checks in `lint` (which
+  orchestrates); `lint-types` holds shared shapes. A rule added to `lint.ts` is
+  the 500-line file this split undid — guarded by the file-size attention-focus
+  and `looks-lint-rules.test.ts`; see `/reference/cli/looks`
+
+- **What `init` prints is checked against the command line**: every `indusk` command and file `init` prints is checked by `init-next-steps.test.ts`, so a new printed command must exist.
 
 ## Eval, agents, skills, extensions
 
+- **A recommendation the new-project flow acts on is named by a constant the agent's prompt reads** (`TELEMETRY_RECOMMENDATION` in `lib/new-project/proposal.ts`), never a word the agent might choose — guarded by T32 in `prompt.test.ts`.
 - **Eval agent** ("evaluator", never "judge"): PostToolUse on `git commit`
   only — anchored regex, never `String.includes`; skips when `exit_code` ≠ 0;
   persistent session via `claude --resume`; `--mcp-config .mcp.json` +
@@ -291,7 +325,8 @@ pointer; the pointer holds the story.
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
-- The root run builds this package before its tests (`turbo.json` `@infinitedusky/indusk-mcp#test`): a test behind `SHOULD_SKIP` skips silently without `dist/`, so a row on the built CLI must not rest on a build someone remembered.
+- The root run builds this package first (`turbo.json`): a test behind `SHOULD_SKIP` skips silently without `dist/`.
+- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes every test calling it a system test: list the file in `vitest.tiers.ts` `SYSTEM`; `everyday-tests-never-wait` reads the helpers and fails the file.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —

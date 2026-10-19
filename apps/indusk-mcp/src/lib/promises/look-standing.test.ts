@@ -8,7 +8,7 @@ import { parseMarkedSpan } from "./telemetry.js";
 
 // promise: a-look-reports-like-any-promise
 // promise: every-part-of-the-ui-is-covered
-// promise: a-look-check-costs-what-changed
+// promise: a-look-check-runs-what-changed
 
 /**
  * ui-promises Build Phase 4: the rule `readLookStanding` applies, over the

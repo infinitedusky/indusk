@@ -10,6 +10,7 @@ import { dirname, join, relative } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "../config.js";
 import { git, restorePaths, snapshotPaths } from "../git.js";
+import { findPlanFolder } from "../promises/plan-folder.js";
 import { DestinationError, type ResolvedDestination, resolveDestination } from "./destination.js";
 import { collectIndexEntries, IndexError, regenerateIndex } from "./index-page.js";
 import { type PublishedRecord, readPublishedRecord, withProvenance } from "./provenance.js";
@@ -194,7 +195,8 @@ export async function publishPaper(opts: PublishOptions): Promise<PublishResult>
 	const planningDir = getPlanningDir(projectRoot);
 
 	// 1. The paper.
-	const planDir = join(planningDir, plan);
+	// promise: a-plan-is-found-in-the-archive
+	const planDir = findPlanFolder(projectRoot, plan) ?? join(planningDir, plan);
 	const paperPath = join(planDir, file);
 	if (!existsSync(paperPath)) throw new PublishRefusal(`No such paper: ${plan}/${file}`);
 	const raw = readFileSync(paperPath, "utf-8");

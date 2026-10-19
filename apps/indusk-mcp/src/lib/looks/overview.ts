@@ -10,12 +10,14 @@ import {
 	type StoryApprovalEntry,
 	storyApprovalOf,
 } from "./approvals.js";
+import { pageOnly, splitVariants } from "./component-styles.js";
 import { storybookIds } from "./components.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
 import {
 	type ComponentStyle,
 	type Device,
+	type LooksApp,
 	MOCKUPS_DIR,
 	type Mockup,
 	readApp,
@@ -111,6 +113,14 @@ export function listApps(root: string): string[] {
 
 const TOKENS_LINK = /<link\b[^>]*\bhref=["'][^"']*tokens\.css["'][^>]*>/i;
 
+/** The mockup's own `<style>` elements with their rules cut to its page (`pageOnly`); the sheets added around them are the foundation's and the components'. `drawnHere` is the components the mockup declares new: its styles still reach them. */
+const withPageOnlyStyles = (html: string, drawnHere: readonly string[]): string =>
+	html.replace(
+		/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
+		(_all, open: string, css: string, close: string) =>
+			`${open}${pageOnly(css, drawnHere)}${close}`,
+	);
+
 /**
  * A mockup as a page the cockpit can draw on its own: it loads the app's
  * generated `tokens.css` by a relative link, which a frame has no folder to
@@ -118,16 +128,28 @@ const TOKENS_LINK = /<link\b[^>]*\bhref=["'][^"']*tokens\.css["'][^>]*>/i;
  * the foundation as it is now, so a changed value shows on the next read.
  * A mockup without the link gets the CSS first in its head. The stylesheet of
  * each component the mockup names follows the tokens (ADR decision 10): a
- * snapshot is markup, and its look is the app's compiled classes.
+ * snapshot is markup, and its look is the app's compiled classes. `reset`, the
+ * app's element rules scoped to components (`_reset.css`), goes between the
+ * tokens and the component sheets, so a component draws as its story does.
  */
 export function mockupDocument(
-	html: string,
+	ownHtml: string,
 	tokensCss: string,
 	styles: readonly Pick<ComponentStyle, "component" | "css">[] = [],
+	reset = "",
+	drawnHere: readonly string[] = [],
 ): string {
+	const html = withPageOnlyStyles(ownHtml, drawnHere);
+	// A variant rule comes after every component's plain rules (`splitVariants`).
+	const cut = styles.map((s) => ({ component: s.component, ...splitVariants(s.css) }));
+	const variants = cut.map((c) => c.variants).filter((v) => v.trim() !== "");
 	const style = [
 		`<style data-foundation>\n${tokensCss}</style>`,
-		...styles.map((s) => `<style data-component-style="${s.component}">\n${s.css}</style>`),
+		...(reset ? [`<style data-component-style="_reset">\n${reset}</style>`] : []),
+		...cut.map((c) => `<style data-component-style="${c.component}">\n${c.plain}</style>`),
+		...(variants.length > 0
+			? [`<style data-component-style="_variants">\n${variants.join("\n")}</style>`]
+			: []),
 	].join("\n");
 	if (TOKENS_LINK.test(html)) return html.replace(TOKENS_LINK, () => style);
 	if (/<head\b[^>]*>/i.test(html)) return html.replace(/<head\b[^>]*>/i, (head) => head + style);
@@ -152,13 +174,20 @@ function viewOf(
 		hash: mockup.hash,
 		componentsHash: mockup.componentsHash,
 		componentsChanged: approval.state === "proposed" ? (approval.componentsChanged ?? []) : [],
-		document: mockupDocument(mockup.html, css, mockup.styles),
+		document: mockupDocument(
+			mockup.html,
+			css,
+			mockup.styles,
+			app.reset,
+			mockup.declaresNewComponents,
+		),
 	};
 }
 
 /**
  * A story's snapshot as a page the cockpit can draw on its own, built as
  * `mockupDocument` builds a composed mockup: the foundation's tokens, the app's
+ * element resets (`_reset.css`), the app's
  * base (`_base.css`, so the story is drawn in the app's type), then its
  * component's stylesheet, then the snapshot's markup inside a
  * `#storybook-root`, where the frame measures the component it holds. What is
@@ -167,14 +196,18 @@ function viewOf(
 export function storyDocument(
 	story: Pick<Story, "component" | "html">,
 	tokensCss: string,
-	styles: readonly Pick<ComponentStyle, "component" | "css">[],
-	base = "",
+	sheets: Pick<LooksApp, "styles" | "base" | "reset">,
 ): string {
 	const page = `<!doctype html>\n<html>\n<head><meta charset="utf-8"></head>\n<body><div id="storybook-root">${story.html}</div></body>\n</html>\n`;
-	return mockupDocument(page, tokensCss, [
-		...(base ? [{ component: "_base", css: base }] : []),
-		...styles.filter((s) => s.component === story.component),
-	]);
+	return mockupDocument(
+		page,
+		tokensCss,
+		[
+			...(sheets.base ? [{ component: "_base", css: sheets.base }] : []),
+			...sheets.styles.filter((s) => s.component === story.component),
+		],
+		sheets.reset,
+	);
 }
 
 function storiesOf(
@@ -196,7 +229,7 @@ function storiesOf(
 			plan: entry?.plan ?? null,
 			hash: story.hash,
 			stylesheetHash: story.stylesheetHash,
-			document: storyDocument(story, css, app.styles, app.base),
+			document: storyDocument(story, css, app),
 		};
 	});
 }

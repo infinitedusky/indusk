@@ -11,6 +11,7 @@ subplans:
   - one-promise-language
   - looks-check-speed
   - plans-are-promises
+  - tests-never-make-us-wait
   - telemetry-from-day-one
   - run-the-master
   - expectations-loop
@@ -245,6 +246,19 @@ parent with its own `master.md` naming them.
      holds one or more promises of clauses (2026-10-16; was "a plan is one
      promise"); each promise's clause plan replaces the test plan and is written
      before the ADR; a clause can rest on another promise.
+   - **`tests-never-make-us-wait`** (closed 2026-10-18; [retrospective](../archive/tests-never-make-us-wait/retrospective.md); the sampler is `the-sampler`) (Sandy, 2026-10-17: before `mark-first`;
+     not yet written) — development had slowed to a crawl on tests: a CSS
+     bugfix took five build phases, one story-frame check 23 minutes, the
+     everyday suite 3 m 45 s. The change made now is checked now, in seconds;
+     regression is sampled over time. Visual regression leaves every phase,
+     landing and release and becomes a background spot checker whose findings
+     are a list to come back to; the everyday suite finishes in under a minute
+     (tests that start a CLI, a git repo or a workbench move to the system
+     tier); a failing slow test opens no incident, no Maintenance phase and no
+     "broke in production" (moved here from `a-break-runs-its-tests`). It does
+     not wait for telemetry to be good enough: what needs clause-keyed signals
+     is `a-break-runs-its-tests`, after `mark-first`. The philosophy: software
+     that keeps moving and fixing itself, not perfect at every commit.
    - **`mark-first`** ("Signal first") — `a-clause-is-proved-twice`: verified by
      its tests before release, upheld by its signal in use; plans in the new
      shape close on both. Since 2026-10-16 the third child of

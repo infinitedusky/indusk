@@ -29,7 +29,7 @@ dusk/
 **Apps:**
 
 - **indusk-mcp** — the InDusk MCP server + CLI (`init`/`update`/`setup`/`extensions`/`agent`/`plans`/`sync`/`context`/`eval`/`ui`/`telemetry`/`worktree`/`promises`/`papers`/`workbench`), published as `@infinitedusky/indusk-mcp`. Skills (`skills/*.md`), hooks (`hooks/*.js`) and the planning context file (`templates/planning/CLAUDE.md`) are package-owned and installed into projects by `init`/`update`. It also hosts the two Dawn commands: `indusk run <plan>` (a model-agnostic gated loop over a plan's phases) and `indusk verify <plan> --phase N` (phase-boundary verification for work Dawn did not execute; detects, never repairs). Git is the only SCM. — see `/reference/cli/run`, `/reference/cli/verify`
-- **indusk-admin** — Next.js read-only viewer over `.indusk/planning/` + each project's evaluation results, one machine-global daemon (`indusk ui`), reusing indusk-mcp's parsers through workspace subpath exports — never duplicating parsing. — see `/decisions/admin-ui-hosting`
+- **indusk-admin** — Next.js read-only viewer over `.indusk/planning/` + each project's evaluation results, one machine-global daemon (`indusk ui`) (its parsing rule lives in its CLAUDE.md). — see `/decisions/admin-ui-hosting`
 - **vscode-extension** — markers at each promise's line, the Promises panel, Fix with Claude; reads `indusk promises health --json`, writes nothing; ships in the npm package (`indusk editor install`).
 - **docs** — VitePress site. Every plan contributes pages at close; ADRs publish to `/decisions/*`.
 
@@ -80,8 +80,7 @@ dusk/
 - Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `/decisions/day-monitor`
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - One promise language: upheld/broken, holding/broken live, no signal unknown; every reader takes `broken` and `violated` as broken, writers keep `violated` until `mark-first`; `known-broken` with `known-violated` still read — see `/decisions/one-promise-language`
-- Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
-- Release as a declared step: `indusk release` runs `workflow.steps.release` — slow tests before or after, `done_when` — and routes failures from JUnit to incidents or bugfix plans — see `/decisions/release-records-its-failures`
+- A plan runs its tests, what its changes reach and its Must-not-break tests; processes in the system tier — see `/decisions/tests-never-make-us-wait`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
 - Workbench plans: documents at the workbench root, code on `plan/<name>` in the named repo; one contract per repo through one resolver — see `/decisions/workbench-plan-authoring`
 - Bookkeeping: notes committed on `main` as written; machine state in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`); the evaluator's tools named — see `/decisions/bookkeeping-lives-where-it-is-read`
@@ -94,7 +93,9 @@ dusk/
 - Sessions per plan: one per plan and kind, at most `sessions.max` a machine — see `/decisions/sessions-per-plan`
 - New project flow: a project starts as a conversation in the admin; drafts at `~/.indusk/new-projects/`, creation by the package — see `/decisions/new-project-flow`
 - Plans are promises: a plan holds the promises it lands, each stated as clauses with a clause plan before the ADR; opt-in `clauses: required` — see `/decisions/plans-are-promises`
-- The daemon is found, not guessed: one daemon on one address chosen once and stored in ~/.indusk (InDusk's block 24316-24319, or ports picked once when held at first setup; a recording server keeps 4318), read by every reader and handed out by `indusk telemetry address`, recognised by binary + config path, its record never deleted by a read and rebuilt from the process list; nothing starts a second — see /decisions/daemon-found-not-guessed
+- The daemon is found, not guessed: one daemon per machine on one stored address (`indusk telemetry address`), never a second; rules in `apps/indusk-mcp/CLAUDE.md` (Promises and telemetry) — see `/decisions/daemon-found-not-guessed`
+- Init sets up telemetry: the scaffold goes in each declared code repo, sends to the daemon's stored address with project and environment on every span, and offers a newer template beside an edit — see `/decisions/init-sets-up-telemetry`
+- Plan timing: one per-plan log in machine state, written through one never-raising writer, read by `indusk plans time` — see `/decisions/plan-timing`
 
 ## Known Gotchas
 

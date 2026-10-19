@@ -22,7 +22,6 @@ tests:
   - apps/indusk-mcp/src/lib/promises/record-broken.test.ts
   - apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts
   - apps/indusk-mcp/src/lib/promises/standing.test.ts
-  - apps/indusk-mcp/src/__tests__/suite-speed.test.ts
   - apps/indusk-admin/src/components/ui/PromiseRow.test.tsx
 incidents: []
 ---

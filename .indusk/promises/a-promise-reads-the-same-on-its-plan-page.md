@@ -2,11 +2,16 @@
 name: a-promise-reads-the-same-on-its-plan-page
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: admin
 owner: plan-page-promise-health
-sites: []
-tests: []
+sites:
+  - apps/indusk-admin/src/components/plan/PlanParts.tsx
+  - apps/indusk-admin/src/lib/plan-health.ts
+  - apps/indusk-mcp/src/lib/promises/health.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts
+  - apps/indusk-admin/src/__tests__/plan-parts.test.tsx
 incidents: []
 clauses:
   - name: broken-reads-broken
@@ -24,3 +29,4 @@ A plan's page and its brief page colour each of the plan's promises by the same 
 
 ## History
 - 2026-10-17 — declared (plan-page-promise-health), from its planning conversation.
+- 2026-10-17 — enforced, confirmed for plan-page-promise-health: proven by row A1, row A2, row A3, row A4, row A5, row A6, row A7.

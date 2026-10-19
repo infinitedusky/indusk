@@ -361,6 +361,11 @@ lesson title, or a chat log.
   promises, commands write the registry, every test row says what it is for,
   a plan cannot build while its brief, rows and registry disagree, and closes
   with its promises confirmed. See `/decisions/planner-promises`.
+- **Closed, standalone bugfix** (2026-10-17): [mockups-draw-components-as-stories](archive/mockups-draw-components-as-stories/brief.md)
+  — a component in a mockup draws as its story does (element resets scoped to
+  components, a mockup's own styles scoped to its page), checked at every
+  device; approvals bind the element rules. Closes the two 1.71.0 incidents
+  once storybook-components' Maintenance phases verify.
 - **Closed, standalone bugfix** (2026-10-06): [publish-hygiene](archive/publish-hygiene/brief.md)
   — before 1.63.0 published: the tarball drops its source maps (41.5 → 14.5
   MB unpacked), the release stops listing every packed file, and the system

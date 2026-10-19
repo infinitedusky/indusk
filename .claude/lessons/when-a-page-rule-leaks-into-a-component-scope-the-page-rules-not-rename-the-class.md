@@ -1,0 +1,5 @@
+# When a page's rule leaks into a component, scope the page's rules; renaming the colliding class fixes one mockup and proves nothing about the next
+
+The home mockup's own `.grid` rule beat the project card's `.gap-1`; renaming the mockup's class to `.cards` fixed that mockup. The audit pointed out nothing stopped the next mockup's `.flex`/`.grid`/`.gap-*` rule doing the same. The class-level fix was `pageOnly` (overview.ts `mockupDocument`): each selector of a mockup's own style carries `:not(:where([data-component], [data-component] *))`, a selector naming a component marker still places it.
+
+How to apply: after fixing one instance of a leak, ask whether the same mechanism can recur and fix the mechanism. Also: a brief's looks name mockups only; new story states of a component belong in the changed mockup's line, not as looks of their own (reapprove refused the amendment otherwise); and amend the brief when scope is discovered, not after the audit. Note from the retrospective: the admin's cockpit reapprove did not land and the terminal reapprove had to be run — worth a look. Record: .indusk/planning/mockups-draw-components-as-stories/impl.md Build Phase 5.

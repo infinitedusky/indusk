@@ -66,7 +66,11 @@ export interface ReusePlan {
  * result (`reuseOf`) and those to open, from the facts read from the project
  * now: whether the stories were rendered from the current sources, the
  * page-code hash, and the held results in machine state. A look named by
- * `--only` is always opened.
+ * `--only` is always opened. With `opts.touched` (`--changed`), only the
+ * looks it names open: every other look with a held result is reused from it
+ * whatever else about the app changed, and one never held opens.
+ *
+ * promise: a-look-check-runs-what-changed
  */
 export async function planReuse(
 	app: LooksApp,
@@ -113,8 +117,21 @@ export async function planReuse(
 		stories: [],
 		reused: [],
 	};
+	const changedOnly = opts.touched && !opts.only && !opts.all ? opts.touched : undefined;
 	const opens = (record: string, key: LookKey, look: Omit<Reused, "app" | "at" | "devices">) => {
 		const build = builds[key.kind];
+		if (changedOnly) {
+			// A look the change did not touch stands for its last held result.
+			const last = held[record];
+			if (!changedOnly.has(record) && last?.state === "held" && typeof last.at === "string") {
+				plan.reused.push({ app: app.app, ...look, at: last.at, devices });
+				return false;
+			}
+			if (changedOnly.has(record)) {
+				plan.opened.set(record, key);
+				return true;
+			}
+		}
 		const reuse = opts.only ? undefined : reuseOf(held[record], key, { all: opts.all, build });
 		if (reuse?.reuse) {
 			plan.reused.push({ app: app.app, ...look, at: reuse.at, devices });
@@ -154,7 +171,7 @@ export async function planReuse(
 			(stories.length > 0 && served.stories === null),
 		current,
 		stale: (screens.length > 0 && plan.stale.screen) || (stories.length > 0 && plan.stale.story),
-		chosen: Boolean(opts.all || opts.only),
+		chosen: Boolean(opts.all || opts.only || changedOnly),
 	});
 	if (notice) plan.notice = notice;
 	return plan;

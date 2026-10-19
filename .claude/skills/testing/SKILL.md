@@ -32,12 +32,14 @@ You are working in a project with tests. Follow these patterns.
 
 ## Asserting a Behaviour Promise
 
-A behaviour promise (`.indusk/promises/`) sends its signal from the running code with plain OpenTelemetry — the application imports nothing from InDusk:
+A behaviour promise (`.indusk/promises/`)'s signal is a span, written by the helper `init` put in the app (`./signal`). Where a test needs the daemon's address, `indusk telemetry address` prints it; the test itself captures spans in process:
 
 ```ts
-span.setAttribute("indusk.promise", "seat-never-double-booked");
-span.setAttribute("indusk.promise.outcome", "upheld"); // or "violated" (read as broken), plus:
-// span.addEvent("indusk.promise.violated", { "indusk.promise.symptom": "seat 4 held twice" });
+import { signal } from "./signal";
+
+signal.upheld({ promise: "seat-never-double-booked", clause: "one-holder", value: 1, bound: 1 });
+// or, when it did not hold, outcome `broken` with its symptom:
+signal.broken({ promise: "seat-never-double-booked", clause: "one-holder", symptom: "seat 4 held twice" });
 ```
 
 Test the signal with the trace-shape helper, passing the promise as its token — the call is then the promise's test link, with no other citation:
@@ -51,7 +53,7 @@ expectPromiseUpheld(spans, "promise: seat-never-double-booked", { parent: "handl
 
 - Assert containment, not a snapshot: extra attributes and child spans never fail it; the signalling span being gone does
 - `captureSpans` owns the global tracer for the call — it refuses when one is already registered
-- `expectPromiseViolated(spans, token)` asserts a break and returns its symptom
+- `expectPromiseViolated(spans, token)` asserts a break (outcome `broken`) and returns its symptom
 
 ## Common Gotchas
 

@@ -32,6 +32,12 @@ export interface DeclaredScreen {
 	/** Where the running app serves this screen; `/<name>` when not declared. */
 	path?: string;
 	/**
+	 * The file that draws this screen, relative to the project root, when it is
+	 * not the Next.js app-router page `path` names (`indusk looks check
+	 * --changed` reads the screen's imports from it). Only ever a string.
+	 */
+	page?: string;
+	/**
 	 * A path per state, overriding `path` for those states: a state that exists
 	 * only at another address (`{ "conversation": "/new/{seed}" }`).
 	 */
@@ -169,6 +175,15 @@ export interface LooksApp {
 	styles: ComponentStyle[];
 	/** `components/_base.css`, the app's compiled `body` rules a story's frame draws under; "" when absent. */
 	base: string;
+	/** `components/_reset.css`, the app's element rules scoped to components, which a mockup and a story frame both draw under; "" when absent. */
+	reset: string;
+	/**
+	 * The catalog's `baseRulesHash`: the hash of the app's element rules the
+	 * stories were rendered under, which `_reset.css` carries into the cockpit.
+	 * An approval binds it. Absent when the app has no catalog or the catalog
+	 * records none.
+	 */
+	baseRulesHash?: string;
 	mockups: Mockup[];
 }
 
@@ -252,6 +267,12 @@ function declaredNew(html: string, name: "indusk-new-tokens" | "indusk-new-compo
 		.filter(Boolean);
 }
 
+/** A screen's `page` survives the reader only as a non-empty string. */
+function withValidPage(screen: DeclaredScreen): DeclaredScreen {
+	const { page, ...rest } = screen;
+	return typeof page === "string" && page !== "" ? { ...rest, page } : rest;
+}
+
 export async function readApp(root: string, app: string): Promise<LooksApp> {
 	const dir = join(root, MOCKUPS_DIR, app);
 	if (!existsSync(dir)) {
@@ -272,6 +293,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	const styles = await readStyles(dir, join(MOCKUPS_DIR, app));
 	const basePath = join(dir, "components", BASE_STYLESHEET);
 	const base = existsSync(basePath) ? await readFile(basePath, "utf-8") : "";
+	const resetPath = join(dir, "components", RESET_STYLESHEET);
+	const reset = existsSync(resetPath) ? await readFile(resetPath, "utf-8") : "";
 	const stories = await readStories(
 		dir,
 		join(MOCKUPS_DIR, app),
@@ -279,6 +302,14 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		await readContentMaps(join(dir, "components.json")),
 	);
 	const snapshots = new Map<string, SnapshotBytes>(stories.map((s) => [s.name, s]));
+	const catalogRules = await readJson<{ baseRulesHash?: unknown } | null>(
+		join(dir, "components.json"),
+		null,
+	);
+	const baseRulesHash =
+		typeof catalogRules?.baseRulesHash === "string" && catalogRules.baseRulesHash !== ""
+			? catalogRules.baseRulesHash
+			: undefined;
 
 	const screensDir = join(dir, "screens");
 	const names = existsSync(screensDir)
@@ -320,7 +351,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		foundation,
 		...facts,
 		declarationsHash: declarationsHashOf(facts),
-		screens: declared.screens ?? [],
+		screens: (declared.screens ?? []).map(withValidPage),
 		uncatalogued: declared.uncatalogued ?? [],
 		uncomposed: declared.uncomposed ?? [],
 		...(declared.url ? { url: declared.url } : {}),
@@ -328,6 +359,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		stories,
 		styles,
 		base,
+		reset,
+		...(baseRulesHash === undefined ? {} : { baseRulesHash }),
 		mockups,
 	};
 }
@@ -399,12 +432,15 @@ async function readStories(
 /** The app's base stylesheet in `<app>/components/`, beside the components' own; not a component's. */
 export const BASE_STYLESHEET = "_base.css";
 
+/** The app's element resets in `<app>/components/`, scoped to components; not a component's either. */
+export const RESET_STYLESHEET = "_reset.css";
+
 /** The stylesheets in `<app>/components/`, `<name>.css`, sorted by component; none when the app has none. */
 async function readStyles(dir: string, rel: string): Promise<ComponentStyle[]> {
 	const componentsDir = join(dir, "components");
 	if (!existsSync(componentsDir)) return [];
 	const files = (await readdir(componentsDir))
-		.filter((f) => f.endsWith(".css") && f !== BASE_STYLESHEET)
+		.filter((f) => f.endsWith(".css") && f !== BASE_STYLESHEET && f !== RESET_STYLESHEET)
 		.sort();
 	const styles: ComponentStyle[] = [];
 	for (const fileName of files) {
@@ -534,12 +570,13 @@ export function checkerHashOf(checker: {
 
 /** The styling configuration files of an app's own folder: Tailwind and PostCSS. */
 const STYLING_CONFIG = /^(tailwind|postcss)\.config\./;
+const NEXT_CONFIG = /^next\.config\./;
 
 /**
  * The nearest folder at or above `source` that holds a `package.json` — the
  * app a source directory belongs to — else the source's parent.
  */
-function appFolderOf(root: string, source: string): string {
+export function appFolderOf(root: string, source: string): string {
 	for (let dir = join(root, source); dir.startsWith(root) && dir !== root; dir = dirname(dir)) {
 		if (existsSync(join(dir, "package.json"))) return dir;
 	}
@@ -554,6 +591,33 @@ function appFolderOf(root: string, source: string): string {
  * to any of them reopens everything (looks-check-speed ADR decision 2).
  */
 export async function configHashOf(root: string, app: Pick<LooksApp, "sources">): Promise<string> {
+	return filesHashOf(root, await configFilesOf(root, app));
+}
+
+/**
+ * The files a page shows or is built with that no import names, absolute: the
+ * app's `public/` folder (images and fonts a page reaches by URL) and its
+ * `next.config.*`. A change to one restyles or rebuilds any look, so the
+ * looks check counts them with the foundation (tests-never-make-us-wait).
+ */
+export async function servedFilesOf(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+): Promise<string[]> {
+	const files: string[] = [];
+	for (const folder of new Set(app.sources.map((s) => appFolderOf(root, s)))) {
+		const here = existsSync(folder) ? await readdir(folder) : [];
+		files.push(...here.filter((f) => NEXT_CONFIG.test(f)).map((f) => join(folder, f)));
+		files.push(...(await filesUnder(join(folder, "public"))));
+	}
+	return files;
+}
+
+/** The files `configHashOf` hashes, absolute: the configuration no source file holds. */
+export async function configFilesOf(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+): Promise<string[]> {
 	const files: string[] = [];
 	for (const folder of new Set(app.sources.map((s) => appFolderOf(root, s)))) {
 		const here = existsSync(folder) ? await readdir(folder) : [];
@@ -562,5 +626,5 @@ export async function configHashOf(root: string, app: Pick<LooksApp, "sources">)
 	}
 	const lock = join(root, "pnpm-lock.yaml");
 	if (existsSync(lock)) files.push(lock);
-	return filesHashOf(root, files);
+	return files;
 }

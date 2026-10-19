@@ -134,7 +134,7 @@ The daemon resolves binaries via `createRequire(import.meta.url).resolve("@infin
 
 **Enable-time** (`indusk extensions enable local-telemetry` or `indusk init` on a fresh project):
 
-1. Writes the extension's `.env` component, routing `OTEL_EXPORTER_OTLP_ENDPOINT` to the daemon's traces address (`indusk telemetry address`) in the `development` profile only. Staging + production profiles stay on Dash0.
+1. Writes no environment file: an app reaches the daemon through the settings file `init` scaffolds into it (see [what a project is handed](#what-a-project-is-handed)), with nothing set.
 2. Calls `indusk telemetry register $(pwd)` — appends to `~/.indusk/telemetry/projects.json`, takes over the running daemon or starts the one daemon on its stored address (choosing the address first if none is stored; never a second daemon), and upserts a `jaeger` MCP server entry in **this project's** `.mcp.json` pointing at the stored MCP port. The file is rewritten only when the entry differs, and no other project's entry is touched.
 3. The `.mcp.json` entry follows the same shape as the `dash0` extension's — a plain `{ type: "http", url: "http://localhost:{mcpPort}/mcp" }` block. Claude Code loads it on the next session start.
 
@@ -144,7 +144,7 @@ The daemon resolves binaries via `createRequire(import.meta.url).resolve("@infin
 2. Calls `indusk telemetry deregister $(pwd)` — removes the project from the registry.
 3. If the registry becomes empty, gracefully stops the daemon. Otherwise the daemon keeps running for the other registered projects.
 
-**Escape hatch**: if you don't want local telemetry on a specific project, add `disabled_extensions: ["local-telemetry"]` to `.indusk/config.json`. The required-by-default logic respects explicit disables. No data lost, no weird coexistence — the project simply routes `development` OTel to whatever its `.env` component says (usually Dash0 as a fallback, or nowhere).
+**Escape hatch**: if you don't want local telemetry on a specific project, add `disabled_extensions: ["local-telemetry"]` to `.indusk/config.json`. The required-by-default logic and detection-based enabling both respect explicit disables. A project created through the new-project flow with the telemetry recommendation declined gets `disabled_extensions: ["local-telemetry", "otel"]` written before `init` runs, so neither is enabled and nothing is scaffolded; the reason is recorded under `recommendations`.
 
 The escape hatch shape:
 
@@ -199,29 +199,56 @@ Returns OTLP log records within the window. The tool is gated on `isTelemetryAct
 
 **Why the split**: traces are rich + structured + queryable by many dimensions — Jaeger's 8 pre-computed tools are the right abstraction and writing our own would be strictly worse. Logs are flat lines — a single filter/limit MCP tool beats forcing a Jaeger UI for the "grep my app's output" workflow. A later [unified-telemetry-query plan](#future-work) may eventually give any agent one interface across local + Dash0 as a user-facing convenience, but local-only consumers (like the watcher agent in §Future Work) talk to `jaeger_mcp` + `tail_logs` directly — no unified layer required.
 
-## Environment routing
+## What a project is handed {#what-a-project-is-handed}
 
-The extension writes its `.env` component such that the `development` profile points `OTEL_EXPORTER_OTLP_ENDPOINT` at the daemon's traces address (`http://localhost:24318` when the block was free; `indusk telemetry address` prints it) while staging + production stay on Dash0. ce + composable.env do the profile selection, not the extension.
+`indusk init` and every `indusk update` scaffold OpenTelemetry into the project's app through one module (`lib/scaffold/`). The app then reports to the local daemon on its first run with nothing set in its environment: a Next.js app's server with no file edited by hand, any other app once it adds the one line `init` prints for it (the `wire:` or `import` line).
 
-Expected effective environment values:
+```mermaid
+flowchart LR
+  cmd["indusk init / indusk update"] --> scaffold["scaffold, per declared code repo<br/>(else the project root)"]
+  scaffold --> app["the app: instrumentation +<br/>telemetry-settings.ts"]
+  app -- "traces" --> traces["daemon traces port<br/>(indusk telemetry address)"]
+  app -- "logs" --> logs["daemon logs port"]
+  traces --> readers["promise readers, jaeger MCP"]
+  logs --> tail["tail_logs"]
+```
 
-| Profile | `OTEL_EXPORTER_OTLP_ENDPOINT` | Where traces + logs land |
-|---------|-------------------------------|--------------------------|
-| `development` | the daemon's traces address (`indusk telemetry address`) | Local daemon (Jaeger + otelcol) |
-| `staging` | Dash0 URL | Dash0 `staging` dataset |
-| `production` | Dash0 URL | Dash0 `production` dataset |
+**Where the files go.** In a workbench, into each declared code repo (`worktree.repos[]`), never the workbench root, where no app runs. Elsewhere, into the project root. The runtime is read from the files at the repo's root: `next.config.*` (Next.js), `vite.config.*` (a browser app), `requirements.txt` or `pyproject.toml` (Python), `package.json` (Node). A repo with none of them gets nothing and a line saying it has no app yet; the next `indusk update` scaffolds it once one appears. `--local` mode and a project with `otel` in `disabled_extensions` get no scaffold.
 
-If your service doesn't pick up the new `development` endpoint, check `ce doctor` + the order of `.env` component merging. The local-telemetry component must sort after any component that hardcodes a Dash0 URL in the `development` profile.
+| Runtime | Files |
+|---------|-------|
+| Node | `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts`, `telemetry-settings.ts`, `signal.ts` (in `src/` when the app has one) |
+| Next.js | `instrumentation.ts` in the folder that holds `app/` or `pages/` (the app root, or `src/` when the pages live there, which is where Next.js looks for it); `src/logger.ts`, `src/instrumentation.web.ts`, `src/telemetry-settings.ts`, `src/signal.ts` |
+| Browser app | `instrumentation.ts`, `telemetry-settings.ts` (in `src/` when the app has one); no signal helper, it has no server |
+| Python | `instrumentation.py`, with the settings inline at its top, imported first in the entry point (not run under `opentelemetry-instrument`, whose own provider ignores it); `indusk_signal.py` |
+
+The signal file is how the app tells InDusk a promise held or broke: see [the signal helper](./signal-helper). An app that already sets up OpenTelemetry itself gets only that file and the settings it reads.
+
+**How an app finds the daemon.** Each app carries a small settings file, `telemetry-settings.ts`, rendered with four values: the service name (the code repo's name in a workbench, the project folder's otherwise), the InDusk project id, and the daemon's stored traces and logs addresses (InDusk's block, `24318` and `24319`, when none is stored yet). Every template reads it, so every runtime sends to the daemon with nothing set; a set endpoint still wins:
+
+| Set in the environment | Effect |
+|------------------------|--------|
+| nothing | traces to `<traces address>/v1/traces`, logs to `<logs address>/v1/logs` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | both go there, with `/v1/traces` and `/v1/logs` added |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` / `_LOGS_ENDPOINT` | that signal goes to the URL as given |
+| `OTEL_SERVICE_NAME` | the service name |
+| `OTEL_RESOURCE_ATTRIBUTES` with `deployment.environment=…` | the environment |
+
+**Where a span ran.** Every span's resource carries `indusk.project` (the InDusk project id, what the promise readers compare) and `deployment.environment` (`development` unless set). A browser app reads the same names under its bundler's prefix (`VITE_OTEL_…`, `NEXT_PUBLIC_OTEL_…`).
+
+**The newer-version file.** InDusk records a fingerprint of each file it writes in `.indusk/scaffold.json` (the workbench root in a workbench); the fingerprint ignores whitespace, line breaks, semicolons, trailing commas and quote style, so reformatting a scaffolded file with Biome or Prettier is not an edit (a record written as a hash of the exact text still matches). On each run a missing file is created (unless InDusk recorded writing it and you deleted it: it is left out, with one line saying so, and `init --force` writes it back), a file still as InDusk wrote it is refreshed to the newer template, and a file you changed (a changed word, not its layout), or one InDusk never wrote, is left byte for byte with the newer version written beside it as `<file>.indusk-new`, and the run says so. A lost record makes every file unrecorded, and an unrecorded file is never overwritten. `init --force` overwrites them all.
+
+A workbench's code repo also gets its own `.mcp.json` naming the `indusk` server, so the evaluator that runs there can score its first commit; one that exists is never rewritten.
 
 ## Migration from Dash0-only
 
 Projects initialized before 1.28 have only the `dash0` extension and route all OTel traffic to Dash0 regardless of profile. Migration happens automatically on `indusk update`:
 
 1. `indusk update` detects that `local-telemetry` is not in the enabled extensions set and treats it as a migration step.
-2. Writes the extension's `.env` component — redirects `development` profile to the daemon's traces address.
+2. Scaffolds the app's instrumentation where it has none (see [what a project is handed](#what-a-project-is-handed)); a file it did not write is left, with the newer version beside it.
 3. Registers the project with the daemon (auto-starts the daemon if needed).
 4. Upserts the `jaeger` MCP server entry in `.mcp.json`.
-5. Leaves `instrumentation.ts` unchanged — the OTel SDK reads the endpoint from env at boot, so no code changes are needed.
+5. Leaves an existing `instrumentation.ts` byte for byte.
 6. Leaves the `dash0` extension alone — both extensions coexist; the active profile (via ce) decides the endpoint.
 
 After `indusk update`, the first `next dev` / `pnpm dev` / equivalent in the `development` profile emits to the local daemon. Staging + production runs still emit to Dash0 unchanged.

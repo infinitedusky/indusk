@@ -34,7 +34,8 @@ function keyRange(head: string[], key: string): [number, number] | null {
 	return [start, end];
 }
 
-function replaceKey(text: string, key: string, lines: string[]): string {
+/** Replace `key`'s lines with `lines` (added at the end when the key is absent). */
+export function replaceKey(text: string, key: string, lines: string[]): string {
 	const s = split(text);
 	const range = keyRange(s.head, key);
 	if (range) s.head.splice(range[0], range[1] - range[0], ...lines);

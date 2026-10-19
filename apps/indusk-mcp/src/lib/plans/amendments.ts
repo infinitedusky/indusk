@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { basename, join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import matter from "gray-matter";
 import { fileAtRevision, git } from "../git.js";
 import { type ParsedBrief, parseBriefContract, sameSentence } from "../promises/brief-contract.js";
@@ -107,18 +107,24 @@ export async function amendmentsOf(folder: string): Promise<Amendment[]> {
 		throw new AmendmentsUnreadable(`${planDir} records an approved brief and has no brief.md`);
 	}
 	const plan = basename(planDir);
-	const root = resolve(planDir, "..", "..", "..");
+	const archived = basename(dirname(planDir)) === "archive";
+	const root = resolve(planDir, "..", "..", "..", ...(archived ? [".."] : []));
 	const top = await git(planDir, "rev-parse", "--show-toplevel").catch((err: Error) => {
 		throw new AmendmentsUnreadable(`${planDir} is not in a git checkout: ${err.message.trim()}`);
 	});
 	const sha = await approvalCommit(top, plan);
-	const approvedBrief = await fileAtRevision(top, sha, relative(top, briefFile)).catch(
-		(err: Error) => {
+	// promise: a-plan-is-found-in-the-archive — a plan archived after its
+	// approval had its brief at `.indusk/planning/<plan>/brief.md` then.
+	const unarchived = join(dirname(dirname(planDir)), plan, "brief.md");
+	const approvedBrief = await fileAtRevision(top, sha, relative(top, briefFile))
+		.catch((err: Error) =>
+			archived ? fileAtRevision(top, sha, relative(top, unarchived)) : Promise.reject(err),
+		)
+		.catch((err: Error) => {
 			throw new AmendmentsUnreadable(
 				`the brief at ${plan}'s approval commit ${sha.slice(0, 8)} cannot be read: ${err.message.trim()}`,
 			);
-		},
-	);
+		});
 	if (sha256(approvedBrief) !== recorded) {
 		throw new AmendmentsUnreadable(
 			`${plan}'s impl records approved_brief ${recorded.slice(0, 8)}, and the brief at its approval commit ${sha.slice(0, 8)} is another — what was approved cannot be told`,
