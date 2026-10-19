@@ -2,7 +2,8 @@ import { resolve } from "node:path";
 import { text } from "node:stream/consumers";
 import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
-import { clauseTestRunner } from "../../lib/promises/closing-inputs.js";
+import { clauseTestRunner, localSignalReader } from "../../lib/promises/closing-inputs.js";
+import { markClosing } from "../../lib/promises/closing-signal.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { confirmPlan } from "../../lib/promises/confirm.js";
 import {
@@ -299,7 +300,9 @@ export async function promisesConfirm(
 		codeRoot,
 		plan,
 		runTests: clauseTestRunner(projectRoot, codeRoot),
+		readSignals: localSignalReader(projectRoot),
 	});
+	await markClosing(projectRoot, plan, result);
 	if (!result.ok) {
 		for (const r of result.refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(

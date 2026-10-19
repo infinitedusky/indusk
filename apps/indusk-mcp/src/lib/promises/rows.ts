@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
+import { restsOnly } from "./clause-standing.js";
 import { planFolders } from "./plan-folder.js";
 import { findPromise, type PromiseEntry, parseFrontmatter } from "./registry.js";
 
@@ -231,7 +232,8 @@ export function rowProofs(
 		};
 		// A promise stated as clauses is refused by clause first: it names the gap precisely.
 		let refusal = clauseRefusal(promise, rows, resting, chain);
-		if (refusal === null) {
+		// A promise made only of resting clauses is proved by what it rests on, with no row of its own (mark-first A15).
+		if (refusal === null && !restsOnly(promise)) {
 			if (rows.length === 0) {
 				refusal = `${promise.name}: no test row of ${plan} names it — a promise is proven by a row whose For cell names it`;
 			} else if (open.length > 0) {

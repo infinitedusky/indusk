@@ -76,6 +76,15 @@ export function hasSignalClauses(entry: Pick<PromiseEntry, "clauses">): boolean 
 }
 
 /**
+ * A promise made only of clauses resting on other promises: it has the
+ * standing of those, and closes when they are in force with no row, test or
+ * code site of its own (mark-first ADR D4, A15).
+ */
+export function restsOnly(entry: Pick<PromiseEntry, "clauses">): boolean {
+	return (entry.clauses ?? []).length > 0 && !hasSignalClauses(entry);
+}
+
+/**
  * Whether telemetry is read for a promise: a behaviour promise, or any other
  * with clauses a signal can report (a clause is read whatever its promise's
  * kind). A retired promise is not.

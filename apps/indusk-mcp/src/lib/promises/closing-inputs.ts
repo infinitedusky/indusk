@@ -1,6 +1,16 @@
 import { execRunner, type Runner, runFiles } from "../tests/run-files.js";
 import { resolveTestCommand } from "../verify/red-tests.js";
-import type { ClauseTestRunner } from "./clause-proof.js";
+import type { ClauseReports, ClauseTestRunner, SignalReader } from "./clause-proof.js";
+import type { ClauseReport } from "./clause-standing.js";
+import { readPromises } from "./registry.js";
+import {
+	healthWindowMs,
+	JaegerUnreachable,
+	readPromiseMarks,
+	sourceAdvice,
+	WatcherBlind,
+} from "./sources.js";
+import type { MarkedSpansResult } from "./telemetry.js";
 
 /**
  * The real inputs closing and landing take (mark-first ADR D2), made at the
@@ -33,5 +43,47 @@ export function clauseTestRunner(
 			run,
 		});
 		return results.map((r) => ({ file: r.path, passed: r.passed }));
+	};
+}
+
+/**
+ * Asks the local daemon what each clause's signal reported, through the read
+ * `indusk promises status` makes (`readPromiseMarks`, source `local`, over the
+ * health window; a test run's spans already dropped by `parseMarkedSpan`). The
+ * daemon is read once per close, on the first promise asked. A daemon that is
+ * not running, or a watcher that is blind, is a failed read naming how to
+ * start it — never an empty one.
+ */
+export function localSignalReader(projectRoot: string): SignalReader {
+	let read: Promise<MarkedSpansResult | Error> | null = null;
+	const marks = (): Promise<MarkedSpansResult | Error> => {
+		if (read === null) {
+			const registry = readPromises(projectRoot);
+			if (!registry.ok) {
+				return Promise.resolve(new Error(`the promise registry cannot be read in ${projectRoot}`));
+			}
+			read = readPromiseMarks(projectRoot, registry.registry, {
+				source: "local",
+				sinceMs: healthWindowMs(projectRoot, registry.registry),
+			}).catch((err: unknown) =>
+				err instanceof JaegerUnreachable || err instanceof WatcherBlind
+					? new Error(`${err.message}. ${sourceAdvice("local", err)}`)
+					: (err as Error),
+			);
+		}
+		return read;
+	};
+	return async (promise): Promise<ClauseReports> => {
+		const result = await marks();
+		if (result instanceof Error) return { ok: false, reason: result.message };
+		const seen = result.byPromise.get(promise.name)?.byClause ?? {};
+		const byClause: Record<string, ClauseReport[]> = {};
+		for (const [clause, s] of Object.entries(seen)) {
+			byClause[clause] = [...s.violations, ...(s.lastUpheld ? [s.lastUpheld] : [])].map((m) => ({
+				outcome: m.outcome === "upheld" ? "upheld" : "broken",
+				at: m.at.toISOString(),
+			}));
+		}
+		return { ok: true, byClause, heartbeatOk: true };
 	};
 }
