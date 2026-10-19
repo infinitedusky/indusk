@@ -1,7 +1,7 @@
 ---
 title: "The admin knows the package root"
 date: 2026-10-19
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "39098b5e39510b2e3e1d2680ff5c09bf659cce5f193d622480c0df92a5ea6988"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T13:15:24.800Z"
 ---
 
 # The admin knows the package root
