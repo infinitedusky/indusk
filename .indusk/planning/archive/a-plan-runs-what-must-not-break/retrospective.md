@@ -60,3 +60,5 @@ change), 0 judged wrong by a human.
 - Trajectory rows: 5, all passing
 - The phase's test set: 9 files, 12 s
 - Falsification and cleanup skipped with reasons; audit run
+
+Landed on main at a489d4e84, 2026-10-18. Installed with `pnpm install:local`; nothing published.
