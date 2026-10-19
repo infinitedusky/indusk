@@ -162,6 +162,8 @@ until a person approves it again. Until a person approves the change, the app
 is held to the last approved version on the foundation and declarations as
 they are now, which `status` names.
 
+A `screens.json` can also list `exclude`: paths under a source that draw nothing, such as an app's server code and API routes. They are left out of the app's **interface** (the files a brief must answer for with a look or a reason) and nowhere else. `exclude` is outside the declarations hash, so adding one returns no approved mockup to proposed.
+
 An approval binds **what the person was shown**: Approve sends the hash of the
 mockup the page drew and of the foundation it drew it on, and a mockup or a
 foundation that changed since — on disk between the page's read and the
