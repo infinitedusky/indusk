@@ -169,7 +169,7 @@ export async function startBuild(
     .finally(() => {
       state.running = false;
       state.step = null;
-      releasePlace();
+      free();
     });
   return state;
 }

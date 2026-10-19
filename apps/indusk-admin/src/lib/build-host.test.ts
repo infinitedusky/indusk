@@ -167,20 +167,19 @@ describe("A12 — no planning run while a person's planning conversation is open
       (err: Error) => err,
     );
     expect(runs).toBe(0);
+    const stop = outcome instanceof Error ? null : outcome.stop;
     const text =
-      outcome instanceof Error ? outcome.message : (outcome.stop?.why ?? "");
+      outcome instanceof Error
+        ? outcome.message
+        : stop && "why" in stop
+          ? stop.why
+          : "";
     expect(text).toMatch(/planning/i);
   });
 
   it("A12 tells the planning conversation, in the planner skill, to stop once the admin is planning", () => {
     const skill = readFileSync(
-      join(
-        process.cwd(),
-        "..",
-        "indusk-mcp",
-        "skills",
-        "planner.md",
-      ),
+      join(process.cwd(), "..", "indusk-mcp", "skills", "planner.md"),
       "utf-8",
     );
     expect(skill).toMatch(/end (this|the) conversation here/i);
