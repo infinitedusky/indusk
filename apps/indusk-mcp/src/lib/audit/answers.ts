@@ -8,6 +8,8 @@ import { fencedLineMask } from "../impl-headings.js";
  * planning loop's state is built from it.
  *
  * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes
+ * promise: an-audit-concern-gets-a-solution — the reader that refuses an unanswered finding,
+ * a signal naming no clause, or an answer with no text.
  */
 
 /** What the post-build audit asks of the code, as the reader's headings. */

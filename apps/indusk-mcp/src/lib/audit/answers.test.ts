@@ -1,3 +1,7 @@
+// promise: a-plan-is-read-cold-before-approval
+/**
+ * promise: an-audit-concern-gets-a-solution — A2, A4, A10, A13, A25, A26.
+ */
 import { describe, expect, it } from "vitest";
 import {
 	AUDIT_QUESTIONS,

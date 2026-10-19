@@ -8,6 +8,7 @@ import { type BuildPlan, nextBuildStep, type StepOutcome } from "./next-step.js"
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A13.
  * promise: a-skip-reason-is-one-sentence — skip-reason-why A15, below.
+ * promise: an-audit-concern-gets-a-solution — A12.
  *
  * A build that cannot continue stops and says why, instead of trying again
  * without end. Three causes, from ADR D4: the step's session ended in an

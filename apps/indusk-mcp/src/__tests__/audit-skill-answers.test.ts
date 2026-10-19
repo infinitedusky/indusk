@@ -1,3 +1,4 @@
+// promise: a-plan-is-read-cold-before-approval
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -7,6 +8,7 @@ import { describe, expect, it } from "vitest";
  * retrospective skills as text, like planner-impl-summary-template.test.ts.
  *
  * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — A15.
+ * promise: an-audit-concern-gets-a-solution — A1, A3, A5, A9, A11.
  * clause: an-audit-concern-gets-a-solution/the-audit-finds — A1
  * clause: an-audit-concern-gets-a-solution/the-plan-answers — A3
  * clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person — A5

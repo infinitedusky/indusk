@@ -81,7 +81,7 @@ the build and planning loops.
 
 **Changes**
 
-- **`a-plan-is-audited-by-a-fresh-reader-before-it-closes`**. Now: when a plan's build phases close, before falsification, a reader that has not seen the building session reads the plan and writes what it finds to `audit.md` in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped. (Was: before the retrospective, after cleanup.)
+- **`a-plan-is-audited-by-a-fresh-reader-before-it-closes`**. When a plan's build phases close, before falsification, a reader that has not seen the building session reads the plan and writes what it finds to `audit.md` in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped.
 
 **Replaces**
 

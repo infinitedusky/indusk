@@ -1,3 +1,4 @@
+// promise: a-plan-is-read-cold-before-approval
 import { describe, expect, it } from "vitest";
 import { PLANNING_STEPS, planningStepRefusal } from "./step-env.js";
 

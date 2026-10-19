@@ -1,3 +1,4 @@
+// promise: a-plan-is-read-cold-before-approval
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { planReviewInputs } from "../lib/audit/inputs.js";
