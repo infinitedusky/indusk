@@ -264,7 +264,7 @@ export function changePromise(planRoot: string, input: ChangeInput): PromiseEntr
 		promise.owner === plan ? "" : ` Owned before by ${promise.owner}; ${plan} takes it over.`;
 	text = appendHistory(
 		text,
-		`- ${today(input.now ?? new Date())} — changed by ${plan}: ${reason}. It read: "${promise.statement}"${from}${clauseLines ? `; its clauses were ${clausesRead(promise)}` : ""}`,
+		`- ${today(input.now ?? new Date())} — changed by ${plan}: ${reason}. It read: "${promise.statement}"${clauseLines ? ` with the clauses ${clausesRead(promise)}` : ""}${from}`,
 	);
 	requireReadable(name, text);
 	writeFileSync(path, text);
