@@ -69,4 +69,4 @@ The audit is advisory; nothing gates on it. Each finding below is a scenario rea
 
 ## Landing
 
-Landed on main at <pending>, <pending>. (Recorded after the merge, Step 10.)
+Landed on main at ae8902361, 2026-10-18. Installed with `pnpm install:local`; nothing published (no release requested for this close; `indusk release` is the person's call).
