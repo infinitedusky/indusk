@@ -1,6 +1,9 @@
 import { approvePlan } from "@infinitedusky/indusk-mcp/plans";
 import { appendDecision } from "@infinitedusky/indusk-mcp/plans/history";
-import type { WaitingOn } from "@infinitedusky/indusk-mcp/plans/waiting";
+import {
+  WAITING_KINDS,
+  type WaitingOn,
+} from "@infinitedusky/indusk-mcp/plans/waiting";
 import type { NextRequest } from "next/server";
 import { startRelease } from "@/lib/build-host";
 import { answerDecision, type DecisionChoice } from "@/lib/decisions";
@@ -16,14 +19,6 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const WAITING_KINDS: WaitingOn[] = [
-  "question",
-  "approval",
-  "review",
-  "amendment",
-  "plan-review",
-];
 
 /**
  * Answer the decision a plan waits on (plan-cockpit, ADR decision 4):
@@ -63,7 +58,10 @@ export async function POST(
     );
   }
   const { project } = body;
-  if (body.on !== undefined && !WAITING_KINDS.includes(body.on as WaitingOn)) {
+  if (
+    body.on !== undefined &&
+    !(WAITING_KINDS as readonly string[]).includes(body.on)
+  ) {
     return refuse(400, `on is one of ${WAITING_KINDS.join(", ")}`);
   }
   const root = getProjectPath(project);

@@ -41,7 +41,15 @@ import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
  * promise: display-names-are-defined-once
  */
 
-export type WaitingOn = "question" | "approval" | "review" | "amendment" | "plan-review";
+export const WAITING_KINDS = [
+	"question",
+	"approval",
+	"review",
+	"amendment",
+	"plan-review",
+] as const;
+
+export type WaitingOn = (typeof WAITING_KINDS)[number];
 
 export interface WaitingSession {
 	plan: string;

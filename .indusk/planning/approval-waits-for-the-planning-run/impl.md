@@ -556,6 +556,53 @@ This phase tests the finished change against two things a person does with the n
 
   </details>
 
+### Build Phase 4: Cleanup — one list of the waiting kinds
+
+**Tier**: med — the work step's default
+
+This plan added a fifth kind of decision a plan can wait on, and the admin's decision route now keeps its own hand-written list of the five kinds to check what a card sends. The package's type already names the kinds, and the card's heading table is checked against it by the compiler, but the route's list is not, so a sixth kind would be refused by the route with no warning. Once the phase closes, the package holds the one list, the type is drawn from it, and the route reads it. Every other changed file was reviewed and stays as it is; the reasons are below.
+
+- [x] Make the package's list of waiting kinds the one list, and have the decision route read it instead of its own copy.
+  <details><summary>Technical</summary>
+
+  In `apps/indusk-mcp/src/lib/plans/waiting.ts` export `const WAITING_KINDS = ["question", "approval", "review", "amendment", "plan-review"] as const` and define `WaitingOn = (typeof WAITING_KINDS)[number]`. In `apps/indusk-admin/src/app/api/plans/[name]/decision/route.ts` delete the local `WAITING_KINDS` array and import the package's (a value import from `@infinitedusky/indusk-mcp/plans/waiting`, the module the route already takes the type from). Basis: the rule of three is not met, but the copy sits across a package boundary where the compiler cannot see it, and `DecisionCard`'s `Record<Waiting["on"], string>` already shows the exhaustive-by-type pattern wanted here. Rebuild the package so the admin reads it.
+
+  </details>
+- [x] Leave the plan-review reader, the planning-run wiring, the decision answering code and the card as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed, left as-is, none over the 400-line cap (largest: `waiting.ts` 265, `decisions.ts` 261): `plans/plan-review.ts` (35 lines, one reader both the run and the offer share — already the extraction); `waiting.ts` (the `planReview` and `planningGoing` units each do one job and sit beside `approval` and `askedOf`, the siblings they are read with); `build/read-planning.ts` (`readReview` parses the review text twice, once for the dismissals and once through `planReviewState`; both are small string reads of a short file, and routing around `planReviewState` would give the run and the offer two ways to decide "answered", which is what this plan removed); `decisions.ts` (`shown` check and the plan-review words are two short branches in a function already organised by kind); `decisions-reader.ts` and `plan-actions.ts` (tiny additions); `DecisionCard.tsx` (one table row and one body field); the page files (one prop each). Test files were not decomposed: they follow the one-file-per-subject layout around them.
+
+  </details>
+
+#### Build Phase 4 Verification
+
+- [x] Behaviour is unchanged: the route still refuses a kind outside the list, and the waiting and decision tests stay green.
+  <details><summary>Technical</summary>
+
+  (no new rows — structure-preserving; A22–A25 and the route's 400 case in the existing tests are the coverage.) `pnpm --filter @infinitedusky/indusk-mcp build`; `pnpm --filter indusk-admin exec vitest run src/lib/decisions.test.ts`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/waiting.test.ts`; `pnpm exec tsc --noEmit -p apps/indusk-admin` and `-p apps/indusk-mcp` exit 0.
+
+  </details>
+
+#### Build Phase 4 Context
+
+- [x] (none needed — the list moves between two files with no new rule; the admin's context file already says an answer names its decision)
+  <details><summary>Technical</summary>
+
+  No `CLAUDE.md` edit: internal decomposition, no convention added.
+
+  </details>
+
+#### Build Phase 4 Document
+
+- [x] (none needed — the public surface and the docs pages are unchanged)
+  <details><summary>Technical</summary>
+
+  The new export is internal to the package's `plans/waiting` module; no docs page names the route's list.
+
+  </details>
+
+
 ## Files Affected
 
 | File | Change |
@@ -609,6 +656,7 @@ This phase tests the finished change against two things a person does with the n
 - Build Phase 1 Shape review (unattended): reviewed `plans/plan-review.ts`, the `waiting.ts` additions and `read-planning.ts`'s change — nothing found; each unit has one job and the run's reader now shares the module.
 - Build Phase 2 (unattended) decisions: (1) every `*.test.tsx` browser-project file that reads `render`'s `container` (cockpit-nav, DecisionCard's older cases, nav/layout files) fails in this environment before and after this plan's changes — verified by running `cockpit-nav.test.tsx` and `DecisionCard.test.tsx` in the main checkout (19 of 19 and 6 of 8 red there); they are not this plan's regressions, and A20 (written to wait for the card) passes. (2) The verification item "the live check ... is written down for after landing" is ticked because the procedure is written in row A16's Test cell and the check itself is a post-landing step, not one a person must do during this build; A16 stays `skipped`. (3) `indusk looks lint admin` exits 0 (its `needs-a-story` lines are the earlier `plan-looks` mockups', not this plan's) and `looks check admin` reports nothing broken, only `unchecked … 404` for fixture paths. (4) Biome `--write` on the admin reformatted five unrelated files; they were restored.
 - Build Phase 3 (unattended): A22–A25 authored with the fixes in one pass (tests and fixes written together, then run; A23's body assertion and the three older posted-body assertions now include `on`). `DecisionCard.test.tsx` still has the 7 render-timing failures that predate this plan; A23 (waits for the card) passes. `route.ts` returns 400 for an `on` outside the five kinds; an absent `on` is accepted (older clients), which only skips the stale-card check. A25 passes: a trailing `.` is stripped once from a `cannot-continue` reason.
+- Build Phase 4 (unattended): `WAITING_KINDS` is now exported from `plans/waiting` and `WaitingOn` is drawn from it; the decision route imports it. Waiting (24) and decision (18) tests, both type-checks and biome pass. The Context and Document items stay `(none needed — …)` with the reasons the phase already gave.
 - Live check result (A16) goes here when it is run after landing.
 - Falsification (unattended, 2026-10-19), what was looked at and decided:
   - **Authored** (Build Phase 3): a stale plan-review card's Accept approving the plan (A22, A23); a running agent told only the button's words (A24); the `wait-for-looks` wording and a doubled full stop (A25, the audit's hand-off).
