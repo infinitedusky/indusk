@@ -135,8 +135,13 @@ vi.mock("@infinitedusky/indusk-mcp/plans", () => ({
   acceptPlan: async () => {},
   bringTrunkIntoPlan: async () => undefined,
 }));
+/** What finding the plan's worktree waits on; resolved at once unless a test holds it. */
+let whereHold: Promise<void> = Promise.resolve();
 vi.mock("./session-host", () => ({
-  planLocation: async () => ({ root: "/p", cwd: "/p" }),
+  planLocation: async () => {
+    await whereHold;
+    return { root: "/p", cwd: "/p" };
+  },
   sessionManager: () => ({
     forPlan: () => undefined,
     running: () => [],
@@ -187,6 +192,7 @@ beforeEach(() => {
   onMain = true;
   runs = { build: 0, planning: 0, release: 0 };
   handed = { build: null, planning: null };
+  whereHold = Promise.resolve();
   stepHold = new Promise((resolve) => {
     endStep = () => resolve({ error: null });
   });
@@ -437,5 +443,39 @@ describe("A57 — a dead run of a plan not yet accepted never starts the release
     await startBuild(PROJECT, PLAN);
     expect(runs.release).toBe(0);
     expect(runs.build).toBe(1);
+  });
+});
+
+describe("A96 — a just-pressed build is running from the moment it is pressed", () => {
+  it("A96 while it is still finding its worktree it reads running, and a second press is refused", async () => {
+    let found: () => void = () => {};
+    whereHold = new Promise((resolve) => {
+      found = resolve;
+    });
+    const first = startBuild(PROJECT, PLAN);
+    // Before the first step session spawns: no process recorded yet.
+    await vi.waitFor(() => expect(readRecord("build")).not.toBeNull());
+    expect(buildState(PROJECT, PLAN)?.running).toBe(true);
+    expect(buildState(PROJECT, PLAN)?.stop ?? null).toBeNull();
+    await expect(startBuild(PROJECT, PLAN)).rejects.toThrow(/already building/);
+    found();
+    await first;
+    expect(runs.build).toBe(1);
+  });
+
+  it("A96 a build whose worktree cannot be found frees its hold and reads stopped with why", async () => {
+    let fail: (e: Error) => void = () => {};
+    whereHold = new Promise((_resolve, reject) => {
+      fail = reject;
+    });
+    const first = startBuild(PROJECT, PLAN);
+    await vi.waitFor(() => expect(readRecord("build")).not.toBeNull());
+    fail(new Error("no worktree for keeps-a-record"));
+    await expect(first).rejects.toThrow(/no worktree/);
+    expect(buildState(PROJECT, PLAN)?.running).toBe(false);
+    whereHold = Promise.resolve();
+    await expect(startBuild(PROJECT, PLAN)).resolves.toMatchObject({
+      running: true,
+    });
   });
 });
