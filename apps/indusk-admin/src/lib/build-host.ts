@@ -312,6 +312,13 @@ export async function startPlanning(
   let free: (() => void) | null = null;
   let where: Awaited<ReturnType<typeof planLocation>>;
   try {
+    if (sessionManager().forPlan(project, plan, "planning")) {
+      release();
+      return declined({
+        step: "cannot-continue",
+        why: `a planning conversation is open on ${plan}: end it, and the run starts at the next ask`,
+      });
+    }
     const read = await readPlanningState(root, plan);
     if (read.briefStatus !== "accepted") {
       release();
