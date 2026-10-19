@@ -165,7 +165,7 @@ async function pass(
 	} catch (err) {
 		return failed(result, mark, err);
 	}
-	await markClauseIncidents(planRoot, watched.changes, heardMarks, deps.markIncident);
+	await markClauseIncidents(planRoot, watched.changes, deps.markIncident);
 	result.mark = { outcome: "upheld" };
 	mark(result.mark);
 	return result;
@@ -173,20 +173,18 @@ async function pass(
 
 /**
  * The signal of `a-break-names-its-clause`: one verdict for each incident this
- * pass opened from a break that named a clause. An extended incident was
- * named when it opened; a break naming no clause has nothing to name.
+ * pass opened from a break that named a clause, judged by that incident's own
+ * clause (the recorder opens one incident per clause). An extended incident
+ * was named when it opened; a break naming no clause has nothing to name.
  */
 async function markClauseIncidents(
 	planRoot: string,
 	changes: WatchChange[],
-	marks: MarkedSpansResult | null,
 	write: RecordDeps["markIncident"] = markIncidentVerdict,
 ): Promise<void> {
 	for (const c of changes) {
-		if (c.kind !== "opened") continue;
-		const spans = marks?.byPromise.get(c.promise)?.violations ?? [];
-		const clause = spans.find((s) => c.traces.includes(s.traceId) && s.clause)?.clause;
-		if (!clause) continue;
+		if (c.kind !== "opened" || !c.clause) continue;
+		const clause = c.clause;
 		try {
 			const verdict = incidentVerdict(planRoot, c.id, c.promise, clause);
 			if (verdict) await write(verdict);

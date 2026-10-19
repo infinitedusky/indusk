@@ -72,7 +72,7 @@ function openedIncident(span: MarkedSpan = violation): string {
 	if (!read.ok) throw new Error(JSON.stringify(read));
 	const promise = read.registry.promises.find((p) => p.name === PROMISE);
 	if (!promise) throw new Error("fixture promise missing");
-	const change = recordViolations(read.registry, promise, [span], "deployed", new Date());
+	const [change] = recordViolations(read.registry, promise, [span], "deployed", new Date());
 	if (!change) throw new Error("nothing was recorded");
 	return readFileSync(
 		join(fixture.planRoot, ".indusk", "promises", "incidents", `${change.id}.md`),

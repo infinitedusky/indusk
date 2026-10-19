@@ -162,7 +162,7 @@ describe("A28 — a deployed system cannot write into a plan document", () => {
 		if (!read.ok) throw new Error("fixture registry did not parse before the write");
 		const promise = read.registry.promises.find((p) => p.name === PROMISE);
 		if (!promise) throw new Error("fixture promise missing");
-		const change = recordViolations(read.registry, promise, [span], "deployed", new Date());
+		const [change] = recordViolations(read.registry, promise, [span], "deployed", new Date());
 		if (!change) throw new Error("nothing was recorded");
 		return join(fixture.planRoot, ".indusk", "promises", "incidents", `${change.id}.md`);
 	}

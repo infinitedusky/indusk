@@ -26,6 +26,8 @@ export interface WatchChange {
 	kind: IncidentChange["kind"] | "unowned";
 	traces: string[];
 	promise: string;
+	/** The clause the incident is keyed by, when its break named one. */
+	clause?: string;
 	owner: string;
 	reopen: ReopenResult;
 }
@@ -127,11 +129,14 @@ export async function watchPromises(
 		);
 		if (violations.length === 0 && open.length === 0) continue;
 		const owner = await ownerReopener(planRoot, promise);
-		const change =
+		// One change per clause that broke (an incident is keyed by
+		// `promise/clause`); each reaches the owner. An id opened earlier in
+		// this pass is avoided by the next, as the owner's phases are.
+		const recorded =
 			violations.length > 0
 				? recordViolations(read.registry, promise, violations, opts.source, now, owner.taken())
-				: null;
-		if (change) {
+				: [];
+		for (const change of recorded) {
 			const reopen = owner.reopen(change.id, change.kind);
 			changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 		}
@@ -140,8 +145,9 @@ export async function watchPromises(
 		// it was left unowned by a reopen that failed then. Retry it every run:
 		// a quiet window must still repair it, or say it cannot (A6).
 		const owned = owner.taken();
+		const touched = new Set(recorded.map((c) => c.id));
 		for (const incident of open) {
-			if (incident.id === change?.id || owned.has(incident.id)) continue;
+			if (touched.has(incident.id) || owned.has(incident.id)) continue;
 			changes.push({
 				id: incident.id,
 				kind: "unowned",

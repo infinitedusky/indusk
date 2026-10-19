@@ -65,7 +65,7 @@ describe("A7 — a broken clause is broken, and its incident names it", () => {
 		if (!read.ok) throw new Error(JSON.stringify(read));
 		const promise = read.registry.promises.find((p) => p.name === NAME);
 		if (!promise) throw new Error("fixture promise missing");
-		const change = recordViolations(read.registry, promise, [violation], "deployed", new Date());
+		const [change] = recordViolations(read.registry, promise, [violation], "deployed", new Date());
 		if (!change) throw new Error("nothing was recorded");
 		const text = readFileSync(
 			join(fixture.planRoot, ".indusk", "promises", "incidents", `${change.id}.md`),

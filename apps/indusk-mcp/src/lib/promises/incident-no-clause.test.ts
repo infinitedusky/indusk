@@ -73,7 +73,7 @@ describe("A27 — a promise with no clauses opens an incident that names its tes
 			symptom: "seat 4 held by two players",
 			environment: "production",
 		};
-		const change = recordViolations(read.registry, promise, [violation], "deployed", new Date());
+		const [change] = recordViolations(read.registry, promise, [violation], "deployed", new Date());
 		if (!change) throw new Error("nothing was recorded");
 		const text = readFileSync(
 			join(fixture.planRoot, ".indusk", "promises", "incidents", `${change.id}.md`),
