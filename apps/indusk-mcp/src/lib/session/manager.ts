@@ -60,6 +60,12 @@ export interface ManagedStart extends SessionOptions {
 	confined?: boolean;
 	/** Told of each request a confined session was refused, with the reason it was given. */
 	onRefused?: (ev: PermissionEvent, message: string) => void;
+	/**
+	 * Told once the session has ended and its record is gone, however it ended:
+	 * what a caller asks of "this plan has no such session now" (a planning
+	 * conversation's end lets the unattended planning run start).
+	 */
+	onEnd?: () => void;
 }
 
 interface Held {
@@ -170,6 +176,11 @@ export class SessionManager {
 		session.done.then(() => {
 			this.held.delete(id);
 			this.write();
+			try {
+				opts.onEnd?.();
+			} catch {
+				// A caller's reaction to the end never undoes the end.
+			}
 		});
 		return { id, session };
 	}

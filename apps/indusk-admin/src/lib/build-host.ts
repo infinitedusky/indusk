@@ -262,6 +262,25 @@ export function planningState(
   return plannings().get(key(project, plan)) ?? null;
 }
 
+/**
+ * A planning conversation on `plan` has ended: ask for its planning run. The
+ * brief is normally accepted from inside that conversation, where the run is
+ * held back while it is open, so its end is the next moment to ask. Asking is
+ * safe at any end — `startPlanning` starts nothing unless the brief is
+ * accepted, its looks approved and a document still to write — so a decline or
+ * a refusal is not this caller's to report.
+ */
+export async function planningConversationEnded(
+  project: string,
+  plan: string,
+): Promise<PlanningRunState | null> {
+  try {
+    return await startPlanning(project, plan);
+  } catch {
+    return null;
+  }
+}
+
 const declined = (stop: PlanningStop): PlanningRunState => ({
   started: false,
   running: false,
@@ -316,7 +335,7 @@ export async function startPlanning(
       release();
       return declined({
         step: "cannot-continue",
-        why: `a planning conversation is open on ${plan}: end it, and the run starts at the next ask`,
+        why: `a planning conversation is open on ${plan}: the run starts when it ends`,
       });
     }
     const read = await readPlanningState(root, plan);

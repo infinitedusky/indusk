@@ -118,6 +118,33 @@ describe("A21 — a session can be stopped, and is recorded", () => {
 		expect(JSON.parse(readFileSync(record, "utf-8")).sessions).toEqual([]);
 	});
 
+	it("a session's end is announced once its record is gone, however it ended", async () => {
+		const { m, record } = manager();
+		const seen: unknown[] = [];
+		const { session } = m.start({
+			...planning,
+			...meta,
+			onEnd: () => seen.push(JSON.parse(readFileSync(record, "utf-8")).sessions),
+		});
+		await session.stop();
+		await new Promise((r) => setImmediate(r));
+		expect(seen).toEqual([[]]);
+	});
+
+	it("an onEnd that throws leaves the session ended", async () => {
+		const { m, record } = manager();
+		const { session } = m.start({
+			...planning,
+			...meta,
+			onEnd: () => {
+				throw new Error("boom");
+			},
+		});
+		await session.stop();
+		await new Promise((r) => setImmediate(r));
+		expect(JSON.parse(readFileSync(record, "utf-8")).sessions).toEqual([]);
+	});
+
 	it("stopAll ends every session it holds", async () => {
 		const { m, fake } = manager();
 		m.start({ ...planning, ...meta });

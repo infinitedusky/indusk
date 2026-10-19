@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { planningConversationEnded } from "@/lib/build-host";
 import {
   adminOnly,
   planLocation,
@@ -79,6 +80,14 @@ export async function POST(request: NextRequest): Promise<Response> {
       project: body.project,
       plan: body.plan,
       onEvent: () => {},
+      // The brief is accepted from inside a planning conversation, where the
+      // planning run is held back; the conversation's end asks for it.
+      ...(body.kind === "planning"
+        ? {
+            onEnd: () =>
+              void planningConversationEnded(body.project, body.plan),
+          }
+        : {}),
     });
     return Response.json(
       { id, pid: session.pid, cwd: where.cwd },
