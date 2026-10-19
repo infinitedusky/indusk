@@ -72,6 +72,7 @@ vi.mock("./session-host", () => ({
 }));
 vi.mock("./registry-client", () => ({ getProjectPath: () => "/p" }));
 
+import * as host from "./build-host";
 import { startBuild, startPlanning } from "./build-host";
 
 const PROJECT = "seats";
@@ -184,5 +185,42 @@ describe("A12 — no planning run while a person's planning conversation is open
     );
     expect(skill).toMatch(/end (this|the) conversation here/i);
     expect(skill).toMatch(/admin[^\n]*(writes|is writing|plans)/i);
+  });
+});
+
+describe("A19 — the end of a planning conversation asks for the planning run", () => {
+  const ended = () =>
+    (
+      host as unknown as {
+        planningConversationEnded?: (
+          project: string,
+          plan: string,
+        ) => Promise<unknown>;
+      }
+    ).planningConversationEnded;
+
+  it("A19 is a function the sessions route can hand the manager as a session's end", () => {
+    expect(typeof ended()).toBe("function");
+  });
+
+  it("A19 starts the run for an accepted brief whose looks are all approved", async () => {
+    await ended()?.(PROJECT, PLAN);
+    expect(runs).toBe(1);
+  });
+
+  it("A19 starts nothing for a draft brief or a look still unapproved", async () => {
+    held.briefStatus = "draft";
+    await ended()?.(PROJECT, PLAN);
+    held.briefStatus = "accepted";
+    held.unapprovedLooks = ["seat-picker is still proposed"];
+    await ended()?.(PROJECT, PLAN);
+    expect(typeof ended()).toBe("function");
+    expect(runs).toBe(0);
+  });
+
+  it("A19 never throws when the ask is declined or refused", async () => {
+    expect(typeof ended()).toBe("function");
+    await startPlanning(PROJECT, PLAN);
+    await expect(ended()?.(PROJECT, PLAN)).resolves.not.toThrow();
   });
 });
