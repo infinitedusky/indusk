@@ -235,11 +235,12 @@ function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<Releas
 	}
 }
 
+/** In the order they run: the audit runs when the build phases close, before falsification. */
 const RELEASE_STEPS: readonly ReleaseStepName[] = [
 	"Build",
+	"Audit",
 	"Falsify",
 	"Cleanup",
-	"Audit",
 	"Review",
 	"Release",
 ];
