@@ -146,8 +146,8 @@ kind (`behaviour`, `state` or `structure`). The agent writes each to the
 registry with `indusk promises declare` when you accept the brief; nobody
 types a registry file. Accepting is `indusk plans accept-brief <plan>`: it runs the
 contract check, refuses with its message if the brief and the registry disagree,
-and otherwise sets the brief accepted, then asks the running admin to write the rest
-of the plan. One you then drop or rename is taken back with
+and otherwise brings main into the plan's branch, so the plan is written against current code (a conflict is refused, naming the files, with nothing changed), sets the brief accepted, then asks the running admin to write the rest
+of the plan. The admin's planning start brings main in too, so a brief accepted another way is still planned on current main. One you then drop or rename is taken back with
 `indusk promises withdraw`. A promise starts `declared` and becomes `enforced` when the
 plan closes with a passing test that names it.
 
