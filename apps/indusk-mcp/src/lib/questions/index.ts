@@ -3,10 +3,11 @@
  * runner, the sweep and the admin.
  */
 
-export { answersNote, applyAnswer, untold } from "./answer.js";
+export { answerQuestionRecord, answersNote, applyAnswer, untold } from "./answer.js";
 export { type AskOutcome, askDecision } from "./ask.js";
 export { changesAgreed, effectiveCost } from "./cost.js";
 export { dueAt, isDue, type QuestionWait, readQuestionWait } from "./deadline.js";
+export { type FollowOn, followOnName, openFollowOn, openFollowOnOnTrunk } from "./follow-on.js";
 export { nextQuestionId, readQuestions, recordQuestion } from "./history.js";
 export {
 	CHANGES,
