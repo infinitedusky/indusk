@@ -5,7 +5,6 @@ import {
 	type ShortenReason,
 	type StepOutcome,
 } from "./next-step.js";
-import type { PlanningStep } from "./step-env.js";
 
 /**
  * An unattended build (admin-plan-authoring, ADR D4, D7). After every step
@@ -22,7 +21,6 @@ import type { PlanningStep } from "./step-env.js";
  */
 
 export type BuildStepName =
-	| PlanningStep
 	| "work"
 	| "falsify"
 	| "cleanup"

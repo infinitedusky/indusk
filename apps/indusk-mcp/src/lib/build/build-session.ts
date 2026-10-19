@@ -19,10 +19,13 @@ import { BUILD_STEP_ENV, type PlanningStep } from "./step-env.js";
  * are; any other failure is the step's error.
  */
 
+/** Every step a session can run: a build's, or a planning run's. */
+export type SessionStepName = BuildStepName | PlanningStep;
+
 export const GATE_POLICY_FOR_BUILDS = { INDUSK_GATE_POLICY: "auto" } as const;
 
 /** A step's environment: unattended, and marked as a build step unless it is the release (A35). */
-export function stepEnv(step: BuildStepName): Record<string, string> {
+export function stepEnv(step: SessionStepName): Record<string, string> {
 	return {
 		...GATE_POLICY_FOR_BUILDS,
 		...(step === "retrospective" ? {} : { [BUILD_STEP_ENV]: step }),
@@ -33,7 +36,7 @@ const UNATTENDED =
 	"This build runs unattended (INDUSK_GATE_POLICY=auto): nobody will answer a question. Decide on your own judgement and record each decision and its reason in the plan. Skip a gate item only as `(none needed — <why>)`; the person reviewing the build reads every skip.";
 
 /** What each step asks for. The runner decides which step; this only words it. */
-export function stepPrompt(step: BuildStepName, plan: string, reason?: ShortenReason): string {
+export function stepPrompt(step: SessionStepName, plan: string, reason?: ShortenReason): string {
 	switch (step) {
 		case "work":
 			return `/work ${plan}\n\n${UNATTENDED} Work the plan's open phases in order until every one is closed, then stop. Do not run /falsify, /cleanup, /audit or /retrospective.`;
@@ -116,7 +119,7 @@ export interface BuildSessionOptions {
 
 /** Run one step to its end. `error` is null when the session finished its work. */
 export async function runStepSession(
-	step: BuildStepName,
+	step: SessionStepName,
 	opts: BuildSessionOptions,
 ): Promise<{ error: string | null }> {
 	const delays =
@@ -132,7 +135,7 @@ export async function runStepSession(
 }
 
 async function oneSession(
-	step: BuildStepName,
+	step: SessionStepName,
 	opts: BuildSessionOptions,
 ): Promise<{ error: string | null; rateLimited: boolean }> {
 	let result: Extract<StartedEvent, { type: "result" }> | undefined;

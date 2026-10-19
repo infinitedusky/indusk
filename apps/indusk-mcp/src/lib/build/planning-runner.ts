@@ -4,7 +4,7 @@ import {
 	type PlanningState,
 } from "./next-planning-step.js";
 import type { StepOutcome } from "./next-step.js";
-import type { PlanningStep } from "./step-env.js";
+import { PLANNING_STEPS, type PlanningStep } from "./step-env.js";
 
 /**
  * An unattended planning run (a-brief-is-planned-unasked, ADR decision 4),
@@ -31,10 +31,8 @@ export interface PlanningRunnerDeps {
 /** Every answer that is not a document to write ends the run. */
 export type PlanningStop = Exclude<PlanningDecision, { step: PlanningStep }>;
 
-const WRITES: readonly string[] = ["plan-test-plan", "plan-adr", "plan-impl"];
-
 function isWrite(d: PlanningDecision): d is { step: PlanningStep } {
-	return WRITES.includes(d.step);
+	return (PLANNING_STEPS as readonly string[]).includes(d.step);
 }
 
 export async function runPlanning(deps: PlanningRunnerDeps): Promise<PlanningStop> {
