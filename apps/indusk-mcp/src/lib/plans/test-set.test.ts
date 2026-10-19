@@ -44,7 +44,10 @@ it("T1 a test phase and a build phase of the same number are different phases", 
 		row("T1", "Test Phase 1", ["t.test.ts"]),
 		row("T2", "Build Phase 1", ["b.test.ts"]),
 	];
-	const set = planTestSet({ ...reads, rows: mixed }, { phase: phase("Build Phase 1") });
+	const set = planTestSet(
+		{ ...reads, rows: mixed, mustNotBreak: [] },
+		{ phase: phase("Build Phase 1") },
+	);
 	expect(set.files.map((f) => f.path)).toEqual(["b.test.ts"]);
 });
 
@@ -101,7 +104,10 @@ it("T2 a file two reasons name is in the set once", () => {
 
 it("T1 a row's manual reference is listed as manual, not run", () => {
 	const manual = [row("T9", "Build Phase 1", ["manual: signed off by Sandy"])];
-	const set = planTestSet({ ...reads, rows: manual }, { phase: phase("Build Phase 1") });
+	const set = planTestSet(
+		{ ...reads, rows: manual, mustNotBreak: [] },
+		{ phase: phase("Build Phase 1") },
+	);
 	expect(set.files).toEqual([]);
 	expect(set.manual).toEqual(["T9: signed off by Sandy"]);
 });
