@@ -218,3 +218,18 @@ export async function startRelease(
     });
   return state;
 }
+
+/** A planning run's state; a stub until the host starts one (a-brief-is-planned-unasked). */
+export interface PlanningRunState {
+  started: boolean;
+  running: boolean;
+  step: string | null;
+  stop: { step: string; why?: string } | null;
+}
+
+export async function startPlanning(
+  _project: string,
+  _plan: string,
+): Promise<PlanningRunState> {
+  return { started: false, running: false, step: null, stop: null };
+}
