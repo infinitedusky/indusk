@@ -213,9 +213,9 @@ describe("A15 — a check that could not run is not an impl that failed", () => 
 			{ status: 1, stderr: "Error: Cannot find module validate-impl-structure.js" },
 			{ status: null, signal: "SIGTERM" },
 		]) {
-			await expect(
-				readPlanningState(root, PLAN, fakes({ runHook: () => broken })),
-			).rejects.toThrow(PlanningUnreadable);
+			await expect(readPlanningState(root, PLAN, fakes({ runHook: () => broken }))).rejects.toThrow(
+				PlanningUnreadable,
+			);
 		}
 	});
 

@@ -17,6 +17,8 @@ import type { PlanningStep } from "./step-env.js";
 export interface PlanningDocument {
 	exists: boolean;
 	ok: boolean;
+	/** What the document's check said when it refused it, to carry into the run's stop. */
+	refusal?: string;
 }
 
 export interface PlanningState {
@@ -50,7 +52,11 @@ export function nextPlanningStep(
 		return { step: "cannot-continue", why: `the last step's session failed: ${last.error}` };
 	if (state.blocker) return { step: "cannot-continue", why: `a blocker: ${state.blocker}` };
 	if (last && previous && !last.progressed && !previous.progressed) {
-		return { step: "cannot-continue", why: "two steps in a row made no progress" };
+		const refusal = state.documents.impl.refusal;
+		return {
+			step: "cannot-continue",
+			why: `two steps in a row made no progress${refusal ? `; the impl check said: ${refusal}` : ""}`,
+		};
 	}
 	if (state.implStatus !== null && state.implStatus !== "draft") {
 		return {

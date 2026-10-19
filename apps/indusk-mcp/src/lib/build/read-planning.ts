@@ -39,12 +39,24 @@ export interface HookInput {
 	cwd: string;
 }
 
+/**
+ * What running the impl hook gave. Exit 0 allows and exit 2 refuses, with the
+ * reason on stderr; anything else (a spawn error, a signal or timeout, node
+ * failing to load the hook) means the check did not run.
+ */
+export interface HookResult {
+	status: number | null;
+	stderr?: string;
+	error?: string;
+	signal?: string | null;
+}
+
 export interface PlanningReadDeps {
 	/** Where the plan's checkout is, and its folder in it. */
 	locate: (anyCheckout: string, plan: string) => Promise<{ root: string; dir: string | null }>;
 	contract: (root: string, plan: string) => ContractResult;
 	/** Run the shipped impl hook on a write; `status` is its exit code (0 allows). */
-	runHook: (input: HookInput) => { status: number | null };
+	runHook: (input: HookInput) => HookResult;
 	unapprovedLooks: (root: string, briefText: string) => Promise<string[]>;
 }
 
@@ -77,7 +89,7 @@ export const realPlanningReads: PlanningReadDeps = {
 			// The policy the planning session wrote the impl under, or its skips read as failures.
 			env: { ...process.env, ...GATE_POLICY_FOR_BUILDS, INDUSK_SKIP_UPDATE_CHECK: "1" },
 		});
-		return { status: r.status };
+		return { status: r.status, stderr: r.stderr, error: r.error?.message, signal: r.signal };
 	},
 	unapprovedLooks: unapprovedMockups,
 };
@@ -93,6 +105,34 @@ function textOf(dir: string | null, file: string): string | null {
 /** A `blocker: <what>` line a planning step wrote into a document. */
 function blockerIn(text: string | null): string | null {
 	return text?.match(/^blocker:\s+(\S.*)$/m)?.[1].trim() ?? null;
+}
+
+/**
+ * The impl's structure check. A check that refused keeps its words; one that
+ * could not run is not a refusal and ends the read (lesson
+ * `detectors-must-distinguish-could-not-check-from-checked-and-failed`).
+ */
+function judgeImpl(
+	dir: string,
+	root: string,
+	impl: string,
+	deps: PlanningReadDeps,
+): PlanningDocument {
+	const ran = deps.runHook({
+		tool_name: "Write",
+		tool_input: { file_path: join(dir, "impl.md"), content: impl },
+		cwd: root,
+	});
+	if (ran.error || ran.signal || (ran.status !== 0 && ran.status !== 2)) {
+		const why = ran.error ?? (ran.signal ? `killed by ${ran.signal}` : `exit ${ran.status}`);
+		const said = ran.stderr?.trim();
+		throw new PlanningUnreadable(
+			`the impl's structure check could not run (${why})${said ? `: ${said}` : ""}`,
+		);
+	}
+	if (ran.status === 0) return { exists: true, ok: true };
+	const refusal = ran.stderr?.trim();
+	return { exists: true, ok: false, ...(refusal ? { refusal } : {}) };
 }
 
 export async function readPlanningState(
@@ -123,18 +163,7 @@ export async function readPlanningState(
 		!contract.ok && contract.refusals.some((r) => /(^|\/)test-plan\.md$/.test(r.file));
 	const standing = (text: string | null): PlanningDocument =>
 		text === null ? ABSENT : { exists: true, ok: text.trim() !== "" };
-	const implDocument: PlanningDocument =
-		impl === null
-			? ABSENT
-			: {
-					exists: true,
-					ok:
-						deps.runHook({
-							tool_name: "Write",
-							tool_input: { file_path: join(dir, "impl.md"), content: impl },
-							cwd: root,
-						}).status === 0,
-				};
+	const implDocument = impl === null ? ABSENT : judgeImpl(dir, root, impl, deps);
 
 	const status = impl === null ? undefined : matter(impl).data.status;
 	const briefStatus = brief === null ? undefined : matter(brief).data.status;
