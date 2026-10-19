@@ -1,6 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
 	DURATION_FILE,
@@ -72,8 +73,7 @@ describe("the everyday suite's duration record", () => {
 			{
 				pid: 11,
 				ppid: 10,
-				command:
-					"node apps/indusk-mcp/scripts/with-daemon-guard.js --record-duration",
+				command: "node apps/indusk-mcp/scripts/with-daemon-guard.js --record-duration",
 			},
 			{ pid: 12, ppid: 11, command: "node /repo/node_modules/vitest/vitest.mjs run" },
 			{
@@ -88,5 +88,16 @@ describe("the everyday suite's duration record", () => {
 			"the evaluator's run and its worker",
 		).toEqual([12, 20, 21]);
 		expect(otherTestRuns(ps.slice(0, 4), 12), "this run, seen from inside it").toEqual([]);
+	});
+});
+
+describe("A31 — the suite-speed script writes no promise outcome", () => {
+	it("holds no `violated` word to switch: it marks no promise, so it cannot write one", () => {
+		const source = readFileSync(
+			join(dirname(fileURLToPath(import.meta.url)), "..", "..", "scripts", "suite-speed.js"),
+			"utf-8",
+		);
+		expect(source).not.toMatch(/violated/);
+		expect(source).not.toMatch(/indusk\.promise/);
 	});
 });

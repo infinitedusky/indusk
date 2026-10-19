@@ -439,3 +439,4 @@
 {"plan":"a-brief-is-planned-unasked","phase":7,"kind":"build","sha":"bf5fff04a6e6c4a7458cdf0862dde5cbed20f824","timestamp":"2026-10-19T02:11:39.684Z"}
 {"plan":"a-brief-is-planned-unasked","phase":8,"kind":"build","sha":"18c751d69","timestamp":"2026-10-19T02:25:16.475Z"}
 {"plan":"admin-builds-with-the-planning-reader","phase":1,"kind":"test","sha":"b9762fab278dad90517f0b7ef57a85f2a28519eb","timestamp":"2026-10-19T02:42:19.283Z"}
+{"plan":"mark-first","phase":1,"kind":"test","sha":"dae89ebfd07c3b2b5b656e71c87261680cc6edab","timestamp":"2026-10-19T03:14:42.761Z"}
