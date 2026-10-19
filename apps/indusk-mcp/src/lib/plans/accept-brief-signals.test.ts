@@ -1,6 +1,6 @@
 // clause: a-plan-with-clauses-carries-its-signals/the-two-landed-plans-report
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Tracer } from "@opentelemetry/api";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { briefText } from "../../__tests__/helpers/plan-fixture.js";
 import {
 	type PlanLifecycleProject,
@@ -9,6 +9,23 @@ import {
 import { BUILD_STEP_ENV } from "../build/step-env.js";
 import { type CapturedSpan, captureTracer, outcomesByClause } from "../promises/capture-tracer.js";
 import { acceptBrief } from "./accept-brief.js";
+import { bringTrunkIntoPlan } from "./bring-trunk.js";
+
+/**
+ * The seam for A47's second half: a git that swallows `merge --abort` leaves a conflicted
+ * merge in the checkout, as a half-merge let through would. Off, it is the real git.
+ */
+const stub = vi.hoisted(() => ({ swallowAbort: false }));
+vi.mock("../git.js", async (importActual) => {
+	const actual = await importActual<typeof import("../git.js")>();
+	return {
+		...actual,
+		git: (cwd: string, ...args: string[]) =>
+			stub.swallowAbort && args[0] === "merge" && args[1] === "--abort"
+				? Promise.resolve("")
+				: actual.git(cwd, ...args),
+	};
+});
 
 /**
  * a-run-can-be-trusted A46–A49: accepting a brief reports the three clauses of
@@ -19,30 +36,20 @@ import { acceptBrief } from "./accept-brief.js";
  * promise reader reads — never a mock of the writer. Real git in a temporary repository,
  * so this runs in the system tier.
  *
- * Build Phase 4 gives `acceptBrief` the third argument these tests pass (`{ tracer }`).
- * Today it ignores it and reports nothing, so A46–A48 fail on their own assertion that a
- * span exists. The call is typed loosely for the same reason: the parameter is the seam
- * that phase creates.
- *
- * A47's second half (a stub that lets a half-merge through gives `broken`) needs the seam
- * Build Phase 4 adds to git in the same function, so it is written there.
+ * `acceptBrief(anyCheckout, plan, { tracer })` is the seam Build Phase 4 created: the reports
+ * come from `bringTrunkIntoPlan`, so the admin's planning start (`build-host.trunk.test.ts`)
+ * reads the same spans.
  */
 
 const PLAN = "seat-holds";
 const PROMISE = "a-brief-is-accepted-on-current-main";
 const draft = (text: string) => text.replace("status: accepted", "status: draft");
 
-type Accept = (
-	anyCheckout: string,
-	plan: string,
-	opts?: { tracer?: Tracer },
-) => Promise<{ plan: string }>;
-const accept = acceptBrief as unknown as Accept;
-
 let p: PlanLifecycleProject;
 let wt: string;
 let previous: string | undefined;
 beforeEach(() => {
+	stub.swallowAbort = false;
 	previous = process.env[BUILD_STEP_ENV];
 	delete process.env[BUILD_STEP_ENV];
 	p = planLifecycleProject("accept-brief-signals");
@@ -66,7 +73,7 @@ describe("accepting a brief reports its clauses", () => {
 		writeBrief();
 		mainMoves();
 		const { tracer, spans } = captureTracer();
-		await accept(p.trunk, PLAN, { tracer });
+		await acceptBrief(p.trunk, PLAN, { tracer });
 		const span = spanFor(spans, "main-is-merged-first");
 		expect(span, "a span for main-is-merged-first").toBeDefined();
 		expect(span?.attrs["indusk.promise"]).toBe(PROMISE);
@@ -78,7 +85,7 @@ describe("accepting a brief reports its clauses", () => {
 		writeBrief();
 		mainMoves({ "README.md": "main edit\n" });
 		const { tracer, spans } = captureTracer();
-		await expect(accept(p.trunk, PLAN, { tracer })).rejects.toThrow(/README\.md/);
+		await expect(acceptBrief(p.trunk, PLAN, { tracer })).rejects.toThrow(/README\.md/);
 		const span = spanFor(spans, "a-conflict-refuses");
 		expect(span, "a span for a-conflict-refuses").toBeDefined();
 		expect(span?.attrs["indusk.promise"]).toBe(PROMISE);
@@ -89,11 +96,48 @@ describe("accepting a brief reports its clauses", () => {
 		writeBrief();
 		mainMoves();
 		const { tracer, spans } = captureTracer();
-		await accept(p.trunk, PLAN, { tracer });
+		await acceptBrief(p.trunk, PLAN, { tracer });
 		const span = spanFor(spans, "the-person-never-merges");
 		expect(span, "a span for the-person-never-merges").toBeDefined();
 		expect(span?.attrs["indusk.promise"]).toBe(PROMISE);
 		expect(outcomesByClause(spans)["the-person-never-merges"]).toBe("upheld");
+	});
+});
+
+describe("a clause that breaks is reported broken", () => {
+	it("A47: a half-merge let through a conflicting acceptance reports a-conflict-refuses broken, naming what was left", async () => {
+		p.commit(wt, { "README.md": "plan edit\n" }, "plan edits the readme");
+		writeBrief();
+		mainMoves({ "README.md": "main edit\n" });
+		stub.swallowAbort = true;
+		const { tracer, spans } = captureTracer();
+		await expect(acceptBrief(p.trunk, PLAN, { tracer })).rejects.toThrow(/README\.md/);
+		const span = spanFor(spans, "a-conflict-refuses");
+		expect(span, "a span for a-conflict-refuses").toBeDefined();
+		expect(outcomesByClause(spans)["a-conflict-refuses"]).toBe("broken");
+		expect(JSON.stringify(span?.events)).toMatch(/merge is still in progress|unmerged files/);
+	});
+
+	it("A48: a refusal that tells the person to merge main reports the-person-never-merges broken", async () => {
+		p.commit(wt, { "README.md": "plan edit\n" }, "plan edits the readme");
+		writeBrief();
+		mainMoves({ "README.md": "main edit\n" });
+		const { tracer, spans } = captureTracer();
+		await expect(
+			bringTrunkIntoPlan(
+				p.trunk,
+				PLAN,
+				{
+					refused: "its brief was not accepted",
+					again: "merge main into the branch by hand and accept the brief again",
+					when: "its brief was accepted",
+				},
+				undefined,
+				{ tracer },
+			),
+		).rejects.toThrow(/README\.md/);
+		expect(outcomesByClause(spans)["the-person-never-merges"]).toBe("broken");
+		expect(outcomesByClause(spans)["a-conflict-refuses"]).toBe("upheld");
 	});
 });
 
@@ -106,6 +150,6 @@ describe("a report that cannot be sent never fails the acceptance", () => {
 				throw new Error("no daemon");
 			},
 		} as unknown as Tracer;
-		await expect(accept(p.trunk, PLAN, { tracer })).resolves.toEqual({ plan: PLAN });
+		await expect(acceptBrief(p.trunk, PLAN, { tracer })).resolves.toEqual({ plan: PLAN });
 	});
 });

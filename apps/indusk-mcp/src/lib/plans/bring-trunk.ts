@@ -1,7 +1,15 @@
 import { existsSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
+import type { Tracer } from "@opentelemetry/api";
 import { git, headSha } from "../git.js";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
+import {
+	conflictVerdicts,
+	type Leftover,
+	mergedVerdicts,
+	refusalVerdicts,
+	reportBring,
+} from "./bring-trunk-signals.js";
 import { PlanCommandRefusal, planBranch } from "./plan-branch.js";
 import { workbenchPlan } from "./workbench-plan.js";
 
@@ -19,8 +27,16 @@ import { workbenchPlan } from "./workbench-plan.js";
  * undone and the refusal names each file in plain words: the branch is exactly
  * as it was.
  *
+ * Each clause of the promise is reported from here (`bring-trunk-signals.ts`), so the
+ * command line and the admin's planning start report alike.
+ *
  * promise: a-brief-is-accepted-on-current-main
  */
+
+/** What a caller may hand in: the tracer the clause reports go through, in place of the commands' one. */
+export interface BringTrunkOptions {
+	tracer?: Tracer;
+}
 
 export interface BringTrunkHow {
 	/** What was refused: "its brief was not accepted" | "its planning run did not start". */
@@ -52,13 +68,19 @@ export async function bringTrunkIntoPlan<T>(
 	plan: string,
 	how: BringTrunkHow,
 	after?: () => T | Promise<T>,
+	opts: BringTrunkOptions = {},
 ): Promise<T | undefined> {
 	const live = await livePlanCopy(anyCheckout, plan);
 	// A plan with no branch of its own is planned on the trunk: already current.
 	if (live.ok && live.copy.source === "trunk" && !(await workbenchPlan(anyCheckout, plan)))
 		return await after?.();
 	const at = await placeOf(anyCheckout, plan);
-	await refuseUnfinishedWork(at, plan, how);
+	const report = (verdicts: Parameters<typeof reportBring>[2]) =>
+		reportBring(anyCheckout, plan, verdicts, opts.tracer);
+	await refuseUnfinishedWork(at, plan, how).catch(async (err) => {
+		if (err instanceof PlanCommandRefusal) await report(refusalVerdicts(at.trunk, err.message));
+		throw err;
+	});
 	const before = await headSha(at.checkout);
 	try {
 		await git(
@@ -71,7 +93,13 @@ export async function bringTrunkIntoPlan<T>(
 			at.trunk,
 		);
 	} catch (err) {
-		throw new PlanCommandRefusal(await whyNotBrought(at, plan, how, err));
+		const why = await whyNotBrought(at, plan, how, err);
+		await report(
+			why.conflicted
+				? conflictVerdicts(at.trunk, why.message, await leftoverOf(at, before))
+				: refusalVerdicts(at.trunk, why.message),
+		);
+		throw new PlanCommandRefusal(why.message);
 	}
 	try {
 		if (at.planDir) {
@@ -81,12 +109,30 @@ export async function bringTrunkIntoPlan<T>(
 			if (changed.length > 0)
 				throw new PlanCommandRefusal(ownDocumentsMessage(at, plan, how, changed));
 		}
-		return await after?.();
+		const result = await after?.();
+		const current = await git(at.checkout, "merge-base", "--is-ancestor", at.trunk, "HEAD")
+			.then(() => true)
+			.catch(() => false);
+		await report(mergedVerdicts(at.trunk, at.branch, current));
+		return result;
 	} catch (err) {
 		// `--merge`, not `--hard`: a person's unrelated uncommitted files survive.
 		await git(at.checkout, "reset", "--merge", before);
+		if (err instanceof PlanCommandRefusal) await report(refusalVerdicts(at.trunk, err.message));
 		throw err;
 	}
+}
+
+/** What the checkout still holds of a merge that was meant to be undone, read from git. */
+async function leftoverOf(at: Place, before: string): Promise<Leftover> {
+	const midMerge = await git(at.checkout, "rev-parse", "-q", "--verify", "MERGE_HEAD")
+		.then(() => true)
+		.catch(() => false);
+	const unmerged = lines(
+		await git(at.checkout, "diff", "--name-only", "--diff-filter=U").catch(() => ""),
+	);
+	const moved = (await headSha(at.checkout).catch(() => before)) !== before;
+	return { midMerge, unmerged, moved };
 }
 
 /** Another change that git left half done in the checkout: the merge, rebase, cherry-pick or revert belongs to whoever started it. */
@@ -144,7 +190,7 @@ async function whyNotBrought(
 	plan: string,
 	how: BringTrunkHow,
 	err: unknown,
-): Promise<string> {
+): Promise<{ message: string; conflicted: boolean }> {
 	const unmerged = lines(
 		await git(at.checkout, "diff", "--name-only", "--diff-filter=U").catch(() => ""),
 	);
@@ -153,12 +199,15 @@ async function whyNotBrought(
 		.catch(() => false);
 	if (midMerge) await git(at.checkout, "merge", "--abort").catch(() => undefined);
 	if (unmerged.length > 0) {
-		return [
-			head(plan, how),
-			`Bringing ${at.trunk} into ${at.branch} conflicts in these files:`,
-			list(unmerged),
-			`Resolve them in ${at.checkout} (or on ${at.trunk}) and ${how.again}.`,
-		].join("\n");
+		return {
+			conflicted: true,
+			message: [
+				head(plan, how),
+				`Bringing ${at.trunk} into ${at.branch} conflicts in these files:`,
+				list(unmerged),
+				`Resolve them in ${at.checkout} (or on ${at.trunk}) and ${how.again}.`,
+			].join("\n"),
+		};
 	}
 	// Paths, not `status --porcelain`: `git()` trims its output, which eats the first line's leading column.
 	const dirty = [
@@ -179,20 +228,27 @@ async function whyNotBrought(
 	const inTheWay = dirty.filter((p) => trunkChanges.has(p));
 	const named = inTheWay.length > 0 ? inTheWay : dirty;
 	if (named.length > 0) {
-		return [
-			head(plan, how),
-			`${at.trunk} could not be brought into ${at.branch} because these files in ${at.checkout} have uncommitted changes, which belong to whoever made them:`,
-			list(named),
-		].join("\n");
+		return {
+			conflicted: false,
+			message: [
+				head(plan, how),
+				`${at.trunk} could not be brought into ${at.branch} because these files in ${at.checkout} have uncommitted changes, which belong to whoever made them:`,
+				list(named),
+			].join("\n"),
+		};
 	}
 	const reason = ((err as Error).message ?? String(err))
 		.split("\n")
 		.filter((l) => !/^Command failed:/.test(l) && !/^hint:/.test(l))
 		.join("\n")
 		.trim();
-	return [head(plan, how), `${at.trunk} could not be brought into ${at.branch}: ${reason}`].join(
-		"\n",
-	);
+	return {
+		conflicted: false,
+		message: [
+			head(plan, how),
+			`${at.trunk} could not be brought into ${at.branch}: ${reason}`,
+		].join("\n"),
+	};
 }
 
 function ownDocumentsMessage(

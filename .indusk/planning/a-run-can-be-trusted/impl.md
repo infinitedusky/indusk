@@ -804,25 +804,27 @@ This phase makes the project's contract check ask two more things of an impl bei
   `lib/promises/clause-rules.ts` / `contract.ts`: call the two rules when the brief says `clauses: required`; each refusal is one line per clause (`promise/clause`) and one per row, the row message saying a live check runs only after landing so it blocks the clause at close. `validate-impl-structure.js` already passes the impl through `indusk promises contract --impl-stdin`; add nothing to the hook beyond what the hook rules file says a hook may add.
 
   </details>
-- [ ] Make accepting a brief report the three clauses.
+- [x] Make accepting a brief report the three clauses.
   <details><summary>Technical</summary>
+
+  Done 2026-10-19. Decisions (unattended): the reports sit inside `bringTrunkIntoPlan` itself (verdicts in `plans/bring-trunk-signals.ts`), not in `accept-brief.ts`, because that one function is what both the command line and the admin's planning start call; so both lanes report with no second call site. Each verdict is read from git after the code ran: `main-is-merged-first` from `git merge-base --is-ancestor <trunk> HEAD`, `a-conflict-refuses` broken when a merge, unmerged files or a moved head remain after the refusal, `the-person-never-merges` broken when a refusal's own words tell the person to merge, rebase or pull the trunk. The tracer seam is `bringTrunkIntoPlan(…, after, { tracer })`, `acceptBrief(…, { tracer })` and `startPlanning(project, plan, { tracer })`; absent, the commands' one tracer. A47's half-merge case needed no code seam: the test wraps `git` with `vi.mock` so `merge --abort` does nothing. `a-conflict-refuses` reports upheld on a refused conflict in the admin's planning start too, where the brief is already accepted: its check is that nothing of the merge remains, not the brief's status.
 
   `lib/plans/bring-trunk.ts` (merge of trunk → `main-is-merged-first`), the conflict refusal in `accept-brief.ts` (→ `a-conflict-refuses`, `broken` if a half-merge remains) and the output path (→ `the-person-never-merges`, `broken` when the message tells the person to merge): each calls `writeClauseSignals(root, "plan.accept-brief", plan, { plan: "a-brief-is-accepted-on-current-main", phase: "Build Phase 1" }, [...])`, best-effort. The admin's planning start calls the same function, so both lanes report.
 
   </details>
-- [ ] Report the signal for the clause that an impl is refused without signals.
+- [x] Report the signal for the clause that an impl is refused without signals.
   <details><summary>Technical</summary>
 
   signal: `a-plan-with-clauses-carries-its-signals/refused-without-signals` — read in the daemon's reports at confirm, an independent source from the impl's text. Reported from `apps/indusk-mcp/src/lib/promises/confirm.ts`: when `indusk promises confirm` runs on a `clauses: required` plan whose impl passed the rule, each split or limit clause still at no-signal is reported `broken`, naming the plan and the clause (the rule let through a task that reports nothing), and each clause that has reported counts as upheld (A84 in `src/lib/promises/confirm-signal-rules.test.ts`, the reads injected). The contract check also reports upheld through `writeClauseSignals` when it refuses a missing signal task.
 
   </details>
-- [ ] Report the signal for the clause that a live check proves no clause.
+- [x] Report the signal for the clause that a live check proves no clause.
   <details><summary>Technical</summary>
 
   signal: `a-plan-with-clauses-carries-its-signals/a-live-check-proves-no-clause` — read in the impl as it is confirmed, reported from `apps/indusk-mcp/src/lib/promises/confirm.ts`: confirm re-reads the trajectory table itself and reports `broken`, naming the row and clause, when a saved impl holds a `live check`, `smoke` or `promise` row naming a clause; upheld otherwise. The contract check reports upheld when it refuses one on save.
 
   </details>
-- [ ] Report the signal for the clause that the two landed plans report.
+- [x] Report the signal for the clause that the two landed plans report.
   <details><summary>Technical</summary>
 
   signal: `a-plan-with-clauses-carries-its-signals/the-two-landed-plans-report` — read as that plan's three clauses by the promise reader, reported from `apps/indusk-mcp/src/lib/promises/confirm.ts` when `indusk promises confirm a-brief-is-accepted-on-current-main` runs: upheld when each of the three has reported in a real run, `broken` naming each still at no-signal. The span delivery from a real process is proved at landing by A86; L2 makes the one conflicting acceptance `a-conflict-refuses` needs before that confirm.
