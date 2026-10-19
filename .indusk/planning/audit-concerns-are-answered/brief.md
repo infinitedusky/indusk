@@ -94,7 +94,25 @@ None.
 
 ## Looks
 
-None — a dismissal reaches the person in `audit.md`, in the cold read's notes beside the plan and in the step's report in the session; no screen changes.
+A dismissal reaches the person in `audit.md`, in the cold read's notes beside the plan and in the step's report in the session. The one interface change is a sentence: the build controls say why a build stopped, and gain one for a build waiting on re-approval. No mockup draws a stop's sentence.
+
+### This plan makes
+
+None.
+
+### Existing looks
+
+**Must not break**
+
+- **`plan.working`**. The plan page while it builds, whose build controls gain the sentence for a build stopped on an amendment.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
 
 ## Depends On
 
