@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
+import { basename, join, relative, resolve, sep } from "node:path";
 import { readCatalog } from "./components.js";
 import { closureOf, importReader, loadTypeScript, type TypeScript } from "./import-closure.js";
 import {
@@ -69,10 +69,14 @@ export async function foundationFiles(root: string, app: LooksApp): Promise<stri
 	return [...own, ...[...styles, ...config, ...served].map((f) => posix(relative(root, f)))];
 }
 
-/** The `app/` folder of the app's sources: `<source>/app` or `<source>/src/app`. */
+/** The `app/` folder of the app's sources: a source that is the folder itself, `<source>/app` or `<source>/src/app`. */
 function appRouterDir(root: string, app: LooksApp): string | undefined {
 	return app.sources
-		.flatMap((s) => [join(root, s, "app"), join(root, s, "src", "app")])
+		.flatMap((s) => [
+			...(basename(s.replace(/\/+$/, "")) === "app" ? [join(root, s)] : []),
+			join(root, s, "app"),
+			join(root, s, "src", "app"),
+		])
 		.find((d) => existsSync(d));
 }
 
