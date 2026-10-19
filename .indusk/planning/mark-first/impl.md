@@ -742,12 +742,13 @@ This phase tests the finished plan against signals and breaks shaped differently
 
   </details>
   Shipped. The D-3 scan was rerun first (a scratchpad script, not committed) over every impl, active and archived, in this worktree (137 impls, 166 rows naming a clause, 76 test files) and in the main checkout (138 impls, 180 rows, 76 files): no existing file that carries a clause token is refused by the tightened rule, and none changes verdict between the old and new rule; the files that do not exist are other plans' unwritten rows (`audit-skill-answers.test.ts`, `vitest-related-report.contract.test.ts`, `lib/audit/answers.test.ts`). The rule counts `expect(`/`assert(` through any members (`expect.soft(`, `assert.equal(`), after removing block and line comments (a `://` is left alone) and import statements; the refusal text now says "no `expect(` or `assert(` call outside comments and imports".
-- [ ] Draw an enforced promise with a clause that has no signal as no signal in the admin's promise list, not as enforced.
+- [x] Draw an enforced promise with a clause that has no signal as no signal in the admin's promise list, not as enforced.
   <details><summary>Technical</summary>
 
   Hypothesis (A38): A12 and A14 claim the admin never draws a clause with no signal as holding, but `readsNoSignal` (`apps/indusk-admin/src/lib/promise-dashboard.ts`) is `standing === "enforced" && held === null`, and `held` is any upheld day in thirty. One clause reporting gives `held` a value, so the row gets `enforced`'s green dot while another clause reads no signal, and a blind watcher leaves past held days green too. Fix (decision D-29): `buildRows` carries the package's `signal` (`StandingRow.signal`) and `readsNoSignal` is also true when it is `no-signal`; the existing grey `no-signal` dot is used, so no look changes (the brief's Looks stays "None"; `src/lib` is outside the admin's look sources). Committed as its own commit (the admin is its own context).
 
   </details>
+  Done as written: `DashboardRow` gains an optional `signal` (optional so the component fixtures built without it still type-check), `buildRows` copies the package's, and `readsNoSignal` is also true for an enforced row whose signal is `no-signal`; a promise stated before clauses (`signal` null) reads as before. The admin's typecheck is clean. Its component tests (`src/components`) fail in this worktree with and without the change (checked by reverting `promise-dashboard.ts`: `Promises.test.tsx` red the same way) — they need the browser run this environment does not have, so they are not this item's.
 - [ ] Make the promise status command write the signal for the clause that says no signal is never holding.
   <details><summary>Technical</summary>
 
