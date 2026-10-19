@@ -58,7 +58,7 @@ const states = (steps: { name: string; state: string }[]) =>
 	Object.fromEntries(steps.map((s) => [s.name, s.state]));
 
 describe("A10 — steps follow the type", () => {
-	it("A10 a bugfix lists Brief, Test plan and Impl only", () => {
+	it("A10 a bugfix lists Brief, Test plan, Impl and the Planning audit only", () => {
 		const bugfix = planSteps({
 			workflow: "bugfix",
 			position: positionOf("impl", "in-progress", {
@@ -71,7 +71,7 @@ describe("A10 — steps follow the type", () => {
 				impl: { status: "in-progress" },
 			},
 		});
-		expect(bugfix.planning.map((s) => s.name)).toEqual(["Brief", "Test plan", "Impl"]);
+		expect(bugfix.planning.map((s) => s.name)).toEqual(["Brief", "Test plan", "Impl", "Planning audit"]);
 	});
 
 	it("A10 a ritual skipped with a reason is skipped, carries the reason and is not owed", () => {
@@ -131,7 +131,7 @@ describe("A11 — the steps say where the plan is", () => {
 			Review: "not-yet",
 			Release: "not-yet",
 		});
-		expect(stepCount(planning)).toEqual({ done: 5, total: 5 });
+		expect(stepCount(planning)).toEqual({ done: 6, total: 6 });
 		expect(stepCount(release)).toEqual({ done: 0, total: 6 });
 	});
 

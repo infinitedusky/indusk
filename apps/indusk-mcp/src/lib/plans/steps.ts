@@ -67,8 +67,26 @@ export interface PlanSnapshot {
 	skippedRituals?: ReadonlyArray<{ ritual: SkippedRitual; reason?: string }>;
 	/** Falsification, cleanup or audit finished: its phase closed or its report written. */
 	finishedRituals?: ReadonlyArray<SkippedRitual>;
-	/** Its plan-review.md as `plans/plan-review` read it; absent reads as missing. */
+	/** Its plan-review.md as `plans/plan-review` read it. Absent: not read, steps keep their document reading. */
 	planReview?: PlanReviewState;
+	/**
+	 * The processes running for the plan now (a-run-can-be-trusted, Decision 15).
+	 * Given, a step reads in progress only while one runs for it, else to do; absent
+	 * means the caller did not look, and a step reads as its documents say.
+	 */
+	live?: LivePlan;
+}
+
+/** What runs for a plan: a process writing it, a build, a release. */
+export interface LivePlan {
+	/** A planning run or an interactive session is writing the plan's documents. */
+	writing?: boolean;
+	/** The planning run's current step (`plan-impl`, `plan-review`, ...), when one runs. */
+	planningStep?: string | null;
+	/** A build run (phases, falsify, cleanup, audit) is going. */
+	build?: boolean;
+	/** The release's retrospective is running. */
+	release?: boolean;
 }
 
 export interface PlanWorkflows {
@@ -83,12 +101,15 @@ const PLANNING: ReadonlyArray<{
 	name: PlanningStepName;
 	document: DocumentPosition;
 	at: PlanPosition;
+	/** The Planning audit: kept wherever the impl is, never as a document of its own. */
+	audit?: true;
 }> = [
 	{ name: "Research", document: "research", at: "research" },
 	{ name: "Brief", document: "brief", at: "brief" },
 	{ name: sentenceCase(DOCUMENT_LABELS["test-plan"]), document: "test-plan", at: "test-plan" },
 	{ name: "Decision", document: "adr", at: "adr" },
 	{ name: "Impl", document: "impl", at: "impl-approved" },
+	{ name: "Planning audit", document: "impl", at: "impl-approved", audit: true },
 ];
 
 /** An impl past its approval has done its Planning work; a draft is waiting to be approved. */
@@ -108,6 +129,10 @@ function planningStep(
 	const status = plan.documents[step.document]?.status;
 	const segment: SegmentState = plan.position?.segments[step.at] ?? "pending";
 	const named = (state: StepState): PlanStep<PlanningStepName> => ({ name: step.name, state });
+	// A step the documents call in progress is that only while a process runs for it.
+	const inProgress = (running: boolean): StepState =>
+		plan.live === undefined || running ? "current" : "not-yet";
+	if (step.audit) return named(planningAudit(plan, status, segment, inProgress));
 	switch (segment) {
 		case "done":
 			return named("done");
@@ -118,14 +143,40 @@ function planningStep(
 			return named("missing");
 		case "active": {
 			if (documentFinished(step.document, status)) return named("done");
+			if (step.document === "impl" && status === "draft" && plan.planReview !== undefined) {
+				// Decision 16: a written impl asks for approval only once its plan review is
+				// answered; until then the Planning audit is the step the plan is at.
+				if (plan.planReview === "answered") return named("needs-you");
+				if (plan.live?.planningStep === "plan-impl") return named("current");
+				return named("done");
+			}
 			// An impl waits to be approved; any other document waits to be accepted
 			// once it has been proposed. A draft is still being written.
 			const waiting = step.document === "impl" ? status === "draft" : status === "proposed";
-			return named(waiting ? "needs-you" : "current");
+			return named(waiting ? "needs-you" : inProgress(plan.live?.writing === true));
 		}
 		default:
 			return named("not-yet");
 	}
+}
+
+/**
+ * The Planning audit reads the plan review for the documents as they stand: done
+ * once it is answered (or the impl is approved past it), in progress only while the
+ * planning run is on its plan-review step, otherwise to do.
+ */
+function planningAudit(
+	plan: PlanSnapshot,
+	implStatus: string | undefined,
+	implSegment: SegmentState,
+	inProgress: (running: boolean) => StepState,
+): StepState {
+	if (implSegment === "skipped") return "skipped";
+	if (documentFinished("impl", implStatus) || implSegment === "done") return "done";
+	if (implStatus !== "draft") return "not-yet";
+	if (plan.planReview === "answered") return "done";
+	if (plan.planReview === undefined) return "not-yet";
+	return plan.live?.planningStep === "plan-review" ? inProgress(true) : "not-yet";
 }
 
 function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<ReleaseStepName> {
@@ -149,11 +200,15 @@ function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<Releas
 		if (skipped) return named("skipped", skipped.reason);
 		if (plan.finishedRituals?.includes(ritual)) return named("done");
 	}
-	const segment = (state: SegmentState): StepState =>
+	// An active step is in progress only while a process runs for it (Decision 15).
+	const running = (on: boolean | undefined): boolean => plan.live === undefined || on === true;
+	const segment = (state: SegmentState, on: boolean | undefined = plan.live?.build): StepState =>
 		state === "done"
 			? "done"
 			: state === "active"
-				? "current"
+				? running(on)
+					? "current"
+					: "not-yet"
 				: state === "skipped"
 					? "skipped"
 					: "not-yet";
@@ -167,12 +222,13 @@ function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<Releas
 		case "Audit":
 			return named(segment(at("audit")));
 		case "Review":
-			return named(segment(at("review")));
+			// Review waits on the person, not on a process.
+			return named(segment(at("review"), true));
 		case "Release": {
 			// Accepted waits for the release to run; the retrospective is that run.
 			if (at("executing") === "skipped") return named("skipped");
 			if (at("accepted") === "active" || at("retrospective") === "active") {
-				return named("current");
+				return named(running(plan.live?.release) ? "current" : "not-yet");
 			}
 			return named(at("archived") === "pending" ? "not-yet" : "done");
 		}
