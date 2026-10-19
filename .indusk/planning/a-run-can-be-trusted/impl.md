@@ -197,7 +197,7 @@ Rows A65–A72 follow the test plan's sections for `says-what-is-true`, `never-i
 
 This phase writes the tests the plan commits to before anything changes, so each build phase has a fixed target. Today the shell guard does not exist, the contract check never asks an impl for a signal, accepting a brief reports no clause, and the approval offer does not compare the plan review with the documents, so those tests fail on their own assertions. The tests of things that must stay true (the existing acceptance behaviour, the existing recorder test's assertions) pass from the start and are recorded as guards. Tests of brand-new code (the run record, the shown phase, the landed check, the shell guard's rule, the clause rules, the wait rule) cannot be loaded until the build phase that creates them and are registered below with the reason.
 
-- [ ] Create or confirm this plan's own worktree before any edit.
+- [x] Create or confirm this plan's own worktree before any edit.
   <details><summary>Technical</summary>
 
   `indusk worktree create a-run-can-be-trusted` (records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign a-run-can-be-trusted /Users/the_dusky/code/sandbox/dusk-worktrees/a-run-can-be-trusted`). Worktree-per-plan default; this plan does not set `worktree: none`. The worktree exists (`indusk plans start` made it): `git -C /Users/the_dusky/code/sandbox/dusk-worktrees/a-run-can-be-trusted rev-parse --abbrev-ref HEAD` expects `plan/a-run-can-be-trusted`. Use absolute paths in every command.
