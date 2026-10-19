@@ -1,4 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process";
+import { PACKAGE_ROOT_ENV } from "../package-root.js";
 import {
 	answerQuestion,
 	buildArgs,
@@ -23,6 +24,16 @@ import { projectOf, trustLikeProject } from "./trust.js";
  * (`trust.ts`); one that stays untrusted still runs, ignoring its own
  * allow-list, and the session says which as its first event.
  */
+
+/**
+ * The environment of a session the admin starts. The handed package root is
+ * for the admin's own bundled code; a session runs the `indusk` on its path,
+ * whose own lookup is correct, so it must not inherit the admin's value.
+ */
+export function sessionEnv(base: NodeJS.ProcessEnv, extra?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+	const { [PACKAGE_ROOT_ENV]: _handed, ...inherited } = base;
+	return { ...inherited, ...extra };
+}
 
 export type StartedEvent =
 	| SessionEvent
@@ -85,7 +96,7 @@ export function startSession(opts: SessionOptions): Session {
 	const child: ChildProcess = spawn(opts.claudeBin ?? "claude", args, {
 		cwd: opts.cwd,
 		stdio: ["pipe", "pipe", "pipe"],
-		env: { ...process.env, ...opts.env },
+		env: sessionEnv(process.env, opts.env),
 	});
 	if (typeof child.pid !== "number")
 		throw new Error(`could not start ${opts.claudeBin ?? "claude"}`);
