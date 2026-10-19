@@ -48,13 +48,13 @@ Each phase runs its own rows' tests and the tests of the brief's Must-not-break 
 
 This phase writes the tests that show what changes: a phase's set that should hold the Must-not-break tests and not the reached ones, a landing's set without reached tests, a command that should start no search for them, skills that should say so, and a promise change that should carry clauses. Each fails today on its own assertion, so the build phase starts with every test written.
 
-- [ ] Create or confirm this plan's worktree, so the plan tools read the plan from it.
+- [x] Create or confirm this plan's worktree, so the plan tools read the plan from it.
   <details><summary>Technical</summary>
 
   `indusk worktree create a-plan-runs-what-must-not-break` from the trunk; the worktree from `indusk plans start` exists, so this confirms it.
 
   </details>
-- [ ] Write the tests that a phase's and a landing's sets hold the rows and the Must-not-break tests and nothing reached, failing today.
+- [x] Write the tests that a phase's and a landing's sets hold the rows and the Must-not-break tests and nothing reached, failing today.
   <details><summary>Technical</summary>
 
   T1, T2 in `apps/indusk-mcp/src/lib/plans/test-set.test.ts`: `planTestSet` with rows, a Must-not-break promise and a `reached` list: a phase's set includes the promise's tests and excludes the reached file; a landing's set excludes the reached file. Red today (phases omit Must-not-break; both include reached). Update the existing tests that assert today's reached behaviour (T2/T6 of tests-never-make-us-wait in the same file) to the new rule, saying so in the commit; those rows belong to an archived plan whose promise this plan changes.
