@@ -32,6 +32,8 @@ export class PlanningUnreadable extends Error {}
 export interface PlanningRead extends PlanningState {
 	/** The brief's `status:`, or null when it has none or no brief exists. */
 	briefStatus: string | null;
+	/** When the brief was accepted (`accepted_at`, ISO), or null for one accepted by hand. */
+	acceptedAt: string | null;
 }
 
 export interface HookInput {
@@ -175,7 +177,9 @@ export async function readPlanningState(
 	const implDocument = impl === null ? ABSENT : judgeImpl(dir, root, impl, deps);
 
 	const status = impl === null ? undefined : matter(impl).data.status;
-	const briefStatus = brief === null ? undefined : matter(brief).data.status;
+	const briefData = brief === null ? {} : matter(brief).data;
+	const briefStatus = briefData.status;
+	const acceptedAt = briefData.accepted_at;
 	return {
 		required,
 		documents: {
@@ -188,5 +192,12 @@ export async function readPlanningState(
 		unapprovedLooks: brief === null ? [] : await deps.unapprovedLooks(root, brief),
 		blocker: blockerIn(testPlan) ?? blockerIn(adr) ?? blockerIn(impl),
 		briefStatus: typeof briefStatus === "string" ? briefStatus : null,
+		// A bare timestamp is a Date to YAML; `acceptBrief` quotes it, a hand edit may not.
+		acceptedAt:
+			acceptedAt instanceof Date
+				? acceptedAt.toISOString()
+				: typeof acceptedAt === "string"
+					? acceptedAt
+					: null,
 	};
 }

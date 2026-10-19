@@ -85,7 +85,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       // planning run is held back; the conversation's end asks for it.
       ...(body.kind === "planning"
         ? {
-            onEnd: () => void planningConversationEnded(project, plan),
+            onEnd: (startedAt) =>
+              void planningConversationEnded(project, plan, startedAt),
           }
         : {}),
     });

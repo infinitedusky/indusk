@@ -37,7 +37,7 @@ export async function acceptBrief(anyCheckout: string, plan: string): Promise<Ac
 	if (wp) {
 		const brief = readDraftBrief(wp.dir, plan);
 		refuseFailingContract(wp.root, plan);
-		writeFileSync(brief.path, setFrontmatterKeys(brief.text, { status: "accepted" }));
+		writeFileSync(brief.path, setFrontmatterKeys(brief.text, acceptedKeys()));
 		await commitAtRoot(wp.root, [relative(wp.root, brief.path)], message);
 		return { plan };
 	}
@@ -45,9 +45,20 @@ export async function acceptBrief(anyCheckout: string, plan: string): Promise<Ac
 	const brief = readDraftBrief(pb.dir, plan);
 	refuseFailingContract(pb.worktree, plan);
 	// `setImplKeys` sets frontmatter keys in any plan document and commits that file alone.
-	await setImplKeys(pb, brief.path, { status: "accepted" }, message);
+	await setImplKeys(pb, brief.path, acceptedKeys(), message);
 	return { plan };
 }
+
+/**
+ * `accepted_at` is written beside the status, quoted (a bare timestamp is a
+ * date to YAML). It sits in the brief, so the approval's hash of the brief
+ * covers it: acceptance always precedes approval, so the hash is taken of a
+ * brief that already holds it and nothing writes it afterwards.
+ */
+const acceptedKeys = (): Record<string, string> => ({
+	status: "accepted",
+	accepted_at: JSON.stringify(new Date().toISOString()),
+});
 
 function readDraftBrief(dir: string, plan: string): { path: string; text: string } {
 	const path = join(dir, "brief.md");

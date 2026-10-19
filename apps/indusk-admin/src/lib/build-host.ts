@@ -264,18 +264,25 @@ export function planningState(
 }
 
 /**
- * A planning conversation on `plan` has ended: ask for its planning run. The
- * brief is normally accepted from inside that conversation, where the run is
- * held back while it is open, so its end is the next moment to ask. Asking is
- * safe at any end — `startPlanning` starts nothing unless the brief is
- * accepted, its looks approved and a document still to write — so a decline or
- * a refusal is not this caller's to report.
+ * A planning conversation on `plan` (begun at `startedAt`) has ended: ask for
+ * its planning run, but only when that conversation accepted the brief — the
+ * brief's `accepted_at` is at or after `startedAt`. A person planning by hand
+ * who only paused, or a brief accepted before this or by hand (no
+ * `accepted_at`), starts nothing here. Beyond that, `startPlanning` starts
+ * nothing unless the looks are approved and a document is still to write, so a
+ * decline or a refusal is not this caller's to report.
  */
 export async function planningConversationEnded(
   project: string,
   plan: string,
+  startedAt: string,
 ): Promise<PlanningRunState | null> {
   try {
+    const root = getProjectPath(project);
+    if (!root) return null;
+    const { acceptedAt } = await readPlanningState(root, plan);
+    if (acceptedAt === null || Date.parse(acceptedAt) < Date.parse(startedAt))
+      return null;
     return await startPlanning(project, plan);
   } catch {
     return null;

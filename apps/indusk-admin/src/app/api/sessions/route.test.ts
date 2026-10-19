@@ -94,8 +94,12 @@ describe("a planning conversation's end asks for the planning run (a-brief-is-pl
     await post("another-plan");
     const opts = manager.start.mock.calls[0][0];
     expect(opts.onEnd).toBeTypeOf("function");
-    opts.onEnd();
-    expect(ended).toHaveBeenCalledWith("dusk", "another-plan");
+    opts.onEnd("2026-10-19T11:00:00.000Z");
+    expect(ended).toHaveBeenCalledWith(
+      "dusk",
+      "another-plan",
+      "2026-10-19T11:00:00.000Z",
+    );
   });
 
   it("asks nothing at the end of a build session", async () => {

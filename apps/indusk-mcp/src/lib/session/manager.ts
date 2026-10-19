@@ -64,8 +64,10 @@ export interface ManagedStart extends SessionOptions {
 	 * Told once the session has ended and its record is gone, however it ended:
 	 * what a caller asks of "this plan has no such session now" (a planning
 	 * conversation's end lets the unattended planning run start).
+	 * It is told the session's start (ISO), so a reaction can tell what happened
+	 * during the session.
 	 */
-	onEnd?: () => void;
+	onEnd?: (startedAt: string) => void;
 }
 
 interface Held {
@@ -160,6 +162,7 @@ export class SessionManager {
 				this.record(holder, opts, ev);
 			},
 		});
+		const startedAt = new Date().toISOString();
 		holder.session = session;
 		holder.record = {
 			id,
@@ -169,7 +172,7 @@ export class SessionManager {
 			project: opts.project,
 			plan: opts.plan,
 			kind: opts.kind,
-			startedAt: new Date().toISOString(),
+			startedAt,
 		};
 		this.held.set(id, holder);
 		this.write();
@@ -177,7 +180,7 @@ export class SessionManager {
 			this.held.delete(id);
 			this.write();
 			try {
-				opts.onEnd?.();
+				opts.onEnd?.(startedAt);
 			} catch {
 				// A caller's reaction to the end never undoes the end.
 			}
