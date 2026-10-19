@@ -1,7 +1,7 @@
 ---
 title: "A plan says how long it took"
 date: 2026-10-19
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "f41cf42fe6354357005776aa2dc08b4dc0ea34cc9fb81788b02bd9f37b609b28"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T03:08:06.933Z"
 ---
 
 # A plan says how long it took
