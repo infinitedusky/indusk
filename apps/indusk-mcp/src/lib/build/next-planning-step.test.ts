@@ -153,6 +153,9 @@ describe("A21, A20 — the plan review is the planning run's last step", () => {
 			...written,
 			review: { exists: true, complete: true, dismissals: [dismissal], amendments: [] },
 		});
-		expect(nextPlanningStep(s)).toMatchObject({ step: "ready-for-approval", dismissals: [dismissal] });
+		expect(nextPlanningStep(s)).toMatchObject({
+			step: "ready-for-approval",
+			dismissals: [dismissal],
+		});
 	});
 });

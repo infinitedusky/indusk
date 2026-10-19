@@ -80,7 +80,9 @@ describe("A15 — the order is build, audit, falsify, cleanup, retrospective", (
 		expect(skill(name)).toContain(ORDER);
 	});
 	it.each(["audit", "falsify", "cleanup", "retrospective"])("%s gives no other order", (name) => {
-		expect(skill(name)).not.toMatch(/`\/work` → `\/falsify` → `\/work` → `\/cleanup` → `\/work` → `\/audit`/);
+		expect(skill(name)).not.toMatch(
+			/`\/work` → `\/falsify` → `\/work` → `\/cleanup` → `\/work` → `\/audit`/,
+		);
 		expect(skill(name)).not.toMatch(/\/work → \/falsify → \/work → \/cleanup → \/work → \/audit/);
 	});
 });

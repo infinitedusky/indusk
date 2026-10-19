@@ -1,3 +1,11 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+	AUDIT_QUESTIONS,
+	describeAnswers,
+	PLAN_REVIEW_QUESTIONS,
+	readAuditAnswers,
+} from "../../lib/audit/answers.js";
 import { auditInputs } from "../../lib/audit/inputs.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
@@ -29,7 +37,7 @@ import {
 } from "../../lib/plans/index.js";
 import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
 import { planTimeText } from "../../lib/timing/view.js";
-import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
+import { livePlanCopy, resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
 /** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
 async function planVerb(run: () => Promise<string>): Promise<void> {
@@ -138,6 +146,41 @@ export function plansModel(
 /** `indusk plans audit-inputs <name>` — what the auditor is handed, as JSON. */
 export function plansAuditInputs(cwd: string, name: string, approved?: string): Promise<void> {
 	return planVerb(async () => JSON.stringify(await auditInputs(cwd, name, approved), null, 2));
+}
+
+/**
+ * `indusk plans audit-answers <name> [--plan-review]` — every dismissal and amendment answer
+ * in `audit.md` (or `plan-review.md`), for the person; exit 2 naming each finding or question
+ * the plan's agent has still to answer.
+ */
+export async function plansAuditAnswers(
+	cwd: string,
+	name: string,
+	planReview: boolean,
+): Promise<void> {
+	const file = planReview ? "plan-review.md" : "audit.md";
+	const live = await livePlanCopy(cwd, name);
+	if (!live.ok) {
+		console.error(`Refused: the worktree record ${live.file} cannot be read: ${live.problem}`);
+		process.exit(1);
+	}
+	const path = join(live.copy.dir, file);
+	if (!existsSync(path)) {
+		console.error(`Refused: ${name} has no ${file} in ${live.copy.dir}`);
+		process.exit(1);
+	}
+	const read = readAuditAnswers(readFileSync(path, "utf-8"), {
+		questions: planReview ? PLAN_REVIEW_QUESTIONS : AUDIT_QUESTIONS,
+		causes: !planReview,
+	});
+	const { open, shown } = describeAnswers(read, file);
+	if (open.length > 0) {
+		console.error(`${file} is not answered:\n${open.map((l) => `  ${l}`).join("\n")}`);
+		process.exit(2);
+	}
+	console.info(
+		shown.length > 0 ? shown.join("\n") : `${file}: nothing dismissed, nothing amended.`,
+	);
 }
 
 /** `indusk plans next-session <name>` — the command to run in a new session, from the plan as it stands. */

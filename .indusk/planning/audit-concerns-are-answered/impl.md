@@ -63,22 +63,22 @@ amendment. Every concern waved away is shown to the person.
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | The audit's instructions tell the reader to write what would show each finding breaking, and no remedy | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
-| A2 | Reading an audit reports a finding with no "breaks when" line as incomplete, naming its question and line | Build Phase 1 | Build Phase 1 | planned | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A2 | Reading an audit reports a finding with no "breaks when" line as incomplete, naming its question and line | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A3 | The audit's instructions tell the plan's agent to answer every finding with a fix, a signal or nothing with the reason | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
-| A4 | Reading an audit refuses an unanswered finding or a signal answer naming no clause, naming the finding; a fully answered one passes | Build Phase 1 | Build Phase 1 | planned | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A4 | Reading an audit refuses an unanswered finding or a signal answer naming no clause, naming the finding; a fully answered one passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A5 | Reading an audit lists every "nothing needed" answer with its finding and reason, and the instructions say to show the list to the person | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts, apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A6 | An `audit.md` written before this plan still lets the retrospective start | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over an-audit-blocks-nothing | apps/indusk-mcp/src/__tests__/audit-gate.test.ts |
 | A7 | The auditor is still handed only the documents, the approved impl and the diff | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the-auditor-sees-the-plan-not-the-session | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
 | A8 | The project's copies of the audit, planner, falsify, cleanup and retrospective skills match the package's | Test Phase 1 | Build Phase 4 | written | unit | so the change reaches every project that updates | apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts |
 | A9 | The audit's instructions tell the plan's agent to ask once what let the findings through, group them by cause, flag each recurring process gap for a lesson, or say there is none | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
-| A10 | Reading an audit with findings but no "What let these through?" section reports it incomplete; one naming each cause with its findings and highlight, or no gap with a reason, passes | Build Phase 1 | Build Phase 1 | planned | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A10 | Reading an audit with findings but no "What let these through?" section reports it incomplete; one naming each cause with its findings and highlight, or no gap with a reason, passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A11 | The audit's instructions say an answer that would change a promise, an expectation, a look or the scope is an edit of the brief recorded as an amendment answer, after which the session stops, and every other concern is answered without asking | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A12 | With an amendment waiting, the unattended build stops for re-approval naming it, instead of running a step or ending "cannot continue" | Test Phase 1 | Build Phase 2 | written | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/build/next-step.test.ts |
-| A13 | Reading an audit accepts an amendment answer and lists each with its finding, beside the dismissals | Build Phase 1 | Build Phase 1 | planned | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A13 | Reading an audit accepts an amendment answer and lists each with its finding, beside the dismissals | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A14 | With every build phase closed and falsification, cleanup and the audit to do, the build's next step is the audit; once the audit file exists, it is falsification | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/lib/build/next-step.test.ts |
 | A15 | The audit, falsify, cleanup and retrospective instructions give the order build, audit, falsify, cleanup, retrospective | Test Phase 1 | Build Phase 4 | written | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A16 | The audit's before-approval instructions put the four plan questions to the reader, as the reader's exported list names them | Test Phase 1 | Build Phase 4 | written | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
-| A17 | Reading a plan review with one of the four questions missing reports it incomplete, naming the question; one with all four passes | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A17 | Reading a plan review with one of the four questions missing reports it incomplete, naming the question; one with all four passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A18 | The plan review's inputs are the brief, test plan, ADR and impl as they stand and the tracked-file list, and nothing else | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-is-read-cold-before-approval/the-reader-sees-documents-only | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
 | A19 | The audit's instructions tell the planning agent to answer each plan-review finding by changing a document or with a reason and to show the dismissals; the planner's tell it to run the plan review before presenting a plan written by hand | Test Phase 1 | Build Phase 4 | written | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A20 | The planning run's ready-for-approval stop lists each plan-review dismissal with its finding and reason | Test Phase 1 | Build Phase 3 | written | unit | clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
@@ -233,25 +233,25 @@ tells a complete, answered read from one with a finding left open, accepts an
 amendment as an answer, and lists the dismissals, plus the command the skill
 runs to show them to the person.
 
-- [ ] Write the reader's tests from the recorded bodies.
+- [x] Write the reader's tests from the recorded bodies. Decision: the recorded A2 body expected line 10 for a finding that sits on line 8 of its own fixture (a miscount, not an assertion about the reader); corrected to 8. Every other assertion is as recorded, plus a pass case for A4 and a `describeAnswers` test.
   <details><summary>Technical</summary>
 
   A2, A4, A5 (reader half), A10, A13, A17 in `apps/indusk-mcp/src/lib/audit/answers.test.ts`, from the bodies above; A10 also checks that a cause naming its findings and highlight passes.
 
   </details>
-- [ ] Add the reader and the two question lists it checks against.
+- [x] Add the reader and the two question lists it checks against.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/audit/answers.ts`: `AUDIT_QUESTIONS` (the post-build four: rows against the promise's sentence; what the diff changes that no row touches; what the code does that the brief never promised; which rejected ADR alternative the code takes) and `PLAN_REVIEW_QUESTIONS` (the four of the plan review). `readAuditAnswers(text, { questions = AUDIT_QUESTIONS } = {}): AuditAnswers` returns `findings`, `incomplete`, `unanswered`, `noClause`, `dismissals`, `amendments`, `missingQuestions`, `missingCauses`. A `- nothing` line under a heading is not a finding; findings are top-level `- ` lines under a `##` heading, their `breaks when:` and `answer:` lines indented beneath; answer kinds `fix`, `signal`, `amendment`, `nothing`. The `## What let these through?` section is the agent's, not a question; required only of an audit with at least one finding and only for the post-build audit.
 
   </details>
-- [ ] Add the command that prints the dismissals and amendment answers and refuses a read with an open finding.
+- [x] Add the command that prints the dismissals and amendment answers and refuses a read with an open finding.
   <details><summary>Technical</summary>
 
   `indusk plans audit-answers <plan> [--plan-review]` in `apps/indusk-mcp/src/bin/commands/plans.ts`, reading `audit.md` or `plan-review.md` from the plan's live copy; exit 2 naming each incomplete, unanswered or clause-less finding and each missing question; prints each dismissal as `<question> — <finding> — nothing: <reason>` and each amendment answer as `<question> — <finding> — amendment: <part>`.
 
   </details>
-- [ ] Review the new reader and command against the extensions' rules.
+- [x] Review the new reader and command against the extensions' rules. Shape: reviewed, nothing found — `readAuditAnswers` is one pure parse, the command only reads, prints and exits; `describeAnswers` holds the wording so the command has no logic to test.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
@@ -260,7 +260,7 @@ runs to show them to the person.
 
 #### Build Phase 1 Verification
 
-- [ ] The reader's tests pass.
+- [x] The reader's tests pass.
   <details><summary>Technical</summary>
 
   A2, A4, A5 (reader half), A10, A13, A17: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 1"`.
@@ -269,7 +269,7 @@ runs to show them to the person.
 
 #### Build Phase 1 Context
 
-- [ ] Add the reader to the package's rules as the one home of an audit's and a plan review's answers.
+- [x] Add the reader to the package's rules as the one home of an audit's and a plan review's answers.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md` (Run, verify, Shape, cleanup — the `lib/audit/` entry): `readAuditAnswers` is the one reader of `audit.md` and `plan-review.md`; the question lists live beside it.
@@ -278,7 +278,7 @@ runs to show them to the person.
 
 #### Build Phase 1 Document
 
-- [ ] Describe the new command in the plans reference.
+- [x] Describe the new command in the plans reference.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`: `plans audit-answers`, with `--plan-review`.
