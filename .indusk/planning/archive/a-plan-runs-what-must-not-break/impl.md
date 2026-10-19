@@ -13,9 +13,9 @@ falsification: skipped
 falsification_reason: "a narrowing of what runs; the cold audit reads it instead"
 cleanup: skipped
 cleanup_reason: "the phase deleted the reached-search code; nothing new to decompose"
-approved_brief: "2b2bc9af22cbaa40b4e100ccf5dcc19d96869d718e6f7270324c5f826a3a1d2d"
+approved_brief: "bdabc55af072efde905b71c9db4f9b33dd390994ccf3d85e704befb7e9962151"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-19T00:00:44.078Z"
+approved_at: "2026-10-19T00:18:59.490Z"
 ---
 
 # A plan runs what must not break
