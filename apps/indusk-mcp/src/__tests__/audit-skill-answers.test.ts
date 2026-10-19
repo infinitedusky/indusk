@@ -111,3 +111,15 @@ describe("A19 — the plan review is answered before approval and the planner ru
 		expect(planner).toContain("/audit {plan} --before-approval");
 	});
 });
+
+describe("A43 — the reader runs in the foreground and the turn waits for it", () => {
+	const afterApproval = audit.slice(audit.indexOf("3. **Spawn the reader.**"), audit.search(/Before approval/));
+	const beforeApproval = audit.slice(audit.search(/## Before approval/));
+	it.each([
+		["the post-build audit", afterApproval],
+		["the plan review", beforeApproval],
+	])("%s says run_in_background: false and never to end the turn while the reader runs", (_n, text) => {
+		expect(text).toContain("run_in_background: false");
+		expect(text).toMatch(/never end (your|the) turn while the reader runs/i);
+	});
+});
