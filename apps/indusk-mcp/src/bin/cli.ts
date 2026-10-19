@@ -1060,6 +1060,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("accept-brief <name>")
+	.description(
+		"Accept a plan's draft brief once its contract check passes — the brief is settled and the plan can be written from it",
+	)
+	.action(async (name: string) => {
+		const { plansAcceptBrief } = await import("./commands/plans.js");
+		await plansAcceptBrief(process.cwd(), name);
+	});
+
+plansCmd
 	.command("model <name>")
 	.description(
 		"The tier and model a phase is built on, or a step runs on — `<tier> <model>`, or `session` when the project names no model for it",
