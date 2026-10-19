@@ -45,13 +45,13 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | T1 | Accepting a brief whose contract passes marks it accepted, and is refused, naming the problem, when the contract check fails | Build Phase 2 | Build Phase 2 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-mcp/src/lib/plans/accept-brief.test.ts |
-| T2 | A planning run starts for an accepted brief whose looks are all approved, waits while one is not, and starts when the last is approved | Build Phase 4 | Build Phase 4 | written | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
+| T2 | A planning run starts for an accepted brief whose looks are all approved, waits while one is not, and starts when the last is approved | Build Phase 4 | Build Phase 4 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
 | T3 | A plan whose test plan, ADR and impl already exist, or whose impl is approved, starts no planning run | Build Phase 3 | Build Phase 3 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | T4 | The run's next step is the first missing document the workflow needs — test plan, then ADR when the workflow has one, then impl — and a step whose document fails its check is the same step again | Build Phase 3 | Build Phase 3 | passing | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | T5 | Each planning step is told to write only that document, from the plan's brief and research, to the planner's rules, unattended | Build Phase 3 | Build Phase 3 | passing | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/build-session.test.ts |
 | T6 | Approving a plan, approving a look and starting a build are refused from inside a planning step, naming the step | Test Phase 1 | Build Phase 2 | passing | unit | clause: an-accepted-brief-is-planned-unasked/never-approves | apps/indusk-mcp/src/lib/plans/planning-step-refusals.test.ts |
 | T7 | A planning run ends when the impl passes its check, waiting for approval; a step that writes a blocker, or two steps without progress, end it with that reason | Build Phase 3 | Build Phase 3 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/planning-runner.test.ts |
-| T8 | Approving a plan from the admin starts its build, and an approval refused for any reason starts nothing | Build Phase 4 | Build Phase 4 | written | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
+| T8 | Approving a plan from the admin starts its build, and an approval refused for any reason starts nothing | Build Phase 4 | Build Phase 4 | passing | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
 | T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | written | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
 | T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
 
@@ -314,6 +314,7 @@ This phase connects the loop to the moments that start it: accepting a brief, ap
 
   </details>
 - [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+  - Not run: `prepareShapeReview` answers `skipped` while this phase's Verification item (which names the T9 live check) is unticked. A read of the changed files in the meantime found one defect, fixed (a failed start left a run state in the map); `startBuild` and `startPlanning` share slot rules in two bodies, which is two uses and left for `/cleanup`. Run Shape once T9 has passed.
 
 #### Build Phase 4 Verification
 
@@ -326,7 +327,7 @@ This phase connects the loop to the moments that start it: accepting a brief, ap
 
 #### Build Phase 4 Context
 
-- [ ] Add to the admin's context file that the host starts planning runs as well as builds.
+- [x] Add to the admin's context file that the host starts planning runs as well as builds.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`: one line.
@@ -335,7 +336,7 @@ This phase connects the loop to the moments that start it: accepting a brief, ap
 
 #### Build Phase 4 Document
 
-- [ ] Write the decision page and the guide step for what happens after accepting a brief.
+- [x] Write the decision page and the guide step for what happens after accepting a brief.
   <details><summary>Technical</summary>
 
   `apps/docs/src/decisions/a-brief-is-planned-unasked.md` with its sidebar entry; the planning guide; changelog.
