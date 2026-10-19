@@ -49,11 +49,11 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T3 | A plan whose test plan, ADR and impl already exist, or whose impl is approved, starts no planning run | Build Phase 3 | Build Phase 3 | planned | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | T4 | The run's next step is the first missing document the workflow needs — test plan, then ADR when the workflow has one, then impl — and a step whose document fails its check is the same step again | Build Phase 3 | Build Phase 3 | planned | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | T5 | Each planning step is told to write only that document, from the plan's brief and research, to the planner's rules, unattended | Build Phase 3 | Build Phase 3 | planned | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/build-session.test.ts |
-| T6 | Approving a plan, approving a look and starting a build are refused from inside a planning step, naming the step | Test Phase 1 | Build Phase 2 | planned | unit | clause: an-accepted-brief-is-planned-unasked/never-approves | apps/indusk-mcp/src/lib/plans/planning-step-refusals.test.ts |
+| T6 | Approving a plan, approving a look and starting a build are refused from inside a planning step, naming the step | Test Phase 1 | Build Phase 2 | written | unit | clause: an-accepted-brief-is-planned-unasked/never-approves | apps/indusk-mcp/src/lib/plans/planning-step-refusals.test.ts |
 | T7 | A planning run ends when the impl passes its check, waiting for approval; a step that writes a blocker, or two steps without progress, end it with that reason | Build Phase 3 | Build Phase 3 | planned | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/planning-runner.test.ts |
 | T8 | Approving a plan from the admin starts its build, and an approval refused for any reason starts nothing | Build Phase 4 | Build Phase 4 | planned | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
 | T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | planned | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
-| T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | planned | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
+| T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | written | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
 
 ## Checklist
 
@@ -63,19 +63,19 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 
 This phase writes the two tests whose subjects exist today: that the admin's server code is not counted as interface, and that approving, approving a look and starting a build are refused inside a planning step. It records the rest, whose subjects the build phases introduce, as deferrals, so each build phase starts with its tests written.
 
-- [ ] Create or confirm this plan's worktree, so the plan tools read the plan from it.
+- [x] Create or confirm this plan's worktree, so the plan tools read the plan from it.
   <details><summary>Technical</summary>
 
   `indusk worktree create a-brief-is-planned-unasked` from the trunk; it exists from `indusk plans start`, so this confirms it.
 
   </details>
-- [ ] Write the test that the admin's server code is not interface while its pages and components are, failing today.
+- [x] Write the test that the admin's server code is not interface while its pages and components are, failing today.
   <details><summary>Technical</summary>
 
   T10 in `apps/indusk-mcp/src/lib/promises/interface-files.test.ts` (create if missing): over the real repository root, `interfaceFilesAmong(root, ["apps/indusk-admin/src/lib/build-host.ts", "apps/indusk-admin/src/app/api/plans/approve/route.ts", "apps/indusk-admin/src/app/p/[project]/plan/[name]/page.tsx", "apps/indusk-admin/src/components/ui/PromiseRow.tsx"])` returns only the last two; and `lookClosures` for the admin has no `null` closure (read `lib/looks/touched.ts` for its signature). Red today on the first half.
 
   </details>
-- [ ] Write the test that approving, approving a look and starting a build are refused inside a planning step, failing today.
+- [x] Write the test that approving, approving a look and starting a build are refused inside a planning step, failing today.
   <details><summary>Technical</summary>
 
   T6 in `apps/indusk-mcp/src/lib/plans/planning-step-refusals.test.ts`: with `INDUSK_BUILD_STEP=plan-impl` set for the test, `approvePlan` (on the plan-in-a-worktree fixture) and the look approval in `lib/looks/approve.ts` throw a refusal naming the step. Red today (no such refusal). The build start is an admin function, tested in Build Phase 4 with T2.
@@ -96,7 +96,7 @@ This phase writes the two tests whose subjects exist today: that the admin's ser
 
 #### Test Phase 1 Verification
 
-- [ ] The two tests exist and each fails on its own assertion, not on a missing file.
+- [x] The two tests exist and each fails on its own assertion, not on a missing file.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/interface-files.test.ts`; T6 under the system config if the fixture starts git.
@@ -105,7 +105,7 @@ This phase writes the two tests whose subjects exist today: that the admin's ser
 
 #### Test Phase 1 Context
 
-- [ ] Record nothing new; the rules land with the build phases.
+- [x] Record nothing new; the rules land with the build phases.
   <details><summary>Technical</summary>
 
   Confirm no context file needs a line yet.
@@ -114,7 +114,7 @@ This phase writes the two tests whose subjects exist today: that the admin's ser
 
 #### Test Phase 1 Document
 
-- [ ] Write nothing in the docs yet.
+- [x] Write nothing in the docs yet.
   <details><summary>Technical</summary>
 
   Confirm the docs change with the build phases.
