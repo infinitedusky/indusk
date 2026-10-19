@@ -622,12 +622,13 @@ signals. It closes the plan: nothing after it changes behaviour.
 
   </details>
   Done: 24 prose lines in `src/` comments and the docs guide/reference pages reworded (a promise's telemetry is a signal; Git's own `prunable` flag is a flag), `skills/planner.md` synced to `.claude/skills/planner/SKILL.md`. No tool description used the word. **Decision D-24:** skills and tool descriptions held one line (planner's "asks for marks"), which the A30 pattern does not scan; it was reworded by hand rather than by widening the pattern.
-- [ ] Write the end-to-end check and run it once against the real daemon.
+- [x] Write the end-to-end check and run it once against the real daemon.
   <details><summary>Technical</summary>
 
   `src/__tests__/clause-signal.live.test.ts` in the package's system tier (`vitest.tiers.ts`; not in `pnpm test`): a clause with a signal written by `markPromise` through `commandTracer()` reaches the local daemon, `clauseStanding` reads it upheld, and `confirmPlan` accepts it. Run it once with `pnpm test:system` (daemon up) and record the result and date under Notes (A11). `INDUSK_SKIP_TELEMETRY_AUTOSTART` stays set for `pnpm test`.
 
   </details>
+  Done: `clause-signal.live.test.ts`, listed in `vitest.tiers.ts` `SYSTEM`. **Decision D-25:** it is gated like `telemetry-daemon-found-live.test.ts` (`INDUSK_LIVE_CHECK=clause-signal`, skipped otherwise), because the system tier sets a throwaway `INDUSK_HOME` with no daemon and a release must not depend on the developer's own daemon; the item's `pnpm test:system` is the same config, run with the variable set. **Decision D-26:** the signal is written by a child process (`tsx`, no `VITEST*` in its environment) through `commandTracer()` and `markPromise`, for the fixture plan's `a-promise`, not `a-clause-is-proved-twice`, so a live-check run never moves a real promise's standing; the child signals as the fixture's project because `localSignalReader` keeps only its own project's signals (the first run failed on this: the reader found nothing, honestly), and the check requires a report newer than its own start, so an earlier run's span cannot satisfy it.
 - [ ] Write the signals guide, update the briefs and test-trajectory guides, and publish the decision.
   <details><summary>Technical</summary>
 
@@ -709,4 +710,4 @@ signals. It closes the plan: nothing after it changes behaviour.
 - **D-9. The ADR's D8 stands:** `known-broken` is accepted as a skew with older InDusks; nothing in this plan writes `known-violated`.
 - **D-10. Gates are filled with real items except where a phase changes no rule or no doc,** and those say `(none needed — <why>)`, which the reviewer reads (gate policy `auto`).
 
-**Live check (A11) result:** not yet run.
+**Live check (A11) result:** passed, 2026-10-18 (23:56 local), `INDUSK_LIVE_CHECK=clause-signal pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/clause-signal.live.test.ts` against the local daemon (traces :24318, query :24316 from the stored address): a child process without a test runner wrote an upheld signal for each of the fixture's two clauses, `localSignalReader` read both back, `clauseStanding` read each `holding`, `confirmPlan` accepted the fixture plan. One earlier attempt failed (project mismatch, see D-26); the second passed.
