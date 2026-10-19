@@ -70,3 +70,7 @@ Each decision and its reason, as this run made them without a person answering.
 7. **Periodic pass: the root's git-only line was removed.** Root `CLAUDE.md` carried a Key Decisions line for the git-only substrate. Its rule is held by the enforcer `scm-rip-out-grep.test.ts` and by the root Architecture line ("Git is the only SCM"); the narrative is in `/decisions/git-only-substrate`. Moving it into `apps/indusk-mcp/CLAUDE.md` was blocked by that file's budget, so the line was dropped from root instead. This is one entry moved down a tier, as the step asks.
 8. **Plan closed with `closed_reason`.** The impl has an owed residue (A16, the live check), so the archive records a `closed_reason` naming it, as the archived plans with residue do.
 9. **The nested `apps/indusk-mcp/CLAUDE.md` is over budget.** Not fixed here: a bulk compaction is `/compact-context`'s job, a separate editorial pass. Recorded as a finding.
+
+## Correction (2026-10-19, by hand)
+
+Decision 1 above was wrong, and `plans land` refused it: the two files were not red on `main` (26 of 26 pass there on a quiet machine). `cockpit-nav.test.tsx` passes on the branch too; its earlier red was load. `DecisionCard.test.tsx` failed three older cases for a real reason: this plan's falsification fix made every answer name the decision it answers (`on`), and three cases still expected the old body. They now expect `on: "question"`; 9 of 9 pass. The run then reported "released" although nothing landed: a release that does not land is shown as released (Stabilize, `a-run-can-be-trusted`).

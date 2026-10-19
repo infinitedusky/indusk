@@ -143,6 +143,7 @@ describe("A14 — one decision, with accept, the alternative and a reply", () =>
       project: PROJECT,
       choice: "reply",
       text: "Neither — ask the venue first",
+      on: "question",
     });
   });
 });
@@ -215,6 +216,7 @@ describe("cockpit-audit-fixes A7 — every question the agent asked is on the ca
     expect(posts[0]?.body).toEqual({
       project: PROJECT,
       choice: "answers",
+      on: "question",
       answers: {
         "Which seat map should holds use?": "Our own grid",
         "How long should a hold last?": "Ten minutes",
@@ -260,6 +262,7 @@ describe("cockpit-audit-fixes A14 — a several-question ask takes the person's 
     expect(posts[0]?.body).toEqual({
       project: PROJECT,
       choice: "answers",
+      on: "question",
       answers: {
         "Which seat map should holds use?": "Our own grid",
         "How long should a hold last?": "Until the show starts",
