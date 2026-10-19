@@ -251,6 +251,13 @@ This phase writes the tests the plan commits to before anything changes, so each
   Every test written here imports only symbols that exist today (`acceptBrief`, `planLifecycleProject`, the offer in `lib/decisions.ts`, `readPlanning`, the hook paths as strings given to `spawnSync`). Run each new file once: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run <the new files>` and `pnpm --filter @infinitedusky/indusk-admin exec vitest run <the new admin file>`; the red ones must fail on an assertion, never on an import or fixture error. A missing hook file is the spawned process's non-zero exit, which the assertion reads.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] Shape — review a file this phase changed and leave it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/plans/accept-brief-signals.test.ts`: calls acceptBrief through a loosely typed alias because the third argument (a tracer) is the seam Build Phase 4 creates; the alias is removed in that phase, when the real signature exists.
+
+  </details>
 
 #### Deferred to Build Phase 1
 
