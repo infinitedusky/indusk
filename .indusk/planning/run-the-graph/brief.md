@@ -38,6 +38,21 @@ one of these.
    one. Every other phase in both plans keeps running. If two phases interfere
    without sharing a file, the check when each merges into its plan catches it.
 
+3. **Something breaks in production.** A promise breaks overnight, and a fix
+   phase is written for it. The fix gets the next free session, ahead of every
+   phase that is not a fix. Every phase that touches the files it fixes and has
+   not started yet depends on it, and starts with the fix merged in. Phases
+   already running finish as normal, and merge the fix before they merge into
+   their plan.
+
+**The rule under all of them: nothing stops, and a hold is cheap.** A running
+phase always finishes. A phase can be put on hold (an expensive question, an
+amendment); it is set aside and gives up its turn on its files, so phases
+waiting only for those files move on at once. Phases that need its output still
+wait for it. The held phase does all the catching up: when it is ready again it
+waits for any active phase it now depends on, merges what finished meanwhile
+that touches its files, and carries on from where it stopped.
+
 ## Expectations
 
 1. **A master finishes in about the time of its longest chain of dependent phases, not the sum of its phases.**
