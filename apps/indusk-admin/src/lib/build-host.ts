@@ -2,9 +2,15 @@ import {
   autoAccepts,
   type BuildStepName,
   buildStepModel,
+  nextPlanningStep,
+  type PlanningStep,
+  type PlanningStop,
+  planningStepRefusal,
   type RunnerStop,
   readBuildPlan,
+  readPlanningState,
   runBuild,
+  runPlanning,
   runRelease,
   runStepSession,
   type ShortenReason,
@@ -123,8 +129,12 @@ export async function startBuild(
   project: string,
   plan: string,
 ): Promise<BuildState> {
+  const inPlanning = planningStepRefusal("starting a build");
+  if (inPlanning) throw new Error(inPlanning);
   const existing = buildState(project, plan);
   if (existing?.running) throw new Error(`${plan} is already building`);
+  if (planningState(project, plan)?.running)
+    throw new Error(`${plan} is being planned: its planning run has not ended`);
   const running = sessionManager().forPlan(project, plan, "build");
   if (running)
     throw new Error(
@@ -219,17 +229,136 @@ export async function startRelease(
   return state;
 }
 
-/** A planning run's state; a stub until the host starts one (a-brief-is-planned-unasked). */
+/**
+ * A planning run's state (a-brief-is-planned-unasked, ADR decision 5), held
+ * beside the builds' and keyed the same. `started` says whether this ask began
+ * a run; an ask that begins none (a look still unapproved, a brief not yet
+ * accepted, a plan already written) answers with why in `stop` and holds
+ * nothing, so asking again later is always allowed.
+ */
 export interface PlanningRunState {
   started: boolean;
   running: boolean;
-  step: string | null;
-  stop: { step: string; why?: string } | null;
+  /** The planning step running now. */
+  step: PlanningStep | null;
+  /** Why the run ended, or why none began. */
+  stop: PlanningStop | null;
 }
 
+const PLANNING_KEY = Symbol.for("indusk.admin.plannings");
+const plannings = (): Map<string, PlanningRunState> => {
+  const g = globalThis as unknown as Record<
+    symbol,
+    Map<string, PlanningRunState> | undefined
+  >;
+  g[PLANNING_KEY] ??= new Map();
+  return g[PLANNING_KEY];
+};
+
+export function planningState(
+  project: string,
+  plan: string,
+): PlanningRunState | null {
+  return plannings().get(key(project, plan)) ?? null;
+}
+
+const declined = (stop: PlanningStop): PlanningRunState => ({
+  started: false,
+  running: false,
+  step: null,
+  stop,
+});
+
+/**
+ * Start the plan's planning run in the background, if its brief is ready:
+ * accepted, with every look it names approved, and a document still to write.
+ * It takes the same place a build does (one run per plan, one slot under the
+ * cap, held between steps) and is refused inside a planning step — the run
+ * never starts another. The package's `nextPlanningStep` is asked first, so
+ * this host never restates when a run starts.
+ */
 export async function startPlanning(
-  _project: string,
-  _plan: string,
+  project: string,
+  plan: string,
 ): Promise<PlanningRunState> {
-  return { started: false, running: false, step: null, stop: null };
+  const inPlanning = planningStepRefusal("starting a planning run");
+  if (inPlanning) throw new Error(inPlanning);
+  if (planningState(project, plan)?.running)
+    throw new Error(`${plan} is already being planned`);
+  if (buildState(project, plan)?.running)
+    throw new Error(`${plan} is building: its build has not ended`);
+  const busy = sessionManager().forPlan(project, plan, "build");
+  if (busy)
+    throw new Error(
+      `a build session is already running for ${plan}: ${busy.id} — stop it first`,
+    );
+  const root = getProjectPath(project);
+  if (!root) throw new Error(`no project named ${project}`);
+
+  const read = await readPlanningState(root, plan);
+  if (read.briefStatus !== "accepted") {
+    return declined({
+      step: "cannot-continue",
+      why: `the brief is ${read.briefStatus ?? "without a status"}, not accepted`,
+    });
+  }
+  const next = nextPlanningStep(read);
+  if (
+    next.step === "wait-for-looks" ||
+    next.step === "ready-for-approval" ||
+    next.step === "cannot-continue"
+  ) {
+    return declined(next);
+  }
+
+  // Held before the first await below, so two asks at once cannot both start.
+  const free = sessionManager().admitBuild(project, plan);
+  const state: PlanningRunState = {
+    started: true,
+    running: true,
+    step: null,
+    stop: null,
+  };
+  plannings().set(key(project, plan), state);
+  let where: Awaited<ReturnType<typeof planLocation>>;
+  try {
+    where = await planLocation(project, plan);
+    if ("error" in where) throw new Error(where.error);
+  } catch (err) {
+    state.running = false;
+    free();
+    throw err;
+  }
+  const location = where;
+  void runPlanning({
+    read: () => readPlanningState(root, plan),
+    run: async (step) => {
+      // A planning step runs on the work step's default tier.
+      const chosen = await stepModelOption(root, plan, "work", undefined);
+      if ("error" in chosen) return { error: chosen.error };
+      return runStepSession(step, {
+        manager: sessionManager(),
+        worktree: location.cwd,
+        ...(location.addDirs ? { addDirs: location.addDirs } : {}),
+        project,
+        plan,
+        ...chosen,
+      });
+    },
+    onStep: (step) => {
+      state.step = step;
+    },
+  })
+    .then((stop) => {
+      state.stop = stop;
+    })
+    .catch((err: Error) => {
+      state.stop = { step: "cannot-continue", why: err.message };
+    })
+    .finally(() => {
+      state.running = false;
+      state.step = null;
+      free();
+    });
+  return state;
 }
