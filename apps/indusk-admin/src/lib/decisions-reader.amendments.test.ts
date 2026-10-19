@@ -16,7 +16,10 @@ import type { Plan } from "./planning-reader";
 vi.mock("./session-host", () => ({
   sessionManager: () => ({ running: () => [], pendingQuestion: () => null }),
 }));
-vi.mock("./build-host", () => ({ buildState: () => null }));
+vi.mock("./build-host", () => ({
+  buildState: () => null,
+  planningState: () => null,
+}));
 
 import { readWaiting } from "./decisions-reader";
 

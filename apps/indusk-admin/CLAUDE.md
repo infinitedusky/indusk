@@ -146,7 +146,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `proof`, `fix`; `plans/steps`, `waiting`, `history`); the admin's `lib/` holds
   only fs-to-props glue, never a second definition. What a plan waits on is
   `planWaiting`'s answer alone, amendments included; the nav and the page add
-  none. Guarded by `cockpit-single-definition.test.ts`. — see
+  none. Every Approve asks it too: `planActions`' `canApprove` is true only when `planWaiting` lists the plan as waiting on approval (`waitingOn`), on the plan page and the brief page alike; a plan whose `plan-review.md` is not answered waits on `plan-review`, whose answers go to the agent as words — guarded by `plan-actions.test.ts`, `plan-actions-pages.test.ts` and `decisions.test.ts`. Guarded by `cockpit-single-definition.test.ts`. — see
   `/decisions/plan-cockpit`
 - **A look's state is read from `promises/standing` and `looks/*`, never
   computed here**: the Looks page reads `looks/overview`, the dashboard and the
@@ -192,7 +192,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
-  sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
+  sent, never failed; an answer carries the kind of decision the card showed
+  (`on`), and one the plan no longer waits on is refused before anything runs
+  — a plan-review card can become an approval without the person (guarded by
+  A22 in `decisions.test.ts`). Guarded by `src/lib/build-host.release.test.ts` and
   `src/lib/decisions.test.ts`. **A decision's card shows everything the agent
   asked, never the first of it**: an ask of several questions is shown whole and
   answered under each question's text (`choice: "answers"`), and an answer

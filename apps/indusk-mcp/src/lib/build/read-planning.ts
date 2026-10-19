@@ -2,13 +2,13 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
-import { isAnswered, PLAN_REVIEW_QUESTIONS, readAuditAnswers } from "../audit/answers.js";
 import { planReviewHash } from "../audit/review-hash.js";
 import { fencedLineMask } from "../impl-headings.js";
 import { induskMcpPackageRoot } from "../package-root.js";
 import { parsePlan } from "../plan-parser.js";
 import { type Amendment, briefChangesSinceAcceptance } from "../plans/amendments.js";
 import { unapprovedMockups } from "../plans/approved-brief.js";
+import { planReviewAnswers, planReviewState } from "../plans/plan-review.js";
 import { type ContractResult, checkPlanContract } from "../promises/contract.js";
 import { findPlanFolder } from "../promises/plan-folder.js";
 import { requiredDocuments } from "../workflow-types.js";
@@ -157,13 +157,13 @@ function readReview(
 	briefChanges: readonly Amendment[],
 ): PlanningReview {
 	if (text === null) return { exists: false, complete: false, dismissals: [], amendments: [] };
-	const read = readAuditAnswers(text, { questions: PLAN_REVIEW_QUESTIONS, causes: false });
+	const read = planReviewAnswers(text);
 	// The review records the hash of the documents it read (`read:`); another hash, or none,
 	// means it was not a read of the plan as it stands.
 	const recorded = matter(text).data.read;
 	return {
 		exists: true,
-		complete: isAnswered(read),
+		complete: planReviewState(text) === "answered",
 		stale: recorded !== documentsHash,
 		dismissals: read.dismissals,
 		amendments: read.amendments,

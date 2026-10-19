@@ -8,7 +8,7 @@ import {
   planWaiting,
   type Waiting,
 } from "@infinitedusky/indusk-mcp/plans/waiting";
-import { buildState } from "./build-host";
+import { buildState, planningState } from "./build-host";
 import { snapshotOf } from "./plan-snapshot";
 import type { Plan } from "./planning-reader";
 import { sessionManager } from "./session-host";
@@ -21,7 +21,8 @@ import { sessionManager } from "./session-host";
  * plan's recorded answers are `plans/history`'s. Amendments are found only for
  * a plan whose brief no longer matches its approval, in the checkout the plan
  * is worked in (its worktree, else the project's own) — plan-stories, ADR
- * decision 5.
+ * decision 5. Each plan's planning run, as the daemon holds it, goes in too, so
+ * nothing is listed while one is going and a stopped one's reason is said.
  *
  * promise: decisions-wait-in-one-place
  */
@@ -50,6 +51,10 @@ export async function readWaiting(
     plans: plans.map(snapshotOf),
     builds,
     amendments,
+    plannings: plans.flatMap((p) => {
+      const s = planningState(project, p.name);
+      return s ? [{ plan: p.name, running: s.running, stop: s.stop }] : [];
+    }),
   });
 }
 

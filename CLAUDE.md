@@ -68,7 +68,6 @@ dusk/
 - `rationale_baseline` frontmatter for refactor-baseline plans — see `/lessons/rationale-baseline-frontmatter`
 - Doppler extension as the env layer — see `.indusk/planning/archive/doppler-extension/adr.md`
 - Multi-agent coordination: per-agent sections in one current.md + `update_current_section` MCP write surface + worktrees per agent — see `/decisions/multi-agent-coordination`
-- Git-only substrate (1.31.0): jj ripped out, parity via deletion; `scm-rip-out-grep.test.ts` exempts the record — an audit that fires on its own archive gets switched off — see `/decisions/git-only-substrate`
 - Worktree visibility: worktree-per-plan default + live worktree/branch columns + collision flag; kickoff is a nudge, not a gate — see `/decisions/worktree-visibility`
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
 - Test phases as structure: `### Test Phase N` + `### Build Phase N` as two sequences; Test Phase 1 mandatory, first, and the register where every deferral is justified. Zero migration via an optional `Build ` prefix — see `/decisions/test-phase-structure`

@@ -1,4 +1,5 @@
 // promise: an-accepted-brief-is-planned-unasked
+// promise: approval-waits-for-a-finished-plan
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -21,6 +22,8 @@ interface Held {
 let held: Held;
 let runs = 0;
 let finishRun: () => void = () => {};
+let failRun: (why: string) => void = () => {};
+let handed: { onStep: (step: string) => void } | null = null;
 
 const WRITTEN = { exists: false, ok: false };
 
@@ -44,10 +47,12 @@ vi.mock("@infinitedusky/indusk-mcp/build", async () => {
       blocker: null,
       ...held,
     }),
-    runPlanning: () => {
+    runPlanning: (deps: { onStep: (step: string) => void }) => {
       runs += 1;
+      handed = deps;
       return new Promise((resolve) => {
         finishRun = () => resolve({ step: "ready-for-approval" });
+        failRun = (why: string) => resolve({ step: "cannot-continue", why });
       });
     },
   };
@@ -74,7 +79,7 @@ vi.mock("./session-host", () => ({
 vi.mock("./registry-client", () => ({ getProjectPath: () => "/p" }));
 
 import * as host from "./build-host";
-import { startBuild, startPlanning } from "./build-host";
+import { planningState, startBuild, startPlanning } from "./build-host";
 
 const PROJECT = "seats";
 const PLAN = "plan-from-brief";
@@ -275,5 +280,26 @@ describe("T21 — a held build session blocks every start", () => {
       /sess-1 — stop it first/,
     );
     expect(runs).toBe(0);
+  });
+});
+
+describe("A12 — the admin holds a planning run as going until it ends", () => {
+  it("A12 stays going through the gap between one step and the next, and reads stopped with its reason after a failure", async () => {
+    await startPlanning(PROJECT, PLAN);
+    handed?.onStep("plan-test-plan");
+    expect(planningState(PROJECT, PLAN)).toMatchObject({
+      running: true,
+      step: "plan-test-plan",
+    });
+    // The gap: no step has been announced since, and the run has not ended.
+    expect(planningState(PROJECT, PLAN)?.running).toBe(true);
+    failRun("the last step's session failed: exit 1");
+    await vi.waitFor(() =>
+      expect(planningState(PROJECT, PLAN)?.running).toBe(false),
+    );
+    expect(planningState(PROJECT, PLAN)?.stop).toEqual({
+      step: "cannot-continue",
+      why: "the last step's session failed: exit 1",
+    });
   });
 });
