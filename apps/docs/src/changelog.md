@@ -6,6 +6,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **Only the conversation that accepted the brief starts the run** (a-brief-is-planned-unasked): `indusk plans accept-brief` records `accepted_at` in the brief, and a planning conversation's end starts the run only when the brief was accepted after that conversation began. A person who planned by hand and only paused, or a brief accepted by hand, starts nothing at a conversation's end.
+
 - **Accepting a brief ends the planning conversation, and the run follows** (a-brief-is-planned-unasked): the admin held its planning run back while the person's planning conversation was open, and the brief is usually accepted from inside it, so nothing started the run. The end of a planning conversation now asks for it, and the planner skill ends the conversation after `accept-brief` instead of writing the documents itself; planning by hand is still available.
 
 - **A planning run starts once, reads the way its session wrote, and is not approved mid-run** (a-brief-is-planned-unasked): two asks at once start one planning run, and none starts while a person's planning conversation is open (the planner skill ends that conversation once the admin is writing the plan); the reader holds a test plan to the contract's refusals and runs the impl check under the build's gate policy, says when that check could not run, and ignores a `blocker:` line inside a code block; the planning prompt says an earlier draft or proposed document is no reason to stop; approving a plan from the admin while its run is still running is refused. See [`plans`](/reference/cli/plans#what-runs-after-it).
