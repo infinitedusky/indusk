@@ -88,3 +88,5 @@ Shape reviewed each build phase (Build Phases 1, 2, 3, 4, 5, 7, 8) and recorded 
 ## Landing
 
 Landed on main at 461bab6a, 2026-10-19. Plan folder left in `.indusk/planning/` (not archived): `promises confirm` refuses four clauses until real runs report their signals (A32). Installed with `pnpm install:local` from trunk; `indusk --version` reports 1.71.0, unchanged. Nothing published; no release bump, since the project installs its own build and publishing is deliberate. Deviation from Step 9/10: archive was skipped, by the plan's own rule above.
+
+Landed on main at d2babac74, 2026-10-19 (`indusk plans land`; landing tests exit 0; branch and worktree removed). Install: `pnpm install:local` on trunk succeeded; `indusk --version` reports 1.71.0, unchanged. Step 11: the project installs its own build and this close did not ask for a publish, so nothing is bumped or published; the release is the person's call. Still open: A32's three signal refusals; the plan folder stays in `.indusk/planning/`, not archived, until `indusk promises confirm` passes.
