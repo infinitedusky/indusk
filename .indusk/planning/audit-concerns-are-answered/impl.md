@@ -1,7 +1,7 @@
 ---
 title: "A plan is read cold before approval, and every audit concern is answered"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -85,6 +85,10 @@ amendment. Every concern waved away is shown to the person.
 | A21 | Once the impl and the contract pass, the planning run's next step is the plan review; while it is missing, incomplete or unanswered it stays next; once answered, the run is ready for approval | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/next-planning-step.test.ts |
 | A22 | The plan review is a planning step, so approving is refused from inside it | Test Phase 1 | Build Phase 3 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | apps/indusk-mcp/src/lib/build/step-env.test.ts |
 | A23 | The next unattended planning run after landing writes an answered plan review before it stops for approval | Build Phase 4 | Build Phase 4 | skipped | live check | clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold | manual: after landing, `pnpm install:local` and `indusk ui restart`, accept a brief in the admin; read the run's steps for a plan-review step after plan-impl, `plan-review.md` in the plan folder with every finding answered, and the ready-for-approval stop listing its dismissals |
+| A24 | A finding that quotes a diff or markdown in a fenced block is one finding: a `- ` or `## ` line inside the fence is neither a finding nor a heading, so the file still reads as answered | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A25 | An answer line with no text after its kind (`- answer: nothing`, `- answer: nothing — `, `- answer: fix`, `- answer: amendment`) is unanswered, naming the finding; no dismissal is listed with an empty reason | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/a-dismissal-reaches-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A26 | A signal answer naming a clause the registry does not hold — the skill's own placeholder `<promise>/<clause>` included — is refused as naming no clause when the reader is handed the registry's clauses | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/the-plan-answers | apps/indusk-mcp/src/lib/audit/answers.test.ts |
+| A27 | A question the reader marks empty as `- Nothing.`, `- none` or `- nothing.` is not a finding, the same as `- nothing` | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-audit-concern-gets-a-solution/the-audit-finds | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 
 ### Deferred Verification
 
@@ -208,7 +212,7 @@ plan review's inputs.
 
 #### Test Phase 1 Context
 
-- [x] (none needed — an unattended build writes no session section; the plan's own checklist and `indusk plans next` carry the cursor) Record in this session's section that the plan is at Test Phase 1.
+- [x] (none needed — an unattended build writes no session section; the plan's own checklist and the plan's next-step command carry the cursor) Record in this session's section that the plan is at Test Phase 1.
   <details><summary>Technical</summary>
 
   current.md: via `mcp__indusk__update_current_section` at handoff.
@@ -233,8 +237,10 @@ tells a complete, answered read from one with a finding left open, accepts an
 amendment as an answer, and lists the dismissals, plus the command the skill
 runs to show them to the person.
 
-- [x] Write the reader's tests from the recorded bodies. Decision: the recorded A2 body expected line 10 for a finding that sits on line 8 of its own fixture (a miscount, not an assertion about the reader); corrected to 8. Every other assertion is as recorded, plus a pass case for A4 and a `describeAnswers` test.
+- [x] Write the reader's tests from the recorded bodies.
   <details><summary>Technical</summary>
+
+  Decision: the recorded A2 body expected line 10 for a finding that sits on line 8 of its own fixture (a miscount, not an assertion about the reader); corrected to 8. Every other assertion is as recorded, plus a pass case for A4 and a `describeAnswers` test.
 
   A2, A4, A5 (reader half), A10, A13, A17 in `apps/indusk-mcp/src/lib/audit/answers.test.ts`, from the bodies above; A10 also checks that a cause naming its findings and highlight passes.
 
@@ -251,8 +257,10 @@ runs to show them to the person.
   `indusk plans audit-answers <plan> [--plan-review]` in `apps/indusk-mcp/src/bin/commands/plans.ts`, reading `audit.md` or `plan-review.md` from the plan's live copy; exit 2 naming each incomplete, unanswered or clause-less finding and each missing question; prints each dismissal as `<question> — <finding> — nothing: <reason>` and each amendment answer as `<question> — <finding> — amendment: <part>`.
 
   </details>
-- [x] Review the new reader and command against the extensions' rules. Shape: reviewed, nothing found — `readAuditAnswers` is one pure parse, the command only reads, prints and exits; `describeAnswers` holds the wording so the command has no logic to test.
+- [x] Review the new reader and command against the extensions' rules.
   <details><summary>Technical</summary>
+
+  Shape: reviewed, nothing found — `readAuditAnswers` is one pure parse, the command only reads, prints and exits; `describeAnswers` holds the wording so the command has no logic to test.
 
   Shape review; findings as unchecked items here.
 
@@ -313,8 +321,10 @@ runs.
   `indusk promises change a-plan-is-audited-by-a-fresh-reader-before-it-closes --plan audit-concerns-are-answered --statement "When a plan's build phases close, before falsification, a reader that has not seen the building session reads the plan and writes what it finds to audit.md in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped." --reason "the audit's findings are answered before falsification and cleanup (Sandy, 2026-10-19)"`.
 
   </details>
-- [x] Review the changed loop against the extensions' rules. Shape: reviewed, nothing found — the order change is two moved lines, and the amendment stop is one early return over an input the reader fills. Decision: the admin's `describeStop` (`BuildControls.tsx`) gained an `amendment` case so its exhaustive switch still compiles; it is one sentence, not a new component or state, so no look is drawn. The admin's own ritual rail (`RITUAL_ORDER`) keeps falsify, cleanup, audit — the plan lists no admin rendering change; recorded as forward intelligence below.
+- [x] Review the changed loop against the extensions' rules.
   <details><summary>Technical</summary>
+
+  Shape: reviewed, nothing found — the order change is two moved lines, and the amendment stop is one early return over an input the reader fills. Decision: the admin's `describeStop` (`BuildControls.tsx`) gained an `amendment` case so its exhaustive switch still compiles; it is one sentence, not a new component or state, so no look is drawn. The admin's own ritual rail (`RITUAL_ORDER`) keeps falsify, cleanup, audit — the plan lists no admin rendering change; recorded as forward intelligence below.
 
   Shape review; findings as unchecked items here.
 
@@ -340,8 +350,10 @@ runs.
 
 #### Build Phase 2 Document
 
-- [x] Describe the new order and the amendment stop in the build reference. Decision: `guide/plan-lifecycle.md` still draws falsify → cleanup → audit, the admin's rail order, which this plan does not change; only the build loop's order moved.
+- [x] Describe the new order and the amendment stop in the build reference.
   <details><summary>Technical</summary>
+
+  Decision: `guide/plan-lifecycle.md` still draws falsify → cleanup → audit, the admin's rail order, which this plan does not change; only the build loop's order moved.
 
   `apps/docs/src/reference/cli/plans.md` (`plans next` steps) and wherever the lifecycle order is given (`grep -rn "falsify.*cleanup.*audit" apps/docs/src`).
 
@@ -360,8 +372,10 @@ This phase adds what the plan review's reader is handed and the command that
 prints it, makes the review the unattended planning run's last step, and puts
 its dismissals in the stop that asks the person for approval.
 
-- [x] Write the review inputs' test from the recorded body. Decision: written over the file's own fixture plan (a worktree with committed documents), through `planReviewInputs` directly, rather than the recorded `planReviewInputs(root, "p")` placeholder; the file is system-tier, run with `vitest.system.config.ts`.
+- [x] Write the review inputs' test from the recorded body.
   <details><summary>Technical</summary>
+
+  Decision: written over the file's own fixture plan (a worktree with committed documents), through `planReviewInputs` directly, rather than the recorded `planReviewInputs(root, "p")` placeholder; the file is system-tier, run with `vitest.system.config.ts`.
 
   A18 in `apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts`, from the body above.
 
@@ -378,8 +392,10 @@ its dismissals in the stop that asks the person for approval.
   `PLANNING_STEPS` gains `plan-review` (`lib/build/step-env.ts`). `PlanningState` gains `review: { exists; complete; dismissals; amendments }`; `readPlanningState` (`lib/build/read-planning.ts`) fills it from `plan-review.md` through `readAuditAnswers(text, { questions: PLAN_REVIEW_QUESTIONS })`, complete when nothing is incomplete, unanswered or missing. `nextPlanningStep` returns `plan-review` after the contract check passes while the review is not complete, and `{ step: "ready-for-approval", dismissals, amendments }` once it is. `stepPrompt` (`lib/build/build-session.ts`) gives `plan-review`: run `/audit {plan} --before-approval`, write only `plan-review.md` and the documents its answers change. The admin's run shows the stop's dismissals in its event text. A20, A21, A22.
 
   </details>
-- [x] Review the planning loop's changes against the extensions' rules. Shape: reviewed, nothing found. Decisions: the stop carries `dismissals` and `amendments` only when non-empty, so every existing consumer and test of a bare `ready-for-approval` is unchanged; a `blocker:` line in `plan-review.md` stops the run like one in any planning document; the runner's progress fingerprint includes the review, so an answered review counts as progress.
+- [x] Review the planning loop's changes against the extensions' rules.
   <details><summary>Technical</summary>
+
+  Shape: reviewed, nothing found. Decisions: the stop carries `dismissals` and `amendments` only when non-empty, so every existing consumer and test of a bare `ready-for-approval` is unchanged; a `blocker:` line in `plan-review.md` stops the run like one in any planning document; the runner's progress fingerprint includes the review, so an answered review counts as progress.
 
   Shape review; findings as unchecked items here.
 
@@ -469,8 +485,10 @@ plan review, syncs the project's copies and writes the docs.
   `.claude/skills/{audit,falsify,cleanup,retrospective,planner}.md` from the package; `skill-sync-parity.test.ts` passes. A8.
 
   </details>
-- [x] Review the changed skills against the extensions' writing rules. Shape: reviewed, nothing found; the audit skill's two modes share one answers step and one command, as the ADR's rejected-alternative (a second skill) required. Decisions: the project's skill copies live at `.claude/skills/<name>/SKILL.md`, not `<name>.md`, and were synced there; the docs sidebar (`.vitepress/config.ts`) lists no decision pages, so the new decision page needs no sidebar entry.
+- [x] Review the changed skills against the extensions' writing rules.
   <details><summary>Technical</summary>
+
+  Shape: reviewed, nothing found; the audit skill's two modes share one answers step and one command, as the ADR's rejected-alternative (a second skill) required. Decisions: the project's skill copies live at `.claude/skills/<name>/SKILL.md`, not `<name>.md`, and were synced there; the docs sidebar (`.vitepress/config.ts`) lists no decision pages, so the new decision page needs no sidebar entry.
 
   Shape review; findings as unchecked items here.
 
@@ -484,8 +502,10 @@ plan review, syncs the project's copies and writes the docs.
   A1, A3, A5, A6, A7, A8, A9, A11, A15, A16, A19: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 4"`.
 
   </details>
-- [x] The live check of the planning run is written down and waits for the installed build. A23 stays `planned` in the table with its manual procedure; the Deferred Verification block above carries its reason, requirement and mitigation. Decision: the row's `Passes at` is Build Phase 4 yet it cannot pass here, so it is recorded `skipped` (a manual live check awaiting the installed build) rather than left `planned`.
+- [x] The live check of the planning run is written down and waits for the installed build.
   <details><summary>Technical</summary>
+
+  A23 stays `planned` in the table with its manual procedure; the Deferred Verification block above carries its reason, requirement and mitigation. Decision: the row's `Passes at` is Build Phase 4 yet it cannot pass here, so it is recorded `skipped` (a manual live check awaiting the installed build) rather than left `planned`.
 
   A23 stays `skipped` with its procedure in the trajectory table; run after landing and recorded in the retrospective.
 
@@ -514,6 +534,77 @@ plan review, syncs the project's copies and writes the docs.
 - **Watch out**: the package's full everyday suite has failures that are not this plan's — `timing/test-run.test.ts` (starts git, flagged by `everyday-tests-never-wait`), `steps-name-project-commands.test.ts` (no `what a phase runs` heading in `work.md`), and the `lib/run/*` loop tests (`stopped-red`). None touch a file this plan changed; not confirmed against a clean tree.
 - **Watch out**: `indusk plans tests --phase` also runs `apps/indusk-admin` tests, which fail in a worktree with an unbuilt `indusk-mcp` (`Cannot find module '@infinitedusky/indusk-mcp/...'`); run the package's own files directly.
 - **Assumption**: the audit skill's `--before-approval` mode is run by the planning agent as `/audit {plan} --before-approval`; the live check A23 is the first real proof.
+
+### Build Phase 5: Falsification — what the reader of an audit miscounts: quoted code, empty answers, invented clauses, a capitalised nothing
+
+**Tier**: med — the work step's default
+
+This phase tests the one reader of the audit and plan-review files against what a real reader and a real agent write, not the tidy fixtures it was built on. A finding that quotes a diff turns every removed line into a new unanswered finding, so the planning run can never reach approval; an answer with no reason is accepted and the person is shown a blank dismissal; a telemetry answer naming a clause that does not exist, even the skill's own placeholder, is accepted as naming one; and an empty question written in a slightly different way becomes a finding. Once it closes, each of these is read the way the person would read it.
+
+- [ ] Make the reader ignore every line inside a fenced code block when it looks for headings, findings and answers.
+  <details><summary>Technical</summary>
+
+  `readAuditAnswers` in `apps/indusk-mcp/src/lib/audit/answers.ts` splits on lines and matches `^##\s+` and `^- ` with no fence mask. A reader answering "What does the diff change that no row touches?" naturally quotes a ```` ```diff ```` hunk under a finding; each removed line (`- const x = 1;`) is a column-zero `- ` line and becomes a finding with no `breaks when:` and no answer. `indusk plans audit-answers` then exits 2 naming lines that are not findings, and in the planning run `readReview` keeps `complete: false`, so `nextPlanningStep` keeps returning `plan-review` until two runs make no progress and the run ends "cannot continue" — the plan never reaches the person. A `## ` line inside a quoted markdown fence likewise changes the section. Fix: compute `fencedLineMask(lines)` (`lib/impl-headings.ts`, the project's one fence rule) once and `continue` on every masked line. Answers A24 (fixture: a finding whose answer is followed by a fenced diff holding `- old` and `## Heading` lines; expect one finding, `isAnswered` true, no missing question).
+
+  </details>
+- [ ] Count an answer with nothing written after its kind as no answer, so no blank dismissal reaches the person.
+  <details><summary>Technical</summary>
+
+  `ANSWER` is `/^\s+- answer:\s*(fix|signal|amendment|nothing)\b\s*(?:[—–-]+\s*)?(.*)$/`; `(.*)` accepts the empty string, so `  - answer: nothing` is an answer and `dismissals` gets `{ reason: "" }`, printed as `… — nothing: ` — exactly the waved-away concern with no reason the goal says the person must see. Fix: in `readAuditAnswers`, set `current.answer` only when the captured text is non-empty after trim; an empty one leaves the finding in `unanswered` (the command already names it "has no answer"). Answers A25.
+
+  </details>
+- [ ] Let the reader be handed the registry's clauses, refuse a telemetry answer naming one that does not exist, and have the answers command hand them in.
+  <details><summary>Technical</summary>
+
+  `CLAUSE` is `/clause:\s*[^\s/;]+\/[^\s;]+/`: any `x/y` passes, including the skill's own template text `clause: <promise>/<clause>` (copied unedited, `<promise>` matches `[^\s/;]+`) and a misspelt or never-declared clause. Fix: `ReadOptions` gains `clauses?: ReadonlySet<string>` (`<promise>/<clause>` pairs); when given, a signal answer whose named pair is not in the set goes to `noClause`. The reader stays pure. `plansAuditAnswers` (`apps/indusk-mcp/src/bin/commands/plans.ts`) builds the set from the registry (`readPromises` in `lib/promises/registry.ts`, each promise's `clauses[].name`) for the post-build audit only; an unreadable registry refuses the command by name (exit 1), never reads as an empty set that would refuse every signal. `describeAnswers`'s wording becomes "answers with a signal naming no clause the registry holds". Answers A26 (pure test: a set holding `a-x/holds`; `clause: a-x/holds` passes, `clause: a-x/nope` and `clause: <promise>/<clause>` are refused; with no set given, today's shape check is unchanged).
+
+  </details>
+- [ ] Read a question marked empty in any ordinary spelling of "nothing" as having no findings.
+  <details><summary>Technical</summary>
+
+  The skip is `item[1].trim() === "nothing"`. A cold reader on the audit tier writing `- Nothing.` or `- None` under a question creates a finding with no `breaks when:`; the plan's agent must then answer a non-finding, and in the planning run the review stays incomplete for a session. Fix: skip when `/^(nothing|none)\.?$/i` matches the trimmed text. Answers A27.
+
+  </details>
+
+#### Build Phase 5 Verification
+
+- [ ] The reader counts a fenced diff, a reasonless answer, an invented clause and a capitalised "nothing" the way the person would, failing today and passing after the fixes, and every earlier reader test still passes.
+  <details><summary>Technical</summary>
+
+  A24, A25, A26, A27 in `apps/indusk-mcp/src/lib/audit/answers.test.ts`, written red first; then `indusk plans tests audit-concerns-are-answered --phase "Build Phase 5"` (or `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/audit src/lib/build/next-planning-step src/lib/build/read-planning`), A2, A4, A5, A10, A13, A17, A20, A21 still green; the package's type check clean.
+
+  </details>
+
+#### Build Phase 5 Context
+
+- [ ] Add to the package's rules that the audit reader skips fenced blocks and checks a telemetry answer's clause against the registry.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the `lib/audit/` entry: `readAuditAnswers` masks fences with `fencedLineMask` (never a second fence rule), an answer with no text is no answer, and `plans audit-answers` checks a signal's clause against the registry, an unreadable registry refusing by name.
+
+  </details>
+
+#### Build Phase 5 Document
+
+- [ ] Say in the plans reference that the answers command refuses a reasonless answer and a clause the registry does not hold.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/cli/plans.md`, `plans audit-answers`: exit 2 also names an answer with no text and a signal whose clause is not declared; fenced blocks are not read as findings.
+
+  </details>
+
+#### Build Phase 5 Hunt record
+
+What was investigated, and why some suspicions were not written as hypotheses (`INDUSK_GATE_POLICY=auto`; the decisions below are the falsifier's own):
+
+- **Investigated with hypotheses above**: `lib/audit/answers.ts` (every regex and the line loop), `plans audit-answers` in `bin/commands/plans.ts`, `readReview` in `lib/build/read-planning.ts` and the planning runner's progress fingerprint.
+- **Investigated, nothing found**: `nextBuildStep`'s new order and amendment stop (`lib/build/next-step.ts`) — the amendment check sits after the error and no-progress checks and before every step, and `readBuildPlan` turns an unreadable approval into `BuildPlanUnreadable`, never an empty list; `planReviewInputs` (`lib/audit/inputs.ts`) hands only the four documents and the tree; `PLANNING_STEPS` gains `plan-review`, so approving is refused inside it; `nextSession`'s and `describeStep`'s new cases.
+- **Considered and not written, with reasons**:
+  - The unattended build moves from the audit to falsification once `audit.md` exists, answered or not (`isAuditComplete` reads existence only). Not a defect of this plan: ADR decision D5 keeps the audit advisory and existence-only, and the ADR rejected a gate on unanswered concerns; a build-loop gate would reverse that decision, which is the person's, not a falsification fix.
+  - An `amendment` answer written in `audit.md` without the matching brief edit is not stopped on, since the build loop reads amendments from the brief (`amendmentsOf`), not from `audit.md`. Not written: no reader can tell, after a re-approval, an amendment already approved from one never made, so any detector would stop forever or never; the skill's instruction to edit the brief is the only workable carrier.
+  - `planReviewInputs` computes the full diff and stat through `codeChanges` only to keep `tree` — wasted work, not a wrong result; left to `/cleanup`.
+  - A heading the reader numbers (`## 1. Does each row…`) reads as a missing question. The skill says "unnumbered" and the command names the missing question, so the agent can fix it in the same session; no liveness loss beyond one rerun.
+- **Not investigated**: the admin's rendering of the new stop (`BuildControls.tsx`, one sentence) and the skill-copy sync, both covered by type checks and the parity test; the live planning run (A23), which waits for the installed build by design.
 
 ## Files Affected
 
