@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
+import { fencedLineMask } from "../impl-headings.js";
 import { parsePlan } from "../plan-parser.js";
 import { unapprovedMockups } from "../plans/approved-brief.js";
 import { type ContractResult, checkPlanContract } from "../promises/contract.js";
@@ -102,9 +103,17 @@ function textOf(dir: string | null, file: string): string | null {
 	return existsSync(path) ? readFileSync(path, "utf-8") : null;
 }
 
-/** A `blocker: <what>` line a planning step wrote into a document. */
+/** A `blocker: <what>` line a planning step wrote into a document, outside any code block. */
 function blockerIn(text: string | null): string | null {
-	return text?.match(/^blocker:\s+(\S.*)$/m)?.[1].trim() ?? null;
+	if (text === null) return null;
+	const lines = text.split("\n");
+	const fenced = fencedLineMask(lines);
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const found = lines[i].match(/^blocker:\s+(\S.*)$/);
+		if (found) return found[1].trim();
+	}
+	return null;
 }
 
 /**
