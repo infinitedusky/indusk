@@ -55,17 +55,17 @@ An unattended session asks each choice the plan does not settle as a question th
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | A question with fewer than two options, no recommendation, no reason, or a cost other than cheap / moderate / expensive is refused with what is missing; an empty reply is not an answer | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-mcp/src/lib/questions/record.test.ts |
+| T1 | A question with fewer than two options, no recommendation, no reason, or a cost other than cheap / moderate / expensive is refused with what is missing; an empty reply is not an answer | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-mcp/src/lib/questions/record.test.ts |
 | T2 | A question an unattended session asks appears on the plan's page with its options, the recommended one marked with its reason, and its cost | Build Phase 5 | Build Phase 5 | planned | contract | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-admin/src/__tests__/question-row.test.tsx |
 | T3 | A document saved by an unattended run that records a choice as decided unattended with no question reference is refused naming the line; the same line with a reference to a question that exists in the plan's record saves, and a made-up id is refused; review and acceptance lines are not checked | Test Phase 1 | Build Phase 4 | written | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts |
-| T4 | With nothing set, a cheap, a moderate and an expensive question each stay waiting with no timer however long they are left, and the answer when it comes is used | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-cost-sets-the-wait/holds-by-default | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
-| T5 | The deadline is a stored time: a question on a set time read after the admin was down goes ahead on that read, and a restart never gives it more time | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
+| T4 | With nothing set, a cheap, a moderate and an expensive question each stay waiting with no timer however long they are left, and the answer when it comes is used | Build Phase 1 | Build Phase 1 | passing | unit | clause: the-cost-sets-the-wait/holds-by-default | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
+| T5 | The deadline is a stored time: a question on a set time read after the admin was down goes ahead on that read, and a restart never gives it more time | Build Phase 1 | Build Phase 1 | passing | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
 | T6 | A question that went ahead says so on its row: what was done and when | Build Phase 5 | Build Phase 5 | planned | contract | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-admin/src/__tests__/question-row.test.tsx |
 | T7 | A session that asks a question that holds stops, and the plan is listed under Needs you with no timer | Build Phase 2 | Build Phase 2 | planned | contract | clause: the-cost-sets-the-wait/a-hold-frees-the-slot | apps/indusk-mcp/src/lib/session/question-wait.test.ts |
 | T8 | While a held question waits the machine counts one fewer running session and a queued plan takes the slot; a plan waiting on a set time still holds its slot | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-cost-sets-the-wait/a-hold-frees-the-slot, promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/question-wait.test.ts |
-| T9 | A question one of whose options changes the brief, a promise or a look, or skips a gate, never goes ahead however long it is left, with every cost set to `immediate` and again with every cost set to a time | Build Phase 1 | Build Phase 1 | planned | unit | clause: what-was-agreed-is-never-cheap/never-timed-out | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
+| T9 | A question one of whose options changes the brief, a promise or a look, or skips a gate, never goes ahead however long it is left, with every cost set to `immediate` and again with every cost set to a time | Build Phase 1 | Build Phase 1 | passing | unit | clause: what-was-agreed-is-never-cheap/never-timed-out | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
 | T10 | When the person answers a held question the plan's run resumes and the agent is told the answer | Build Phase 2 | Build Phase 2 | planned | contract | clause: the-cost-sets-the-wait/a-hold-frees-the-slot | apps/indusk-mcp/src/lib/session/question-wait.test.ts |
-| T11 | A question given as cheap whose option changes the brief, a promise, a look or a gate is shown as expensive with no timer and never goes ahead; one whose options change none keeps its cost | Build Phase 1 | Build Phase 1 | planned | unit | clause: what-was-agreed-is-never-cheap/never-timed-out | apps/indusk-mcp/src/lib/questions/cost.test.ts |
+| T11 | A question given as cheap whose option changes the brief, a promise, a look or a gate is shown as expensive with no timer and never goes ahead; one whose options change none keeps its cost | Build Phase 1 | Build Phase 1 | passing | unit | clause: what-was-agreed-is-never-cheap/never-timed-out | apps/indusk-mcp/src/lib/questions/cost.test.ts |
 | T12 | A late answer that differs from what was done opens exactly one draft plan naming the question, the choice made and the one wanted; a matching answer, an on-time answer, or a second answer to the same question opens none more; the plan is not accepted, approved or started | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-late-answer-opens-a-follow-on/disagreement-opens-a-plan | apps/indusk-mcp/src/lib/questions/follow-on.test.ts |
 | T13 | On the question's row the opened follow-on is linked | Build Phase 5 | Build Phase 5 | planned | contract | clause: a-late-answer-opens-a-follow-on/disagreement-opens-a-plan | apps/indusk-admin/src/__tests__/question-row.test.tsx |
 | T14 | A question in each state (waiting, answered in time, gone ahead, answered late) is readable on the plan's page and, after landing and archiving, in its history, with recommendation, answer and what was done | Build Phase 5 | Build Phase 5 | planned | contract | clause: a-late-answer-opens-a-follow-on/every-decision-stays | apps/indusk-mcp/src/lib/questions/history.test.ts, apps/indusk-admin/src/__tests__/question-row.test.tsx |
@@ -81,7 +81,7 @@ An unattended session asks each choice the plan does not settle as a question th
 | T24 | A plan carrying `follow_on_of` is never moved to the archive by the dead-draft sweep however old and untouched, so the release keeps refusing until a person closes it | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/lib/planning/archive-dead-follow-on.test.ts |
 | T25 | Each place that decides a clause reports it: upheld when what it decided holds, broken naming what did not, and a failed report never fails what reported it | Build Phase 7 | Build Phase 7 | planned | unit | the signal writers for this plan's clauses; each clause's upheld signal is read from a real run at close | apps/indusk-mcp/src/lib/questions/signals.test.ts |
 | T26 | Closing the plan reads every one of its clauses upheld by a signal from a real run | Build Phase 7 | Build Phase 7 | planned | live check | the close itself: `indusk promises confirm` refuses a clause no real run reported | manual: with the local daemon up and this build installed, in an unattended run ask one question with nothing set and answer it after its session has stopped; set cheap to a time and ask a cheap question, let it go ahead, answer it late against its recommendation; ask one whose option changes the brief with every cost set to `immediate` and see it hold; try a release with the follow-on open; then `indusk promises confirm decisions-as-questions` |
-| T27 | With cheap set to five minutes a cheap question goes ahead at five, not at four (where an answer is used); with moderate set to `immediate` a moderate question goes ahead at once and its session is not stopped, while a cheap one with cheap unset still holds; a setting that is not `hold`, a whole number of minutes or `immediate` is refused when read, naming the key | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
+| T27 | With cheap set to five minutes a cheap question goes ahead at five, not at four (where an answer is used); with moderate set to `immediate` a moderate question goes ahead at once and its session is not stopped, while a cheap one with cheap unset still holds; a setting that is not `hold`, a whole number of minutes or `immediate` is refused when read, naming the key | Build Phase 1 | Build Phase 1 | passing | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
 
 ### Deferred Verification
 
@@ -290,52 +290,55 @@ This phase writes the tests whose subject exists today and so can fail on an ass
 
 This phase adds the one module that knows what a question is: the record, the refusal of a malformed one, the cost the admin fixes from what an option changes, the per-cost setting that says whether a question holds or goes ahead, the stored deadline, and the write into the plan's history. Later phases only call it, so the rules are tested here once, with no session or screen involved.
 
-- [ ] Write this phase's tests from the recorded bodies.
+- [x] Write this phase's tests from the recorded bodies.
   <details><summary>Technical</summary>
 
   T1, T4, T5, T9, T11, T27 in `apps/indusk-mcp/src/lib/questions/{record,cost,deadline}.test.ts`, from the bodies above, plus the empty-reply case in T1.
 
   </details>
-- [ ] Add the question record and the check that refuses a malformed question, saying what is missing.
+- [x] Add the question record and the check that refuses a malformed question, saying what is missing.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/questions/record.ts`: `Question { id, plan, options: {label, changes: ("brief"|"promise"|"look"|"gate")[]}[], recommended, reason, statedCost, cost, askedAt, dueAt, state: "waiting"|"answered"|"went-ahead"|"answered-late", answer?, done?, followOn? }`; `validateQuestion(input): { ok, missing: string[] }`; `isAnswer(text)` false for empty or whitespace.
 
   </details>
-- [ ] Add the rule that raises a question to expensive from what its options declare, and never lowers one.
+- [x] Add the rule that raises a question to expensive from what its options declare, and never lowers one.
   <details><summary>Technical</summary>
 
   `lib/questions/cost.ts`: `effectiveCost(q)`; any option `changes` non-empty makes `expensive`; options declaring nothing keep `statedCost` (ADR decision 3). `changesAgreed(q)` is true for the same questions; the deadline rule reads it to hold such a question whatever the settings (T9).
 
   </details>
-- [ ] Add one setting per cost saying what an unanswered question does — hold, go ahead after a number of minutes, or go ahead at once — holding when nothing is set, and refuse a setting that is none of these.
+- [x] Add one setting per cost saying what an unanswered question does — hold, go ahead after a number of minutes, or go ahead at once — holding when nothing is set, and refuse a setting that is none of these.
+  Note (auto policy): `sessions.*` lives in the InDusk home's `config.json`, read by `lib/session/limits.ts`, not in `lib/config.ts` (the project config); the accessor `readQuestionWaitSetting(home)` sits beside `readSessionsMax` there and throws naming the key on a bad value, while `readQuestionWait` in `lib/questions/deadline.ts` does the normalising. Reason: the cap and the waits are the machine's, one daemon serves every project. The sweep (Build Phase 2) catches a bad setting and holds everything, so a typo never makes a question go ahead.
   <details><summary>Technical</summary>
 
   Config keys `sessions.question_wait.cheap`, `sessions.question_wait.moderate` and `sessions.question_wait.expensive` in `lib/config.ts`, each `"hold"` | a positive whole number of minutes | `"immediate"`, default `"hold"`, read through the config module's existing accessors; `readQuestionWait(raw)` in `lib/questions/deadline.ts` normalises them and throws naming the key on any other value (T4, T27).
 
   </details>
-- [ ] Add the deadline rule: a stored wall-clock time taken from the question's cost setting, none for a held question or one that changes what was agreed.
+- [x] Add the deadline rule: a stored wall-clock time taken from the question's cost setting, none for a held question or one that changes what was agreed.
   <details><summary>Technical</summary>
 
   `lib/questions/deadline.ts`: `dueAt(q, wait)` returns `askedAt + minutes`, `askedAt` for `immediate`, `null` for `hold` or when `changesAgreed(q)`; `isDue(q, now, wait)`; the record stores `dueAt` when asked, so a restart never moves it (T5, T9, T27).
 
   </details>
-- [ ] Add the write that keeps every question in the plan's history in all four states.
+- [x] Add the write that keeps every question in the plan's history in all four states.
   <details><summary>Technical</summary>
 
   `lib/questions/history.ts` over `lib/plans/history.ts` (the one writer of the plan's history); an answer given in time is recorded as any decision the person answers is today. T14's history half is asserted in Build Phase 5.
 
   </details>
-- [ ] Review the new module against the enabled extensions' rules.
+- [x] Review the new module against the enabled extensions' rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
+
+  Reviewed `record.ts`, `cost.ts`, `deadline.ts`, `history.ts`: each has one reason to change, names say what they are for, and the rules take their clock and settings as inputs (a seam the tests use). Nothing found.
 
   </details>
 
 #### Build Phase 1 Verification
 
-- [ ] The record, cost and deadline tests pass.
+- [x] The record, cost and deadline tests pass.
   <details><summary>Technical</summary>
 
   T1, T4, T5, T9, T11, T27: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/questions && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/questions/record.ts src/lib/questions/cost.ts src/lib/questions/deadline.ts src/lib/config.ts`
@@ -344,14 +347,16 @@ This phase adds the one module that knows what a question is: the record, the re
 
 #### Build Phase 1 Context
 
-- [ ] Write the root Key Decisions line for this plan.
+- [x] Write the root Key Decisions line for this plan.
   <details><summary>Technical</summary>
 
   Root `CLAUDE.md` (Key Decisions, always-on because every session reads the design intent): `- Decisions as questions: an unattended session asks each choice with a recommendation and a cost; each cost's setting (`sessions.question_wait.*`: hold, minutes or immediate, default hold) says whether it waits or goes ahead on a stored deadline; a held question frees its slot, and one that changes what was agreed always holds; a late disagreement opens a follow-on the release waits for, landing never — see /decisions/decisions-as-questions`. It waits for the build because `plans approve` refuses non-`.indusk/` changes before the build.
 
   </details>
-- [ ] Record in the package's rules that one module owns the question rules.
+- [x] Record in the package's rules that one module owns the question rules.
   <details><summary>Technical</summary>
+
+  Done in `apps/indusk-mcp/src/lib/questions/CLAUDE.md` (the area's own rules file, loaded when a file there is read), with a one-line pointer in `apps/indusk-mcp/CLAUDE.md`'s Sessions entry: that file is over its nested budget, so it cannot grow, and an area rule belongs in the area (note 10).
 
   `apps/indusk-mcp/CLAUDE.md` (mcp tier): `lib/questions/` is the one home of the question rules; the cost is fixed by `effectiveCost`, never by the agent; whether a question holds is read from `sessions.question_wait.*` (default `hold`) through `readQuestionWait`, and `changesAgreed` overrides every setting; the deadline is stored, never counted.
 
@@ -359,7 +364,7 @@ This phase adds the one module that knows what a question is: the record, the re
 
 #### Build Phase 1 Document
 
-- [ ] (none needed — nothing in this phase is user-facing; the guide page and config reference are written in Build Phase 6)
+- [x] (none needed — nothing in this phase is user-facing; the guide page and config reference are written in Build Phase 6)
 
 ### Build Phase 2: Stop, free the slot, resume, and go ahead
 
@@ -755,4 +760,5 @@ Decisions made unattended (`INDUSK_GATE_POLICY=auto`), for the reviewer:
 6. **Two exact-path assumptions to check when the phase starts:** the admin's plan page route and the `question-wait.ts` module name; if either differs, move the file, not the row.
 7. **Test plan assertions are consolidated into 22 rows** where several shared one level and one subject (the test plan's A-numbers are in the `Asserts` text, not the IDs).
 8. **Resume is unchecked.** A build session is one `claude -p` turn; I found no resume for it. At Build Phase 2, first look for one; if none, resume by starting a new session on the same worktree with the answer as its first message. Reason: the plan review could not confirm it (`plan-review.md`, finding 9).
+10. **Question rules go in `lib/questions/CLAUDE.md`, not the package's `CLAUDE.md`** (Build Phase 1). Reason: the package file is 29 KB against a 16 KB nested budget and the budget hook refuses any edit that grows it; the area file is where the rule is read when the code is. Later phases that say "record in `apps/indusk-mcp/CLAUDE.md`" for question rules use that file the same way.
 9. **Added by the plan review** (`plan-review.md`): `ask_decision` (ADR decision 12), the build path, the dead-draft exemption (ADR decision 13), T23, T24, the hook's id check, real tier paths, no dry-run flag, mockup paths.
