@@ -73,9 +73,9 @@ amendment. Every concern waved away is shown to the person.
 | A9 | The audit's instructions tell the plan's agent to ask once what let the findings through, group them by cause, flag each recurring process gap for a lesson, or say there is none | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A10 | Reading an audit with findings but no "What let these through?" section reports it incomplete; one naming each cause with its findings and highlight, or no gap with a reason, passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/an-audit-teaches | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | A11 | The audit's instructions say an answer that would change a promise, an expectation, a look or the scope is an edit of the brief recorded as an amendment answer, after which the session stops, and every other concern is answered without asking | Test Phase 1 | Build Phase 4 | written | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
-| A12 | With an amendment waiting, the unattended build stops for re-approval naming it, instead of running a step or ending "cannot continue" | Test Phase 1 | Build Phase 2 | written | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/build/next-step.test.ts |
+| A12 | With an amendment waiting, the unattended build stops for re-approval naming it, instead of running a step or ending "cannot continue" | Test Phase 1 | Build Phase 2 | passing | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/build/next-step.test.ts |
 | A13 | Reading an audit accepts an amendment answer and lists each with its finding, beside the dismissals | Build Phase 1 | Build Phase 1 | passing | unit | clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person | apps/indusk-mcp/src/lib/audit/answers.test.ts |
-| A14 | With every build phase closed and falsification, cleanup and the audit to do, the build's next step is the audit; once the audit file exists, it is falsification | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/lib/build/next-step.test.ts |
+| A14 | With every build phase closed and falsification, cleanup and the audit to do, the build's next step is the audit; once the audit file exists, it is falsification | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/lib/build/next-step.test.ts |
 | A15 | The audit, falsify, cleanup and retrospective instructions give the order build, audit, falsify, cleanup, retrospective | Test Phase 1 | Build Phase 4 | written | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A16 | The audit's before-approval instructions put the four plan questions to the reader, as the reader's exported list names them | Test Phase 1 | Build Phase 4 | written | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/__tests__/audit-skill-answers.test.ts |
 | A17 | Reading a plan review with one of the four questions missing reports it incomplete, naming the question; one with all four passes | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan | apps/indusk-mcp/src/lib/audit/answers.test.ts |
@@ -295,25 +295,25 @@ name, for the person's re-approval, while a change to the approved brief
 waits. It then rewrites the audit promise's sentence to say when the audit
 runs.
 
-- [ ] Make the build run the audit before falsification and cleanup.
+- [x] Make the build run the audit before falsification and cleanup.
   <details><summary>Technical</summary>
 
   `nextBuildStep` in `apps/indusk-mcp/src/lib/build/next-step.ts`: check `audit` before `falsification` and `cleanup`; move the `promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes` comment to the new line, saying "when the build phases close, before falsification". The skip-reason loop is unchanged. A14.
 
   </details>
-- [ ] Make the build stop for the person while an amendment waits.
+- [x] Make the build stop for the person while an amendment waits.
   <details><summary>Technical</summary>
 
   `BuildPlan` gains `amendments: string[]`; `readBuildPlan` (`lib/build/read-plan.ts`) fills it from `amendmentsOf(dir)` as `<part> <name>` (an `AmendmentsUnreadable` becomes `cannot-continue` with its message, never an empty list). `BuildStep` gains `{ step: "amendment"; amendments: string[] }`, returned first when non-empty, after the error and no-progress checks. It is not a session step, so `runBuild` stops on it; add its case to `next-session.ts` and the `plans next` printer in `bin/commands/plans.ts` ("waits for re-approval: …"). Every other `BuildPlan` literal in tests gains `amendments: []`. A12.
 
   </details>
-- [ ] Rewrite the audit promise's sentence now that the build makes it true.
+- [x] Rewrite the audit promise's sentence now that the build makes it true.
   <details><summary>Technical</summary>
 
   `indusk promises change a-plan-is-audited-by-a-fresh-reader-before-it-closes --plan audit-concerns-are-answered --statement "When a plan's build phases close, before falsification, a reader that has not seen the building session reads the plan and writes what it finds to audit.md in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped." --reason "the audit's findings are answered before falsification and cleanup (Sandy, 2026-10-19)"`.
 
   </details>
-- [ ] Review the changed loop against the extensions' rules.
+- [x] Review the changed loop against the extensions' rules. Shape: reviewed, nothing found — the order change is two moved lines, and the amendment stop is one early return over an input the reader fills. Decision: the admin's `describeStop` (`BuildControls.tsx`) gained an `amendment` case so its exhaustive switch still compiles; it is one sentence, not a new component or state, so no look is drawn. The admin's own ritual rail (`RITUAL_ORDER`) keeps falsify, cleanup, audit — the plan lists no admin rendering change; recorded as forward intelligence below.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
@@ -322,7 +322,7 @@ runs.
 
 #### Build Phase 2 Verification
 
-- [ ] The build loop's tests pass, the audit's new place and the amendment stop included.
+- [x] The build loop's tests pass, the audit's new place and the amendment stop included.
   <details><summary>Technical</summary>
 
   A12, A14: `indusk plans tests audit-concerns-are-answered --phase "Build Phase 2"` (with the Must-not-break promises' tests: `a-build-runs-to-review-unasked` among them); the package's type check is clean.
@@ -331,7 +331,7 @@ runs.
 
 #### Build Phase 2 Context
 
-- [ ] Add the amendment stop to the package's rules for the build loop.
+- [x] Add the amendment stop to the package's rules for the build loop.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the build-loop entry: the loop stops on a waiting amendment by name (`amendment`), read through `amendmentsOf`, never a second reader.
@@ -340,12 +340,17 @@ runs.
 
 #### Build Phase 2 Document
 
-- [ ] Describe the new order and the amendment stop in the build reference.
+- [x] Describe the new order and the amendment stop in the build reference. Decision: `guide/plan-lifecycle.md` still draws falsify → cleanup → audit, the admin's rail order, which this plan does not change; only the build loop's order moved.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md` (`plans next` steps) and wherever the lifecycle order is given (`grep -rn "falsify.*cleanup.*audit" apps/docs/src`).
 
   </details>
+
+#### Build Phase 2 Forward Intelligence
+
+- **Watch out**: `RITUAL_ORDER` in `lib/lifecycle.ts` and the admin's step rail still list falsification, cleanup, audit; `nextBuildStep` now runs the audit first. Nothing reads the two against each other today.
+- **Fragile**: `readBuildPlan` now calls `amendmentsOf` (a git read) on every runner read; an unreadable approval throws `BuildPlanUnreadable`, which every caller already catches.
 
 ### Build Phase 3: Read the plan cold before approval
 

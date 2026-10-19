@@ -227,9 +227,11 @@ function describeStep(s: BuildStep): string {
 		case "cleanup":
 			return "cleanup: falsification is closed and the cleanup has not run";
 		case "audit":
-			return "audit: the cleanup is closed and no audit.md has been written (or the audit skipped with a reason)";
+			return "audit: every phase is closed and no audit.md has been written (or the audit skipped with a reason)";
 		case "shorten-reason":
 			return `shorten-reason: the ${s.ritual} was skipped with a reason of ${s.length} characters (${s.sentences} sentence${s.sentences === 1 ? "" : "s"}) — one sentence, at most 120; rewrite that line, do not run the ritual`;
+		case "amendment":
+			return `amendment: the brief says more than was approved (${s.amendments.join(", ")}) — it waits for the person to re-approve`;
 		case "judgement":
 			return `judgement: ${s.phase} waits on a person — ${s.item}`;
 		case "review":

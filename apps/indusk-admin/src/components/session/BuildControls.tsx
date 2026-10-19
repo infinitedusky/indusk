@@ -138,6 +138,8 @@ function describeStop(stop: RunnerStop): string {
   switch (stop.step) {
     case "review":
       return "Built. It waits for your review.";
+    case "amendment":
+      return `Stopped: the brief changed after you approved it (${stop.amendments.join(", ")}). It waits for your re-approval.`;
     case "judgement":
       return `Stopped for a judgement the plan declared — ${stop.item}`;
     case "cannot-continue":
