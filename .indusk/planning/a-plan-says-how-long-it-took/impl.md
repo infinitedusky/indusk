@@ -51,16 +51,16 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 | A4 | A planning step that finishes leaves a record with its start, end and outcome "finished", still there after the step's session is gone | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A5 | A build step that ends in a blocker, a failure or a stop leaves a record naming that outcome | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A6 | A step killed before it wrote its end shows in the view as started and never ended, not missing | Build Phase 2 | Build Phase 4 | written | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/view.test.ts |
-| A7 | A test run for a phase records the plan, the phase, the count of files run per reason, its duration and that it passed | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
-| A8 | A test run at landing records "landing" in place of a phase, and a run with a failing file records that it did not pass | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
-| A9 | Running a plan's tests twice records two runs in order, not one overwritten by the other | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
+| A7 | A test run for a phase records the plan, the phase, the count of files run per reason, its duration and that it passed | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
+| A8 | A test run at landing records "landing" in place of a phase, and a run with a failing file records that it did not pass | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
+| A9 | Running a plan's tests twice records two runs in order, not one overwritten by the other | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A10 | The command prints each phase, step and test run of a plan with its duration, in the order they happened | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A11 | The command's total runs from the brief's acceptance to landing; for a plan not yet landed it says so and shows the time so far | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A12 | A plan recorded before this change prints what exists, says what has no record, and does not fail | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A13 | Run against a real plan in the worktree, the command prints a readable table a person can use to say which phase took longest | Build Phase 4 | Build Phase 4 | planned | live check | clause: a-plan-says-how-long-it-took/one-view | manual: `indusk plans time a-plan-says-how-long-it-took` from the plan's worktree; read which phase took longest |
 | A14 | With the phase record unwritable, opening and closing a phase still succeed, with a warning that the time was not recorded | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
 | A15 | With the step record unwritable, an unattended step still runs to its normal outcome and the build carries on | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
-| A16 | With the test-run record unwritable, the plan's tests still run and the command exits with the tests' own result | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
+| A16 | With the test-run record unwritable, the plan's tests still run and the command exits with the tests' own result | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A17 | A record file that is corrupt, half-written or from an older shape is skipped by the view and by every writer, never thrown from | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
 | A18 | Recording a test run runs exactly the same files for the same plan, phase and landing as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the brief lists a-plan-runs-its-tests-and-what-must-not-break under Must not break, so the existing selection is pinned before any recorder touches it | apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts |
 | A19 | A duration is read from timestamps the same way across time zones and daylight-saving changes | Build Phase 1 | Build Phase 4 | written | unit | durations come from timestamps; a zone-dependent reading would make the data the later per-phase test decision rests on wrong | apps/indusk-mcp/src/lib/timing/view.test.ts |
@@ -314,13 +314,13 @@ This phase makes each run of a plan's tests leave one record: which plan, which 
   A7, A8, A9, A16 in `lib/timing/test-run.test.ts`, per the deferral body above; commit red.
 
   </details>
-- [ ] Add the recorder that appends one line for a finished test run.
+- [x] Add the recorder that appends one line for a finished test run.
   <details><summary>Technical</summary>
 
   `lib/timing/test-run.ts`: `recordTestRun(root, { plan, scope, set, startedAt, durationMs, passed, now })` appends `{ kind: "test-run", scope: { phase } | "landing", files: { own, reached, mustNotBreak }, startedAt, durationMs, passed }` through `recordSafely`. The counts come from `TestSet` (read `lib/plans/test-set.ts` for how each file's reason is named); the recorder only reads the set.
 
   </details>
-- [ ] Time the run inside the function behind the command and record it after the tests finish.
+- [x] Time the run inside the function behind the command and record it after the tests finish.
   <details><summary>Technical</summary>
 
   `lib/plans/plan-tests.ts`, in `plansTestsOutcome` around `runFiles`: take `startedAt` and a monotonic start (`performance.now`, both injectable through `PlanTestsOptions`), then after `results` call `recordTestRun` with `passed: bad.length === 0`. A `--list` run runs nothing and records nothing. The files, the command and `exitCode` are not touched, so a recorder failure leaves `exitCode` as the tests' own (A16, A18).
@@ -329,13 +329,13 @@ This phase makes each run of a plan's tests leave one record: which plan, which 
 
 #### Build Phase 3 Verification
 
-- [ ] The test-run tests pass, and the files a plan runs are still exactly the same.
+- [x] The test-run tests pass, and the files a plan runs are still exactly the same.
   <details><summary>Technical</summary>
 
   A7, A8, A9, A16 pass (goes green): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing/test-run.test.ts src/lib/plans/plan-tests-selection.test.ts` and `pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/plans/plan-tests.ts`; A18 still passes.
 
   </details>
-- [ ] The package type-checks and passes the project's lint.
+- [x] The package type-checks and passes the project's lint.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` exits 0; `pnpm check` exits 0.
@@ -344,7 +344,7 @@ This phase makes each run of a plan's tests leave one record: which plan, which 
 
 #### Build Phase 3 Context
 
-- [ ] Record that recording a test run is read-only over the test set.
+- [x] Record that recording a test run is read-only over the test set. (The `// promise:` token is already in the selection test's header; no prose added, as the item says.)
   <details><summary>Technical</summary>
 
   `guard: lib/plans/plan-tests-selection.test.ts carries promise: a-plan-runs-its-tests-and-what-must-not-break` (add the `// promise:` token to the file's header); no prose rule is added, as the guard delivers it.
@@ -353,7 +353,7 @@ This phase makes each run of a plan's tests leave one record: which plan, which 
 
 #### Build Phase 3 Document
 
-- [ ] Update the page for the plan tests command to say each run is recorded.
+- [x] Update the page for the plan tests command to say each run is recorded.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`, the `plans tests` section: one paragraph saying each run appends a record (plan, phase or landing, file counts by reason, duration, pass or fail) to machine state, and that a record that cannot be written only warns.
@@ -470,4 +470,5 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 - **Decision (Build Phase 2): `classify` is the admin's, and a throw in it is ignored.** It reads the plan after the step, so a plan unreadable at that moment leaves the default outcome rather than failing the step.
 - **Shape (Build Phase 2)**: reviewed `timed-step.ts` and the admin's `classifierFor`; nothing found.
 - **Open (superseded): how a stopped step is told from a failed one.** Decided for now: a thrown abort is `stopped`, anything else with an error is `failed`; Build Phase 2 reads the session manager and refines it, recording the result here.
+- **Shape (Build Phase 3)**: reviewed `test-run.ts` and the edit to `plan-tests.ts`; nothing found. The `reached` count is always 0 today (no search for reached tests is made); it stays in the record because the log shape is the ADR's.
 - **Open: the landing time source.** Build Phase 4 confirms whether the archive records one; the fallback is the landing merge commit's time.

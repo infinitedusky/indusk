@@ -27,7 +27,8 @@ const write = (root: string, path: string, text: string) => {
 	mkdirSync(dirname(join(root, path)), { recursive: true });
 	writeFileSync(join(root, path), text);
 };
-const git = (root: string, ...args: string[]) => execFileSync("git", args, { cwd: root, stdio: "pipe" });
+const git = (root: string, ...args: string[]) =>
+	execFileSync("git", args, { cwd: root, stdio: "pipe" });
 
 function project(): string {
 	const root = tmp("test-run-project-");
@@ -70,7 +71,12 @@ const read = (root: string, home: string) => readTimings(timingLogPath(root, PLA
 it("A7 a phase's run records the plan, the phase, the counts per reason, the duration and that it passed", async () => {
 	const root = project();
 	const home = tmp("home-");
-	await plansTestsOutcome(root, { plan: PLAN, scope: { phase }, run: passing, timing: timing(home) });
+	await plansTestsOutcome(root, {
+		plan: PLAN,
+		scope: { phase },
+		run: passing,
+		timing: timing(home),
+	});
 	expect(await read(root, home)).toEqual([
 		{
 			v: 1,
@@ -120,14 +126,26 @@ it("A8 a landing run records landing in place of a phase; a failing file records
 		timing: timing(home),
 	});
 	expect(outcome.exitCode).toBe(1);
-	expect(await read(root, home)).toMatchObject([{ kind: "test-run", scope: "landing", passed: false }]);
+	expect(await read(root, home)).toMatchObject([
+		{ kind: "test-run", scope: "landing", passed: false },
+	]);
 });
 
 it("A9 two runs record two lines, in order", async () => {
 	const root = project();
 	const home = tmp("home-");
-	await plansTestsOutcome(root, { plan: PLAN, scope: { phase }, run: failing, timing: timing(home) });
-	await plansTestsOutcome(root, { plan: PLAN, scope: { phase }, run: passing, timing: timing(home) });
+	await plansTestsOutcome(root, {
+		plan: PLAN,
+		scope: { phase },
+		run: failing,
+		timing: timing(home),
+	});
+	await plansTestsOutcome(root, {
+		plan: PLAN,
+		scope: { phase },
+		run: passing,
+		timing: timing(home),
+	});
 	const records = await read(root, home);
 	expect(records.map((r) => r.kind === "test-run" && r.passed)).toEqual([false, true]);
 });

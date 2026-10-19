@@ -161,6 +161,8 @@ Runs the tests a plan owes, and says why each file is in the set. Nothing else r
 
 The files run through the project's test command, once per package, a file in the package's system tier (`vitest.tiers.ts`) under that package's system config. A row's `manual:` reference is listed and not run. Each file prints with its reason (`row T1`, `must not break: <promise>`); the exit code is non-zero when any file fails. In a one-repo workbench the tests run in the code repo. The work, verify and retrospective skills name this command at a phase and at landing in place of the whole suite. See [test levels](/guide/test-levels#what-a-plan-runs).
 
+Each run that is not a `--list` appends a record to the plan's timing log in machine state (`indusk eval home` prints where): the plan, the phase or the landing, how many files ran for each reason, how long it took and whether it passed. The record is written beside the run and never changes which files run or the exit code; a record that cannot be written only prints a warning.
+
 ### `plans review <name> [--json]`
 
 What a person reads before accepting a built plan, assembled from its documents and its branch. The admin's review panel renders the JSON.

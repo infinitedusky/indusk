@@ -5,6 +5,7 @@ import { resolveImplPath } from "../impl-parser.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { execRunner, type Runner, runFiles } from "../tests/run-files.js";
+import { recordTestRun } from "../timing/test-run.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 import { resolveTestCommand } from "../verify/red-tests.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
@@ -25,6 +26,14 @@ export interface PlanTestsOptions {
 	/** Print the rows' and Must-not-break files and run nothing. */
 	list?: boolean;
 	run?: Runner;
+	/** Seams for the timing record; the real clock, the real home and the console when absent. */
+	timing?: {
+		home?: string;
+		now?: () => number;
+		/** A monotonic reading in milliseconds, for the run's duration. */
+		clock?: () => number;
+		warn?: (message: string) => void;
+	};
 }
 
 export interface PlanTestsOutcome {
@@ -78,6 +87,10 @@ export async function plansTestsOutcome(
 			"the project names no test command (verify.testRunner or verify.testCommand in .indusk/config.json), so the plan's tests cannot be run",
 		);
 	}
+	const now = options.timing?.now ?? Date.now;
+	const clock = options.timing?.clock ?? (() => performance.now());
+	const startedAt = new Date(now()).toISOString();
+	const began = clock();
 	const results = await runFiles({
 		root: roots.codeRoot,
 		command,
@@ -85,6 +98,18 @@ export async function plansTestsOutcome(
 		run,
 	});
 	const bad = results.filter((r) => !r.passed);
+	// Beside the run, never part of it: the files, the command and the exit code above are the tests' own.
+	await recordTestRun(root, {
+		plan: options.plan,
+		scope: options.scope,
+		set,
+		startedAt,
+		durationMs: Math.round(clock() - began),
+		passed: bad.length === 0,
+		now,
+		home: options.timing?.home,
+		warn: options.timing?.warn,
+	});
 	const label = "phase" in options.scope ? phaseLabel(options.scope.phase) : "landing";
 	const text = [
 		`${options.plan} ${label}: ${results.length - bad.length} of ${results.length} test file(s) passed`,
