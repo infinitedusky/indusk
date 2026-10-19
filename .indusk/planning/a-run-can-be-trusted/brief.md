@@ -39,7 +39,7 @@ None — a bugfix; the measure is Stabilize's bar, three plans in a row from acc
    - **`dead-reads-stopped`** (split). A run whose process is gone without a stop reads as stopped, saying so, and Build starts it again from where the plan stands.
    - **`shows-where-it-is`** (split). The build controls name the phase the plan is on, read from the plan, not the step the session started with.
    - **`released-only-when-landed`** (split). A release reads released only when the plan has landed on main; otherwise it reads stopped with the reason.
-   - **`says-what-is-true`** (split). The plan page and its nav row state the plan's situation in words, read from its record and its files: planning and the step, building and the phase, waiting on the person and for what, landed and what it still waits on to close, or stopped and why.
+   - **`says-what-is-true`** (split). The plan page and its nav row state the plan's situation in words, read from its record and its files: planning and the step, building and the phase, waiting on the person and for what, build complete and waiting on a list of what must still happen for it to close, each ticked as it happens, or stopped and why.
    - **`always-a-next-step`** (split). Every plan that is not closed shows its next step and who takes it: what the system is doing now, or what it waits on and whether the person or an event completes it, so no open plan reads as stuck.
    - **`never-in-progress-when-idle`** (limit). Nothing reads as in progress while no process is running for it.
 
