@@ -17,8 +17,9 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   research.** Its shape is read by `indusk promises contract`, so keep the
   headings and each label on its own line; a draft is not held to the
   registry, an accepted brief is, by every `pnpm test`. The problem, the
-  context and the decisions made on the way go in `research.md`. — see
-  `/guide/briefs`
+  context and the decisions made on the way go in `research.md`. A draft brief
+  is accepted by `indusk plans accept-brief <plan>`, which runs the contract
+  check first — never by editing its status. — see `/guide/briefs`
 - **A brief may state its promises as clauses** (`clauses: required` in its
   frontmatter): each promise it makes lists its splits, limits and the promises
   it rests on beneath it, declared with `--clause`; the contract check holds
