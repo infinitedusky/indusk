@@ -72,7 +72,9 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 		expect(JSON.stringify(spans[0])).toMatch(/landing seat-holds/);
 	});
 
-	it("one failing file among several carrying the clause breaks it, in one report", async () => {
+	it("the recorder test failing among several files carrying the clause breaks it, in one report", async () => {
+		// A103: only the recorder landing test's result speaks for the clause, so the failure here
+		// is its own (the case Build Phase 6's Shape wrote had a unit file fail beside it).
 		const p = codeWith({ [RECORDER]: `${TOKEN}\n`, "src/other.test.ts": `${TOKEN}\n` });
 		const { tracer, spans } = captureTracer();
 		await markRecorderClause(
@@ -80,12 +82,26 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 			p.codeRoot,
 			PLAN,
 			[
-				{ file: RECORDER, passed: true },
-				{ file: "src/other.test.ts", passed: false },
+				{ file: "src/other.test.ts", passed: true },
+				{ file: RECORDER, passed: false },
 			],
 			tracer,
 		);
 		expect(spans.map((s) => s.attrs["indusk.promise.outcome"])).toEqual(["broken"]);
+	});
+
+	it("a row naming the recorder test from the repo root (apps/indusk-mcp/…) counts", async () => {
+		const rooted = `apps/indusk-mcp/${RECORDER}`;
+		const p = codeWith({ [rooted]: `${TOKEN}\n` });
+		const { tracer, spans } = captureTracer();
+		await markRecorderClause(
+			p.planRoot,
+			p.codeRoot,
+			PLAN,
+			[{ file: rooted, passed: true }],
+			tracer,
+		);
+		expect(spans.map((s) => s.attrs["indusk.promise.outcome"])).toEqual(["upheld"]);
 	});
 
 	it("reports nothing when no result's file carries the clause", async () => {
@@ -151,13 +167,20 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 				"a-clause": `// promise: a-promise\n// clause: a-promise/a-clause\n${TOKEN}\nimport { expect, it } from "vitest";\nit("x", () => expect(1).toBe(1));\n`,
 			},
 		});
+		// A103: the clause is reported from the recorder landing test's own result, which the
+		// runner returns beside the clause tests it was asked for.
+		mkdirSync(join(fixture.codeRoot, RECORDER, ".."), { recursive: true });
+		writeFileSync(join(fixture.codeRoot, RECORDER), `${TOKEN}\n`);
+		const withRecorder =
+			(run: ReturnType<typeof passingRun>, passed: boolean): ReturnType<typeof passingRun> =>
+			async (files) => [...(await run(files)), { file: RECORDER, passed }];
 		const { tracer, spans } = captureTracer();
 		await expect(
 			refuseFailingClauseTests(
 				fixture.planRoot,
 				fixture.codeRoot,
 				PLAN,
-				failingRun(testOf("a-clause")),
+				withRecorder(failingRun(testOf("a-clause")), false),
 				tracer,
 			),
 		).rejects.toThrow(/does not land/);
@@ -168,7 +191,7 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 			fixture.planRoot,
 			fixture.codeRoot,
 			PLAN,
-			passingRun(),
+			withRecorder(passingRun(), true),
 			ok.tracer,
 		);
 		expect(ok.spans.map((s) => s.attrs["indusk.promise.outcome"])).toEqual(["upheld"]);
