@@ -98,7 +98,7 @@ Added 2026-10-19 (Sandy): `a-brief-is-accepted-on-current-main` read "release in
 |----|-----------------------------------|-----------|
 | A65 | A plan whose planning run is on a step reads "planning" with that step (writing the test plan, writing the impl, reading the plan cold), on the page and in its nav row. | unit |
 | A66 | A plan whose build is on a phase reads "building" with that phase; one waiting on the person reads what it waits on (review, approval, an amendment, its plan review). | unit |
-| A67 | A plan that has landed on main but is not closed reads "build complete — waiting on" with a list of what must still happen for it to close (each clause signal by name, each live check), each ticked when it happens; never "landed" and never "releasing". | unit |
+| A67 | A plan merged to main reads complete (green), with no release indicator pulsing, and a confirmation step listing what is still to be confirmed (each clause signal and each live check by name), each ticked when confirmed; it never reads "landed" or "releasing". | unit |
 | A68 | A plan whose run stopped reads "stopped" with the reason and what starts it again. | unit |
 
 ### `always-a-next-step` — every plan that is not closed shows its next step and who takes it
