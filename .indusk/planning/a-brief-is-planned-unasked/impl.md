@@ -266,7 +266,7 @@ This phase builds the loop that writes the plan: a decision that names the next 
 
 #### Build Phase 3 Context
 
-- [ ] Add to the package's context file where the planning loop lives beside the build loop.
+- [x] Add to the package's context file where the planning loop lives beside the build loop.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, Run, verify, Shape, cleanup (`lib/build/`): one line.
@@ -275,7 +275,7 @@ This phase builds the loop that writes the plan: a decision that names the next 
 
 #### Build Phase 3 Document
 
-- [ ] Describe the planning loop on the reference page for plans.
+- [x] Describe the planning loop on the reference page for plans.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md` (what runs after `accept-brief`); changelog.
