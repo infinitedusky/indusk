@@ -261,13 +261,22 @@ This phase writes the tests the plan commits to before anything changes, so each
   import { runStatus } from "./liveness.js";
 
   it("A8: a recorded pid that is now a different program reads stopped", () => {
-  	const record = { plan: "p", kind: "build", pid: 4242, startedAt: "2026-10-19T10:00:00.000Z", stop: null };
-  	const status = runStatus(record, {
-  		alive: () => true,
-  		command: () => "/usr/bin/vim notes.txt", // not the process we started
-  		startTime: () => new Date("2026-10-19T12:00:00.000Z"),
-  	});
-  	expect(status).toEqual({ state: "stopped", reason: expect.stringContaining("died") });
+  	const record = {
+  		plan: "p",
+  		kind: "build",
+  		process: { pid: 4242, bin: "claude", startedAt: "2026-10-19T10:00:00.000Z" },
+  		stop: null,
+  	};
+  	const status = runStatus(
+  		record,
+  		{
+  			alive: () => true,
+  			command: () => "/usr/bin/vim notes.txt", // not the program we started
+  			startTime: () => new Date("2026-10-19T10:00:00.000Z"),
+  		},
+  		false, // not held in memory by this daemon
+  	);
+  	expect(status).toEqual({ state: "stopped", reason: expect.stringContaining("gone") });
   });
   ```
 
@@ -359,8 +368,10 @@ This phase writes the tests the plan commits to before anything changes, so each
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-write-guard.contract.test.ts src/__tests__/impl-clause-signals.contract.test.ts src/__tests__/accept-brief-signals.contract.test.ts src/lib/plans/accept-brief-signals.test.ts src/__tests__/hook-registration.test.ts` and `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/decisions-reader.approval.test.ts`: A29, A30, A41, A46–A48, A50, A52, A54, A63, A86 are red on assertions (write the red items, `(write red)`); A49, A51, A53, A55 pass. A59 and A61 are run once in the system tier (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/admin-recorder.test.ts`). The whole suite runs at landing, not here.
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [x] Every deferred test body above has been read and judged.
   <details><summary>Technical</summary>
+
+  Judged unattended (decisions, each with its reason). A8: did not compile against Build Phase 1's own task (a flat `pid` where the record holds `process: { pid, bin, startedAt }`, no third `heldHere` argument, and a start time that differed from the recorded one, which would have hidden a marker bug), and expected "died" where the rule's reason reads "the run's process is gone"; the body above is corrected to the task's shape and to `gone`, and the "died" wording is the situation sentence's (A7, Build Phase 2). A14: sound, but it uses a `planWith` helper that does not exist; Build Phase 2 writes it beside `shown-phase.test.ts`. A23: imports `refusalFor` from `../../hooks/plan-write-guard.js`, which resolves from `src/__tests__/` to the package's hooks folder and is the export Build Phase 3 creates; asserts the file and the Edit tool as claimed. A42: its row shape (`id`, `level`, `forCell`) and function name are the ones Build Phase 4 creates; asserts the claim. A62: the fake-clock call matches `waitForIncident`'s inputs as Decision 12 gives them and asserts a pass between the old minute and the scan's end, as claimed.
 
   Each body reviewed against both questions: will it compile at the phase it names (its imports are exactly the exports that phase creates), and does it assert what it claims (A8, A14, A23, A42 and A62 above).
 
