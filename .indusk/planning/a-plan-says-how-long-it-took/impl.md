@@ -48,9 +48,9 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 | A1 | Opening a phase records its opening time, and the record that already existed for a phase's start still reads the same | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
 | A2 | Closing a phase records its closing time against the phase that was open, never earlier than its opening time | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
 | A3 | A phase closed twice, or closed without having been opened, keeps one honest record and invents no time | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/phases-are-timed | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
-| A4 | A planning step that finishes leaves a record with its start, end and outcome "finished", still there after the step's session is gone | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
-| A5 | A build step that ends in a blocker, a failure or a stop leaves a record naming that outcome | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
-| A6 | A step killed before it wrote its end shows in the view as started and never ended, not missing | Build Phase 2 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/view.test.ts |
+| A4 | A planning step that finishes leaves a record with its start, end and outcome "finished", still there after the step's session is gone | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
+| A5 | A build step that ends in a blocker, a failure or a stop leaves a record naming that outcome | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
+| A6 | A step killed before it wrote its end shows in the view as started and never ended, not missing | Build Phase 2 | Build Phase 4 | written | unit | clause: a-plan-says-how-long-it-took/steps-are-timed | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A7 | A test run for a phase records the plan, the phase, the count of files run per reason, its duration and that it passed | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A8 | A test run at landing records "landing" in place of a phase, and a run with a failing file records that it did not pass | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A9 | Running a plan's tests twice records two runs in order, not one overwritten by the other | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/test-runs-are-recorded | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
@@ -59,7 +59,7 @@ Every phase, every unattended step and every run of a plan's tests leaves a time
 | A12 | A plan recorded before this change prints what exists, says what has no record, and does not fail | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-plan-says-how-long-it-took/one-view | apps/indusk-mcp/src/lib/timing/view.test.ts |
 | A13 | Run against a real plan in the worktree, the command prints a readable table a person can use to say which phase took longest | Build Phase 4 | Build Phase 4 | planned | live check | clause: a-plan-says-how-long-it-took/one-view | manual: `indusk plans time a-plan-says-how-long-it-took` from the plan's worktree; read which phase took longest |
 | A14 | With the phase record unwritable, opening and closing a phase still succeed, with a warning that the time was not recorded | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/phase-close.test.ts |
-| A15 | With the step record unwritable, an unattended step still runs to its normal outcome and the build carries on | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
+| A15 | With the step record unwritable, an unattended step still runs to its normal outcome and the build carries on | Build Phase 2 | Build Phase 2 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/timed-step.test.ts |
 | A16 | With the test-run record unwritable, the plan's tests still run and the command exits with the tests' own result | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/test-run.test.ts |
 | A17 | A record file that is corrupt, half-written or from an older shape is skipped by the view and by every writer, never thrown from | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-says-how-long-it-took/a-record-never-blocks | apps/indusk-mcp/src/lib/timing/log.test.ts |
 | A18 | Recording a test run runs exactly the same files for the same plan, phase and landing as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the brief lists a-plan-runs-its-tests-and-what-must-not-break under Must not break, so the existing selection is pinned before any recorder touches it | apps/indusk-mcp/src/lib/plans/plan-tests-selection.test.ts |
@@ -244,25 +244,25 @@ This phase creates the place every timed record goes, one append-only log per pl
 
 This phase makes every unattended planning and build step leave a start, an end and how it ended, in the log from the previous phase, and keep them after the step's own session record is deleted. It wraps the one function each runner uses to run a step, so the runners' loops stay as they are.
 
-- [ ] Write the tests for the step wrapper, so they fail first.
+- [x] Write the tests for the step wrapper, so they fail first.
   <details><summary>Technical</summary>
 
   A4, A5, A15 in `lib/timing/timed-step.test.ts`, per the deferral body above; commit red.
 
   </details>
-- [ ] Add a wrapper that records a step's start before it runs and its end, with an outcome, after it returns or throws.
+- [x] Add a wrapper that records a step's start before it runs and its end, with an outcome, after it returns or throws.
   <details><summary>Technical</summary>
 
   `lib/timing/timed-step.ts`: `timedStep(run, deps: { root, plan, now, newId, classify? })` returns a function with `run`'s signature. Writes `step-start` (id from `newId`, `step`, `phase`) via `recordSafely` before calling `run`; writes `step-end` in a `finally` via `recordSafely`. Default outcome: result `error === null` is `finished`, `{ error }` is `failed`, a throw is `failed` and rethrown unchanged. The result or throw of `run` is returned exactly as it was.
 
   </details>
-- [ ] Record "blocked" and "stopped" as their own outcomes rather than folding them into the others.
+- [x] Record "blocked" and "stopped" as their own outcomes rather than folding them into the others.
   <details><summary>Technical</summary>
 
   `classify(result)` hook: the admin passes one that reads the plan's blocker line with the reader `lib/build/read-planning.ts` already uses (it ignores fenced lines, T18 of the planning plan) to return `blocked`; and maps a session stopped by the person or a timeout to `stopped`, found by reading how `runStepSession` / the session manager report a stop in `lib/build/build-session.ts`. If a stop cannot be told from a failure there, map only a thrown abort to `stopped` and record that in Notes.
 
   </details>
-- [ ] Wrap the step runner at both places the admin builds it, and export the wrapper.
+- [x] Wrap the step runner at both places the admin builds it, and export the wrapper.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/build-host.ts`, the `run` dependency passed to `runBuild` (line ~99) and to `runPlanning` (line ~378): `run: timedStep(run, { root, plan, now: Date.now, newId: randomUUID, classify })`. Export `timedStep` through `lib/build/index.ts` as the admin imports the other runner pieces. `runBuild`, `runPlanning` and their loops are not edited.
@@ -271,13 +271,13 @@ This phase makes every unattended planning and build step leave a start, an end 
 
 #### Build Phase 2 Verification
 
-- [ ] The step tests pass, and an unwritable step record changes nothing about a step's result.
+- [x] The step tests pass, and an unwritable step record changes nothing about a step's result. (Also fixed: three admin test files mock the build module and needed a pass-through `timedStep`; the admin's browser-project nav tests fail identically on the trunk, so they are not this plan's.)
   <details><summary>Technical</summary>
 
   A4, A5, A15 pass (goes green): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/timing/timed-step.test.ts src/lib/build/runner.test.ts src/lib/build/planning-runner.test.ts`. A6 flips to `written` (its view half waits for Build Phase 4).
 
   </details>
-- [ ] The admin builds and the package type-checks.
+- [x] The admin builds and the package type-checks.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` and `pnpm --filter indusk-admin exec tsc --noEmit` exit 0; `pnpm --filter indusk-admin exec vitest related src/lib/build-host.ts` passes.
@@ -286,7 +286,7 @@ This phase makes every unattended planning and build step leave a start, an end 
 
 #### Build Phase 2 Context
 
-- [ ] Record that a step is timed by wrapping its run function, not by editing the runners.
+- [x] Record that a step is timed by wrapping its run function, not by editing the runners.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md` (the same timing entry from Build Phase 1, one more sentence): a new unattended step kind gets timed by being run through `timedStep`; `guard: lib/timing/timed-step.test.ts carries clause: a-plan-says-how-long-it-took/steps-are-timed`.
@@ -295,7 +295,7 @@ This phase makes every unattended planning and build step leave a start, an end 
 
 #### Build Phase 2 Document
 
-- [ ] Write down the four ways a step can end and what each one means, for the reference page.
+- [x] Write down the four ways a step can end and what each one means, for the reference page. (In Notes.)
   <details><summary>Technical</summary>
 
   Add the outcome list (finished, blocked, failed, stopped) and the "started, never ended" case to Notes for Build Phase 4's page.
@@ -466,5 +466,8 @@ This phase reads everything the earlier phases wrote, plus the phase openings th
 - **Note (Build Phase 1): repo-wide `pnpm check` is red before this plan** (biome 2.5.14 against an admin config on 2.4.8, mockup CSS, `examples/seat-holds`); biome is clean on every file this plan touched.
 - **Shape (Build Phase 1)**: reviewed `log.ts`, `safe.ts`, `phase-close.ts` for intra-unit craft; nothing found. Each has one reason to change and a seam a test reaches (injected clock, home, warn).
 - **Open (superseded): the phase-close site.** The ADR assumed a single phase-start writer; a read of `src/` and `hooks/` found no production caller of `recordPhaseStart`. Build Phase 1's last item finds the real site; the fallback is the ADR's derived close.
-- **Open: how a stopped step is told from a failed one.** Decided for now: a thrown abort is `stopped`, anything else with an error is `failed`; Build Phase 2 reads the session manager and refines it, recording the result here.
+- **Decision (Build Phase 2): how a step ends.** `finished` — the session ended normally and the plan has no blocker; `blocked` — the step returned but the plan now carries a `blocker:` line (the build: `nextBuildStep` answers `cannot-continue` with "has a blocker"; planning: `readPlanningState().blocker`), which wins over finished; `failed` — the session returned an error after its retries, or `run` threw (rethrown unchanged); `stopped` — the session's error says it ended on a signal (`claude exited on a signal`, the only stop `build-session.ts` reports distinctly; a person stopping or a timeout kills the process, so a thrown abort never reaches `timedStep`). A step with a `step-start` and no `step-end` (the daemon itself died) shows as "started, never ended" in the view. The `phase` on a step is the string the runner passes ("Build Phase 2: name"), so the log field is a string.
+- **Decision (Build Phase 2): `classify` is the admin's, and a throw in it is ignored.** It reads the plan after the step, so a plan unreadable at that moment leaves the default outcome rather than failing the step.
+- **Shape (Build Phase 2)**: reviewed `timed-step.ts` and the admin's `classifierFor`; nothing found.
+- **Open (superseded): how a stopped step is told from a failed one.** Decided for now: a thrown abort is `stopped`, anything else with an error is `failed`; Build Phase 2 reads the session manager and refines it, recording the result here.
 - **Open: the landing time source.** Build Phase 4 confirms whether the archive records one; the fallback is the landing merge commit's time.

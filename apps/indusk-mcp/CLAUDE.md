@@ -184,6 +184,9 @@ pointer; the pointer holds the story.
   `recordSafely`, which warns once and resolves; the reader skips what it cannot read. The
   phase-boundary reader's throw is not tolerated by the timing view but caught beside it.
   Guarded by `timing/phase-close.test.ts` (`clause: a-plan-says-how-long-it-took/a-record-never-blocks`).
+  A new unattended step kind is timed by being run through `timedStep` (`lib/timing/timed-step.ts`), which
+  wraps the runner's `run` function at the admin's call sites; the runners are not edited. Guarded by
+  `timing/timed-step.test.ts` (`clause: a-plan-says-how-long-it-took/steps-are-timed`).
   — see `/decisions/plan-timing`
 
 ## Promises and telemetry

@@ -19,13 +19,13 @@ export type StepOutcome = "finished" | "blocked" | "failed" | "stopped";
 /** What a recorder supplies; the log adds the version and the time. */
 export type TimingEntry =
 	| { kind: "phase-close"; plan: string; phase: number; phaseKind?: "test" | "build"; sha: string }
-	| { kind: "step-start"; plan: string; id: string; step: string; phase?: number }
+	| { kind: "step-start"; plan: string; id: string; step: string; phase?: string }
 	| {
 			kind: "step-end";
 			plan: string;
 			id: string;
 			step: string;
-			phase?: number;
+			phase?: string;
 			outcome: StepOutcome;
 	  }
 	| {
