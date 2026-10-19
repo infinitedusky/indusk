@@ -1,7 +1,7 @@
 ---
 title: "A brief is planned unasked"
 date: 2026-10-18
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -62,6 +62,8 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T16 | Approving a plan from the admin while its planning run is still running is refused and approves nothing | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
 | T17 | The impl step's prompt says an ADR or test plan left proposed or draft by the earlier steps is no reason to stop, and that it changes no other document's status | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/build-session.test.ts |
 | T18 | A `blocker:` line inside a fenced code block of a plan document does not end the planning run | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
+| T19 | When the person's planning conversation for a plan ends, a planning run starts for it if its brief is accepted and every look it names is approved | Build Phase 6 | Build Phase 6 | planned | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
+| T20 | The planner skill tells a planning conversation to end after accepting its brief, leaving the documents to the unattended run | Build Phase 6 | Build Phase 6 | planned | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-mcp/src/__tests__/planner-ends-after-accept.test.ts |
 
 ## Checklist
 
@@ -443,6 +445,53 @@ This phase tests the finished planning run against the ways it could start twice
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md` (the `accept-brief` section); changelog.
+
+  </details>
+
+### Build Phase 6: The run starts when the conversation ends
+
+**Tier**: med — the work step's default
+
+The falsification fix that keeps a planning run from starting while the person's own planning conversation is open also means the run rarely starts at all: the brief is normally accepted from inside that conversation, the admin declines because the conversation is open, and nothing asks again. This phase makes the end of a planning conversation ask the admin to start the run, and has the planner skill end the conversation after accepting the brief instead of writing the documents itself. Once it closes, accepting a brief in a conversation leads to the unattended run as soon as the conversation ends.
+
+- [ ] Make the end of a planning conversation ask the admin to start that plan's planning run.
+  <details><summary>Technical</summary>
+
+  Found by the Build Phase 5 builder (2026-10-18): `startPlanning` declines while a planning session is open for the plan (T12's fix), and `accept-brief` is usually run from that session, so nothing starts the run. In the admin's session host, when a session of `kind: "planning"` for a plan ends, call `startPlanning(project, plan)` and ignore a decline (it starts nothing unless the brief is accepted and looks approved). T19.
+
+  </details>
+- [ ] Make the planner skill end the conversation after accepting the brief, leaving the documents to the unattended run, and resync its installed copy.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/skills/planner.md` step 4 and step 5: after `indusk plans accept-brief <plan>`, say the test plan, ADR and impl are written by the unattended run once this conversation ends, and end; the person can still ask to plan by hand. `.claude/skills/planner/SKILL.md`; `skill-sync-parity.test.ts`. T20.
+
+  </details>
+- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+
+#### Build Phase 6 Verification
+
+- [ ] Ending a planning conversation starts the run for a ready brief, and the skill tells the conversation to end after accepting.
+  <details><summary>Technical</summary>
+
+  T19, T20; `indusk plans tests a-brief-is-planned-unasked --phase "Build Phase 6"`.
+
+  </details>
+
+#### Build Phase 6 Context
+
+- [ ] Add to the admin's context file that a planning conversation's end asks for the planning run.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/CLAUDE.md`: amend the host line Build Phase 4 added.
+
+  </details>
+
+#### Build Phase 6 Document
+
+- [ ] Say in the planning guide that accepting a brief ends the conversation and the run follows.
+  <details><summary>Technical</summary>
+
+  The planning guide page Build Phase 4 updated; changelog.
 
   </details>
 
