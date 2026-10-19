@@ -225,6 +225,7 @@ const config = defineConfig({
 						{ text: "UI Promises — mockups a person approves, held by value", link: "/decisions/ui-promises" },
 						{ text: "Brief as the Contract — looks in the brief, a plan that starts as a conversation", link: "/decisions/brief-as-the-contract" },
 						{ text: "Cockpit Redraw — the nav from the original cockpit, a width you can drag, re-approval a person's", link: "/decisions/cockpit-redraw" },
+						{ text: "A Brief Is Planned Unasked — accept the brief, approve the plan once, review the build", link: "/decisions/a-brief-is-planned-unasked" },
 						{ text: "Plan Stories — plans read by their titles, a master plan that tells its story", link: "/decisions/plan-stories" },
 						{ text: "Storybook Components — each component once, a story per state", link: "/decisions/storybook-components" },
 						{ text: "Component Content — a placed component takes its own words", link: "/decisions/component-content" },
