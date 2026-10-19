@@ -24,13 +24,8 @@ import {
 	type SourceRead,
 	sourceAdvice,
 } from "../../lib/promises/sources.js";
-import {
-	formatStatus,
-	markStatusSignal,
-	parseDuration,
-	shownClauses,
-	statusVerdict,
-} from "../../lib/promises/status.js";
+import { formatStatus, parseDuration, shownClauses } from "../../lib/promises/status.js";
+import { markStatusSignal, statusVerdict } from "../../lib/promises/status-signal.js";
 import { watchReport } from "../../lib/promises/watch.js";
 import {
 	changePromise,

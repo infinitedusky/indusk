@@ -765,6 +765,14 @@ blocker: two of the four clauses of `a-clause-is-proved-twice` have no real repo
 
   </details>
 
+- [x] Give the status command's signal its own module, and read a signal's plan and phase one way wherever it is found.
+  <details><summary>Technical</summary>
+
+  Shape finding (manual review; `prepareShapeReview` returned "skipped" because the four-clause verification item is open on an operational report, not on code). `status.ts` now formats the status text and also judges and writes a span — two reasons to change, where the close's and the recorder's signals each have their own module (`closing-signal.ts`, `incident-signal.ts`): move `StatusVerdict`, `statusVerdict` and `markStatusSignal` to `status-signal.ts` (beside its test); `ShownClause`/`shownClauses` stay in `status.ts`, being what the text shows. `parseMarkedSpan` reads the plan/phase pair twice, from the event's fields and from the span's tags, with the same three lines: one helper `pointerIn(tags)`.
+
+  </details>
+  Done: `status-signal.ts` holds the verdict and the writer, the command and the A39 test import it there; `pointerIn` reads the pair from the event's fields and, for a break, the span's tags. Re-ran: `tsc` clean, the status, incident, reader and CLI-words tests 52 passed. Reviewed and left as is: `recordViolations` (now a loop over `byClauseNamed` with `extendIncident`/`openIncident`, each one job); `withoutCommentsOrImports` (coarse by design, its comment says which way it errs); `runFiles`'s `ranNoTest` beside `passed` (kept apart so its two other callers' verdicts cannot move); `reportsOfClause` in `clause-standing.ts` (the one mapping, beside the type it builds).
+
 #### Build Phase 7 Verification
 
 - [x] Two clauses of one promise breaking produce two incidents, each naming its own clause, and an incident with no clause is unchanged.

@@ -1,7 +1,8 @@
 import type { Tracer } from "@opentelemetry/api";
 import { describe, expect, it } from "vitest";
 import type { PromiseEntry } from "./registry.js";
-import { markStatusSignal, type ShownClause, shownClauses, statusVerdict } from "./status.js";
+import { type ShownClause, shownClauses } from "./status.js";
+import { markStatusSignal, statusVerdict } from "./status-signal.js";
 import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
 
 // promise: a-clause-is-proved-twice

@@ -175,6 +175,13 @@ function byClause(all: MarkedSpan[]): NonNullable<PromiseMarks["byClause"]> {
 	return out;
 }
 
+/** The plan and phase that added a signal, when both are among `tags` as strings. */
+function pointerIn(tags: JaegerTag[] | undefined): MarkedSpan["signal"] {
+	const plan = tag(tags, APP_SIGNAL_KEYS.plan);
+	const phase = tag(tags, APP_SIGNAL_KEYS.phase);
+	return typeof plan === "string" && typeof phase === "string" ? { plan, phase } : undefined;
+}
+
 /** A numeric tag as a number; anything else (a string, a missing tag) is no number. */
 function numberTag(tags: JaegerTag[] | undefined, key: string): number | undefined {
 	const v = tag(tags, key);
@@ -291,18 +298,12 @@ export function parseMarkedSpan(
 		if (tag(log.fields, "event") !== PROMISE_MARK.violatedEvent) continue;
 		const s = tag(log.fields, PROMISE_MARK.symptom);
 		if (typeof s === "string") symptom = s;
-		const plan = tag(log.fields, APP_SIGNAL_KEYS.plan);
-		const phase = tag(log.fields, APP_SIGNAL_KEYS.phase);
-		if (typeof plan === "string" && typeof phase === "string") signal = { plan, phase };
+		signal = pointerIn(log.fields) ?? signal;
 	}
 	// An app's own helper puts the pointer on the span, not on the break event
 	// (`templates/signal.ts`); `markPromise` puts it on the event. Both count,
 	// the event first (mark-first decision D-32).
-	if (!signal && outcome === "broken") {
-		const plan = tag(span.tags, APP_SIGNAL_KEYS.plan);
-		const phase = tag(span.tags, APP_SIGNAL_KEYS.phase);
-		if (typeof plan === "string" && typeof phase === "string") signal = { plan, phase };
-	}
+	if (!signal && outcome === "broken") signal = pointerIn(span.tags);
 	const look = lookOf(span.tags);
 	const clause = tag(span.tags, PROMISE_MARK.clause);
 	const value = numberTag(span.tags, APP_SIGNAL_KEYS.value);
