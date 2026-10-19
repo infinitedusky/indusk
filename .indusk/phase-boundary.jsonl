@@ -439,3 +439,4 @@
 {"plan":"a-brief-is-planned-unasked","phase":7,"kind":"build","sha":"bf5fff04a6e6c4a7458cdf0862dde5cbed20f824","timestamp":"2026-10-19T02:11:39.684Z"}
 {"plan":"a-brief-is-planned-unasked","phase":8,"kind":"build","sha":"18c751d69","timestamp":"2026-10-19T02:25:16.475Z"}
 {"plan":"admin-builds-with-the-planning-reader","phase":1,"kind":"test","sha":"b9762fab278dad90517f0b7ef57a85f2a28519eb","timestamp":"2026-10-19T02:42:19.283Z"}
+{"plan":"the-admin-knows-the-package-root","phase":1,"kind":"test","sha":"f65b1d000a64a25bd420bdda2acc6260b68f6c58","timestamp":"2026-10-19T13:15:54.360Z"}

@@ -1,7 +1,7 @@
 ---
 title: "The admin knows the package root"
 date: 2026-10-19
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -56,10 +56,10 @@ Decisions made unattended (`INDUSK_GATE_POLICY=auto`), each with its reason:
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | T1 | The admin daemon's environment names the package root the `indusk` command passed, beside the project root, and leaves it out when none is passed | Build Phase 1 | Build Phase 1 | planned | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/admin/daemon-env.test.ts |
-| T2 | With no handed root, the lookup finds the package root from where the code sits, exactly as before | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard over the lookup every CLI path relies on (demo, worktree, plan start) | apps/indusk-mcp/src/lib/package-root.test.ts |
-| T3 | A handed root that holds this package is returned instead of the folder found from the module's own location | Test Phase 1 | Build Phase 1 | planned | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/package-root.test.ts |
-| T4 | A handed root that is empty, holds no package, or holds another package is ignored and the lookup falls back to finding the root from where the code sits | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: a stale environment value must never beat a correct lookup | apps/indusk-mcp/src/lib/package-root.test.ts |
-| T5 | The planning reader still names the impl hook through the package-root lookup, not through `"node"` or a path built from its own location | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard (`read-planning-hook-path.test.ts`): the fix goes through the same lookup, not around it | apps/indusk-mcp/src/lib/build/read-planning-hook-path.test.ts |
+| T2 | With no handed root, the lookup finds the package root from where the code sits, exactly as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the lookup every CLI path relies on (demo, worktree, plan start) | apps/indusk-mcp/src/lib/package-root.test.ts |
+| T3 | A handed root that holds this package is returned instead of the folder found from the module's own location | Test Phase 1 | Build Phase 1 | written | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/package-root.test.ts |
+| T4 | A handed root that is empty, holds no package, or holds another package is ignored and the lookup falls back to finding the root from where the code sits | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: a stale environment value must never beat a correct lookup | apps/indusk-mcp/src/lib/package-root.test.ts |
+| T5 | The planning reader still names the impl hook through the package-root lookup, not through `"node"` or a path built from its own location | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard (`read-planning-hook-path.test.ts`): the fix goes through the same lookup, not around it | apps/indusk-mcp/src/lib/build/read-planning-hook-path.test.ts |
 | T6 | Inside the admin as started by `indusk ui`, the lookup returns the folder holding the shipped impl hook, not `.../apps/apps/indusk-mcp/dist/lib` | Build Phase 1 | Build Phase 1 | skipped | live check | promise: an-accepted-brief-is-planned-unasked | manual: build the admin, start it with `indusk ui`, read the daemon's environment (`ps eww <pid>`) for the package root and its log (`~/.indusk/admin-ui.log`) for no lookup error naming `apps/apps` |
 | T7 | A planning run over an accepted brief, in the admin as started by `indusk ui`, ends "ready for approval" instead of "cannot continue" | Build Phase 1 | Build Phase 1 | skipped | live check | promise: an-accepted-brief-is-planned-unasked | manual: after landing and `pnpm install:local`, run `indusk ui`, start a planning run over an accepted brief, read the run's stop reason in the admin |
 
@@ -80,19 +80,19 @@ Decisions made unattended (`INDUSK_GATE_POLICY=auto`), each with its reason:
 
 This phase writes the tests of the package-root lookup so the one that asks for a handed root fails on its own assertion, and the two that guard the existing fallback pass from the start. It hands the next phase a red test to make green and the recorded body of the daemon-environment test, which cannot load until the next phase adds the function it imports.
 
-- [ ] Write the tests of the package-root lookup in a new file beside it.
+- [x] Write the tests of the package-root lookup in a new file beside it.
   <details><summary>Technical</summary>
 
   Create `apps/indusk-mcp/src/lib/package-root.test.ts`. Use a temporary directory and set `process.env.INDUSK_MCP_PACKAGE_ROOT` (a string literal, so the file loads today); restore the variable after each test. T2: variable unset → result equals the folder holding `apps/indusk-mcp/package.json` (`join(import.meta.dirname, "..", "..")`). T3: write `package.json` `{"name":"@infinitedusky/indusk-mcp"}` into a temporary folder, set the variable to it → result is that folder (red today: the lookup ignores the variable). T4, with `it.each`: variable `""`, a folder with no `package.json`, a folder whose `package.json` is named `other` → result equals T2's folder. Header comment names `promise: an-accepted-brief-is-planned-unasked` once, on T3's test name.
 
   </details>
-- [ ] Confirm the existing guard of the planning reader's hook path passes untouched.
+- [x] Confirm the existing guard of the planning reader's hook path passes untouched.
   <details><summary>Technical</summary>
 
   T5: `read-planning-hook-path.test.ts` already exists and passes; change nothing, run it.
 
   </details>
-- [ ] Make sure no test fails only because a file or function it loads is missing.
+- [x] Make sure no test fails only because a file or function it loads is missing.
   <details><summary>Technical</summary>
 
   T3 must fail on `expect(...).toBe(handed)`, not on an import; T2, T4, T5 pass. The daemon-environment test is deferred below because `daemonEnv` does not exist yet.
@@ -136,13 +136,13 @@ This phase writes the tests of the package-root lookup so the one that asks for 
 
 #### Test Phase 1 Verification
 
-- [ ] The new package-root tests exist, the handed-root test fails on its own assertion, and the guards pass.
+- [x] The new package-root tests exist, the handed-root test fails on its own assertion, and the guards pass.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/package-root.test.ts src/lib/build/read-planning-hook-path.test.ts`: T3 red on its `toBe`, T2, T4, T5 green.
 
   </details>
-- [ ] The deferred daemon-environment test body above has been read and judged.
+- [x] The deferred daemon-environment test body above has been read and judged.
   <details><summary>Technical</summary>
 
   Reviewed against both questions: it compiles once `daemonEnv`, `PACKAGE_ROOT_ENV` and the `packageRoot` option exist (Build Phase 1), and each test asserts what its name claims. `lib/admin/daemon-env.test.ts` does not start a process, so it needs no `vitest.tiers.ts` entry.
@@ -151,7 +151,7 @@ This phase writes the tests of the package-root lookup so the one that asks for 
 
 #### Test Phase 1 Context
 
-- [ ] Record nothing new yet.
+- [x] Record nothing new yet.
   <details><summary>Technical</summary>
 
   The rule this plan adds is written in Build Phase 1, where the code that enforces it lands.
@@ -160,7 +160,7 @@ This phase writes the tests of the package-root lookup so the one that asks for 
 
 #### Test Phase 1 Document
 
-- [ ] Write nothing in the docs yet.
+- [x] Write nothing in the docs yet.
   <details><summary>Technical</summary>
 
   The changelog line is written in Build Phase 1 with the code.
