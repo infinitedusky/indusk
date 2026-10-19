@@ -20,7 +20,9 @@ Durations print like `1h 04m`, `4m 12s` and `9s`.
 
 `total` runs from the moment the brief was accepted (`accepted_at` in the brief) to the plan's landing, which is the time of the trunk's `Merge <branch>: <plan> landed` commit. A plan that has not landed shows the time so far and says `so far, not yet landed`.
 
-`between` is the total less the phases' durations: the time no phase accounts for, such as the wait between acceptance and the first phase. It is printed so the parts and the gap are never hidden.
+`between` is the total less the phases' durations: the time no phase accounts for, such as the wait between acceptance and the first phase. It is printed so the parts and the gap are never hidden, and it can be negative (printed with a `-`) when the phases outrun the total.
+
+A plan that has landed has no open phase: a phase with no recorded close and no next phase ends at the landing, so its time stops growing once the plan has landed.
 
 ## How a step ends
 
@@ -39,6 +41,8 @@ The command never fails on missing records. It prints what exists and ends with 
 
 ## Where the records are
 
-One file per plan, `timing/<plan>.jsonl`, in the project's machine-state home (`indusk eval home` prints it). Nothing is committed. A phase's opening is read from `.indusk/phase-boundary.jsonl`, which is unchanged. A record that cannot be written only prints a warning: timing never stops the work it records.
+One file per plan, `timing/<plan>.jsonl`, in the project's machine-state home (`indusk eval home` prints it). Nothing is committed. A phase's opening is read from `.indusk/phase-boundary.jsonl`, which is unchanged, in the plan's worktree while it is built there, wherever the command is run from. The landing is looked for in the repository the plan's code lands into (the code repo, for a workbench plan). A record that cannot be written only prints a warning: timing never stops the work it records.
+
+A name that matches no plan is refused: the command prints why on stderr and exits 1, rather than an empty view.
 
 See [the decision](/decisions/plan-timing).

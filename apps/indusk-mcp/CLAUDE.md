@@ -189,6 +189,8 @@ pointer; the pointer holds the story.
   `timing/timed-step.test.ts` (`clause: a-plan-says-how-long-it-took/steps-are-timed`).
   `plans time` (`timing/view.ts`) never throws on a record or a plan with none: it prints what exists and
   names what has no record. Guarded by `timing/view.test.ts` (`clause: a-plan-says-how-long-it-took/one-view`).
+  The view reads a plan where it is written: phase openings from the plan's live worktree, the landing from the
+  code repo (`resolveExecutionRoots`); the log reader checks each kind's fields and skips a record missing them.
   — see `/decisions/plan-timing`
 
 ## Promises and telemetry
