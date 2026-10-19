@@ -338,7 +338,7 @@ This phase adds the one module that knows what a question is: the record, the re
 
 This phase connects the record to running sessions. An unattended session's question becomes a record; an expensive one stops the session and releases its slot; the person's answer resumes it; and the admin's sweep sends a cheap or moderate question's session on with its recommendation once the stored deadline has passed.
 
-- [ ] Add the structured `ask_decision` tool and let its request become a question record, in builds as well as admin sessions.
+- [ ] Add a structured way for a session to ask a decision, and let its request become a question record, in builds as well as admin sessions.
   <details><summary>Technical</summary>
 
   A tool on the indusk MCP server taking the record's fields (options with `changes`, `recommended`, `reason`, `cost`); `lib/session/protocol.ts` `controlRequestEvents` turns a `can_use_tool` for it into the `question` event; `lib/build/build-session.ts` (line ~167, which answers every question with `refuseBuildQuestion`) records it instead, and its prompt (line 36, "nobody will answer a question") is rewritten to say a choice is asked with `ask_decision` and cheap ones go ahead; `lib/session/permissions.ts` `refuseBuildQuestion` now refuses a plain `AskUserQuestion` naming `ask_decision`; update `build-session-gates.test.ts` and `protocol.test.ts`, which pin the old refusal (ADR decision 12). First check whether a stopped build can be resumed with the answer (Notes 8).
@@ -629,6 +629,64 @@ This phase writes the pages the ADR's documentation plan names, so a person usin
   <details><summary>Technical</summary>
 
   Pages, diagram, changelog and ADR-in-docs against the ADR's Documentation Plan.
+
+  </details>
+
+### Build Phase 7: Each clause reports its signal
+
+**Tier**: med — the work step's default
+
+Added before approval (2026-10-19): a plan with clauses closes only when each clause's signal has reported it upheld in a real run, and the phases above report none. This phase makes each place that decides a clause report it through the commands' one tracer, in the shape the close already reads, then runs the real cases so the close can read them.
+
+- [ ] Make each place that decides one of this plan's clauses report it as upheld or broken.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/questions/signals.ts`, in the shape of `markClosing` (`lib/promises/closing-signal.ts`): one `markPromise` span per decision, `signal: { plan: "decisions-as-questions", phase: "Build Phase 7" }`, best-effort, `flushCommandTracer()` in short-lived commands. Where each clause is decided: asking a question (`asked-with-a-recommendation`, broken when a field is missing); the save-time check (`never-decided-silently`); the sweep (`cheap-and-moderate-go-ahead`, and `never-timed-out` when it leaves an expensive one); the stop and resume (`expensive-waits`); a late answer (`disagreement-opens-a-plan`); the question record (`every-decision-stays`); the release's follow-on step (`release-refuses`); landing (`landing-never-waits`). Each file carries its `clause:` tokens. T25.
+
+  </details>
+- [ ] Run each case for real with the local daemon up, so each clause has a real signal.
+  <details><summary>Technical</summary>
+
+  The procedure in T26's row; run after landing and installing if the admin's own loop is needed for a case. T26 is checked at close.
+
+  </details>
+- [ ] Review the signal writers against the extensions' rules.
+  <details><summary>Technical</summary>
+
+  Shape review; findings as unchecked items here.
+
+  </details>
+
+#### Build Phase 7 Verification
+
+- [ ] Each signal writer reports upheld and broken as its clause says, and none can fail what called it.
+  <details><summary>Technical</summary>
+
+  T25: `indusk plans tests decisions-as-questions --phase "Build Phase 7"`.
+
+  </details>
+- [ ] The close's check of the real signals is written down and waits for the real runs.
+  <details><summary>Technical</summary>
+
+  T26 stays `skipped` with its procedure until `indusk promises confirm decisions-as-questions` passes at close.
+
+  </details>
+
+#### Build Phase 7 Context
+
+- [ ] Add to the package's rules where this plan's clauses are reported.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`: the questions entry names `lib/questions/signals.ts` as where each clause is reported.
+
+  </details>
+
+#### Build Phase 7 Document
+
+- [ ] Say in the questions guide which events report which clause.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/questions.md`: a short "Signals" section.
 
   </details>
 
