@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { checkPlanContract } from "../promises/contract.js";
+import { type BringTrunkHow, bringTrunkIntoPlan } from "./bring-trunk.js";
 import {
 	PlanCommandRefusal,
 	planBranch,
@@ -26,6 +27,12 @@ import { commitAtRoot, workbenchPlan } from "./workbench-plan.js";
  * promise: an-accepted-brief-is-planned-unasked
  */
 
+const ACCEPTING: BringTrunkHow = {
+	refused: "its brief was not accepted",
+	again: "accept the brief again",
+	when: "its brief was accepted",
+};
+
 export interface AcceptedBrief {
 	plan: string;
 }
@@ -37,15 +44,24 @@ export async function acceptBrief(anyCheckout: string, plan: string): Promise<Ac
 	if (wp) {
 		const brief = readDraftBrief(wp.dir, plan);
 		refuseFailingContract(wp.root, plan);
+		// The registry at the root is not changed by the code branch's merge: no second check.
+		await bringTrunkIntoPlan(anyCheckout, plan, ACCEPTING);
 		writeFileSync(brief.path, setFrontmatterKeys(brief.text, acceptedKeys()));
 		await commitAtRoot(wp.root, [relative(wp.root, brief.path)], message);
 		return { plan };
 	}
 	const pb = await planBranch(anyCheckout, plan);
-	const brief = readDraftBrief(pb.dir, plan);
+	readDraftBrief(pb.dir, plan);
 	refuseFailingContract(pb.worktree, plan);
+	// Main's registry and the brief itself can change under the merge, so both
+	// are read again inside the undo: no refusal leaves the merge behind.
+	const brief = await bringTrunkIntoPlan(anyCheckout, plan, ACCEPTING, () => {
+		const merged = readDraftBrief(pb.dir, plan);
+		refuseFailingContract(pb.worktree, plan);
+		return merged;
+	});
 	// `setImplKeys` sets frontmatter keys in any plan document and commits that file alone.
-	await setImplKeys(pb, brief.path, acceptedKeys(), message);
+	await setImplKeys(pb, (brief as { path: string }).path, acceptedKeys(), message);
 	return { plan };
 }
 
