@@ -211,7 +211,7 @@ This phase writes every test the plan commits to before anything changes, so the
 
 #### Test Phase 1 Document
 
-- [ ] Write the manual check's recipe into this impl's Notes.
+- [ ] Copy the after-landing live check's steps into this impl's Notes.
   <details><summary>Technical</summary>
 
   The recipe in A12's `Test` cell is copied to `## Notes` with an empty `Result:` line for the person to fill after landing, so they find it in one place.
@@ -373,7 +373,7 @@ This phase makes what people read match what the command and the admin now do, a
   `apps/docs/src/changelog.md`: "**A brief is accepted on current main** (a-brief-is-accepted-on-current-main): `indusk plans accept-brief` and the admin's planning start bring main into the plan's branch first (a workbench plan's code branch to its repo's trunk), so the plan is written against current code; a conflict is undone and refused, naming the files." `apps/docs/src/guide/briefs.md` near line 147: the accepting paragraph gains one sentence on the same.
 
   </details>
-- [ ] Leave the manual check's recipe where the person will find it after landing.
+- [ ] Leave the after-landing live check's steps where the person will find them.
   <details><summary>Technical</summary>
 
   The A12 recipe and its empty `Result:` line are in `## Notes` (Test Phase 1 Document). The row stays `skipped` until the person runs it after landing's `pnpm install:local` and `indusk ui restart`; a planning run that does not start, or main not an ancestor, is a break to fix, not a note.
