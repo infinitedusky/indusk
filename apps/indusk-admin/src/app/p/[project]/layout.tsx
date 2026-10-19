@@ -19,6 +19,7 @@ import {
   WorktreeRecordError,
 } from "@/components/Worktrees";
 import { readWaiting } from "@/lib/decisions-reader";
+import { withSituations } from "@/lib/plan-situation";
 import { worktreePromises } from "@/lib/plan-health";
 import {
   readActivePlans,
@@ -132,6 +133,8 @@ export default async function PerProjectLayout({
   // Needs you: each plan waiting on the person, with the step it waits at —
   // the package's `planWaiting`, over what the admin holds (ADR decision 2).
   const waiting = await readWaiting(project, projectPath, active);
+  // What each plan reads as, and what runs for it, from the package's one reader of both.
+  const situated = await withSituations(project, projectPath, active, waiting);
 
   const summary = `${active.length} ${active.length === 1 ? "plan" : "plans"}`;
 
@@ -180,7 +183,7 @@ export default async function PerProjectLayout({
           )}
           <div className="nav-hide flex flex-col gap-4">
             <PlanList
-              active={active}
+              active={situated}
               archived={archived}
               masterOrder={masterOrder}
               grouping={hierarchy}

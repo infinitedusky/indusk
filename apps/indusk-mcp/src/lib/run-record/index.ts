@@ -35,3 +35,17 @@ export {
 	realGitReads,
 	releaseOutcome,
 } from "./landed.js";
+export { type NextStep, nextStepFor } from "./next-step.js";
+export {
+	type Confirmation,
+	type ConfirmationSources,
+	confirmationsOf,
+	liveCheckRecorded,
+	openConfirmations,
+	planningWords,
+	type Situation,
+	type SituationInput,
+	type SituationKind,
+	situation,
+	waitingWords,
+} from "./situation.js";

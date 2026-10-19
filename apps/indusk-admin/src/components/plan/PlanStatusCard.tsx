@@ -27,6 +27,36 @@ export function PlanStatusCard({
   plan: Plan;
   dates?: PlanDates;
 }) {
+  const said = plan.situation?.situation;
+  if (said?.kind === "complete" && !plan.archived) {
+    // Merged to main: complete, green, nothing pulsing, with what is still to be confirmed.
+    const confirmations = said.confirmations ?? [];
+    return (
+      <DecisionCard
+        who={{ label: "Complete", state: "ok" }}
+        title="Complete — merged to main"
+      >
+        {confirmations.length > 0 ? (
+          <ul
+            className="grid list-none gap-2 text-md leading-4 text-ink-soft"
+            data-testid="plan-confirmations"
+          >
+            {confirmations.map((c) => (
+              <li
+                key={c.name}
+                className={c.confirmed ? "text-ok" : "text-idle"}
+                data-confirmed={c.confirmed}
+              >
+                {c.confirmed ? "✓" : "○"} {c.name} — {c.kind}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Everything it promised is confirmed.</p>
+        )}
+      </DecisionCard>
+    );
+  }
   if (plan.archived || plan.position?.position === "monitor") {
     return (
       <DecisionCard who={{ label: "Released", state: "ok" }} title="Released">

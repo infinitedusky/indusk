@@ -317,6 +317,34 @@ export async function buildView(
   return { build, phase, sentence };
 }
 
+/**
+ * The newest run of the plan, of any kind, with what the run reader says of it: this
+ * daemon's own entry decides while it holds the run, the record and its process otherwise.
+ * What the situation sentence and the steps read, so none says "in progress" without a process.
+ */
+export function runOfPlan(
+  project: string,
+  plan: string,
+): {
+  kind: RunKind;
+  status: ReturnType<typeof runStatus>;
+  step: string | null;
+  phase: string | null;
+} | null {
+  const record = newest(
+    recordsOf(project, plan, ["planning", "release", "build"]),
+  );
+  if (!record) return null;
+  const heldHere =
+    record.kind === "planning"
+      ? plannings().get(key(project, plan))?.running === true
+      : builds().get(key(project, plan))?.running === true;
+  const status = heldHere
+    ? ({ state: "running" } as const)
+    : statusOfRecord(record);
+  return { kind: record.kind, status, step: record.step, phase: record.phase };
+}
+
 /** The newest build or release record's state: what the page shows when this daemon holds nothing. */
 function buildStateOnDisk(project: string, plan: string): BuildState | null {
   const record = newest(recordsOf(project, plan, ["build", "release"]));
