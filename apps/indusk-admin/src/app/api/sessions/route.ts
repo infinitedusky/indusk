@@ -65,6 +65,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
   const manager = sessionManager();
+  const { project, plan } = body;
   const running = manager.forPlan(body.project, body.plan, body.kind);
   if (running && !manager.isWatched(running.id)) {
     return Response.json({ id: running.id, attached: true });
@@ -84,8 +85,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       // planning run is held back; the conversation's end asks for it.
       ...(body.kind === "planning"
         ? {
-            onEnd: () =>
-              void planningConversationEnded(body.project, body.plan),
+            onEnd: () => void planningConversationEnded(project, plan),
           }
         : {}),
     });
