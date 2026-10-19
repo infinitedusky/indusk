@@ -33,6 +33,7 @@ export type HookName =
 	| "check-gates.js"
 	| "stash-guard.js"
 	| "looks-approval-guard.js"
+	| "plan-write-guard.js"
 	| "break-inbox.js"
 	| "claude-md-budget.js"
 	| "trunk-guard.js"
