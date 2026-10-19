@@ -196,6 +196,84 @@ describe("A78, A79 — the drain reports each judged decision and removes what i
 	});
 });
 
+/**
+ * A100 (a-run-can-be-trusted, Build Phase 7, falsification): Claude Code runs one turn's tool
+ * calls at once, so an Edit of impl.md beside a long `pnpm test` changes a plan document between
+ * the shell command's before and after. The witness records each editing-tool write under a plan
+ * folder; the drain leaves out a change such a write accounts for, and blames the rest.
+ */
+describe("A100 — a plan document the Edit or Write tool changed during a shell command is not blamed on it", () => {
+	let home: string;
+	beforeEach(() => {
+		home = mkdtempSync(join(tmpdir(), "clause-verdicts-tool-write-"));
+	});
+	afterEach(() => rmSync(home, { recursive: true, force: true }));
+
+	const toolWrite = (stat: [number, number], at = "2026-10-19T12:00:30Z") =>
+		({
+			kind: "tool-write",
+			at,
+			root: ROOT,
+			file: ".indusk/planning/p/impl.md",
+			stat,
+		}) as unknown as PlanWriteLine;
+
+	it("an Edit recorded during the command, matching what the after snapshot holds, is left out", async () => {
+		appendDecision(home, decision({ command: "pnpm test", files: [] }));
+		appendDecision(home, toolWrite([104, 2000]));
+		appendDecision(home, {
+			kind: "after",
+			toolUseId: "t1",
+			after: { ".indusk/planning/p/impl.md": [104, 2000] },
+		});
+		const { tracer, spans } = captureTracer();
+		await drainPlanWriteDecisions(ROOT, {
+			home,
+			tracer,
+			now: new Date("2026-10-19T12:01:00Z"),
+			live: () => true,
+		});
+		expect(outcomesByClause(spans)["shell-write-refused"]).toBeUndefined();
+	});
+
+	it("a change no tool write accounts for is still broken", async () => {
+		appendDecision(home, decision({ command: "pnpm test", files: [] }));
+		// the Edit wrote one size; the file now holds another: something else wrote it after
+		appendDecision(home, toolWrite([104, 2000]));
+		appendDecision(home, {
+			kind: "after",
+			toolUseId: "t1",
+			after: { ".indusk/planning/p/impl.md": [110, 2500] },
+		});
+		const { tracer, spans } = captureTracer();
+		await drainPlanWriteDecisions(ROOT, {
+			home,
+			tracer,
+			now: new Date("2026-10-19T12:01:00Z"),
+			live: () => true,
+		});
+		expect(outcomesByClause(spans)).toEqual({ "shell-write-refused": "broken" });
+	});
+
+	it("a tool write recorded before the command began does not excuse a change during it", async () => {
+		appendDecision(home, toolWrite([104, 2000], "2026-10-19T11:59:00Z"));
+		appendDecision(home, decision({ command: "./tick.sh", files: [] }));
+		appendDecision(home, {
+			kind: "after",
+			toolUseId: "t1",
+			after: { ".indusk/planning/p/impl.md": [104, 2000] },
+		});
+		const { tracer, spans } = captureTracer();
+		await drainPlanWriteDecisions(ROOT, {
+			home,
+			tracer,
+			now: new Date("2026-10-19T12:01:00Z"),
+			live: () => true,
+		});
+		expect(outcomesByClause(spans)).toEqual({ "shell-write-refused": "broken" });
+	});
+});
+
 describe("rewriting the decision file keeps what a hook appended while the drain ran", () => {
 	let home: string;
 	beforeEach(() => {

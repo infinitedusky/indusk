@@ -1,7 +1,11 @@
 // clause: a-plan-document-is-written-through-its-checks/shell-write-refused
 // clause: a-plan-document-is-written-through-its-checks/reads-pass
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { refusalFor } from "../../hooks/plan-write-guard.js";
+import { parserReadsWrite } from "../lib/promises/clause-verdicts.js";
 
 /**
  * a-run-can-be-trusted, Build Phase 3: the shell guard's rule, imported as a pure
@@ -298,5 +302,110 @@ describe("A77 — git apply and patch naming a plan path are refused; the git co
 describe("a command the guard cannot parse is allowed (A29's rule, imported)", () => {
 	it.each(["", "   ", "echo 'unclosed", 'echo "unclosed', "echo $(unclosed"])("%j", (command) => {
 		expect(refused(command)).toBeNull();
+	});
+});
+
+/**
+ * A97, A98 (a-run-can-be-trusted, Build Phase 7, falsification): the shell writes the guard
+ * let through on 2026-10-19 (one of them used by the audit session on this plan), and the reads
+ * it refused. Each is judged by the guard, and the drain's independent reading
+ * (`parserReadsWrite`) must read each the same way, so a refusal of a write still reports
+ * `shell-write-refused` upheld and an allowed read `reads-pass` upheld.
+ */
+describe("A97 — the common shell writes it let through are refused naming the file", () => {
+	let dir: string;
+	let patchFile: string;
+	let otherPatch: string;
+	beforeAll(() => {
+		dir = mkdtempSync(join(tmpdir(), "plan-write-guard-patch-"));
+		patchFile = join(dir, "fix.patch");
+		writeFileSync(
+			patchFile,
+			`diff --git a/${IMPL} b/${IMPL}\n--- a/${IMPL}\n+++ b/${IMPL}\n@@ -1 +1 @@\n-- [ ] x\n+- [x] x\n`,
+		);
+		otherPatch = join(dir, "other.patch");
+		writeFileSync(
+			otherPatch,
+			"diff --git a/src/a.ts b/src/a.ts\n--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1 +1 @@\n-a\n+b\n",
+		);
+	});
+	afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+	const writes = () => [
+		`perl -0pi -e 's/\\[ \\]/[x]/' ${IMPL}`,
+		`perl -i.bak -pe 's/a/b/' ${IMPL}`,
+		`python3 - <<'PY'\nopen('${IMPL}', 'a').write('- [x]')\nPY`,
+		`python3 -I - <<'PY'\nfrom pathlib import Path\nPath('${PLAN}/audit.md').write_text('x')\nPY`,
+		`node - <<'EOF'\nrequire('fs').appendFileSync('${IMPL}', 'x')\nEOF`,
+		`bash <<EOF\necho x >> ${IMPL}\nEOF`,
+		`python3 <<< "open('${IMPL}', 'w').write('x')"`,
+		`node -e "require('fs').writeFileSync(process.argv[1], 'x')" ${IMPL}`,
+		`F=${IMPL}; echo x >> $F`,
+		`F=${IMPL} && sed -i 's/a/b/' "\${F}"`,
+		`find ${PLAN} -name '*.md' | xargs sed -i 's/a/b/'`,
+		`find .indusk/planning -name impl.md -print0 | xargs -0 rm`,
+		`gsed -i 's/a/b/' ${IMPL}`,
+		`awk -i inplace '{ print }' ${IMPL}`,
+		`gawk -i inplace '{ print }' ${IMPL}`,
+		`sort ${IMPL} | sponge ${IMPL}`,
+		`printf '1d\\nw\\nq\\n' | ed -s ${IMPL}`,
+		`ex -sc '%s/a/b/|x' ${IMPL}`,
+		`vim -c '%s/a/b/' -c 'wq' ${IMPL}`,
+		`nvim +'%s/a/b/' +wq ${IMPL}`,
+		`curl -o ${IMPL} https://example.com/impl.md`,
+		`curl -sSL --output ${IMPL} https://example.com/impl.md`,
+		`wget -O ${IMPL} https://example.com/impl.md`,
+		`wget --output-document=${IMPL} https://example.com/impl.md`,
+		`tar -xf /tmp/plan.tar -C ${PLAN}`,
+		`tar --directory=${PLAN} -xf /tmp/plan.tar`,
+		`unzip -o /tmp/plan.zip -d ${PLAN}`,
+		`git apply ${patchFile}`,
+		`patch -p1 < ${patchFile}`,
+		`patch -p1 -i ${patchFile}`,
+	];
+
+	it("each form is refused, naming a plan path", () => {
+		for (const command of writes()) {
+			const r = refused(command);
+			expect(r, command).not.toBeNull();
+			expect(r, command).toMatch(/some-plan|\.indusk\/planning/);
+		}
+	});
+
+	it("the drain's shell parser reads each form as a write too", () => {
+		for (const command of writes()) {
+			expect(parserReadsWrite(command, ROOT), command).toBe(true);
+		}
+	});
+
+	it("a patch whose headers name no plan path is not refused", () => {
+		expect(refused(`git apply ${otherPatch}`)).toBeNull();
+		expect(refused(`patch -p1 < ${otherPatch}`)).toBeNull();
+	});
+});
+
+describe("A98 — reads an inline interpreter or a dry run makes are allowed", () => {
+	const reads = [
+		`node -e "process.stdout.write(require('fs').readFileSync('${IMPL}', 'utf8'))"`,
+		`node -e "process.stderr.write(fs.readFileSync('${IMPL}'))"`,
+		`python3 -c "import sys; sys.stdout.write(open('${IMPL}').read())"`,
+		`python3 -c "import sys; sys.stderr.write(open('${IMPL}').read())"`,
+	];
+
+	it.each(reads)("%s is allowed", (command) => {
+		expect(refused(command)).toBeNull();
+		expect(parserReadsWrite(command, ROOT)).toBe(false);
+	});
+
+	it.each(["git clean -n", "git clean --dry-run", "git clean -nd"])(
+		"%s in a plan folder is allowed",
+		(command) => {
+			expect(refused(command, `${ROOT}/${PLAN}`)).toBeNull();
+			expect(parserReadsWrite(command, `${ROOT}/${PLAN}`)).toBe(false);
+		},
+	);
+
+	it("a git clean that deletes in a plan folder is still refused", () => {
+		expect(refused("git clean -fd", `${ROOT}/${PLAN}`)).not.toBeNull();
 	});
 });

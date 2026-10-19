@@ -101,6 +101,50 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 		expect(spans).toEqual([]);
 	});
 
+	/**
+	 * A103 (a-run-can-be-trusted, Build Phase 7, falsification): the unit files carry the clause's
+	 * token too, so a landing that ran only them reported the clause upheld although the test that
+	 * waits under load never ran.
+	 */
+	it("A103 a landing whose results carry the clause only in unit files reports nothing", async () => {
+		const p = codeWith({
+			"src/lib/admin/wait-for-incident.test.ts": `${TOKEN}\n`,
+			"src/lib/admin/recorder-loop.scan.test.ts": `${TOKEN}\n`,
+			[RECORDER]: `${TOKEN}\n`,
+		});
+		const { tracer, spans } = captureTracer();
+		await markRecorderClause(
+			p.planRoot,
+			p.codeRoot,
+			PLAN,
+			[
+				{ file: "src/lib/admin/wait-for-incident.test.ts", passed: true },
+				{ file: "src/lib/admin/recorder-loop.scan.test.ts", passed: true },
+			],
+			tracer,
+		);
+		expect(spans).toEqual([]);
+	});
+
+	it("A103 a unit file's failure beside a passing recorder test does not decide the clause", async () => {
+		const p = codeWith({
+			"src/lib/admin/wait-for-incident.test.ts": `${TOKEN}\n`,
+			[RECORDER]: `${TOKEN}\n`,
+		});
+		const { tracer, spans } = captureTracer();
+		await markRecorderClause(
+			p.planRoot,
+			p.codeRoot,
+			PLAN,
+			[
+				{ file: "src/lib/admin/wait-for-incident.test.ts", passed: false },
+				{ file: RECORDER, passed: true },
+			],
+			tracer,
+		);
+		expect(spans.map((s) => s.attrs["indusk.promise.outcome"])).toEqual(["upheld"]);
+	});
+
 	it("plans land reports the failure before it throws its refusal", async () => {
 		fixture = clausePlanProject({
 			testText: {

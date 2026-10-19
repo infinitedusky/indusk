@@ -1,4 +1,5 @@
 // clause: a-run-is-read-from-its-record/always-a-next-step
+// clause: a-run-is-read-from-its-record/says-what-is-true
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { derivePlanPosition } from "../lifecycle.js";
@@ -76,6 +77,38 @@ describe("A70 — every situation short of closed has a next step and who takes 
 
 	it("A70 a closed plan is the only one with none", () => {
 		expect(nextStepFor(situation({ ...base, archived: true }))).toBeNull();
+	});
+});
+
+/**
+ * A92 (a-run-can-be-trusted, Build Phase 7, falsification): a plan on main whose
+ * confirmation list was not read, or could not be read, never claims everything is confirmed.
+ */
+describe("A92 — an unread or unreadable confirmation list never reads as everything confirmed", () => {
+	it("A92 the nav row, which reads no list, says the list is on the plan's page", () => {
+		const s = situation({ ...base, landedOnMain: true });
+		const next = nextStepFor(s);
+		expect(next?.text).not.toMatch(/everything is confirmed/i);
+		expect(next?.text).toMatch(/plan's page/);
+		expect(s.confirmationNote ?? "").not.toMatch(/everything it promised is confirmed/i);
+	});
+
+	it("A92 a registry that could not be read says so, naming why", () => {
+		const s = situation({
+			...base,
+			landedOnMain: true,
+			confirmations: { unreadable: "promises/a.md: no state" },
+		} as unknown as SituationInput);
+		const next = nextStepFor(s);
+		expect(next?.text).not.toMatch(/everything is confirmed/i);
+		expect(next?.text).toMatch(/could not be read: promises\/a\.md: no state/);
+		expect(s.confirmationNote).toMatch(/could not be read: promises\/a\.md: no state/);
+	});
+
+	it("A92 a list that was read and is empty still says everything is confirmed", () => {
+		const s = situation({ ...base, landedOnMain: true, confirmations: [] });
+		expect(nextStepFor(s)?.text).toMatch(/everything is confirmed/);
+		expect(s.confirmationNote).toBeUndefined();
 	});
 });
 

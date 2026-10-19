@@ -2,6 +2,7 @@
 // clause: a-run-is-read-from-its-record/never-in-progress-when-idle
 import { describe, expect, it } from "vitest";
 import { PROCESS_GONE, type RunStatus } from "./liveness.js";
+import { nextStepFor } from "./next-step.js";
 import {
 	type Confirmation,
 	confirmationsOf,
@@ -198,6 +199,106 @@ describe("A69 and A82 — nothing reads in progress without a process", () => {
 			expect(situation(input({ run: { kind, status: running } })).running).toBe(true);
 			expect(situation(input({ run: { kind, status: gone } })).running).toBe(false);
 		}
+	});
+});
+
+/**
+ * A91 and A93 (a-run-can-be-trusted, Build Phase 7, falsification): what the page says is
+ * true against the inputs that made it say it wrongly.
+ */
+describe("A91 — a run that ended at a wait the person has since answered reads the step the plan is at", () => {
+	it("A91 a planning run stopped at ready-for-approval, then approved from the command line, never reads stopped", () => {
+		// As `runOfPlan` hands it: the record's clean stop, worded by its step (no stopReason).
+		const s = situation(
+			input({
+				stepName: "Build",
+				waitingOn: null,
+				run: {
+					kind: "planning",
+					status: { state: "stopped", reason: "ready-for-approval" },
+					stopStep: "ready-for-approval",
+				} as SituationInput["run"],
+			}),
+		);
+		expect(s.text).not.toBe("Stopped — ready-for-approval. Build starts the planning again.");
+		expect(s.kind).not.toBe("stopped");
+		expect(s.text).toMatch(/At Build/);
+		const next = nextStepFor(s);
+		expect(next?.text).not.toMatch(/press Build/);
+		expect(next?.text).toMatch(/Build/);
+	});
+
+	it("A91 each clean end of a runner reads the step the plan is at once nothing waits on the person", () => {
+		for (const [kind, step] of [
+			["planning", "ready-for-approval"],
+			["planning", "wait-for-looks"],
+			["build", "review"],
+		] as const) {
+			const s = situation(
+				input({
+					stepName: "Review",
+					run: {
+						kind,
+						status: { state: "stopped", reason: step },
+						stopStep: step,
+					} as SituationInput["run"],
+				}),
+			);
+			expect(s.kind, `${kind} ${step}`).toBe("idle");
+		}
+	});
+
+	it("A91 a death, a refusal, an amendment and a failed release still read stopped", () => {
+		for (const [kind, step, reason] of [
+			["build", null, PROCESS_GONE],
+			["build", "cannot-continue", "two steps in a row made no progress"],
+			["build", "amendment", "the brief changed"],
+			["build", "judgement", "a person must look"],
+			["release", "release-failed", "the plan is not on main"],
+		] as const) {
+			const s = situation(
+				input({
+					run: {
+						kind,
+						status: { state: "stopped", reason },
+						stopStep: step,
+					} as SituationInput["run"],
+				}),
+			);
+			expect(s.kind, `${kind} ${step}`).toBe("stopped");
+		}
+	});
+});
+
+describe("A93 — a failed live check and an unconfirmed plain promise are never ticked", () => {
+	it("A93 a Notes line holding a date beside a failed result does not record the live check", () => {
+		for (const word of ["failed", "fail", "red", "broken", "refused", "FAILED"]) {
+			const body = `## Notes\n\n- L1 — 2026-10-20 — ${word}: the stop sentence never appeared\n`;
+			expect(liveCheckRecorded(body, "L1"), word).toBe(false);
+		}
+		expect(
+			liveCheckRecorded("## Notes\n\n- L1 — 2026-10-20 — read the stop sentence\n", "L1"),
+		).toBe(true);
+	});
+
+	it("A93 a promise the plan makes with no clauses is listed, and ticked only once it is in force", () => {
+		const made = confirmationsOf({
+			promises: [
+				{ name: "plain", clauses: [], inForce: false },
+				{ name: "kept", clauses: [], inForce: true },
+				{
+					name: "rests",
+					clauses: [{ clause: "r", kind: "rests-on", standing: "holding" }],
+					inForce: false,
+				},
+			],
+			liveChecks: [],
+		} as Parameters<typeof confirmationsOf>[0]);
+		expect(made).toEqual([
+			{ name: "plain", kind: "clause signal", confirmed: false },
+			{ name: "kept", kind: "clause signal", confirmed: true },
+			{ name: "rests", kind: "clause signal", confirmed: false },
+		]);
 	});
 });
 

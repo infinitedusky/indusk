@@ -1,12 +1,14 @@
 // clause: a-run-is-read-from-its-record/released-only-when-landed
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { implText } from "../../__tests__/helpers/plan-fixture.js";
 import {
 	type PlanLifecycleProject,
 	planLifecycleProject,
 } from "../../__tests__/helpers/plan-lifecycle-fixture.js";
-import { git } from "../../__tests__/helpers/test-git.js";
+import { git, initRepoWithCommit } from "../../__tests__/helpers/test-git.js";
 import { acceptPlan } from "../plans/accept.js";
 import { landPlan } from "../plans/land.js";
 import {
@@ -14,6 +16,7 @@ import {
 	landedOnMain,
 	landingSubject,
 	NOT_ON_MAIN,
+	planLandedOnMain,
 	realGitReads,
 	releaseOutcome,
 } from "./landed.js";
@@ -150,5 +153,68 @@ describe("A21 and A87 — against a real repository", () => {
 	it("A87 a branch with commits and no landing merge never reads complete", () => {
 		p.commit(wt, { "src/a.ts": "export const a = 1;\n" }, "work");
 		expect(landedOnMain("main", PLAN, realGitReads(p.trunk))).toBe(false);
+	});
+
+	it("A94 with the root checkout on another branch, a plan landed on the trunk still reads complete", async () => {
+		p.commit(
+			wt,
+			{
+				[`${planDir}/impl.md`]: implText(PLAN, { status: "completed", rows: [{ state: "passing" }] }),
+				"src/seat.ts": "export const seat = 1;\n",
+			},
+			"the build",
+		);
+		// a branch the person made from main before the landing, so it does not hold it
+		git(p.trunk, ["branch", "scratch"]);
+		await acceptPlan(p.trunk, PLAN);
+		await landPlan(p.trunk, PLAN, {
+			runTests: async (files) => files.map((file) => ({ file, passed: true })),
+		});
+		expect(planLandedOnMain(p.trunk, PLAN)).toBe(true);
+		// the person checks that branch out in the root checkout
+		git(p.trunk, ["checkout", "-q", "scratch"]);
+		expect(planLandedOnMain(p.trunk, PLAN)).toBe(true);
+		// a detached checkout of an older commit too
+		git(p.trunk, ["checkout", "-q", "--detach", "scratch"]);
+		expect(planLandedOnMain(p.trunk, PLAN)).toBe(true);
+	});
+});
+
+describe("A95 — a workbench plan reads complete from its code repository's landing", () => {
+	let base: string;
+	beforeEach(() => {
+		base = mkdtempSync(join(tmpdir(), "landed-workbench-"));
+	});
+	afterEach(() => rmSync(base, { recursive: true, force: true }));
+
+	it("A95 the landing merge is in the code repo and the documents are not yet archived at the root", () => {
+		const root = join(base, "bench");
+		const repo = join(base, "app");
+		initRepoWithCommit(root, "bench");
+		mkdirSync(join(root, ".indusk", "planning", "wb-plan"), { recursive: true });
+		writeFileSync(
+			join(root, ".indusk", "config.json"),
+			JSON.stringify({ worktree: { repos: [{ name: "app" }] } }),
+		);
+		writeFileSync(join(root, ".indusk", "planning", "wb-plan", "impl.md"), "# impl\n");
+		// The code worktree is gone after landing: code.json still names the repo.
+		writeFileSync(
+			join(root, ".indusk", "planning", "wb-plan", "code.json"),
+			JSON.stringify({ repo: "app", branch: "plan/wb-plan", worktree: "../app-worktrees/wb-plan" }),
+		);
+		git(root, ["add", "-A"]);
+		git(root, ["commit", "-q", "-m", "plan documents"]);
+
+		initRepoWithCommit(repo, "app");
+		git(repo, ["checkout", "-q", "-b", "plan/wb-plan"]);
+		writeFileSync(join(repo, "seat.ts"), "export const seat = 1;\n");
+		git(repo, ["add", "-A"]);
+		git(repo, ["commit", "-q", "-m", "the code"]);
+		git(repo, ["checkout", "-q", "main"]);
+		expect(planLandedOnMain(root, "wb-plan")).toBe(false);
+		git(repo, ["merge", "-q", "--no-ff", "-m", "Merge plan/wb-plan: wb-plan landed", "plan/wb-plan"]);
+		git(repo, ["branch", "-q", "-d", "plan/wb-plan"]);
+
+		expect(planLandedOnMain(root, "wb-plan")).toBe(true);
 	});
 });

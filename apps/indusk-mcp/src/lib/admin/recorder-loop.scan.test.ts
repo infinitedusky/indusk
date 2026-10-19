@@ -77,6 +77,41 @@ describe("A89 — the loop writes down each scan", () => {
 		expect(lines.join("\n")).toMatch(/disk full/);
 	});
 
+	/**
+	 * A102 (a-run-can-be-trusted, Build Phase 7, falsification): `recordBreaks` never throws when
+	 * the production read fails; it resolves with `error` set. Such a pass did not scan, so it is
+	 * written not finished, and the patient landing test goes on waiting.
+	 */
+	it("A102 a pass that resolved with a failed production read is recorded as not finished", async () => {
+		const records: Array<[string, ScanRecord]> = [];
+		const record = vi
+			.fn<(root: string) => Promise<unknown>>()
+			.mockResolvedValueOnce({ error: new Error("jaeger query timed out after 10s") })
+			.mockResolvedValueOnce({ refused: "names no production source" })
+			.mockResolvedValueOnce({ changes: [] });
+		loops = startRecorderLoops({
+			projects: () => [PROD],
+			hasProduction: () => true,
+			intervalFor: () => 5_000,
+			record,
+			outcomeOf: (result: unknown) => {
+				const r = result as { error?: Error; refused?: string };
+				if (r?.error) return { ok: false, error: r.error.message };
+				if (r?.refused) return { ok: false, error: r.refused };
+				return { ok: true };
+			},
+			scanRecord: (root, scan) => records.push([root, scan]),
+			log: () => {},
+		} as Parameters<typeof startRecorderLoops>[0]);
+		await vi.advanceTimersByTimeAsync(15_000);
+		expect(records.map(([, s]) => [s.ok, s.error])).toEqual([
+			[false, "jaeger query timed out after 10s"],
+			[false, "names no production source"],
+			[true, undefined],
+		]);
+		expect(scanFinishedAfter(records[0][1], 1_000_000)).toBe(false);
+	});
+
 	it("the record file is written whole, per project, with no temp file left", () => {
 		vi.useRealTimers();
 		const home = mkdtempSync(join(tmpdir(), "scan-record-"));
