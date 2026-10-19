@@ -280,7 +280,7 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
 
 11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).
-   - **A phase runs what it touched, not the suite**: run `indusk plans tests <plan> --phase <N>`. It runs the test files the phase's own trajectory rows name and the tests whose imports reach the files the phase changed, in each package it changed, and prints each file with its reason. Seconds, not minutes. At **landing** (the retrospective's merge step) `indusk plans tests <plan> --landing` runs every row's tests, what the plan's branch reaches and the tests of the promises the brief lists as Must not break — and nothing else. Never hand-pick the list or run the whole suite; the command is the one definition of what a plan runs.
+   - **A phase runs its rows and what must not break, not the suite**: run `indusk plans tests <plan> --phase <N>`. A phase runs the test files its own trajectory rows name and the tests of the promises the brief lists as Must not break, and prints each file with its reason. Seconds, not minutes. At **landing** (the retrospective's merge step) `indusk plans tests <plan> --landing` runs every row's tests and those same promises' tests — and nothing else. Never hand-pick the list or run the whole suite; the command is the one definition of what a plan runs.
    - Run commands and capture output — verification items must be specific runnable commands, not "verify it works"
    - If a check fails: read the error, fix it, re-run only the failing check. Max 3 attempts before flagging as a blocker to the user.
    - Check items off only when actually verified, not assumed
@@ -499,5 +499,5 @@ If your work changes something referenced by another plan (e.g., a schema field,
 - Always read the research, brief, and ADR before starting. They contain context that matters.
 - Check items off one at a time, immediately. The checklist should always reflect reality.
 - Explain what you're doing and why as you work through items.
-- **Before touching shared code, grep to understand blast radius.** Search for importers/callers of a file before modifying it.
+- **Before touching shared code, grep to understand blast radius.** Grep for the callers of a file before modifying it.
 - The user's input is: $ARGUMENTS

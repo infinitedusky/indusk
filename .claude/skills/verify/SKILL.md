@@ -68,8 +68,8 @@ Use the `resolveTestIdCommand(trajectory, id)` helper from [`apps/indusk-mcp/src
 3. **The plan's tests** — `indusk plans tests <plan> --phase N` (at landing, `--landing`)
    - Skip for: markdown changes, config-only changes with no test files
    - Catches: behavioral regressions, broken logic
-   - Runs the phase's own rows' tests and the tests whose imports reach the files the phase changed, not the full suite; `--list` shows the rows' files without running anything.
-   - A hand-picked list or a search for importers is not needed: the command finds the tests the changes reach.
+   - A phase runs its own rows' tests and the tests of the promises the brief lists as Must not break, not the full suite; `--list` shows those files without running anything.
+   - A hand-picked list is not needed: the command is the one definition of the set.
 
 4. **Build** — `pnpm turbo build --filter={app}`
    - Only for: shared package changes, build config changes
@@ -146,8 +146,8 @@ Explicit commands in impl verification sections override auto-discovery. If an i
 |---|---|---|
 | Type check | `tsc --noEmit` | Any TypeScript change |
 | Lint | `pnpm check` | Any source file change |
-| Test (a phase) | `indusk plans tests <plan> --phase N` | Any phase: its rows' tests and the tests that import what it changed |
-| Test (landing) | `indusk plans tests <plan> --landing` | At landing: every row, what the plan reaches, the brief's Must-not-break promises — never the whole suite |
+| Test (a phase) | `indusk plans tests <plan> --phase N` | Any phase: its rows' tests and the Must-not-break promises' tests |
+| Test (landing) | `indusk plans tests <plan> --landing` | At landing: every row and the brief's Must-not-break promises' tests — never the whole suite |
 | Build (scoped) | `pnpm turbo build --filter={app}` | Shared package or build config changes |
 | Auto-discover | `quality_check` with mode `discover` | See what checks are available |
 | Run all checks | `quality_check` with no args | Run all discovered checks at once |
