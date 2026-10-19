@@ -1,7 +1,7 @@
 ---
 title: "The admin knows the package root"
 date: 2026-10-19
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -55,9 +55,9 @@ Decisions made unattended (`INDUSK_GATE_POLICY=auto`), each with its reason:
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | The admin daemon's environment names the package root the `indusk` command passed, beside the project root, and leaves it out when none is passed | Build Phase 1 | Build Phase 1 | planned | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/admin/daemon-env.test.ts |
+| T1 | The admin daemon's environment names the package root the `indusk` command passed, beside the project root, and leaves it out when none is passed | Build Phase 1 | Build Phase 1 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/admin/daemon-env.test.ts |
 | T2 | With no handed root, the lookup finds the package root from where the code sits, exactly as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the lookup every CLI path relies on (demo, worktree, plan start) | apps/indusk-mcp/src/lib/package-root.test.ts |
-| T3 | A handed root that holds this package is returned instead of the folder found from the module's own location | Test Phase 1 | Build Phase 1 | written | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/package-root.test.ts |
+| T3 | A handed root that holds this package is returned instead of the folder found from the module's own location | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-mcp/src/lib/package-root.test.ts |
 | T4 | A handed root that is empty, holds no package, or holds another package is ignored and the lookup falls back to finding the root from where the code sits | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: a stale environment value must never beat a correct lookup | apps/indusk-mcp/src/lib/package-root.test.ts |
 | T5 | The planning reader still names the impl hook through the package-root lookup, not through `"node"` or a path built from its own location | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard (`read-planning-hook-path.test.ts`): the fix goes through the same lookup, not around it | apps/indusk-mcp/src/lib/build/read-planning-hook-path.test.ts |
 | T6 | Inside the admin as started by `indusk ui`, the lookup returns the folder holding the shipped impl hook, not `.../apps/apps/indusk-mcp/dist/lib` | Build Phase 1 | Build Phase 1 | skipped | live check | promise: an-accepted-brief-is-planned-unasked | manual: build the admin, start it with `indusk ui`, read the daemon's environment (`ps eww <pid>`) for the package root and its log (`~/.indusk/admin-ui.log`) for no lookup error naming `apps/apps` |
@@ -173,13 +173,13 @@ This phase writes the tests of the package-root lookup so the one that asks for 
 
 This phase makes the command that starts the admin pass the package root it resolved into the daemon's environment, and makes the shared lookup trust that value when it really holds this package. It ends by writing the daemon-environment test deferred from the first phase and recording how the two live checks run once the build is installed.
 
-- [ ] Make the package-root lookup use a root handed through the environment when it holds this package.
+- [x] Make the package-root lookup use a root handed through the environment when it holds this package.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/package-root.ts`: export `PACKAGE_ROOT_ENV = "INDUSK_MCP_PACKAGE_ROOT"`; split the existing name check into `holdsThisPackage(dir: string): boolean` (reads `join(dir, "package.json")`, true only for name `@infinitedusky/indusk-mcp`, false on a missing file or a parse error); in `induskMcpPackageRoot()` check `const handed = process.env[PACKAGE_ROOT_ENV]; if (handed && holdsThisPackage(handed)) return handed;` before the walk-up, which then uses `holdsThisPackage` too. Update the docblock to say why: the admin's bundler rewrites the module's own location. T2, T3, T4.
 
   </details>
-- [ ] Put the package root into the admin daemon's environment through one function.
+- [x] Put the package root into the admin daemon's environment through one function.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/admin/daemon.ts`: add `packageRoot?: string` to `DaemonStartOptions`; export
@@ -201,25 +201,25 @@ This phase makes the command that starts the admin pass the package root it reso
   and make `spawn` use `env: daemonEnv(opts)`. Import `PACKAGE_ROOT_ENV` from `../package-root.js`. The stale value is dropped from the inherited environment so a daemon started without a root never inherits one from the starting shell. T1.
 
   </details>
-- [ ] Make the command that starts the admin pass the package root it resolved.
+- [x] Make the command that starts the admin pass the package root it resolved.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/bin/commands/ui.ts` (the call at `daemonStart({ port, adminDir, nextBin })`): add `packageRoot: induskMcpPackageRoot()` and the import from `../../lib/package-root.js`. A daemon started by the `indusk` command thus carries the root the command found correctly.
 
   </details>
-- [ ] Write the daemon-environment test deferred from the first phase.
+- [x] Write the daemon-environment test deferred from the first phase.
   <details><summary>Technical</summary>
 
   Create `apps/indusk-mcp/src/lib/admin/daemon-env.test.ts` with the reviewed body from "Deferred to Build Phase 1" (T1).
 
   </details>
-- [ ] Rebuild and confirm the admin's production bundle still builds.
+- [x] Rebuild and confirm the admin's production bundle still builds.
   <details><summary>Technical</summary>
 
   `pnpm --filter indusk-admin build` succeeds; the change touches only the package's own modules, but the bundler is the subject of the bug. Run the live checks T6 and T7 per their rows after landing and `pnpm install:local`, and record each result in the retrospective; they are slow-tier and never a gate.
 
   </details>
-- [ ] Shape — review the changed functions for craft; nothing is assumed needed.
+- [x] Shape — review the changed functions for craft; nothing is assumed needed.
   <details><summary>Technical</summary>
 
   `package-root.ts` and `daemon.ts`: one definition of "holds this package" (`holdsThisPackage`), no second name check anywhere.
@@ -228,13 +228,13 @@ This phase makes the command that starts the admin pass the package root it reso
 
 #### Build Phase 1 Verification
 
-- [ ] The lookup honours a trusted handed root and ignores a wrong one; the daemon's environment names the root; the earlier guards still pass.
+- [x] The lookup honours a trusted handed root and ignores a wrong one; the daemon's environment names the root; the earlier guards still pass.
   <details><summary>Technical</summary>
 
   T1, T2, T3, T4, T5 pass: `indusk plans tests the-admin-knows-the-package-root --phase "Build Phase 1"` (the rows' files and the Must-not-break promise's tests). The package's type check and `pnpm check` on the changed files are clean.
 
   </details>
-- [ ] The two live checks are written down and wait for the installed build.
+- [x] The two live checks are written down and wait for the installed build.
   <details><summary>Technical</summary>
 
   T6 and T7 stay in `skipped` state with their manual procedure in the trajectory table (slow tier, after landing).
@@ -243,7 +243,7 @@ This phase makes the command that starts the admin pass the package root it reso
 
 #### Build Phase 1 Context
 
-- [ ] Add the rule that the admin is handed the package root to the package's context file.
+- [x] Add the rule that the admin is handed the package root to the package's context file.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, One home per fact: extend the existing entry on code the admin bundles — `induskMcpPackageRoot()` trusts a root handed through `INDUSK_MCP_PACKAGE_ROOT` (set by `indusk ui` in `daemonEnv`) only when it holds this package, because the bundler rewrites a module's own location. Guard: `package-root.test.ts` (T3, T4) and `daemon-env.test.ts` (T1), so the rule is delivered by the tests; the line is one more clause on an existing bullet, not a new always-on entry.
@@ -252,12 +252,15 @@ This phase makes the command that starts the admin pass the package root it reso
 
 #### Build Phase 1 Document
 
-- [ ] Add a changelog line.
+- [x] Add a changelog line.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md` unreleased: the admin is started with the package root, so a planning run inside it reaches "ready for approval".
 
   </details>
+
+
+Unattended decisions in this phase: `pnpm biome check --write` over `src/lib` touched two unrelated files; reverted them so the commit holds only this plan's changes. Shape review: `package-root.ts` and `daemon.ts` have one `holdsThisPackage` and one `daemonEnv`; reviewed, nothing found. The live checks T6 and T7 stay skipped for the slow tier after landing.
 
 ## Files Affected
 

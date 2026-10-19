@@ -6,6 +6,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **The admin knows the package root** (the-admin-knows-the-package-root): `indusk ui` hands the package root it resolved to the admin daemon, and `induskMcpPackageRoot()` trusts it when it holds this package, so a planning run inside the admin reaches "ready for approval" instead of "cannot continue".
+
 - **The admin builds again with the planning reader** (admin-builds-with-the-planning-reader): the reader runs the shipped impl hook through the package root and the running Node binary, which the admin's production bundler leaves alone; `pnpm install:local` had failed on main.
 
 - **Only the conversation that accepted the brief starts the run** (a-brief-is-planned-unasked): `indusk plans accept-brief` records `accepted_at` in the brief, and a planning conversation's end starts the run only when the brief was accepted after that conversation began. A person who planned by hand and only paused, or a brief accepted by hand, starts nothing at a conversation's end.

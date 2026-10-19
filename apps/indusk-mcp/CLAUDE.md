@@ -38,7 +38,7 @@ pointer; the pointer holds the story.
   `planFolderStatus`): planning folder, then `archive/`, null for the archive folder, a file
   or an unusable name; never a hand-built `.indusk/planning/<plan>` join. Guard: T9,
   `plan-folder-single-definition.test.ts`.
-- **Code the admin bundles finds shipped files through `induskMcpPackageRoot()` and runs scripts with `process.execPath`, never `"node"`** — Turbopack resolves `spawnSync("node", [path])` and `import.meta.url` paths at build time. — guarded by `read-planning-hook-path.test.ts`.
+- **Code the admin bundles finds shipped files through `induskMcpPackageRoot()` and runs scripts with `process.execPath`, never `"node"`** — Turbopack resolves `spawnSync("node", [path])` and `import.meta.url` paths at build time, so the lookup trusts a root handed through `INDUSK_MCP_PACKAGE_ROOT` (set by `indusk ui` in `daemonEnv`) when it holds this package. — guarded by `read-planning-hook-path.test.ts`, `package-root.test.ts`, `daemon-env.test.ts`.
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
