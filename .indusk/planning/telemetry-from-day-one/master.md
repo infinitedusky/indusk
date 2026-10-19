@@ -133,7 +133,10 @@ each child is one plan with one landing.
    holds all its clauses' phases; a look holds the phases that touch its
    interface files; an expectation holds nothing. Every other phase keeps
    building, and a held phase resumes on re-approval. Today an amendment
-   holds every build checkbox in the plan.
+   holds every build checkbox in the plan. Approving an amendment runs a
+   follow-on audit scoped to the changed promise or clause — whether the
+   closed phases' rows still prove the new sentence — answered as any audit
+   is; landing reruns every row, so the audit need not run tests.
 
 3c. **`audit-concerns-are-answered`** ("Audit concerns are answered by the
    plan's agent") — blocked by `mark-first`, since a signal answer names the
