@@ -460,7 +460,7 @@ The falsification fix that keeps a planning run from starting while the person's
   Found by the Build Phase 5 builder (2026-10-18): `startPlanning` declines while a planning session is open for the plan (T12's fix), and `accept-brief` is usually run from that session, so nothing starts the run. In the admin's session host, when a session of `kind: "planning"` for a plan ends, call `startPlanning(project, plan)` and ignore a decline (it starts nothing unless the brief is accepted and looks approved). T19.
 
   </details>
-- [ ] Make the planner skill end the conversation after accepting the brief, leaving the documents to the unattended run, and resync its installed copy.
+- [x] Make the planner skill end the conversation after accepting the brief, leaving the documents to the unattended run, and resync its installed copy.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/planner.md` step 4 and step 5: after `indusk plans accept-brief <plan>`, say the test plan, ADR and impl are written by the unattended run once this conversation ends, and end; the person can still ask to plan by hand. `.claude/skills/planner/SKILL.md`; `skill-sync-parity.test.ts`. T20.
