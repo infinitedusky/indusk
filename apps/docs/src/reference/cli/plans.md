@@ -1,6 +1,6 @@
 # `indusk plans`
 
-A plan's lifecycle from start to landing — `start`, `accept-brief`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
+A plan's lifecycle from start to landing — `start`, `accept-brief`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive` (a-run-can-be-trusted) and `archive-dead` (indusk-makeover).
 
 ## A plan's lifecycle
 
@@ -222,6 +222,14 @@ Every one of these reads the plan's code from `code.json`. A code file that name
 Every command that acts on a plan finds it in `.indusk/planning/<plan>` or, when it is not there, in `.indusk/planning/archive/<plan>`, through one lookup (`findPlanFolder`, which also refuses names that are not a plan's folder: the archive folder itself, a file such as `master.md`, a name with path separators or `..`). A workbench plan's `code.json` is found there too. A plan the retrospective archived before it lands is accepted, re-approved, tested at landing and landed where it lies, with no moving it out of the archive and back. A plan in both places is read from the planning folder. Re-approval and `plans amendments` read the approved brief from the path it had at the approval commit, archived or not.
 
 ## Housekeeping
+
+### `plans archive`
+
+```bash
+indusk plans archive <plan>
+```
+
+The retrospective's archival step: moves `.indusk/planning/<plan>` to `.indusk/planning/archive/<plan>` with `git mv`, staged for the retrospective's commit. Refused, moving nothing (exit 1), while the plan owns a promise still `declared` (run `indusk promises confirm <plan>` first), when the archive already holds a plan by the name, or when the name is not an active plan's folder. It exists because the shell guard refuses a raw `mv` of a plan folder and names this command instead (a-run-can-be-trusted).
 
 ### `plans archive-dead`
 

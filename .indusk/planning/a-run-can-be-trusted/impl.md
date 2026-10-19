@@ -760,8 +760,10 @@ This phase adds a hook on the shell tool that reads each command and refuses one
 
 #### Build Phase 3 Document
 
-- [ ] Document the shell guard, what it refuses and its one honest gap.
+- [x] Document the shell guard, what it refuses and its one honest gap.
   <details><summary>Technical</summary>
+
+  Written 2026-10-19: the search found no hooks page under `reference/` beyond `reference/tools/indusk-mcp.md`'s Hooks section, which now carries the guard (refused forms, allowed forms, the script-file gap and its compensating controls); the guide's hook table (`guide/index.md`) lists the guard and its witness; `reference/cli/plans.md` documents `plans archive`, and `reference/skills/retrospective.md`'s Step 9 uses it.
 
   Update the hooks reference page under `apps/docs/src/reference/` (find it with `grep -rln "trunk-guard" apps/docs/src/reference`) with the refused forms (the test plan's Decision 8 list), what is allowed, and the script-file gap with its compensating controls.
 

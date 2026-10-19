@@ -182,9 +182,31 @@ The tool holds an `O_EXCL`-based file lock on `<projectRoot>/.indusk/current.md.
 
 ## Hooks
 
-`init` installs every hook in the package's `hooks/` directory to `.claude/hooks/` and registers each in `.claude/settings.json`; `update` re-syncs the files and adds any registration a pre-existing project lacks. The full table — seven hooks, what each catches, and the event it runs on — is in the [guide](/guide/#3-hooks-enforce-what-discipline-won-t).
+`init` installs every hook in the package's `hooks/` directory to `.claude/hooks/` and registers each in `.claude/settings.json`; `update` re-syncs the files and adds any registration a pre-existing project lacks. The full table — every hook, what each catches, and the event it runs on — is in the [guide](/guide/#3-hooks-enforce-what-discipline-won-t).
 
 One registration detail is worth knowing when reading `settings.json`: `trunk-guard.js` is registered under **two** `PreToolUse` matchers, `Edit|Write` and `Bash`. The first refuses code edits on a protected branch; the second refuses `git commit` there. A project with only one of the two has half a gate, which is why `update` ensures both.
+
+### A plan document is written through its checks (`plan-write-guard`)
+
+A plan document — any file under `.indusk/planning/<plan>/`, or an archived plan's `.indusk/planning/archive/<plan>/` — changes through the Edit tool, where `check-gates` and the impl validator run, or through the `indusk` command that owns it. A shell command goes around both: a build session once ticked a phase off with `sed -i` while an amendment waited. `plan-write-guard.js` (PreToolUse, `Bash` only) reads each shell command and refuses one that writes, moves or deletes a plan document, naming the file and the tool to use instead.
+
+Unlike `trunk-guard`, it has one matcher, and one is the whole gate: an Edit or Write to a plan document already passes the plan's checks, so only the shell path goes around them.
+
+**Refused**, in any segment of a `&&`/`||`/`;`/pipe chain, after any `cd` (and from a shell already inside a plan folder), inside `bash -c`/`sh -c` text and `$(…)`:
+
+| Form | Example |
+|---|---|
+| a redirect onto a plan path | `echo x >> .indusk/planning/p/impl.md`, `>`, `>|`, `&>` |
+| a writer naming one | `tee`, `sed -i` / `--in-place`, `perl -i`, `truncate`, `rm`, `rmdir`, `unlink`, `shred`, `touch`, `dd of=`, `patch` |
+| a copy or link into a plan folder | `cp`, `install`, `rsync`, `ln` with a plan path as the destination |
+| any `mv` touching one | a whole plan folder is told to use `indusk plans archive <plan>` |
+| a `find` that deletes | `find <plan path> … -delete`, `-exec rm|mv|sed -i …` |
+| git that rewrites working files | `git mv`, `git rm` (not `--cached`), `git restore` (not `--staged` alone), `git checkout [<tree>] -- <path>`, `git apply`, `git clean` |
+| an inline interpreter | `node -e`, `python -c`, `python3 -c`, `perl -e`, `ruby -e`, `tsx -e` whose text names a plan path, or runs inside a plan folder, with a write call |
+
+**Allowed**: every read (`cat`, `head`, `sed -n`, `grep`, `rg`, `diff`, `git diff|log|show|status`); `git add` and `git commit` of a plan document; a plan path named only as text (a commit message, an `echo` to a file elsewhere, `cat impl.md > /tmp/copy`, a here-document's body); fd redirects (`2>&1`, `>/dev/null`); every `indusk` command; the git commands that move a checkout between committed states (`merge`, `pull`, `checkout <branch>`, `switch`, `reset --hard`, `stash pop`); writes outside plan folders (`.indusk/current.md`, `.indusk/planning/master.md`, source files). A command the guard cannot parse is allowed — a guard that refused what it misread would block every shell command.
+
+**The honest gap.** The guard reads command text, never a script's body: `./tick.sh` that writes a plan document passes it, as does a path built at run time. It is a tripwire for an agent's ordinary attempt, as `looks-approval-guard` is, not a boundary. What sees past it is the record: for each command it writes a decision line to the project's home (`plan-write-decisions.jsonl`) with the plan folders' sizes and modified times before the command, and `plan-write-witness.js` (PostToolUse) adds the state after — for any command, named or not, that changed a plan document. The package drains that file at the start of an `indusk` command (at most once a minute) and on each admin recorder tick, and judges each decision from two sources the guard never uses: the change on disk, and a real shell parser (`shell-quote`). A refused write reports `a-plan-document-is-written-through-its-checks/shell-write-refused` upheld; a refused read reports `reads-pass` broken, naming the command; an allowed command after which a plan document changed reports `shell-write-refused` broken, naming the file and the command. Beside it, `check-gates` refuses a box ticked without its gates at the next phase boundary, `indusk verify` detects a premature checkoff, and the change shows in the diff the audit reads.
 
 ## Lessons Registry
 
