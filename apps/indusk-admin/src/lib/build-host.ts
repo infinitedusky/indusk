@@ -363,6 +363,8 @@ export function runOfPlan(
   status: ReturnType<typeof runStatus>;
   step: string | null;
   phase: string | null;
+  /** The step the record's stop names, when the run stopped on its own. */
+  stopStep: string | null;
 } | null {
   const record = newest(
     recordsOf(project, plan, ["planning", "release", "build"]),
@@ -375,7 +377,13 @@ export function runOfPlan(
   const status = heldHere
     ? ({ state: "running" } as const)
     : statusOfRecord(record);
-  return { kind: record.kind, status, step: record.step, phase: record.phase };
+  return {
+    kind: record.kind,
+    status,
+    step: record.step,
+    phase: record.phase,
+    stopStep: heldHere ? null : (record.stop?.step ?? null),
+  };
 }
 
 /** The newest build or release record's state: what the page shows when this daemon holds nothing. */
