@@ -24,7 +24,7 @@ export async function register(): Promise<void> {
     { sourceNames },
     { readRegistryProjects },
     { readAdminRefreshMs },
-    { writeScanRecord },
+    { writeScanRecord, recordPassOutcome },
   ] = await Promise.all([
     import("@infinitedusky/indusk-mcp/admin/recorder-loop"),
     import("@infinitedusky/indusk-mcp/promises/record"),
@@ -42,6 +42,8 @@ export async function register(): Promise<void> {
     // Each pass's start, end and outcome, in machine state: the patient recorder
     // landing test reads it to know the admin has scanned since a break was loaded.
     scanRecord: writeScanRecord,
+    // A pass whose production read failed resolves with `error`: not a finished scan (A102).
+    outcomeOf: recordPassOutcome,
     // Each tick also judges the shell guard's recorded decisions
     // (a-run-can-be-trusted, Decision 8); best-effort, it never fails a pass.
     record: async (root) => {
