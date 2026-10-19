@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import matter from "gray-matter";
 import { fencedLineMask } from "../impl-headings.js";
+import { induskMcpPackageRoot } from "../package-root.js";
 import { parsePlan } from "../plan-parser.js";
 import { unapprovedMockups } from "../plans/approved-brief.js";
 import { type ContractResult, checkPlanContract } from "../promises/contract.js";
@@ -63,15 +63,13 @@ export interface PlanningReadDeps {
 	unapprovedLooks: (root: string, briefText: string) => Promise<string[]>;
 }
 
-/** The hook the package ships, beside `dist` and `src` alike. */
-const IMPL_HOOK = join(
-	dirname(fileURLToPath(import.meta.url)),
-	"..",
-	"..",
-	"..",
-	"hooks",
-	"validate-impl-structure.js",
-);
+/**
+ * The hook the package ships, asked of the package root when the reader runs: the
+ * admin bundles this module, and its bundler tries to resolve a path built from
+ * `import.meta.url` when the module loads (admin-builds-with-the-planning-reader).
+ */
+const implHookPath = (): string =>
+	join(induskMcpPackageRoot(), "hooks", "validate-impl-structure.js");
 
 export const realPlanningReads: PlanningReadDeps = {
 	locate: async (anyCheckout, plan) => {
@@ -84,7 +82,7 @@ export const realPlanningReads: PlanningReadDeps = {
 	},
 	contract: checkPlanContract,
 	runHook: (input) => {
-		const r = spawnSync("node", [IMPL_HOOK], {
+		const r = spawnSync(process.execPath, [implHookPath()], {
 			input: JSON.stringify(input),
 			cwd: input.cwd,
 			encoding: "utf-8",
