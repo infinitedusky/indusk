@@ -1,3 +1,4 @@
+// promise: a-plan-is-read-cold-before-approval
 // clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance
 // clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check
 import { describe, expect, it } from "vitest";
@@ -31,6 +32,7 @@ function state(over: Partial<PlanningState> = {}): PlanningState {
 		contractOk: true,
 		unapprovedLooks: [],
 		blocker: null,
+		review: { exists: true, complete: true, dismissals: [], amendments: [] },
 		...over,
 	};
 }
@@ -119,5 +121,42 @@ describe("A4 — the next step is the first missing document the workflow needs"
 			previous: { progressed: true, error: null },
 		});
 		expect(once).toEqual({ step: "plan-test-plan" });
+	});
+});
+
+// clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold
+// clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval
+describe("A21, A20 — the plan review is the planning run's last step", () => {
+	const written = {
+		documents: { "test-plan": good, adr: good, impl: good },
+		implStatus: "draft",
+	};
+	it("is next once the impl and the contract pass and there is no review", () => {
+		const s = state({
+			...written,
+			review: { exists: false, complete: false, dismissals: [], amendments: [] },
+		});
+		expect(nextPlanningStep(s)).toEqual({ step: "plan-review" });
+	});
+	it("stays next while the review is incomplete or unanswered", () => {
+		const s = state({
+			...written,
+			review: { exists: true, complete: false, dismissals: [], amendments: [] },
+		});
+		expect(nextPlanningStep(s)).toEqual({ step: "plan-review" });
+	});
+	it("is ready for approval once answered", () => {
+		expect(nextPlanningStep(state(written))).toMatchObject({ step: "ready-for-approval" });
+	});
+	it("carries each dismissal, with its finding and reason, into the stop", () => {
+		const dismissal = { question: "q", finding: "a.ts:3 — x", reason: "too unlikely" };
+		const s = state({
+			...written,
+			review: { exists: true, complete: true, dismissals: [dismissal], amendments: [] },
+		});
+		expect(nextPlanningStep(s)).toMatchObject({
+			step: "ready-for-approval",
+			dismissals: [dismissal],
+		});
 	});
 });

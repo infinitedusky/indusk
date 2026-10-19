@@ -3,6 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { checkRetrospectiveReadiness } from "../cleanup/gate.js";
 import { parseImplString } from "../impl-parser-core.js";
+import { AmendmentsUnreadable, amendmentsOf } from "../plans/amendments.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import type { BuildPlan } from "./next-step.js";
@@ -28,9 +29,17 @@ export async function readBuildPlan(
 	const path = join(dir, "impl.md");
 	if (!existsSync(path)) throw new BuildPlanUnreadable(`${plan} has no impl.md in ${dir}`);
 	const content = readFileSync(path, "utf-8");
+	// An approval that cannot be read is never "no amendments": the build cannot tell, so it stops.
+	const amendments = await amendmentsOf(dir).catch((err: unknown) => {
+		if (err instanceof AmendmentsUnreadable) {
+			throw new BuildPlanUnreadable(`${plan}'s amendments cannot be read: ${err.message}`);
+		}
+		throw err;
+	});
 	return {
 		dir,
 		content,
+		amendments: amendments.map((a) => `${a.part} ${a.name}`),
 		impl: parseImplString(content),
 		trajectory: parseTrajectory(matter(content).content),
 		readiness: checkRetrospectiveReadiness(dir, content),

@@ -29,6 +29,7 @@ export function nextSession(
 	implBody: string,
 	opts: {
 		readiness?: Pick<RetrospectiveReadiness, "missing"> & { nonTerminalRows?: string[] };
+		amendments?: string[];
 		config?: TierConfig;
 	} = {},
 ): string {
@@ -41,6 +42,7 @@ export function nextSession(
 		impl: parseImplString(implBody),
 		trajectory: parseTrajectory(matter(implBody).content),
 		readiness,
+		amendments: opts.amendments ?? [],
 	};
 	const step = nextBuildStep(buildPlan);
 	switch (step.step) {
@@ -56,6 +58,8 @@ export function nextSession(
 			return `In a new session, shorten the ${step.ritual}_reason in ${plan}'s impl.md to one sentence of at most 120 characters, then run: /retrospective ${plan}`;
 		case "review":
 			return `In a new session, run: /retrospective ${plan}`;
+		case "amendment":
+			return `Waits for the person to re-approve the brief: ${step.amendments.join(", ")}`;
 		case "judgement":
 			return `${step.phase.split(":")[0]} waits on a person before the build continues: ${step.item}`;
 		case "cannot-continue":
@@ -97,5 +101,9 @@ export async function nextSessionForPlan(checkout: string, plan: string): Promis
 		// an unreadable tier config does not stop a boundary from naming its command
 		if (!(err instanceof TierConfigError)) throw err;
 	}
-	return nextSession(plan, built.content, { readiness: built.readiness, config });
+	return nextSession(plan, built.content, {
+		readiness: built.readiness,
+		amendments: built.amendments,
+		config,
+	});
 }

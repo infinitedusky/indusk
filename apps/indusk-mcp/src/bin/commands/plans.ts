@@ -1,4 +1,12 @@
-import { auditInputs } from "../../lib/audit/inputs.js";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+	AUDIT_QUESTIONS,
+	describeAnswers,
+	PLAN_REVIEW_QUESTIONS,
+	readAuditAnswers,
+} from "../../lib/audit/answers.js";
+import { auditInputs, planReviewInputs } from "../../lib/audit/inputs.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
@@ -28,8 +36,9 @@ import {
 	startPlan,
 } from "../../lib/plans/index.js";
 import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
+import { readPromises } from "../../lib/promises/registry.js";
 import { planTimeText } from "../../lib/timing/view.js";
-import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
+import { livePlanCopy, resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
 /** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
 async function planVerb(run: () => Promise<string>): Promise<void> {
@@ -140,6 +149,62 @@ export function plansAuditInputs(cwd: string, name: string, approved?: string): 
 	return planVerb(async () => JSON.stringify(await auditInputs(cwd, name, approved), null, 2));
 }
 
+/** `indusk plans review-inputs <name>` — what the plan review's reader is handed before approval, as JSON. */
+export function plansReviewInputs(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => JSON.stringify(await planReviewInputs(cwd, name), null, 2));
+}
+
+/**
+ * `indusk plans audit-answers <name> [--plan-review]` — every dismissal and amendment answer
+ * in `audit.md` (or `plan-review.md`), for the person; exit 2 naming each finding or question
+ * the plan's agent has still to answer.
+ */
+export async function plansAuditAnswers(
+	cwd: string,
+	name: string,
+	planReview: boolean,
+): Promise<void> {
+	const file = planReview ? "plan-review.md" : "audit.md";
+	const live = await livePlanCopy(cwd, name);
+	if (!live.ok) {
+		console.error(`Refused: the worktree record ${live.file} cannot be read: ${live.problem}`);
+		process.exit(1);
+	}
+	const path = join(live.copy.dir, file);
+	if (!existsSync(path)) {
+		console.error(`Refused: ${name} has no ${file} in ${live.copy.dir}`);
+		process.exit(1);
+	}
+	let clauses: Set<string> | undefined;
+	if (!planReview) {
+		const registry = readPromises(cwd);
+		if (!registry.ok) {
+			const why =
+				"missing" in registry ? `${registry.missing} is missing` : "an entry is malformed";
+			console.error(`Refused: the promises registry cannot be read to check clauses: ${why}`);
+			process.exit(1);
+		}
+		clauses = new Set(
+			registry.registry.promises.flatMap((p) =>
+				(p.clauses ?? []).map((c) => `${p.name}/${c.name}`),
+			),
+		);
+	}
+	const read = readAuditAnswers(readFileSync(path, "utf-8"), {
+		questions: planReview ? PLAN_REVIEW_QUESTIONS : AUDIT_QUESTIONS,
+		causes: !planReview,
+		clauses,
+	});
+	const { open, shown } = describeAnswers(read, file);
+	if (open.length > 0) {
+		console.error(`${file} is not answered:\n${open.map((l) => `  ${l}`).join("\n")}`);
+		process.exit(2);
+	}
+	console.info(
+		shown.length > 0 ? shown.join("\n") : `${file}: nothing dismissed, nothing amended.`,
+	);
+}
+
 /** `indusk plans next-session <name>` — the command to run in a new session, from the plan as it stands. */
 export function plansNextSession(cwd: string, name: string): Promise<void> {
 	return planVerb(() => nextSessionForPlan(cwd, name));
@@ -184,9 +249,11 @@ function describeStep(s: BuildStep): string {
 		case "cleanup":
 			return "cleanup: falsification is closed and the cleanup has not run";
 		case "audit":
-			return "audit: the cleanup is closed and no audit.md has been written (or the audit skipped with a reason)";
+			return "audit: every phase is closed and no audit.md has been written (or the audit skipped with a reason)";
 		case "shorten-reason":
 			return `shorten-reason: the ${s.ritual} was skipped with a reason of ${s.length} characters (${s.sentences} sentence${s.sentences === 1 ? "" : "s"}) — one sentence, at most 120; rewrite that line, do not run the ritual`;
+		case "amendment":
+			return `amendment: the brief says more than was approved (${s.amendments.join(", ")}) — it waits for the person to re-approve`;
 		case "judgement":
 			return `judgement: ${s.phase} waits on a person — ${s.item}`;
 		case "review":

@@ -124,12 +124,21 @@ What the auditor is handed, as JSON, read from the plan's worktree and branch (a
 
 The approval is the first-parent merge on the trunk whose subject starts `plan(<name>): approved` — for a workbench plan, the plain commit of that subject on the workbench root's branch, since `plans approve` merges nothing there. A plan with no such commit is refused, naming the plan: an audit of an unapproved plan has no impl "as approved". When history was rewritten and the subject cannot be found, `--approved <sha>` names the merge by hand.
 
+### `plans review-inputs <name>`
+
+What the plan review's reader is handed before approval, as JSON, read from the plan's worktree: `documents` (`brief`, `testPlan`, `adr` and `impl` as they stand, each `{ path, text }` or `null` when the plan has none) and `tree` (every tracked file, less `.indusk/`). Never `research.md`, which holds the planning conversation's decisions, and no diff — no code exists yet. It writes nothing. A planning run's last step, `plan-review`, runs `/audit <name> --before-approval` over it and writes `plan-review.md`; the run is ready for approval once every finding in it is answered, and its stop carries each dismissal and amendment answer for the person.
+
+### `plans audit-answers <name> [--plan-review]`
+
+Reads `audit.md` in the plan folder (with `--plan-review`, `plan-review.md`, the read before approval) from the plan's worktree and prints every dismissal (`<question> — <finding> — nothing: <reason>`) and every amendment answer (`… — amendment: <part of the brief>`), so the person sees each concern the plan's agent waved away or sent back to them. It writes nothing. Fenced code blocks quoted in the file are not read as findings or headings. A finding with no `breaks when:` line, no answer, an answer with no text after its kind, or a signal answer naming no `clause: <promise>/<clause>` the promises registry declares (an unreadable registry refuses the command with code 1), a missing question, or findings with no `What let these through?` section (the audit's, not the plan review's) exit it with code 2, naming each; the plan's agent answers them and runs it again.
+
 ### `plans next-session <name>`
 
 Prints the command to run in a new session for the plan's next piece of work, decided the way `plans next` decides it:
 
 - the next open phase: `In a new session, run: /work <name> — next is Build Phase 2, on strong (opus)` (the tier and model appear when the config names them);
-- every phase closed: `/falsify`, then `/cleanup`, then `/audit`, then `/retrospective`, in that order — `/audit` until the plan folder holds `audit.md` or the impl skips the audit with `audit: skipped` and `audit_reason`;
+- every phase closed: `/audit`, then `/falsify`, then `/cleanup`, then `/retrospective`, in that order — `/audit` until the plan folder holds `audit.md` or the impl skips the audit with `audit: skipped` and `audit_reason`;
+- an amendment waiting: `Waits for the person to re-approve the brief: …`, instead of a command;
 - a phase with a `blocker:` line, a phase waiting on a person (a manual or deferred-verification item), or a finished build with trajectory rows still open: the blocker, the item or the rows themselves, instead of a command — there is nothing to start yet.
 
 `plans approve` ends with the same line, and `/work` prints it at each phase close, so a session ends at the plan boundary instead of compacting across plans. It reads the plan from its worktree while it has one, and falls back to `/work <name>` when the plan cannot be read.
@@ -141,12 +150,13 @@ What an unattended build does next, read from the plan as it stands — its work
 | Answer | When |
 |---|---|
 | `work` | a phase is open — an impl phase, or a falsification or cleanup phase; names the phase |
-| `falsify` | every phase is closed and no falsification phase or skip exists |
+| `amendment` | the brief says something the person did not approve — a promise, an expectation or a look — read through the same `amendmentsOf` as `plans amendments`; names each. The build stops here for the person's re-approval before any other step, so a plan agent's amendment answer ends the run by name instead of two empty steps ending "cannot continue" |
+| `audit` | every phase is closed and the plan folder has no `audit.md`, nor does the impl carry `audit: skipped` with an `audit_reason`. The audit reads when the build phases close, before falsification. The runner runs `/audit <name>` as a step; the answers in `audit.md` are read by `plans audit-answers` |
+| `falsify` | the audit is done and no falsification phase or skip exists |
 | `cleanup` | falsification is closed and no cleanup phase or skip exists |
-| `audit` | the cleanup is closed and the plan folder has no `audit.md`, nor does the impl carry `audit: skipped` with an `audit_reason`. The runner runs `/audit <name>` as a step; what `audit.md` says is never read |
 | `shorten-reason` | every phase is closed and a ritual (falsification, cleanup or audit) is skipped with a reason over one sentence or 120 characters. Answered before that ritual's own step, so a skip is never turned into a full run; the runner starts a session that rewrites that one `<ritual>_reason` line, changes nothing else and commits. Names the ritual, the reason's length and sentence count |
 | `judgement` | the open phase's next item is one the plan declared for a person — a Deferred Verification row, a manual or visual check; names the item |
-| `review` | every phase, the falsification and the cleanup are closed, and the audit written or skipped. Never `retrospective`: that waits for acceptance |
+| `review` | every phase, the audit, the falsification and the cleanup are closed. Never `retrospective`: that waits for acceptance |
 | `cannot continue` | the open phase has a `blocker:` line; or every phase is closed while a row is not terminal. The runner adds two of its own: the step's session ended in an error after its retries, or two steps in a row made no progress |
 
 Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.

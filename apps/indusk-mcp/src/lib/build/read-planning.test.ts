@@ -1,9 +1,11 @@
 // clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check
 // clause: an-accepted-brief-is-planned-unasked/decides-and-records
+
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { PLAN_REVIEW_QUESTIONS } from "../audit/answers.js";
 import { nextPlanningStep } from "./next-planning-step.js";
 import {
 	type PlanningReadDeps,
@@ -61,6 +63,24 @@ describe("readPlanningState", () => {
 		expect(s.documents.impl.exists).toBe(false);
 		expect(s.implStatus).toBeNull();
 		expect(s.briefStatus).toBe("accepted");
+	});
+
+	it("reads the plan review: absent, open, then answered with its dismissals", async () => {
+		expect((await readPlanningState(root, PLAN, fakes())).review).toMatchObject({
+			exists: false,
+			complete: false,
+		});
+		const questions = PLAN_REVIEW_QUESTIONS.map((q) => `## ${q}\n- nothing\n`);
+		write("plan-review.md", questions.slice(1).join("\n"));
+		expect((await readPlanningState(root, PLAN, fakes())).review).toMatchObject({
+			exists: true,
+			complete: false,
+		});
+		const answered = `${questions[0].replace("- nothing", "- `a.md:1` — x\n  - breaks when: y\n  - answer: nothing — unlikely")}\n${questions.slice(1).join("\n")}`;
+		write("plan-review.md", answered);
+		const review = (await readPlanningState(root, PLAN, fakes())).review;
+		expect(review.complete).toBe(true);
+		expect(review.dismissals).toEqual([expect.objectContaining({ reason: "unlikely" })]);
 	});
 
 	it("reads which documents exist and the impl's status", async () => {
