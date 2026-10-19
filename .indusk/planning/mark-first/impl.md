@@ -569,12 +569,13 @@ Done at `watch.ts`, which `recordBreaks` runs: it read only `kind: behaviour` pr
 
   </details>
 Ran exactly as given; `promises check` clean. The sentence is true by `incident-names-clause.test.ts` (A17, A18).
-- [ ] Review the incident changes against the TypeScript extension's rules.
+- [x] Review the incident changes against the TypeScript extension's rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
 
   </details>
+Shape (after Verification was green; changed: `incidents.ts`, `record.ts`, `watch.ts`, `rows.ts`, `telemetry.ts`, new `incident-signal.ts`): one finding, fixed — `watch.ts` still named its list `behaviour` and its docblock still said behaviour promises, though it now reads `readsSignal`; renamed to `signalled` and the comment corrected, and `provenBy`'s docblock now says what a clause changes. Left as is: `incident-signal.ts` spells the promise name `closing-signal.ts` also spells (two constants naming the same promise, each file owning its clause); a shared constant would couple two phases' signals for no behaviour. An extended open incident keeps the clause it opened with (D-21).
 
 #### Build Phase 5 Verification
 
@@ -588,21 +589,23 @@ A7, A17, A18 passing; A27, `record.test.ts`, `record-broken.test.ts`, `test-born
 
 #### Build Phase 5 Context
 
-- [ ] Record that the clause is the incident's key in the promises area's rules.
+- [x] Record that the clause is the incident's key in the promises area's rules.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: an incident is keyed by `promise/clause`, the plan and phase are a pointer; guard: `incident-names-clause.test.ts`.
 
   </details>
+One entry added to `apps/indusk-mcp/src/lib/promises/CLAUDE.md` (key, pointer, `readsSignal`, no-clause unchanged, guards named).
 
 #### Build Phase 5 Document
 
-- [ ] Describe how a break names its clause in the signals guide.
+- [x] Describe how a break names its clause in the signals guide.
   <details><summary>Technical</summary>
 
   Folded into `apps/docs/src/guide/signals.md` (written in Build Phase 6); this item is checked there.
 
   </details>
+(none needed — folded into guide/signals.md, written and checked in Build Phase 6's Document item)
 
 ### Build Phase 6: One word, the live check and the docs
 
