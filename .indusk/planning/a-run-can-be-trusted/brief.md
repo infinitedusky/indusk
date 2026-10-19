@@ -39,6 +39,8 @@ None — a bugfix; the measure is Stabilize's bar, three plans in a row from acc
    - **`dead-reads-stopped`** (split). A run whose process is gone without a stop reads as stopped, saying so, and Build starts it again from where the plan stands.
    - **`shows-where-it-is`** (split). The build controls name the phase the plan is on, read from the plan, not the step the session started with.
    - **`released-only-when-landed`** (split). A release reads released only when the plan has landed on main; otherwise it reads stopped with the reason.
+   - **`says-what-is-true`** (split). The plan page and its nav row state the plan's situation in words, read from its record and its files: planning and the step, building and the phase, waiting on the person and for what, landed and what it still waits on to close, or stopped and why.
+   - **`never-in-progress-when-idle`** (limit). Nothing reads as in progress while no process is running for it.
 
 2. **`a-plan-document-is-written-through-its-checks`** (state). A shell command that writes a plan document is refused, so every change to a plan document passes the checks that guard it.
    - **`shell-write-refused`** (split). A shell command that writes, moves or deletes a file under a plan's folder is refused, naming the file and the tool to use instead.
@@ -88,6 +90,7 @@ None.
 **Must not break**
 
 - **`plan.working`**. The plan page while it builds, whose build controls now name the plan's real phase and a dead run's reason.
+- **`nav.expanded`**. The nav, whose plan rows state each plan's real situation in the words they already use.
 
 **Changes**
 
