@@ -1,7 +1,7 @@
 ---
 title: "The admin builds with the planning reader"
 date: 2026-10-19
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "b59a8408f7e95823da8a8e92e3bc48d8982a1a85278cbb610c5162fde35af88f"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T02:42:11.304Z"
 ---
 
 # The admin builds with the planning reader
