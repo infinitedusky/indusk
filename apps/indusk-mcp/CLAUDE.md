@@ -328,18 +328,17 @@ pointer; the pointer holds the story.
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
-- The root run builds this package first (`turbo.json`): a test behind `SHOULD_SKIP` skips silently without `dist/`.
-- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes every test calling it a system test: list the file in `vitest.tiers.ts` `SYSTEM`; `everyday-tests-never-wait` reads the helpers and fails the file.
+- The root run builds this package first (`turbo.json`); a `SHOULD_SKIP` test skips silently without `dist/`.
+- A landing test waits for what it expects (`waitForIncident`), never a fixed minute — `wait-for-incident.test.ts`, `lesson: everyday-tests-never-wait`.
+- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes every caller a system test: list the file in `vitest.tiers.ts` `SYSTEM`, or `everyday-tests-never-wait` fails it.
 - Fixtures with one home: a versioned workbench —
-  `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
-  where code lives runs over all four); a promise-bearing project —
-  `helpers/promises-fixture.ts` (also watched promises, code files,
-  incidents); a plan in a worktree —
+  `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`); a
+  promise-bearing project — `helpers/promises-fixture.ts`; a plan in a worktree —
   `helpers/plan-worktree-fixture.ts`; trunk-guard —
   `helpers/trunk-guard-fixture.ts`; the throwing git runner —
   `helpers/test-git.ts`; MCP tools — `helpers/tool-call.ts`; the built CLI —
-  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon in a
-  temporary home on ports the test gives it (`helpers/local-jaeger.ts`); a decision about
+  `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the daemon in a
+  temp home on test-given ports (`helpers/local-jaeger.ts`); a decision about
   the daemon is a unit test over `helpers/daemon-reads.ts`; the evaluator runs against a fake `claude` +
   `helpers/otlp-capture.ts`; the always-on server via
   `helpers/always-on-server.ts`, a free port via `freeLoopbackPort`; Slack

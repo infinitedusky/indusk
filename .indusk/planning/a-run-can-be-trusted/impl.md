@@ -1036,7 +1036,7 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
 
 #### Build Phase 6 Context
 
-- [ ] Record the waiting rule for landing tests.
+- [x] Record the waiting rule for landing tests.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md` (Tests section): "a landing test that waits for the admin waits for the thing it expects (`waitForIncident`), never a fixed minute" — destination: the package's area file; guard: `wait-for-incident.test.ts` carries `lesson: everyday-tests-never-wait`.
