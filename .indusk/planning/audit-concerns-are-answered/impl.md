@@ -9,9 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
-approved_brief: "37fb8c344bcd9fd645863dc517edb7cf5430df3f1e7a383504d267298d829f3d"
+approved_brief: "10e33497fe2547bc8280c84f1f881f61ca76d5ab74899ec489b8f60057e3bc74"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-17T18:21:12.860Z"
+approved_at: "2026-10-19T13:23:23.241Z"
 ---
 
 # A plan is read cold before approval, and every audit concern is answered
