@@ -1,7 +1,7 @@
 ---
 title: "A brief is accepted on current main — Impl"
 date: 2026-10-19
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "4185817c416778284c5cf8d1b9c1c31772a63b7bf55a15df86a11e7ec7702c85"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T17:32:27.817Z"
 ---
 
 # A brief is accepted on current main — Impl
