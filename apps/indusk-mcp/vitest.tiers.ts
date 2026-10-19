@@ -193,6 +193,7 @@ export const SYSTEM = [
 	"src/lib/plans/amendments.test.ts",
 	"src/lib/plans/land-own-worktree.test.ts",
 	"src/lib/plans/planning-step-refusals.test.ts",
+	"src/lib/plans/plan-tests.test.ts",
 	"src/lib/promises/citations.test.ts",
 	"src/lib/server/connect.test.ts",
 	"src/lib/server/deploy.test.ts",
