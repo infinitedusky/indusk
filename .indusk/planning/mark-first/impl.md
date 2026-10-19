@@ -831,12 +831,13 @@ blocker: two of the four clauses of `a-clause-is-proved-twice` have no real repo
 
 #### Build Phase 7 Document
 
-- [ ] Update the signals guide and the promises command reference with what this phase changed.
+- [x] Update the signals guide and the promises command reference with what this phase changed.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/signals.md`: a measured value over its bound breaks a limit; an incident is opened per clause; the test-run mark is read from the span or its resource. `apps/docs/src/reference/cli/promises.md`: the refusal table gains "ran no test (skipped)"; `promises status` writes the signal of `no-signal-is-not-holding`.
 
   </details>
+  Done: the guide says the pointer is read from the event or the span, a measurement only as numbers, the test-run flag on the span or its resource, an upheld report past its bound breaks a limit, and an incident is opened per clause; the reference's refusal table gains the skipped row and the tightened asserts-nothing wording, and the `promises status` section says it prints one line per clause and writes `no-signal-is-not-holding`. `pnpm --filter docs build` complete; `signal-word.test.ts` and `promise-words.test.ts` 9 passed (one guide line first said the old word for the run flag and was reworded). `promises check` then refused the A37 test, whose fixture text spelled a literal promise token for the fixture's promise; it now builds those lines from the fixture's constant, and the check passes (165 promises); `promises contract mark-first` agrees (1 made, 3 kept, 2 changed).
 
 #### Build Phase 7 Falsification Summary
 
