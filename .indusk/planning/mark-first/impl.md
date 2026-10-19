@@ -334,32 +334,35 @@ to the local daemon and stays silent when none runs, so closing and the incident
 writer in later phases can emit the spans their own clauses are read by. It adds
 no behaviour a person sees yet.
 
-- [ ] Add the tracer provider for InDusk's commands and use it for the spans commands already emit.
+- [x] Add the tracer provider for InDusk's commands and use it for the spans commands already emit.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/telemetry/command-tracer.ts`: `commandTracer(): Tracer`, reading the daemon's stored address through the existing finder (`daemon-address.ts`/`daemon-find.ts`; never a second daemon or a guessed port — `/decisions/daemon-found-not-guessed`); no-op tracer when no daemon is running, never an error. Per CLAUDE.md "Do Not Reinvent": use the official `@opentelemetry/sdk-trace-node` and the OTLP HTTP exporter already in the package's dependencies (verify with Context7 and `package.json` before adding any); no custom exporter. Route `new_project.create`'s span (`lib/new-project/create.ts`, `TRACER_NAME`) through it; its `options.tracer` override stays for tests.
 
   </details>
-- [ ] Review the provider against the OTel extension's rules.
+  **Decision D-13:** `commandTracer()` is lifted from `lib/eval/otel.ts` using the SDK packages already in `package.json` (`sdk-trace-node`, `exporter-trace-otlp-http`; no new dependency, no custom exporter). It finds the daemon with `liveOtlpEndpointSync` (the stored address), is lazy, is not registered globally so it never competes with the evaluator's `initEvalOtel`, and `createProject` flushes it when it made the tracer itself.
+- [x] Review the provider against the OTel extension's rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here. Confirm it adds no start-up cost to a command that emits nothing (lazy provider).
 
   </details>
+  Shape: nothing found. No provider is built and no `ps`/`lsof` runs until a command asks for a tracer.
 
 #### Build Phase 2 Verification
 
-- [ ] The package's commands still run with no daemon, and with one the span arrives.
+- [x] The package's commands still run with no daemon, and with one the span arrives.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` and `pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/telemetry/command-tracer.ts src/lib/new-project/create.ts`; then run a command that emits a span once against the running daemon and confirm the span with the jaeger MCP.
 
   </details>
-- [ ] (no tests flip at this phase — reason: infra)
+  `tsc --noEmit` clean; `vitest related` on both files green (7 tests). A probe span through `commandTracer()` reached the running daemon: Jaeger returned trace `28ddf59f…` for service `indusk`, operation `mark_first.phase2.probe`. (The jaeger MCP did not connect in this session, so Jaeger's HTTP query API was read directly.)
+- [x] (no tests flip at this phase — reason: infra)
 
 #### Build Phase 2 Context
 
-- [ ] Record that a command's spans go through the one tracer.
+- [x] Record that a command's spans go through the one tracer.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md` (Promises and telemetry): commands get a tracer from `commandTracer()`; silent with no daemon; the address is the stored one.
@@ -368,7 +371,7 @@ no behaviour a person sees yet.
 
 #### Build Phase 2 Document
 
-- [ ] (none needed — an internal tracer; the signals guide in Build Phase 6 mentions that a command's spans reach the daemon)
+- [x] (none needed — an internal tracer; the signals guide in Build Phase 6 mentions that a command's spans reach the daemon)
 
 ### Build Phase 3: What a clause and a promise read as
 

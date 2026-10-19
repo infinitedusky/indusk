@@ -10,11 +10,12 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
-import { type Span, SpanStatusCode, type Tracer, trace } from "@opentelemetry/api";
+import { type Span, SpanStatusCode, type Tracer } from "@opentelemetry/api";
 import matter from "gray-matter";
 import { readRegistry, removeProject } from "../admin/registry.js";
 import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { induskMcpPackageRoot } from "../package-root.js";
+import { commandTracer, flushCommandTracer } from "../telemetry/command-tracer.js";
 import { installProblems } from "./install.js";
 import { isUnderParent, parentSetBy, readParent, repositoryAround } from "./parent.js";
 import {
@@ -316,10 +317,9 @@ export async function createProject(
 		throw err;
 	} finally {
 		endSpan(span, options.now);
+		if (!options.tracer) await flushCommandTracer();
 	}
 }
-
-const TRACER_NAME = "@infinitedusky/indusk-mcp/new-project";
 
 /**
  * The `new_project.create` span (new-project-flow, OTel): it starts when the
@@ -341,7 +341,7 @@ function startCreateSpan(
 ): Span | null {
 	try {
 		const created = projectDraftCreatedAt(draft);
-		const span = (tracer ?? trace.getTracer(TRACER_NAME)).startSpan(
+		const span = (tracer ?? commandTracer()).startSpan(
 			"new_project.create",
 			created ? { startTime: created } : {},
 		);
