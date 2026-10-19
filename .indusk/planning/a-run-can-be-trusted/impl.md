@@ -21,7 +21,7 @@ What an unattended run says about itself is true. The admin keeps each build, pl
 
 This impl was written unattended (`INDUSK_GATE_POLICY=auto`): nobody could be asked, so each choice is the author's, with its reason. The person reads them at the single approval after this document.
 
-1. **The test plan has no section for two clauses of the first promise.** The brief states six clauses under `a-run-is-read-from-its-record`; the test plan (draft, left exactly as the earlier step wrote it) covers four and says "ten clauses" where the brief has twelve. `says-what-is-true` (split) and `never-in-progress-when-idle` (limit) have no section, no signal line and no assertion, and the contract check refuses a clause with no section. This impl gives them four rows, A65–A68, marked "added by the impl" in the table, so the build is not short of a proof; **the test plan still needs a `### clause` section with a signal for each before `indusk promises contract` passes.** Open decision for the person: add the two sections to the test plan (the rows below are written to match), or drop the two clauses from the brief. Not a blocker: the build is the same either way.
+1. **The rows for the first promise's later clauses follow the test plan.** The brief now states eight clauses under `a-run-is-read-from-its-record`, and the test plan has a section for each: `says-what-is-true` (A65–A68, a merged plan reading complete with its confirmation list among them), `never-in-progress-when-idle` (A69), `always-a-next-step` (A70, A71) and `the-planning-audit-is-a-step` (A72). An earlier draft of this impl invented rows A65–A68 for two of them; those are replaced by the test plan's, with the same IDs. All eight are built in Build Phase 2, where the plan page's situation words are built.
 2. **Pure rules live in the package, wiring in the admin.** Which step a dead run restarts at, which phase to show, whether a release is landed and what the situation sentence says are inputs-in, answer-out functions in a new `apps/indusk-mcp/src/lib/run-record/` folder (the clock, the process reads and git are inputs, `lesson: code-that-decides-takes-its-clock-and-its-reads`), exported through the package's existing `build` export the admin already imports. The admin's `build-host.ts` only supplies the reads and writes the record. This keeps nearly every row a `unit` test that starts nothing.
 3. **A run's record is one JSON file per plan and kind in machine state**, `<indusk eval home>/runs/<plan>.<kind>.json`, written whole by temporary file and rename, read by one reader that returns `unknown` for a missing, cut-off or unreadable file. It holds `{ plan, kind, step, phase, pid, startedAt, stop, stopReason, updatedAt }`. Machine state is outside the repository, so a record never shows as a change in the plan's tree (`/decisions/bookkeeping-lives-where-it-is-read`). The in-memory map in `build-host.ts` stays as a cache; the record is the truth and is read on every ask.
 4. **"Is the process alive" is asked once, through `lib/process-identity.ts`'s `isOwnProcess`** with the pid, a marker the run recorded and the recorded start time. No second liveness check is written. The admin's own daemon process is the run's process (builds run inside the daemon), so after an admin restart the old pid is gone or recycled and every run it held reads stopped with the reason "the admin restarted while it ran" or "its process is gone"; a run owned by a still-living process reads running (A10 pins this).
@@ -35,8 +35,9 @@ This impl was written unattended (`INDUSK_GATE_POLICY=auto`): nobody could be as
 12. **The patient recorder test waits through one injected rule.** `lib/admin/wait-for-incident.ts` takes the clock, a read of the incident, and a read of whether the admin's scan has finished after the break was loaded; it passes when the incident appears, fails naming the break when the scan has finished and none appeared, and ends after a generous upper bound only to stop a hung admin. How the scan is observed is read from the admin's own recorder tick output (the recorder loop already writes a tick record, see `lib/admin/recorder-loop.ts`); if no tick record can say "scan finished after time T", the build adds one (a `lastScanAt` in the tick record) and records that as a surprise. The test stays in the system tier (it starts Jaeger, the always-on server and the admin) and asserts exactly what it asserted before.
 13. **Tiers.** The default tier for the work step is `med` (`workflow.steps.work.tier`). Build Phase 3 (a hook every shell command passes through) and Build Phase 5 (the readiness gate every plan's approval goes through) are `strong` for the same reason `check-gates.js` edits are: a mistake in either silently weakens a gate for every plan. The rest are `med`.
 14. **Operational live checks are not clause proofs.** L1–L3 run only after landing and sit in the table as `live check` rows whose `For` is a reason, never a clause (the second clause of `a-plan-with-clauses-carries-its-signals`, applied to itself). Each carries a `manual:` command, so verify reports them unverified, not passed.
-15. **The signal tasks are in the phases below, one per split and limit clause (twelve).** Until Build Phase 4 lands the rule, this plan is held to it by hand: each signal task's fold names `signal`, the clause, and where it is read.
+15. **The signal tasks are in the phases below, one per split and limit clause (fourteen).** Until Build Phase 4 lands the rule, this plan is held to it by hand: each signal task's fold names `signal`, the clause, and where it is read.
 16. **Tests that start a process are system-tier; the rule tests are not.** The repo's rule (`everyday-tests-never-wait`) makes any test that runs a hook as a process a system-tier file. So the rows that prove a rule import the pure function (`refusalFor`, the new clause rules) and are `unit`; the two files that run a hook as Claude Code runs it (`plan-write-guard.contract.test.ts`, `impl-clause-signals.contract.test.ts`) are `contract` and are added to `vitest.tiers.ts`. A consequence: the unit rows for the guard and the clause rules import symbols that do not exist until their build phase, so they are written there and registered below, not written red in Test Phase 1.
+17. **Two looks change, and they are approved before the plan is.** The brief's Changes lists `plan.working` (the planning steps gain a Planning audit step after the impl; the build controls name the real phase and a dead run's reason) and `plan.released` (a plan merged to main reads complete, green and not pulsing, with a confirmation list ticked as each signal and live check is confirmed). Both are redrawn as mockups and approved by the person before this plan is approved; drawing them is outside this impl. Build Phase 2, the phase that changes the page, rechecks the looks against the approved mockups, and `nav.expanded` must not break.
 
 ## Scope
 
@@ -56,7 +57,8 @@ This impl was written unattended (`INDUSK_GATE_POLICY=auto`): nobody could be as
 - Running phases in parallel (`run-the-graph`).
 - Guarding writes outside plan folders (A35 pins that they are not refused).
 - Reading script files the guard cannot see into (U1).
-- A new component or state in the admin: the existing stop sentence and Build button carry the change (looks `plan.working` and `nav.expanded` are held as they are).
+- A new component in the admin: the existing stop sentence and Build button carry a dead run; the changed looks `plan.working` and `plan.released` are redrawn as mockups before approval (Decision 17), and `nav.expanded` is held as it is.
+- Drawing the two mockups: done before approval, outside this impl.
 
 ## Boundary Map
 
@@ -64,7 +66,7 @@ This impl was written unattended (`INDUSK_GATE_POLICY=auto`): nobody could be as
 |-------|----------|----------|
 | Test Phase 1 | Every test that can be written today, red; the register of those that wait | Existing hooks, readers, fixtures (`planLifecycleProject`), `build-host.ts` |
 | Build Phase 1 | `lib/run-record/{record,liveness,restart}.ts`; the admin's record writes; Build after death | `process-identity.ts`, `next-step.ts`, the machine-state home |
-| Build Phase 2 | `lib/run-record/{shown-phase,landed,situation}.ts`; controls and nav wired to them | Build Phase 1's record reader |
+| Build Phase 2 | `lib/run-record/{shown-phase,landed,situation,next-step}.ts`; the Planning audit step in `lib/plans/steps.ts`; controls and nav wired to them | Build Phase 1's record reader, `plan-review.ts`, the approved `plan.working` and `plan.released` mockups |
 | Build Phase 3 | `hooks/plan-write-guard.js`, `hooks/_clause-verdicts.js`, the registration and its drain | `HOOK_REGISTRATIONS`, `_inbox.js` pattern, `looks-approval-guard.js` |
 | Build Phase 4 | `lib/promises/clause-signal-rules.ts` called by the contract check; the accept-brief signal reports | `clause-rules.ts`, `contract.ts`, `clause-signal.ts`, `bring-trunk.ts` |
 | Build Phase 5 | One plan-review reader behind the offer and `plans approve`; the changed promise | `plan-review.ts`, `read-planning.ts`, `decisions.ts` |
@@ -72,7 +74,7 @@ This impl was written unattended (`INDUSK_GATE_POLICY=auto`): nobody could be as
 
 ## Test Trajectory
 
-Rows A65–A68 are added by this impl: the test plan has no section for the clauses they prove (see Decision 1).
+Rows A65–A72 follow the test plan's sections for `says-what-is-true`, `never-in-progress-when-idle`, `always-a-next-step` and `the-planning-audit-is-a-step` (see Decision 1).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
@@ -140,10 +142,14 @@ Rows A65–A68 are added by this impl: the test plan has no section for the clau
 | A62 | An incident that appears after the old fixed minute but before the admin's scan ends passes; none after the scan ends fails | Build Phase 6 | Build Phase 6 | planned | unit | clause: landing-tests-hold-under-load/recorder-waits-for-its-break | apps/indusk-mcp/src/lib/admin/wait-for-incident.test.ts |
 | A63 | The new shell hook is registered under Bash in the project's settings and synced byte for byte from the package | Test Phase 1 | Build Phase 3 | planned | unit | a regression guard: a hook that is not registered refuses nothing, and no clause test would see it | apps/indusk-mcp/src/__tests__/hook-registration.test.ts, apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts |
 | A64 | A run record written by the admin leaves the plan's working tree clean: a record is machine state outside the repository | Build Phase 1 | Build Phase 1 | planned | unit | a regression guard on Decision 3, keeping bookkeeping out of plan documents | apps/indusk-mcp/src/lib/run-record/record.test.ts |
-| A65 | The plan page and its nav row state the plan's situation in words: planning and its step, building and its phase, waiting on the person and for what, landed and what it still waits on to close, or stopped and why (added by the impl) | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
-| A66 | The plan page and the nav row never disagree about a plan: both read one sentence from one reader (added by the impl) | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
-| A67 | A plan with no running process and no recorded stop never reads in progress; it reads stopped or unknown (added by the impl) | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-run-is-read-from-its-record/never-in-progress-when-idle | apps/indusk-mcp/src/lib/run-record/liveness.test.ts |
-| A68 | A plan whose recorded process is alive reads in progress, so the idle rule never hides a live run (added by the impl) | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-run-is-read-from-its-record/never-in-progress-when-idle | apps/indusk-mcp/src/lib/run-record/liveness.test.ts |
+| A65 | A plan whose planning run is on a step reads "planning" with that step (writing the test plan, writing the impl, reading the plan cold), on the page and in its nav row | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
+| A66 | A plan whose build is on a phase reads "building" with that phase; one waiting on the person reads what it waits on (review, approval, an amendment, its plan review) | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
+| A67 | A plan merged to main reads complete (green), with no release indicator pulsing, and a confirmation step listing what is still to be confirmed (each clause signal and each live check by name), each ticked when confirmed; it never reads "landed" or "releasing" | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
+| A68 | A plan whose run stopped reads "stopped" with the reason and what starts it again | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
+| A69 | An accepted plan with no release process running, after an admin restart, reads landed, stopped or waiting, never "release in progress" | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/never-in-progress-when-idle | apps/indusk-mcp/src/lib/run-record/situation.test.ts |
+| A70 | For every situation short of closed (planning, waiting for looks, waiting for approval, building, at review, releasing, landed waiting on signals, stopped), the page and the nav row show a next step and who takes it | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/always-a-next-step | apps/indusk-mcp/src/lib/run-record/next-step.test.ts |
+| A71 | No open plan in the project's real planning folder reads without a next step (a check over every plan the admin lists) | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/always-a-next-step | apps/indusk-mcp/src/lib/run-record/next-step.test.ts |
+| A72 | A plan's planning steps read Research, Brief, Test plan, Decision, Impl, Planning audit; the audit reads in progress while the plan-review step runs, to do when the review is missing or unanswered and nothing runs, and done once it is answered | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-run-is-read-from-its-record/the-planning-audit-is-a-step | apps/indusk-mcp/src/lib/plans/steps.planning-audit.test.ts |
 | L1 | After landing, on the installed admin, a build on a scratch plan killed by hand reads stopped with its reason within a page load, and Build starts it again from the phase the plan is on | Build Phase 6 | Build Phase 6 | skipped | live check | a live check after landing, recorded in the retrospective; the clauses are proved by A1–A21 | manual: after landing run `pnpm install:local` and `indusk ui restart`; start a build on a scratch plan, `kill` the admin's session process by hand, reload the plan page and read the stop sentence, press Build and read the phase it names; record date and result in Notes |
 | L2 | After landing, `indusk promises confirm a-brief-is-accepted-on-current-main` succeeds and that plan closes | Build Phase 6 | Build Phase 6 | skipped | live check | a live check after landing; the clause the-two-landed-plans-report is proved by A46–A49 | manual: after landing run `indusk promises confirm a-brief-is-accepted-on-current-main` and then its retrospective close; record the result in Notes |
 | L3 | After landing, in a real session, a shell command that tries to tick a box in a plan's impl is refused with the file and the tool named | Build Phase 6 | Build Phase 6 | skipped | live check | a live check against the installed hook; the clause shell-write-refused is proved by A22–A30 | manual: after landing, in a new session run `sed -i 's/- \[ \]/- [x]/' .indusk/planning/<scratch>/impl.md` and read the refusal; record in Notes |
@@ -222,7 +228,7 @@ This phase writes the tests the plan commits to before anything changes, so each
 
 #### Deferred to Build Phase 1
 
-- **A1–A13, A56–A58, A64, A67, A68** — their subjects are `record.ts`, `liveness.ts` and `restart.ts` under `lib/run-record/` and the admin's `build-host.record.test.ts` wiring, which Build Phase 1 creates; a test importing them today fails to load, not to assert. Body reviewed (A8, representative; the record is read by a reader that takes the process reads as inputs):
+- **A1–A13, A56–A58, A64** — their subjects are `record.ts`, `liveness.ts` and `restart.ts` under `lib/run-record/` and the admin's `build-host.record.test.ts` wiring, which Build Phase 1 creates; a test importing them today fails to load, not to assert. Body reviewed (A8, representative; the record is read by a reader that takes the process reads as inputs):
 
   ```typescript
   // clause: a-run-is-read-from-its-record/dead-reads-stopped
@@ -241,7 +247,7 @@ This phase writes the tests the plan commits to before anything changes, so each
 
 #### Deferred to Build Phase 2
 
-- **A14–A21, A65, A66** — their subjects are `shown-phase.ts`, `landed.ts` and `situation.ts`, which Build Phase 2 creates. Body reviewed (A14):
+- **A14–A21, A65–A72** — their subjects are `shown-phase.ts`, `landed.ts`, `situation.ts` and `next-step.ts`, which Build Phase 2 creates, and the Planning audit step that Build Phase 2 adds to the planning steps, whose state reads the planning record Build Phase 1 creates; a test importing them today fails to load, not to assert. Body reviewed (A14):
 
   ```typescript
   // clause: a-run-is-read-from-its-record/shows-where-it-is
@@ -361,7 +367,7 @@ This phase makes the admin's builds, planning runs and releases leave a record o
 - [ ] Add the one rule that says whether a run is alive, using the existing process-identity reader.
   <details><summary>Technical</summary>
 
-  New `lib/run-record/liveness.ts`: `runStatus(record, deps: ProcessDeps)` → `{ state: "running" | "stopped" | "unknown", reason? }`. A record with a `stop` reads stopped with that reason; otherwise `isOwnProcess(record.pid, markers, deps, record.startedAt)` from `lib/process-identity.ts` — alive reads running, anything else reads stopped with "the run's process is gone" (a recycled pid included). Nothing in the file calls `process.kill(pid, 0)` itself (`lesson: identify-a-process-by-what-it-cannot-rewrite`). `readRunRecord` returning "unknown" yields unknown, never running. Header `// clause: a-run-is-read-from-its-record/dead-reads-stopped` and `// clause: a-run-is-read-from-its-record/never-in-progress-when-idle`.
+  New `lib/run-record/liveness.ts`: `runStatus(record, deps: ProcessDeps)` → `{ state: "running" | "stopped" | "unknown", reason? }`. A record with a `stop` reads stopped with that reason; otherwise `isOwnProcess(record.pid, markers, deps, record.startedAt)` from `lib/process-identity.ts` — alive reads running, anything else reads stopped with "the run's process is gone" (a recycled pid included). Nothing in the file calls `process.kill(pid, 0)` itself (`lesson: identify-a-process-by-what-it-cannot-rewrite`). `readRunRecord` returning "unknown" yields unknown, never running. Header `// clause: a-run-is-read-from-its-record/dead-reads-stopped`; the limit `never-in-progress-when-idle` is proved where the situation is stated, in Build Phase 2 (A69).
 
   </details>
 - [ ] Add the rule that picks the step Build starts from the plan's documents.
@@ -406,7 +412,7 @@ This phase makes the admin's builds, planning runs and releases leave a record o
 - [ ] The run record, the liveness rule, the restart rule and the admin's wiring are proved.
   <details><summary>Technical</summary>
 
-  A1–A13, A56–A58, A64, A67, A68 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/run-record && pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/build-host.record.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest related src/lib/build-host.ts`) — the whole suite runs at landing, not here. The existing `build-host*.test.ts` files stay green.
+  A1–A13, A56–A58, A64 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/run-record && pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/build-host.record.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest related src/lib/build-host.ts`) — the whole suite runs at landing, not here. The existing `build-host*.test.ts` files stay green.
 
   </details>
 
@@ -432,7 +438,7 @@ This phase makes the admin's builds, planning runs and releases leave a record o
 
 **Tier**: med — the work step's default
 
-This phase makes the admin say true things from the record the last phase keeps. The build controls name the phase the plan is on, read from the plan's files each time; the plan page and its nav row state the plan's situation in words from one reader; and a release reads released only when the plan is on main, otherwise stopped with the reason. It adds no component or state: the existing stop sentence and Build button carry it.
+This phase makes the admin say true things from the record the last phase keeps. The build controls name the phase the plan is on, read from the plan's files each time; the plan page and its nav row state the plan's situation in words from one reader; and a release reads released only when the plan is on main, otherwise stopped with the reason. Every plan that is not closed shows its next step and who takes it; the planning steps gain a Planning audit step after the impl; and a plan merged to main reads complete, with a list of what is still to be confirmed, ticked as each is. The page is then checked against the two looks the person approved before the plan did.
 
 - [ ] Make the build controls name the phase the plan is on, read from the plan each time.
   <details><summary>Technical</summary>
@@ -449,7 +455,25 @@ This phase makes the admin say true things from the record the last phase keeps.
 - [ ] Add the one sentence that states a plan's situation, and use it on the page and the nav row.
   <details><summary>Technical</summary>
 
-  New `lib/run-record/situation.ts`: `situation({ record, status, plan, files })` → a sentence for planning (and its step), building (and its phase), waiting on the person (and for what: approval, an amendment, a decision), landed (and what it still waits on to close), or stopped (and why). The plan page and `nav.expanded`'s plan row call it; the wording of existing sentences is kept. Header `// clause: a-run-is-read-from-its-record/says-what-is-true`.
+  New `lib/run-record/situation.ts`: `situation({ record, status, plan, files })` → a sentence for planning (and its step), building (and its phase), waiting on the person (and for what: review, approval, an amendment, its plan review), complete (merged to main), or stopped (and why, and what starts it again). An accepted plan with no live release process never reads "release in progress" (A69). The plan page and `nav.expanded`'s plan row call it; the wording of existing sentences is kept. Rows A65, A66, A68, A69 in `situation.test.ts`. Header `// clause: a-run-is-read-from-its-record/says-what-is-true` and `// clause: a-run-is-read-from-its-record/never-in-progress-when-idle`.
+
+  </details>
+- [ ] Show a plan merged to main as complete, with a confirmation list of what is still to be confirmed.
+  <details><summary>Technical</summary>
+
+  In `situation.ts`, a plan whose branch is an ancestor of the trunk (the `landed.ts` check) reads complete: green, no release indicator pulsing, never "landed" or "releasing". It carries `confirmations: { name, kind: "clause signal" | "live check", confirmed }[]` — each split and limit clause of the brief's promises, confirmed once its signal has reported upheld in a real run (the promise reader `indusk promises confirm` uses), and each `live check` row of the impl, confirmed once its Notes result is recorded. The plan page renders it as the confirmation step of `plan.released`, a tick per confirmed item. Row A67 in `situation.test.ts`.
+
+  </details>
+- [ ] Give every plan that is not closed a next step and who takes it.
+  <details><summary>Technical</summary>
+
+  New `lib/run-record/next-step.ts`: `nextStepFor(situation)` → `{ text, by: "system" | "person" | "event" }` for every situation short of closed (planning: "the system is writing the impl"; waiting for looks or approval: "you approve it"; building; at review; releasing; complete with confirmations open: "closes when its clauses report from a real run"; stopped: what starts it again). It never returns nothing for an open plan. The plan page and the `nav.expanded` row show it beside the situation. Rows A70 (every situation) and A71 (over every plan `indusk plans` lists in this repo's `.indusk/planning/`) in `next-step.test.ts`. Header `// clause: a-run-is-read-from-its-record/always-a-next-step`.
+
+  </details>
+- [ ] Add the planning audit to the plan page's planning steps, after the impl.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/plans/steps.ts`: add `{ name: "Planning audit", … }` after Impl in `PLANNING` (extend `PlanningStepName`). Its state is read from the plan review (`lib/plans/plan-review.ts`'s `planReviewState`, the reader Build Phase 5 makes the only one) and the planning run's record from Build Phase 1: in progress while the planning run is on its plan-review step, to do when the review is missing or unanswered and nothing runs, done once every finding is answered for the documents as they stand. Row A72 in `steps.planning-audit.test.ts`. Header `// clause: a-run-is-read-from-its-record/the-planning-audit-is-a-step`.
 
   </details>
 - [ ] Report the signal for the clause that the controls show where the plan is.
@@ -467,22 +491,34 @@ This phase makes the admin say true things from the record the last phase keeps.
 - [ ] Report the signal for the clause that the page says what is true.
   <details><summary>Technical</summary>
 
-  signal: `a-run-is-read-from-its-record/says-what-is-true` — read where the sentence is shown. The page and the nav row each pass their sentence to the reporter; `broken` names the plan when they differ (A66).
+  signal: `a-run-is-read-from-its-record/says-what-is-true` — read where the sentence is shown. The page and the nav row each pass their sentence to the reporter; `broken` names the plan, the words shown and what the record says when they differ from the record and the files (a running process for planning or building, a merge on main for complete).
+
+  </details>
+- [ ] Report the signal for the clause that every open plan has a next step.
+  <details><summary>Technical</summary>
+
+  signal: `a-run-is-read-from-its-record/always-a-next-step` — read where the page and the nav row are read. Upheld when every open plan shown has a next step naming who takes it; `broken` names the plan shown with none. Reported through `lib/run-record/signals.ts`, at most once per plan per read.
+
+  </details>
+- [ ] Report the signal for the clause that the planning audit is a step.
+  <details><summary>Technical</summary>
+
+  signal: `a-run-is-read-from-its-record/the-planning-audit-is-a-step` — read where the planning steps are shown. Upheld when a plan with an impl shows a Planning audit step whose state matches its plan review; `broken` names the plan and the step state shown. Same reporter.
 
   </details>
 
 #### Build Phase 2 Verification
 
-- [ ] The shown phase, the landed check and the situation sentence are proved, and the existing release tests still pass.
+- [ ] The shown phase, the landed check, the situation sentence, the next step, the confirmation list and the Planning audit step are proved, and the existing release and steps tests still pass.
   <details><summary>Technical</summary>
 
-  A14–A21, A65, A66 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/run-record && pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/build-host.release.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest related src/lib/build-host.ts`).
+  A14–A21, A65–A72 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/run-record src/lib/plans/steps.planning-audit.test.ts src/lib/plans/steps.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/build-host.release.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest related src/lib/build-host.ts`).
 
   </details>
-- [ ] The two looks this plan must not break still hold.
+- [ ] The page matches the two looks the person approved, and the nav look still holds.
   <details><summary>Technical</summary>
 
-  `plan.working` and `nav.expanded` are held by value in Chromium by the existing look checks: run the look tests the repo already runs for the admin (`pnpm --filter @infinitedusky/indusk-admin exec vitest related <the changed components>`); no mockup is changed or approved here.
+  `plan.working` and `plan.released` are checked by value in Chromium against the mockups the person approved before this plan's approval (drawn outside this impl); `nav.expanded` is unchanged and still passes. Run the admin's look checks over the changed components (`pnpm --filter @infinitedusky/indusk-admin exec vitest related <the changed components>`); a look that does not match its approved mockup is a defect in this phase, never a reason to redraw the mockup here.
 
   </details>
 
@@ -500,7 +536,7 @@ This phase makes the admin say true things from the record the last phase keeps.
 - [ ] Document what the plan page's stop sentence can say and why.
   <details><summary>Technical</summary>
 
-  Update `apps/docs/src/reference/admin-ui/overview.md` with the situation sentences (planning, building, waiting, landed, stopped) and the rule that a release reads released only when on main.
+  Update `apps/docs/src/reference/admin-ui/overview.md` with the situation sentences (planning, building, waiting, complete, stopped), the next step and who takes it, the Planning audit step, the confirmation list of a merged plan, and the rule that a release reads released only when on main.
 
   </details>
 
@@ -634,7 +670,7 @@ This phase makes the project's contract check ask two more things of an impl bei
 - [ ] This plan's own impl passes its own rule.
   <details><summary>Technical</summary>
 
-  `indusk promises contract a-run-can-be-trusted` reports no clause without a signal task and no live check naming a clause (the two clauses of Decision 1 are reported as lacking a test-plan section until the person settles that).
+  `indusk promises contract a-run-can-be-trusted` reports no clause without a signal task and no live check naming a clause.
 
   </details>
 
@@ -680,7 +716,7 @@ This phase makes the admin's offer of approval and the approve command ask one r
 - [ ] Approval is offered and withheld as the promise now says, by one reader.
   <details><summary>Technical</summary>
 
-  A50–A55 pass (`pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/decisions-reader.approval.test.ts src/lib/decisions-reader.planning.test.ts src/app/api/plans/approve/route.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/plan-review.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest related src/lib/decisions.ts`); then `indusk promises contract a-run-can-be-trusted` passes once the test plan has sections for the two clauses of Decision 1.
+  A50–A55 pass (`pnpm --filter @infinitedusky/indusk-admin exec vitest run src/lib/decisions-reader.approval.test.ts src/lib/decisions-reader.planning.test.ts src/app/api/plans/approve/route.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/plan-review.test.ts && pnpm --filter @infinitedusky/indusk-admin exec vitest related src/lib/decisions.ts`); then `indusk promises contract a-run-can-be-trusted` passes.
 
   </details>
 
@@ -764,7 +800,8 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
 
 | File | Change |
 |------|--------|
-| `apps/indusk-mcp/src/lib/run-record/{record,liveness,restart,shown-phase,landed,situation,signals}.ts` | New: the run record and the rules that read it |
+| `apps/indusk-mcp/src/lib/run-record/{record,liveness,restart,shown-phase,landed,situation,next-step,signals}.ts` | New: the run record and the rules that read it |
+| `apps/indusk-mcp/src/lib/plans/steps.ts` | The Planning audit step after Impl |
 | `apps/indusk-admin/src/lib/build-host.ts` | Write and read the record; liveness not the flag; release by git |
 | `apps/indusk-admin/src/lib/decisions.ts`, `decisions-reader.ts` | One reader of the plan review; merged run state |
 | `apps/indusk-mcp/hooks/plan-write-guard.js`, `_clause-verdicts.js` | New: shell guard, verdict port |
@@ -783,7 +820,7 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
 
 ## Notes
 
-- Open decision (Decision 1): the test plan has no section for `says-what-is-true` and `never-in-progress-when-idle`; add them or drop the clauses before `indusk promises contract` passes.
+- Before approval (Decision 17): the person approves redrawn mockups of `plan.working` and `plan.released`; drawing them is outside this impl.
 - Open decision (Decision 8): the broken side of the two shell-guard clauses is not observable from inside the hook.
 - Open decision: the test plan's list of refused shell forms (its Decision 8) is the author's; a form the person wants added or allowed changes the guard's list before Build Phase 3.
 - After landing, run and record: **L1** (kill a scratch build, read "stopped", press Build), **L2** (`indusk promises confirm a-brief-is-accepted-on-current-main`), **L3** (try to tick a box with `sed -i`; read the refusal). Date / result: ______
