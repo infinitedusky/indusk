@@ -60,7 +60,7 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T14 | The reader judges the impl under the same gate policy the planning session wrote it under, so an impl whose gate is skipped with a reason the session's check allowed is not read as failing | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
 | T15 | An impl check that cannot run (the hook file missing, node not starting) ends the run saying the check could not run, never reads as an impl that failed, and a check that refuses keeps its message for the run's stop reason | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
 | T16 | Approving a plan from the admin while its planning run is still running is refused and approves nothing | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
-| T17 | The impl step's prompt says an ADR or test plan left proposed or draft by the earlier steps is no reason to stop, and that it changes no other document's status | Build Phase 5 | Build Phase 5 | written | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/build-session.test.ts |
+| T17 | The impl step's prompt says an ADR or test plan left proposed or draft by the earlier steps is no reason to stop, and that it changes no other document's status | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/build-session.test.ts |
 | T18 | A `blocker:` line inside a fenced code block of a plan document does not end the planning run | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
 
 ## Checklist
@@ -393,7 +393,7 @@ This phase tests the finished planning run against the ways it could start twice
   `apps/indusk-admin/src/app/api/plans/approve/route.ts:52` calls `approvePlan` with no look at `planningState`; once an impl passes the contract mid-run the person can approve and merge documents a planning session is still writing, and the following `startBuild` is then refused ("is being planned") with nothing to start the build when the run ends. Refuse with 409 naming the running step before `approvePlan`. T16.
 
   </details>
-- [ ] Tell the impl and ADR steps that an earlier document left draft or proposed is not a reason to stop.
+- [x] Tell the impl and ADR steps that an earlier document left draft or proposed is not a reason to stop.
   <details><summary>Technical</summary>
 
   The planner skill's step 7 reads "If ADR is accepted … write the impl", and `advance_plan` refuses `adr → impl` while the ADR is `proposed`; `planningPrompt` in `lib/build/build-session.ts` says neither, so a `plan-impl` session following the skill may write a blocker, or set the ADR accepted itself. Add to the planning prompt that the earlier documents stay as the earlier steps left them for the person's one approval, and that the step changes no other document. T17.
