@@ -1,7 +1,7 @@
 ---
 title: "A brief is planned unasked"
 date: 2026-10-18
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -64,6 +64,7 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T18 | A `blocker:` line inside a fenced code block of a plan document does not end the planning run | Build Phase 5 | Build Phase 5 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
 | T19 | When the person's planning conversation for a plan ends, a planning run starts for it if its brief is accepted and every look it names is approved | Build Phase 6 | Build Phase 6 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
 | T20 | The planner skill tells a planning conversation to end after accepting its brief, leaving the documents to the unattended run | Build Phase 6 | Build Phase 6 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-mcp/src/__tests__/planner-ends-after-accept.test.ts |
+| T21 | A build session already held for a plan refuses a build start and a planning start alike, naming the session and saying to stop it first | Build Phase 7 | Build Phase 7 | planned | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
 
 ## Checklist
 
@@ -492,6 +493,70 @@ The falsification fix that keeps a planning run from starting while the person's
   <details><summary>Technical</summary>
 
   The planning guide page Build Phase 4 updated; changelog.
+
+  </details>
+
+### Build Phase 7: Cleanup — one refusal for a held build session
+
+**Tier**: med — the work step's default
+
+This plan added a third place in the admin's run host that refuses to start when a build session is already held for the plan, each copy writing out the same message. Three copies of one rule is the point at which it earns a single home, so a later change to the wording or the check cannot reach only two of them. Once this phase closes the three starts share one refusal and behave exactly as before. The other comparisons the cleanup made found nothing worth moving, and each is recorded below with its reason.
+
+- [ ] Give the held-build-session refusal one home in the admin's run host and use it from the build, release and planning starts.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/lib/build-host.ts`: `startBuild`, `startRelease` and `startPlanning` each build the string "a build session is already running for ${plan}: ${id} — stop it first" from `sessionManager().forPlan(project, plan, "build")`. Extract one private `assertNoBuildSession(project, plan)` that throws it; the rule of three. Not exported. T21.
+
+  </details>
+- [ ] Review the planning loop beside the build loop and leave both as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed `lib/build/planning-runner.ts` against `lib/build/runner.ts` — left as-is: both are a read, decide, run, repeat loop, but they decide with different pure functions, stop on different answers and track different progress; a shared loop would take a generic over both and be harder to follow than two 30-line loops.
+
+  </details>
+- [ ] Review the planning reader beside the build reader and leave both as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed `lib/build/read-planning.ts` against `lib/build/read-plan.ts` — left as-is: the only shared lines are the live-copy lookup and its error, five lines; everything else reads different documents through different checks.
+
+  </details>
+- [ ] Review the planning run's state and background wiring beside the build's and leave them as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed `startPlanning` against `startBuild` in `build-host.ts` — left as-is beyond the refusal above: the state shapes differ, the claim-and-release order differs (the planning run holds its entry before the first await and releases on a decline, the build does not), and the shared tail is a single promise chain; a helper over both would need flags for each difference.
+
+  </details>
+- [ ] Review the remaining oversized changed files and leave them as they are.
+  <details><summary>Technical</summary>
+
+  Reviewed `bin/cli.ts`, `lib/looks/approve.ts`, `lib/session/manager.ts`, `lib/session/manager.test.ts`, the planner skill and the docs pages — left as-is: this plan added ten lines or fewer to each of the code files and they were already over the threshold; the skill and docs are prose.
+
+  </details>
+
+#### Build Phase 7 Verification
+
+- [ ] A held build session stops a build start and a planning start with the same message, and the existing starts still work.
+  <details><summary>Technical</summary>
+
+  T21 passes; `indusk plans tests a-brief-is-planned-unasked --phase "Build Phase 7"`; the admin's build-host tests stay green.
+
+  </details>
+
+#### Build Phase 7 Context
+
+- [ ] Add nothing to the context files, since the decomposition is internal to one file.
+  <details><summary>Technical</summary>
+
+  (none — internal decomposition: one private function in `build-host.ts`; no rule or structure a reader of the admin's context file needs changes.)
+
+  </details>
+
+#### Build Phase 7 Document
+
+- [ ] Add nothing to the docs, since no public surface changes.
+  <details><summary>Technical</summary>
+
+  (none — internal decomposition: the refusal message and its triggers are unchanged.)
 
   </details>
 
