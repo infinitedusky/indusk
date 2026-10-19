@@ -669,21 +669,23 @@ signals. It closes the plan: nothing after it changes behaviour.
 
 #### Build Phase 6 Context
 
-- [ ] Record the word rule where plan documents are written.
+- [x] Record the word rule where plan documents are written.
   <details><summary>Technical</summary>
 
   `templates/planning/CLAUDE.md` (the planning rules; extend the existing promise-words entry): the telemetry of a clause is its signal, never a mark; guard: `signal-word.test.ts`.
 
   </details>
+  Extended the existing promise-words entry in `templates/planning/CLAUDE.md` (a promise's telemetry is its signal, the old word not used; guarded by `signal-word.test.ts`) and copied it to `.indusk/planning/CLAUDE.md`, as Build Phase 4 did; `skill-sync-parity.test.ts` holds them equal. The entry avoids spelling the old word, since `promise-words.test.ts` scans the template.
 
 #### Build Phase 6 Document
 
-- [ ] Check the signals guide covers how a break names its clause (carried from Build Phase 5).
+- [x] Check the signals guide covers how a break names its clause (carried from Build Phase 5).
   <details><summary>Technical</summary>
 
   `guide/signals.md` has the section; the Mermaid flow renders in `pnpm --filter docs build`.
 
   </details>
+  `guide/signals.md` has "How a break names its clause" (five steps) and the Mermaid flow; both rendered in the docs build.
 
 ## Files Affected
 
