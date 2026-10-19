@@ -1,7 +1,7 @@
 ---
 title: "A brief is planned unasked"
 date: 2026-10-18
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -65,6 +65,7 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T19 | When the person's planning conversation for a plan ends, a planning run starts for it if its brief is accepted and every look it names is approved | Build Phase 6 | Build Phase 6 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
 | T20 | The planner skill tells a planning conversation to end after accepting its brief, leaving the documents to the unattended run | Build Phase 6 | Build Phase 6 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-mcp/src/__tests__/planner-ends-after-accept.test.ts |
 | T21 | A build session already held for a plan refuses a build start and a planning start alike, naming the session and saying to stop it first | Build Phase 7 | Build Phase 7 | passing | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
+| T22 | Ending a planning conversation starts a run only when the brief was accepted during that conversation; a conversation that ends without accepting it starts nothing, even when the brief was accepted earlier | Build Phase 8 | Build Phase 8 | planned | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
 
 ## Checklist
 
@@ -557,6 +558,47 @@ This plan added a third place in the admin's run host that refuses to start when
   <details><summary>Technical</summary>
 
   (none — internal decomposition: the refusal message and its triggers are unchanged.)
+
+  </details>
+
+### Build Phase 8: Audit fix — only the conversation that accepted the brief starts the run
+
+**Tier**: med — the work step's default
+
+The cold audit found that ending any planning conversation on a plan whose brief is accepted starts an unattended run, including one where a person planning by hand only paused, which is broader than the promise's start at acceptance. This phase records when a brief was accepted and starts a run at a conversation's end only when the acceptance happened during that conversation. Once it closes, a run starts at acceptance, at the last look's approval, or when the conversation that accepted the brief ends, and at no other time.
+
+- [ ] Record when a brief was accepted, and start a run at a conversation's end only when the brief was accepted after that conversation began.
+  <details><summary>Technical</summary>
+
+  Found by the audit (2026-10-19, `apps/indusk-admin/src/app/api/sessions/route.ts:88`). `acceptBrief` writes `accepted_at` (ISO) into the brief's frontmatter beside `status: accepted`; the session's `onEnd` passes the session's `startedAt` to `planningConversationEnded`, which calls `startPlanning` only when the brief's `accepted_at` is at or after it. A brief with no `accepted_at` (accepted by hand, before this) starts nothing at a conversation's end. T22.
+
+  </details>
+- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+
+#### Build Phase 8 Verification
+
+- [ ] A conversation that accepted the brief starts the run when it ends, and one that did not starts nothing.
+  <details><summary>Technical</summary>
+
+  T22 and T19 still passing; `indusk plans tests a-brief-is-planned-unasked --phase "Build Phase 8"`.
+
+  </details>
+
+#### Build Phase 8 Context
+
+- [ ] Amend the admin's context line about a conversation's end to say only the accepting conversation starts the run.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/CLAUDE.md`, the host line.
+
+  </details>
+
+#### Build Phase 8 Document
+
+- [ ] Say in the planning guide that only the conversation that accepted the brief starts the run when it ends.
+  <details><summary>Technical</summary>
+
+  The planning guide page; the changelog line for this plan.
 
   </details>
 
