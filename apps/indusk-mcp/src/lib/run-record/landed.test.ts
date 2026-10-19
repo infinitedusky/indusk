@@ -159,7 +159,10 @@ describe("A21 and A87 — against a real repository", () => {
 		p.commit(
 			wt,
 			{
-				[`${planDir}/impl.md`]: implText(PLAN, { status: "completed", rows: [{ state: "passing" }] }),
+				[`${planDir}/impl.md`]: implText(PLAN, {
+					status: "completed",
+					rows: [{ state: "passing" }],
+				}),
 				"src/seat.ts": "export const seat = 1;\n",
 			},
 			"the build",
@@ -212,7 +215,14 @@ describe("A95 — a workbench plan reads complete from its code repository's lan
 		git(repo, ["commit", "-q", "-m", "the code"]);
 		git(repo, ["checkout", "-q", "main"]);
 		expect(planLandedOnMain(root, "wb-plan")).toBe(false);
-		git(repo, ["merge", "-q", "--no-ff", "-m", "Merge plan/wb-plan: wb-plan landed", "plan/wb-plan"]);
+		git(repo, [
+			"merge",
+			"-q",
+			"--no-ff",
+			"-m",
+			"Merge plan/wb-plan: wb-plan landed",
+			"plan/wb-plan",
+		]);
 		git(repo, ["branch", "-q", "-d", "plan/wb-plan"]);
 
 		expect(planLandedOnMain(root, "wb-plan")).toBe(true);

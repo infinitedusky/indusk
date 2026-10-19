@@ -124,7 +124,9 @@ const CLEAN_ENDS: ReadonlySet<string> = new Set([
 ]);
 
 const endedCleanly = (run: SituationInput["run"]): boolean =>
-	run?.status.state === "stopped" && typeof run.stopStep === "string" && CLEAN_ENDS.has(run.stopStep);
+	run?.status.state === "stopped" &&
+	typeof run.stopStep === "string" &&
+	CLEAN_ENDS.has(run.stopStep);
 
 /** The confirmations still open. */
 export const openConfirmations = (c: readonly Confirmation[] | undefined): Confirmation[] =>

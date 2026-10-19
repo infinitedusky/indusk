@@ -148,7 +148,7 @@ function codeRepoOf(root: string, plan: string): { dir: string; trunk: string } 
 export function landedAsker(root: string): (plan: string) => boolean {
 	let rootTrunk: string | null = null;
 	const subjects = new Map<string, string[]>();
-	const cached = (dir: string, trunk: string): GitReads => {
+	const cached = (dir: string): GitReads => {
 		const git = realGitReads(dir);
 		return {
 			mergeSubjects: (t) => {
@@ -166,10 +166,10 @@ export function landedAsker(root: string): (plan: string) => boolean {
 	return (plan) => {
 		try {
 			rootTrunk ??= trunkOf(root, getTrunkBranches(root));
-			if (landedOnMain(rootTrunk, plan, cached(root, rootTrunk))) return true;
+			if (landedOnMain(rootTrunk, plan, cached(root))) return true;
 			const code = codeRepoOf(root, plan);
 			if (code === null) return false;
-			return cached(code.dir, code.trunk)
+			return cached(code.dir)
 				.mergeSubjects(code.trunk)
 				.some((s) => isLandingOf(s, plan));
 		} catch {
