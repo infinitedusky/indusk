@@ -609,6 +609,48 @@ What was investigated, and why some suspicions were not written as hypotheses (`
   - A heading the reader numbers (`## 1. Does each row…`) reads as a missing question. The skill says "unnumbered" and the command names the missing question, so the agent can fix it in the same session; no liveness loss beyond one rerun.
 - **Not investigated**: the admin's rendering of the new stop (`BuildControls.tsx`, one sentence) and the skill-copy sync, both covered by type checks and the parity test; the live planning run (A23), which waits for the installed build by design.
 
+### Build Phase 6: Cleanup — the plan review stops computing a diff it throws away
+
+**Tier**: med — the work step's default
+
+The only code worth changing across this plan's files is in the audit inputs: the plan review is handed the tracked-file list, but it gets it by running the same function that builds the full diff and diff summary for the post-build audit, then discards both. Splitting the file-list step out leaves the audit's output identical and stops the plan review doing git work it never uses. Everything else this plan changed is cohesive or under the file-size focus point, and each is recorded below with the reason it stays.
+
+- [x] Lift the tracked-file list out of the function that also builds the diff, so the plan review asks only for the list.
+  <details><summary>Technical</summary>
+
+  In `apps/indusk-mcp/src/lib/audit/inputs.ts`, extract the `git ls-tree -r --name-only <branch>` + `isBookkeeping` filter from `codeChanges` into `trackedTree(code)`; `codeChanges` calls it for `tree`, `planReviewInputs` calls it directly and no longer runs `branchFileChanges`, `git diff` or `git diff --stat`. Basis: single responsibility, and the falsification hunt record's "wasted work, left to /cleanup". Function-local, so no new public export.
+
+  </details>
+- [x] (reviewed the post-build audit's answers command — left as-is: it reads the file, the promises registry and the reader in one place on purpose, so the reader stays a pure function of text.)
+  <details><summary>Technical</summary>
+
+  Reviewed `plansAuditAnswers` in `apps/indusk-mcp/src/bin/commands/plans.ts`. The file is 477 lines, over the 400 focus point, but it is a collection of one-verb command wrappers; this plan added ~55 lines to it, 50 of them this one function. Moving the registry read into `lib/audit/` would make `answers.ts` depend on the registry and break the Build Phase 5 Shape decision that kept it pure. Extracting the function alone would only relocate it. No second copy of the clause-set or the refusal pattern exists elsewhere (searched `src/` for the `${p.name}/${c.name}` build), so the rule of three is not met.
+
+  </details>
+- [x] (reviewed the other changed source files — left as-is: each is under the focus point and was Shape-reviewed in its phase.)
+  <details><summary>Technical</summary>
+
+  `lib/audit/answers.ts` (195), `lib/audit/inputs.ts` (241), `build-session.ts` (220), `read-planning.ts` (216), `next-planning-step.ts` (104), `next-step.ts` (102), `next-session.ts` (109), `step-env.ts` (46), `read-plan.ts` (47): all under 400, each with one responsibility; no helper appears in two files. The five skill files and the docs pages are prose, not decomposable units. Not investigated: `BuildControls.tsx` (one added sentence).
+
+  </details>
+
+#### Build Phase 6 Verification
+
+- [x] The audit's inputs for a finished plan are unchanged, and the plan review's inputs are still the four documents and the file list.
+  <details><summary>Technical</summary>
+
+  No row flips — behaviour-preserving refactor with existing coverage: A7 (`plans-audit-inputs.test.ts`, the auditor is still handed only the documents, approved impl and diff) and A18 (the plan review's inputs are the four documents and the tracked-file list) stay green; the package's type check is clean.
+
+  </details>
+
+#### Build Phase 6 Context
+
+- [x] (none needed — internal decomposition of one function; no rule, path or module boundary changes.)
+
+#### Build Phase 6 Document
+
+- [x] (none needed — internal decomposition; the `plans review-inputs` output the docs describe is unchanged.)
+
 ## Files Affected
 
 | File | Change |

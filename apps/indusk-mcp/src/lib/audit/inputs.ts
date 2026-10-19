@@ -147,6 +147,14 @@ async function resolveApproval(
 	return sha;
 }
 
+/** Every file tracked on the branch, one per line, without `.indusk/`'s bookkeeping. */
+async function trackedTree(code: AuditSource["code"]): Promise<string> {
+	return (await git(code.repo, "ls-tree", "-r", "--name-only", code.branch))
+		.split("\n")
+		.filter((p) => p && !isBookkeeping(p))
+		.join("\n");
+}
+
 /** The diff, the stat of what the branch changed and the tree of every tracked file, all without `.indusk/`'s bookkeeping where it would leak. */
 async function codeChanges(
 	code: AuditSource["code"],
@@ -160,11 +168,7 @@ async function codeChanges(
 		.filter((p) => !isBookkeeping(p));
 	const diff = paths.length > 0 ? await git(repo, "diff", range, "--", ...paths) : "";
 	const stat = await git(repo, "diff", "--stat", range);
-	const tree = (await git(repo, "ls-tree", "-r", "--name-only", branch))
-		.split("\n")
-		.filter((p) => p && !isBookkeeping(p))
-		.join("\n");
-	return { diff, stat, tree };
+	return { diff, stat, tree: await trackedTree(code) };
 }
 
 /** The auditor's inputs for `plan`; `approved` names the approval commit by hand when history was rewritten. */
@@ -227,7 +231,6 @@ export async function planReviewInputs(checkout: string, plan: string): Promise<
 	const { docsRoot, planDir } = src;
 	const doc = (file: string): AuditText | null =>
 		existsSync(join(docsRoot, planDir, file)) ? readText(docsRoot, `${planDir}/${file}`) : null;
-	const { tree } = await codeChanges(src.code);
 	return {
 		plan,
 		documents: {
@@ -236,6 +239,6 @@ export async function planReviewInputs(checkout: string, plan: string): Promise<
 			adr: doc("adr.md"),
 			impl: doc("impl.md"),
 		},
-		tree,
+		tree: await trackedTree(src.code),
 	};
 }
