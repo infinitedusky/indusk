@@ -21,6 +21,10 @@ export interface BuildPlan {
 	readiness: RetrospectiveReadiness;
 	/** What the brief says now that the person did not approve, one `<part> <name>` each; empty when nothing waits. */
 	amendments: string[];
+	/** `audit.md` exists and its answers do not read complete: the audit step is not done. */
+	auditOpen?: boolean;
+	/** Why the approval record cannot be read, when it cannot; the build cannot tell what changed. */
+	approvalUnreadable?: string;
 }
 
 /** What one step's session did. */
@@ -60,6 +64,13 @@ export function nextBuildStep(
 		return { step: "cannot-continue", why: "two steps in a row made no progress" };
 	}
 
+	if (plan.approvalUnreadable) {
+		return {
+			step: "cannot-continue",
+			why: `the approval record cannot be read: ${plan.approvalUnreadable} — re-approve the plan`,
+		};
+	}
+
 	// A waiting amendment is the person's to re-approve; no step runs past it.
 	if (plan.amendments.length > 0) return { step: "amendment", amendments: plan.amendments };
 
@@ -83,7 +94,8 @@ export function nextBuildStep(
 		}
 	}
 	// promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — read once, when the build phases close, before falsification
-	if (missing.includes("audit")) return { step: "audit" };
+	// An `audit.md` that exists but is not answered is not a finished audit: the step runs again.
+	if (missing.includes("audit") || plan.auditOpen) return { step: "audit" };
 	if (missing.includes("falsification")) return { step: "falsify" };
 	if (missing.includes("cleanup")) return { step: "cleanup" };
 	if (missing.includes("rows")) {

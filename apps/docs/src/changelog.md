@@ -11,6 +11,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **The audit's open findings are closed** (audit-concerns-are-answered): the build waits for a complete audit, other list shapes and bare causes no longer pass, a Not promised edit is an amendment, a plan review goes stale with its documents, and a brief changed before approval is shown with the dismissals.
 - **The admin knows the package root** (the-admin-knows-the-package-root): `indusk ui` hands the package root it resolved to the admin daemon, and `induskMcpPackageRoot()` trusts it when it holds this package, so a planning run inside the admin reaches "ready for approval" instead of "cannot continue".
 
 - **The admin builds again with the planning reader** (admin-builds-with-the-planning-reader): the reader runs the shipped impl hook through the package root and the running Node binary, which the admin's production bundler leaves alone; `pnpm install:local` had failed on main.

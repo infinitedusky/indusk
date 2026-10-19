@@ -1,0 +1,9 @@
+# A new waiting kind silently inherits the decision route's default answer behavior and absorbs other stops' special-case logic — the planner must state what each answer does at every stop the kind can reach, not just name its accept/alternative labels
+
+In approval-waits-for-the-planning-run, a new waiting kind (`plan-review`) was added to the plan's decision-waiting mechanism. Its brief named the kind's accept and alternative labels, but not what answering each does for every stop that can route through it. In practice it silently inherited the decision route's generic default-answer path (send words back to the agent, start a new planning session on "Not yet") and also absorbed the existing wait-for-looks stop's special-case behavior — neither inheritance was stated anywhere, and both were discovered only by reading the code, not the brief.
+
+**Why:** the decision-waiting mechanism is a shared route with per-kind special cases layered on a generic default. Adding a new kind without tracing every existing stop that could reach it means the new kind picks up whatever the generic path does by default, plus whatever an existing special case happens to also match on — behavior nobody designed for this kind, inherited by omission.
+
+**How to apply:** when a plan adds a new waiting/decision kind to a shared route, the brief or ADR must enumerate every existing stop that can reach the new kind and state explicitly what each answer (accept, alternative, "not yet") does at that stop — not just the kind's own labels. If a new kind would otherwise fall through to the route's generic default, decide deliberately whether that's correct, rather than finding out after the fact that it silently absorbed another stop's logic.
+
+Source: highlight h-20261019-019; approval-waits-for-the-planning-run (plan-review kind).

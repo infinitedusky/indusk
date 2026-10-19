@@ -187,7 +187,7 @@ describe("planReviewInputs", () => {
 			"plan documents",
 		);
 		const inputs = await planReviewInputs(wt, PLAN);
-		expect(Object.keys(inputs).sort()).toEqual(["documents", "plan", "tree"]);
+		expect(Object.keys(inputs).sort()).toEqual(["documents", "plan", "read", "tree"]);
 		expect(Object.keys(inputs.documents).sort()).toEqual(["adr", "brief", "impl", "testPlan"]);
 		expect(inputs.documents.brief?.text).toContain("MARK-BRIEF");
 		expect(JSON.stringify(inputs)).not.toContain("MARK-RESEARCH");

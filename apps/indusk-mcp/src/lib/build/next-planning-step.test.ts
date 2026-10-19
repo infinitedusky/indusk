@@ -160,3 +160,26 @@ describe("A21, A20 — the plan review is the planning run's last step", () => {
 		});
 	});
 });
+
+// clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold — A37
+// clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval — A42
+describe("Build Phase 8 — a stale review is read again, and a changed brief is shown", () => {
+	const ready = (over: Partial<PlanningState["review"]> = {}) =>
+		state({
+			documents: { "test-plan": good, adr: good, impl: good },
+			implStatus: "draft",
+			review: { exists: true, complete: true, dismissals: [], amendments: [], ...over },
+		});
+
+	it("A37 — a complete plan review written before the documents last changed is read cold again", () => {
+		expect(nextPlanningStep(ready({ stale: true }))).toEqual({ step: "plan-review" });
+		expect(nextPlanningStep(ready({ stale: false })).step).toBe("ready-for-approval");
+	});
+
+	it("A42 — a brief changed since it was accepted is listed at the ready-for-approval stop", () => {
+		const changed = [{ part: "promise", name: "a-x", was: "old", now: "new" }] as const;
+		const stop = nextPlanningStep(ready({ briefChanges: changed }));
+		expect(stop).toMatchObject({ step: "ready-for-approval", briefChanges: changed });
+		expect(nextPlanningStep(ready())).not.toHaveProperty("briefChanges");
+	});
+});

@@ -67,7 +67,12 @@ export interface AuditAnswers {
 	amendments: Amendment[];
 	/** Questions with no heading in the file. */
 	missingQuestions: string[];
-	/** Findings exist and the `What let these through?` section does not. */
+	/** Signal answers in a file that takes none (a plan review): before approval there is no signal. */
+	refusedSignal: Finding[];
+	/**
+	 * Findings exist and the `What let these through?` section does not, or a line in it is
+	 * neither a cause naming its findings and its highlight nor a no-gap line with a reason.
+	 */
 	missingCauses: boolean;
 }
 
@@ -80,21 +85,30 @@ export interface ReadOptions {
 	 * naming a pair outside it names no clause; absent, only the shape is checked.
 	 */
 	clauses?: ReadonlySet<string>;
+	/** Whether a `signal` answer is refused; a plan review's, which has no signal before approval. */
+	refuseSignal?: boolean;
 }
 
 const ANSWER = /^\s+- answer:\s*(fix|signal|amendment|nothing)\b\s*(?:[—–-]+\s*)?(.*)$/;
 const BREAKS_WHEN = /^\s+- breaks when:\s*(.*)$/;
 const CLAUSE = /clause:\s*([^\s/;]+\/[^\s;]+)/;
+const TRAILING_PUNCTUATION = /[.,;:)]+$/;
+const FINDING_ITEM = /^(?:[-*]|\d+\.) (.+)$/;
+const CAUSE = /^- \S.* [—–-]+ findings:\s*\S.* [—–-]+ highlight:\s*\S+\s*$/;
+const NO_GAP = /^- no process gap\s*[—–-]+\s*\S.*$/i;
 const EMPTY_QUESTION = /^(nothing|none)\.?$/i;
 
 export function readAuditAnswers(text: string, options: ReadOptions = {}): AuditAnswers {
 	const questions = options.questions ?? AUDIT_QUESTIONS;
-	const wantCauses = options.causes ?? questions === AUDIT_QUESTIONS;
+	const isAudit = questions === AUDIT_QUESTIONS;
+	const wantCauses = options.causes ?? isAudit;
+	const refuseSignal = options.refuseSignal ?? questions === PLAN_REVIEW_QUESTIONS;
 	const findings: Finding[] = [];
 	const headings = new Set<string>();
 	let section: string | null = null;
 	let current: Finding | null = null;
 	let causes = false;
+	const causeLines: string[] = [];
 
 	const lines = text.split("\n");
 	const fenced = fencedLineMask(lines);
@@ -109,8 +123,12 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 			if (section === CAUSES_HEADING) causes = true;
 			continue;
 		}
-		if (section === null || section === CAUSES_HEADING) continue;
-		const item = /^- (.+)$/.exec(raw);
+		if (section === CAUSES_HEADING) {
+			if (/^\s*-/.test(raw)) causeLines.push(raw.trim());
+			continue;
+		}
+		if (section === null) continue;
+		const item = FINDING_ITEM.exec(raw);
 		if (item) {
 			current = null;
 			if (EMPTY_QUESTION.test(item[1].trim())) continue;
@@ -137,6 +155,8 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 		}
 	}
 
+	const causesRead =
+		causeLines.length > 0 && causeLines.every((l) => CAUSE.test(l) || NO_GAP.test(l));
 	return {
 		findings,
 		incomplete: findings.filter((f) => !f.breaksWhen),
@@ -151,12 +171,13 @@ export function readAuditAnswers(text: string, options: ReadOptions = {}): Audit
 			.filter((f) => f.answer?.kind === "amendment")
 			.map((f) => ({ question: f.question, finding: f.finding, part: f.answer?.text ?? "" })),
 		missingQuestions: questions.filter((q) => !headings.has(q)),
-		missingCauses: wantCauses && findings.length > 0 && !causes,
+		refusedSignal: refuseSignal ? findings.filter((f) => f.answer?.kind === "signal") : [],
+		missingCauses: wantCauses && findings.length > 0 && !(causes && causesRead),
 	};
 }
 
 function namesClause(text: string, held: ReadonlySet<string> | undefined): boolean {
-	const named = CLAUSE.exec(text)?.[1];
+	const named = CLAUSE.exec(text)?.[1]?.replace(TRAILING_PUNCTUATION, "");
 	return named !== undefined && (held === undefined || held.has(named));
 }
 
@@ -166,6 +187,7 @@ export function isAnswered(read: AuditAnswers): boolean {
 		read.incomplete.length === 0 &&
 		read.unanswered.length === 0 &&
 		read.noClause.length === 0 &&
+		read.refusedSignal.length === 0 &&
 		read.missingQuestions.length === 0 &&
 		!read.missingCauses
 	);
@@ -186,8 +208,16 @@ export function describeAnswers(
 			(f) =>
 				`${file}:${f.line} answers with a signal naming no clause the registry holds — ${f.finding}`,
 		),
+		...read.refusedSignal.map(
+			(f) =>
+				`${file}:${f.line} answers with a signal, which a plan review does not take before approval — fix it or give a reason — ${f.finding}`,
+		),
 		...read.missingQuestions.map((q) => `${file} has no section for: ${q}`),
-		...(read.missingCauses ? [`${file} has findings and no "${CAUSES_HEADING}" section`] : []),
+		...(read.missingCauses
+			? [
+					`${file} has findings and no complete "${CAUSES_HEADING}" section: each line is "- <cause> — findings: <refs> — highlight: <id>" or "- no process gap — <reason>"`,
+				]
+			: []),
 	];
 	const shown = [
 		...read.dismissals.map((d) => `${d.question} — ${d.finding} — nothing: ${d.reason}`),

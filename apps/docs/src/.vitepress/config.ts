@@ -302,6 +302,7 @@ const config = defineConfig({
 						{ text: "Overview", link: "/lessons/" },
 						{ text: "Lessons — Agent Roles", link: "/lessons/agent-roles" },
 						{ text: "Sessions per Plan — Lessons", link: "/lessons/sessions-per-plan" },
+						{ text: "Audit Concerns Are Answered — Lessons", link: "/lessons/audit-concerns-are-answered" },
 						{ text: "Cleanup Ritual — Lessons", link: "/lessons/cleanup-ritual" },
 						{ text: "Dawn Hook Parity — Lessons", link: "/lessons/dawn-hook-parity" },
 						{ text: "Dawn External Orchestrator — Acceptance Matrix", link: "/lessons/dawn-orchestrator-acceptance-matrix" },

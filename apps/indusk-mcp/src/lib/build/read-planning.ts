@@ -2,9 +2,11 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
+import { planReviewHash } from "../audit/review-hash.js";
 import { fencedLineMask } from "../impl-headings.js";
 import { induskMcpPackageRoot } from "../package-root.js";
 import { parsePlan } from "../plan-parser.js";
+import { type Amendment, briefChangesSinceAcceptance } from "../plans/amendments.js";
 import { unapprovedMockups } from "../plans/approved-brief.js";
 import { planReviewAnswers, planReviewState } from "../plans/plan-review.js";
 import { type ContractResult, checkPlanContract } from "../promises/contract.js";
@@ -62,6 +64,8 @@ export interface PlanningReadDeps {
 	/** Run the shipped impl hook on a write; `status` is its exit code (0 allows). */
 	runHook: (input: HookInput) => HookResult;
 	unapprovedLooks: (root: string, briefText: string) => Promise<string[]>;
+	/** What the brief says now that it did not say when accepted; absent, none is compared. */
+	briefChanges?: (dir: string) => Promise<Amendment[]>;
 }
 
 /**
@@ -94,6 +98,7 @@ export const realPlanningReads: PlanningReadDeps = {
 		return { status: r.status, stderr: r.stderr, error: r.error?.message, signal: r.signal };
 	},
 	unapprovedLooks: unapprovedMockups,
+	briefChanges: briefChangesSinceAcceptance,
 };
 
 const ABSENT: PlanningDocument = { exists: false, ok: false };
@@ -146,14 +151,23 @@ function judgeImpl(
 }
 
 /** The plan review as the run reads it: absent is not complete, and neither is a file with an open finding. */
-function readReview(text: string | null): PlanningReview {
+function readReview(
+	text: string | null,
+	documentsHash: string,
+	briefChanges: readonly Amendment[],
+): PlanningReview {
 	if (text === null) return { exists: false, complete: false, dismissals: [], amendments: [] };
 	const read = planReviewAnswers(text);
+	// The review records the hash of the documents it read (`read:`); another hash, or none,
+	// means it was not a read of the plan as it stands.
+	const recorded = matter(text).data.read;
 	return {
 		exists: true,
 		complete: planReviewState(text) === "answered",
+		stale: recorded !== documentsHash,
 		dismissals: read.dismissals,
 		amendments: read.amendments,
+		briefChanges,
 	};
 }
 
@@ -203,7 +217,11 @@ export async function readPlanningState(
 		contractOk: contract.ok,
 		unapprovedLooks: brief === null ? [] : await deps.unapprovedLooks(root, brief),
 		blocker: blockerIn(testPlan) ?? blockerIn(adr) ?? blockerIn(impl) ?? blockerIn(reviewText),
-		review: readReview(reviewText),
+		review: readReview(
+			reviewText,
+			planReviewHash({ brief, testPlan, adr, impl }),
+			(await deps.briefChanges?.(dir)) ?? [],
+		),
 		briefStatus: typeof briefStatus === "string" ? briefStatus : null,
 		// A bare timestamp is a Date to YAML; `acceptBrief` quotes it, a hand edit may not.
 		acceptedAt:

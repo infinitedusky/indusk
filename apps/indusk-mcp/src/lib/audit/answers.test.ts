@@ -130,3 +130,72 @@ describe("describeAnswers", () => {
 		]);
 	});
 });
+
+/**
+ * Build Phase 8 (the findings the audit left open).
+ * clause: an-audit-concern-gets-a-solution/an-audit-teaches — A34
+ * clause: an-audit-concern-gets-a-solution/the-audit-finds — A35
+ * clause: an-audit-concern-gets-a-solution/the-plan-answers — A40
+ * clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval — A41
+ */
+describe("Build Phase 8 — the reader holds the shapes a model reader writes", () => {
+	const answered = "- `a.ts:3` — x\n  - breaks when: y\n  - answer: nothing — fine";
+	const withCauses = (cause: string) =>
+		`${audit(answered)}\n## What let these through?\n${cause}\n`;
+
+	it("A34 — a cause naming no findings or no highlight is incomplete; a full one and a no-gap line pass", () => {
+		const bad = [
+			"",
+			"- the readers were tested on one shape",
+			"- the readers were tested on one shape — findings: a.ts:3",
+			"- the readers were tested on one shape — highlight: h-1",
+			"- no process gap",
+		];
+		for (const cause of bad) expect(readAuditAnswers(withCauses(cause)).missingCauses).toBe(true);
+		for (const cause of [
+			"- the readers were tested on one shape — findings: a.ts:3 — highlight: h-1",
+			"- no process gap — a one-off slip",
+		]) {
+			expect(readAuditAnswers(withCauses(cause)).missingCauses).toBe(false);
+		}
+	});
+
+	it("A35 — a finding written as a star or numbered item is a finding, so an unanswered one is refused", () => {
+		for (const marker of ["* ", "1. "]) {
+			const r = readAuditAnswers(audit(`${marker}\`a.ts:3\` — x\n  - breaks when: y`));
+			expect(r.findings).toHaveLength(1);
+			expect(r.unanswered).toHaveLength(1);
+		}
+	});
+
+	it("A40 — a clause named with trailing punctuation is read without it", () => {
+		const clauses = new Set(["a-x/holds"]);
+		for (const tail of [".", ",", ";", ":", ")"]) {
+			const r = readAuditAnswers(
+				audit(
+					`- \`a.ts:3\` — x\n  - breaks when: y\n  - answer: signal — inv; here; daily; clause: a-x/holds${tail}`,
+				),
+				{ clauses },
+			);
+			expect(r.noClause, tail).toEqual([]);
+		}
+	});
+
+	it("A41 — a signal answer in a plan review is refused, naming the finding", () => {
+		const q = PLAN_REVIEW_QUESTIONS.map((x, i) =>
+			i === 0
+				? `## ${x}\n- \`impl.md:3\` — x\n  - breaks when: y\n  - answer: signal — inv; here; daily; clause: a-x/holds\n`
+				: `## ${x}\n- nothing\n`,
+		).join("\n");
+		const r = readAuditAnswers(q, { questions: PLAN_REVIEW_QUESTIONS });
+		expect(r.refusedSignal.map((f) => f.finding)).toEqual(["`impl.md:3` — x"]);
+		expect(describeAnswers(r, "plan-review.md").open.join("\n")).toContain("impl.md:3");
+		// an audit still takes a signal answer
+		const a = readAuditAnswers(
+			audit(
+				"- `a.ts:3` — x\n  - breaks when: y\n  - answer: signal — inv; here; daily; clause: a-x/holds",
+			),
+		);
+		expect(a.refusedSignal).toEqual([]);
+	});
+});

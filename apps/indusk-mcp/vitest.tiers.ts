@@ -133,6 +133,7 @@ export const SYSTEM = [
 	"src/__tests__/plans-accept-stories.test.ts",
 	"src/__tests__/plans-approve-looks.test.ts",
 	"src/__tests__/plans-approve.test.ts",
+	"src/__tests__/plans-audit-answers.test.ts",
 	"src/__tests__/plans-audit-inputs.test.ts",
 	"src/__tests__/plans-land.test.ts",
 	"src/__tests__/plans-model.test.ts",

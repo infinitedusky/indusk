@@ -105,6 +105,7 @@ async function depsFor(project: string, plan: string, state: BuildState) {
   return {
     root,
     deps: {
+      signals: { root, plan },
       read: () => readBuildPlan(root, plan),
       run: timedStep(
         async (step: BuildStepName, phase?: string, reason?: ShortenReason) => {
@@ -397,6 +398,7 @@ export async function startPlanning(
   const releasePlace = free;
   const location = where;
   void runPlanning({
+    signals: { root, plan },
     read: () => readPlanningState(root, plan),
     run: timedStep(
       async (step: PlanningStep) => {
