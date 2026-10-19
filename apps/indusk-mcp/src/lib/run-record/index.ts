@@ -7,6 +7,7 @@
 export { type PsRow, psAll, realProcessReads } from "../process-identity.js";
 export {
 	type GitReads,
+	landedAsker,
 	landedOnMain,
 	landingSubject,
 	NOT_ON_MAIN,

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { Tracer } from "@opentelemetry/api";
 import { isAnswered } from "../audit/answers.js";
 import { planReviewHash } from "../audit/review-hash.js";
+import { getTrunkBranches } from "../config.js";
 import { planReviewAnswers } from "../plans/plan-review.js";
 import type { PsRow } from "../process-identity.js";
 import { type ClauseVerdict, writeClauseSignals } from "../promises/clause-signal.js";
@@ -82,16 +83,32 @@ export const reportShowsWhereItIs = (
 	tracer?: Tracer,
 ) => report(root, "run.shown-phase", input.plan, judgeShowsWhereItIs(input), tracer);
 
-/** The merge commits' subjects on the checked-out trunk, by a plain `git log` and nothing of the package's. */
+/**
+ * The merge commits' subjects on the trunk branches that exist (`main`, `master`, or the
+ * project's `trunk_guard` list), by plain `git log`s and nothing of the landing reader's: the
+ * root checkout may be on another branch, and a landing is on the trunk, not on HEAD (A94).
+ * With no trunk branch at all, HEAD's.
+ */
 export function trunkMergeSubjects(root: string): string[] {
-	try {
-		return execFileSync("git", ["log", "HEAD", "--merges", "--format=%s"], {
+	const log = (ref: string): string[] =>
+		execFileSync("git", ["log", ref, "--merges", "--format=%s"], {
 			cwd: root,
 			encoding: "utf-8",
 			stdio: ["ignore", "pipe", "ignore"],
 		})
 			.split("\n")
 			.filter(Boolean);
+	const out: string[] = [];
+	for (const branch of getTrunkBranches(root)) {
+		try {
+			out.push(...log(`refs/heads/${branch}`));
+		} catch {
+			// no such branch here
+		}
+	}
+	if (out.length > 0) return out;
+	try {
+		return log("HEAD");
 	} catch {
 		return [];
 	}

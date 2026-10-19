@@ -1,4 +1,11 @@
 import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { getTrunkBranches } from "../config.js";
+import { findPlanFolder } from "../promises/plan-folder.js";
+import { pickTrunk } from "../trunk-branch.js";
+import { isWorkbench } from "../worktree/repos.js";
+import { chooseCodeRepo, codeRepoBase, PLAN_CODE_FILE } from "../worktree/roots.js";
 import { PROCESS_GONE } from "./liveness.js";
 
 /**
@@ -64,12 +71,7 @@ export function releaseOutcome(input: {
 
 /** Real reads of the repository at `root`. */
 export function realGitReads(root: string): GitReads {
-	const run = (...args: string[]): string =>
-		execFileSync("git", args, {
-			cwd: root,
-			encoding: "utf-8",
-			stdio: ["ignore", "pipe", "ignore"],
-		});
+	const run = gitIn(root);
 	return {
 		mergeSubjects: (trunk) =>
 			run("log", trunk, "--merges", "--format=%s").split("\n").filter(Boolean),
@@ -84,19 +86,99 @@ export function realGitReads(root: string): GitReads {
 	};
 }
 
-/**
- * Whether `plan` is on the project's trunk now, read from the trunk checkout at `root`: the
- * checkout's own branch is where `plans land` merges, so that is the history asked.
- */
-export function planLandedOnMain(root: string, plan: string): boolean {
-	try {
-		const branch = execFileSync("git", ["branch", "--show-current"], {
+function gitIn(root: string): (...args: string[]) => string {
+	return (...args) =>
+		execFileSync("git", args, {
 			cwd: root,
 			encoding: "utf-8",
 			stdio: ["ignore", "pipe", "ignore"],
-		}).trim();
-		return landedOnMain(branch || "HEAD", plan, realGitReads(root));
+		});
+}
+
+/**
+ * The trunk of the repository at `root`, among `allowed`: the checked-out branch when it is a
+ * trunk branch, else the first that exists (`pickTrunk`); with none, the checkout's own branch.
+ */
+function trunkOf(root: string, allowed: readonly string[]): string {
+	const run = gitIn(root);
+	let current = "";
+	try {
+		current = run("branch", "--show-current").trim();
 	} catch {
-		return false;
+		// not a repository: the reads below fail and say not landed
 	}
+	const exists = (b: string) => {
+		try {
+			run("rev-parse", "--verify", "--quiet", `refs/heads/${b}`);
+			return true;
+		} catch {
+			return false;
+		}
+	};
+	return pickTrunk(current, allowed, exists) ?? (current || "HEAD");
+}
+
+/** The code repository a workbench plan's `code.json` names, with its trunk; null for any other plan. */
+function codeRepoOf(root: string, plan: string): { dir: string; trunk: string } | null {
+	if (!isWorkbench(root)) return null;
+	const folder = findPlanFolder(root, plan);
+	if (folder === null) return null;
+	const path = join(folder, PLAN_CODE_FILE);
+	if (!existsSync(path)) return null;
+	let repo: unknown;
+	try {
+		repo = (JSON.parse(readFileSync(path, "utf-8")) as { repo?: unknown }).repo;
+	} catch {
+		return null;
+	}
+	// The worktree `code.json` names is removed at landing, so only the repo is read here.
+	const chosen = chooseCodeRepo(root, typeof repo === "string" ? repo : undefined);
+	if ("error" in chosen) return null;
+	const base = codeRepoBase(root, chosen.name);
+	return { dir: chosen.dir, trunk: trunkOf(chosen.dir, base ? [base] : getTrunkBranches(root)) };
+}
+
+/**
+ * Whether each plan is on the project's trunk now, asked of the trunk branch, never of the
+ * branch the root checkout happens to be on (A94), and for a workbench plan of the code
+ * repository its landing merged into, its documents' archive folder still read at the root
+ * (A95). The trunk's merge subjects are read once per repository, so the nav's many plans cost
+ * one log each.
+ */
+export function landedAsker(root: string): (plan: string) => boolean {
+	let rootTrunk: string | null = null;
+	const subjects = new Map<string, string[]>();
+	const cached = (dir: string, trunk: string): GitReads => {
+		const git = realGitReads(dir);
+		return {
+			mergeSubjects: (t) => {
+				const key = `${dir}\0${t}`;
+				let got = subjects.get(key);
+				if (got === undefined) {
+					got = git.mergeSubjects(t);
+					subjects.set(key, got);
+				}
+				return got;
+			},
+			hasPath: git.hasPath,
+		};
+	};
+	return (plan) => {
+		try {
+			rootTrunk ??= trunkOf(root, getTrunkBranches(root));
+			if (landedOnMain(rootTrunk, plan, cached(root, rootTrunk))) return true;
+			const code = codeRepoOf(root, plan);
+			if (code === null) return false;
+			return cached(code.dir, code.trunk)
+				.mergeSubjects(code.trunk)
+				.some((s) => isLandingOf(s, plan));
+		} catch {
+			return false;
+		}
+	};
+}
+
+/** Whether `plan` is on the project's trunk now (`landedAsker`, for one plan). */
+export function planLandedOnMain(root: string, plan: string): boolean {
+	return landedAsker(root)(plan);
 }
