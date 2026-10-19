@@ -43,7 +43,7 @@ export function rowsNamingIn(
 }
 
 /** The rows that say they prove `clause` (`clause: <promise>/<clause>`): the ones closing asks for a passing state and a test file. */
-export function rowsProvingClause(rows: readonly NamingRow[], clause: string): NamingRow[] {
+export function rowsProvingClause<R extends NamingRow>(rows: readonly R[], clause: string): R[] {
 	return rows.filter((r) => r.clauses?.includes(clause));
 }
 

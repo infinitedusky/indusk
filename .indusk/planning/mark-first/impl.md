@@ -541,18 +541,20 @@ promise and the clause first, with the plan and phase that added the signal as a
 pointer, and lets a person go from the incident to the clause's tests and its
 signal's emit place. It finishes the break path that Build Phase 1 started.
 
-- [ ] Make the incident name the promise and the clause, and the plan and phase as a pointer.
+- [x] Make the incident name the promise and the clause, and the plan and phase as a pointer.
   <details><summary>Technical</summary>
 
   `incidentText`/`recordViolations` in `lib/promises/incidents.ts` take `clause` and `pointer` (from the break event's `indusk.clause` and `indusk.signal.plan`/`phase`); frontmatter `clause:`, a "Signal" line naming `promise/clause`, the pointer second; a promise with no clause writes what it writes today (A27).
 
   </details>
-- [ ] Make the incident reach the clause's tests and the place that emits its signal.
+Done: `MarkedSpan` gains `signal` (`parseMarkedSpan` reads `indusk.signal.plan`/`phase` off the violated event); `incidentText` takes `clause` and `pointer`, writes frontmatter `clause:` and a `Signal: promise/clause — added by plan …` line ahead of the symptom. **Decision D-21:** the clause and pointer come from the newest violation of the pass; a clause arrived on a span, so it is written plain only when it is a registry-style name, else quoted on one line (it can never add a frontmatter key). An open incident that is extended keeps the clause it was opened with.
+- [x] Make the incident reach the clause's tests and the place that emits its signal.
   <details><summary>Technical</summary>
 
   `provenBy` lists the rows and files that carry `clause: <promise>/<clause>` (through `rowsProvingClause`) and the files that emit the signal (the token scan `citations.ts` already runs), under "Proven by"; no search by file name (A18).
 
   </details>
+Done in the same commit (one function, `provenBy`): with a clause it lists only the rows that prove that clause (`rowsProvingClause`, made generic so the plan stays on the row), then "The signal is emitted at: …". **Decision D-22:** the emit place is the promise's registry `sites` that carry the clause's token, or all its readable sites when none does; no repository scan, because `provenBy` is synchronous and the registry already declares sites (a signal emitted from a file no `sites` names is not reachable from the incident). Paths are read under the plan root and pass `isUsableRelPath`.
 - [ ] Make the recorder open an incident from a clause's break.
   <details><summary>Technical</summary>
 

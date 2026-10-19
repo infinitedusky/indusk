@@ -3,6 +3,7 @@ import { daemonMetaPath, resolveLocalDaemonHere } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
 import {
 	APP_RESOURCE_KEYS,
+	APP_SIGNAL_KEYS,
 	ENVIRONMENT_ATTRIBUTE,
 	LOOK_MARK,
 	PROMISE_MARK,
@@ -58,6 +59,8 @@ export interface MarkedSpan {
 	look?: LookKey;
 	/** The clause of the promise this signal concerns (`indusk.clause`); absent when the span names none. */
 	clause?: string;
+	/** The plan and phase that added the signal, read from a break's event; absent when it named none. */
+	signal?: { plan: string; phase: string };
 }
 
 /** The app, screen, state and device a look check's span names. */
@@ -255,10 +258,14 @@ export function parseMarkedSpan(
 	const environment =
 		tag(span.tags, ENVIRONMENT_ATTRIBUTE) ?? tag(processTags, ENVIRONMENT_ATTRIBUTE);
 	let symptom: string | null = null;
+	let signal: MarkedSpan["signal"];
 	for (const log of span.logs ?? []) {
 		if (tag(log.fields, "event") !== PROMISE_MARK.violatedEvent) continue;
 		const s = tag(log.fields, PROMISE_MARK.symptom);
 		if (typeof s === "string") symptom = s;
+		const plan = tag(log.fields, APP_SIGNAL_KEYS.plan);
+		const phase = tag(log.fields, APP_SIGNAL_KEYS.phase);
+		if (typeof plan === "string" && typeof phase === "string") signal = { plan, phase };
 	}
 	const look = lookOf(span.tags);
 	const clause = tag(span.tags, PROMISE_MARK.clause);
@@ -274,6 +281,7 @@ export function parseMarkedSpan(
 		environment: typeof environment === "string" ? environment : null,
 		...(look ? { look } : {}),
 		...(typeof clause === "string" ? { clause } : {}),
+		...(signal ? { signal } : {}),
 	};
 }
 

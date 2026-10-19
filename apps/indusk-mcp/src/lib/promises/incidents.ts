@@ -1,9 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import matter from "gray-matter";
+import { isUsableRelPath } from "../path-segment.js";
+import { clauseTokenPattern } from "../tokens.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import type { IncidentEntry, PromiseEntry, Registry } from "./registry.js";
-import { rowsNaming } from "./rows.js";
+import { rowsNaming, rowsProvingClause } from "./rows.js";
 import type { MarkedSpan } from "./telemetry.js";
 import {
 	INCIDENTS_SUBDIR,
@@ -101,12 +103,15 @@ export function oneLine(value: string): string {
  *
  * promise: an-incident-names-its-tests
  */
-export function provenBy(planRoot: string, promise: PromiseEntry): string {
-	const { rows, unreadable } = rowsNaming(planRoot, promise);
+export function provenBy(planRoot: string, promise: PromiseEntry, clause?: string): string {
+	const { rows: all, unreadable } = rowsNaming(planRoot, promise);
+	// A broken clause is vouched for by the rows that name that clause; the
+	// promise's other rows are not the ones that failed to catch it (A18).
+	const rows = clause ? rowsProvingClause(all, clause) : all;
 	const lines =
 		rows.length === 0
 			? [
-					`No test row names this promise, so no plan says which test proves it. ${
+					`No test row names this ${clause ? "clause" : "promise"}, so no plan says which test proves it. ${
 						promise.tests.length > 0
 							? `Its registry entry lists as tests: ${promise.tests.join(", ")}.`
 							: "Its registry entry lists no test either."
@@ -116,6 +121,12 @@ export function provenBy(planRoot: string, promise: PromiseEntry): string {
 					(r) =>
 						`- \`${r.plan}\` row ${r.id} — ${r.state}${r.tests.length > 0 ? ` (${r.tests.join(", ")})` : ""}`,
 				);
+	if (clause) {
+		const emits = signalEmitters(planRoot, promise, clause);
+		if (emits.length > 0) {
+			lines.push("", `The signal is emitted at: ${emits.map((f) => `\`${f}\``).join(", ")}.`);
+		}
+	}
 	if (unreadable.length > 0) {
 		lines.push(
 			"",
@@ -123,6 +134,35 @@ export function provenBy(planRoot: string, promise: PromiseEntry): string {
 		);
 	}
 	return lines.join("\n");
+}
+
+/**
+ * The files that emit a clause's signal: the promise's declared `sites` that
+ * carry the clause's token, or all of its sites when none does (a site that
+ * emits one signal for the promise's every clause names none). A site that
+ * cannot be read is left out, never guessed.
+ */
+function signalEmitters(planRoot: string, promise: PromiseEntry, clause: string): string[] {
+	const readable = promise.sites.filter((rel) => {
+		if (!isUsableRelPath(rel)) return false;
+		const abs = join(planRoot, rel);
+		return existsSync(abs) && statSync(abs).isFile();
+	});
+	const names = [promise.name, ...promise.aliases];
+	const naming = readable.filter((rel) => {
+		const text = readFileSync(join(planRoot, rel), "utf-8");
+		return names.some((n) => clauseTokenPattern(n, clause).test(text));
+	});
+	return naming.length > 0 ? naming : readable;
+}
+
+/**
+ * A clause name as a frontmatter value. It arrived on a span, so it is
+ * written plain only when it is a name the registry could hold; anything else
+ * is quoted on one line, never able to add a key.
+ */
+function clauseScalar(clause: string): string {
+	return /^[a-z0-9][a-z0-9-]*$/.test(clause) ? clause : JSON.stringify(oneLine(clause));
 }
 
 /** The section of a release's incident that names what may have caused it (ADR D9). */
@@ -146,10 +186,15 @@ export function incidentText(o: {
 	suspects?: string;
 	/** The rows that were proving the promise, as `provenBy` writes them. */
 	provenBy: string;
+	/** The clause that broke, when the break named one; the incident is keyed by `promise/clause`. */
+	clause?: string;
+	/** The plan and phase that added the clause's signal, when the break named them: a pointer, second to the clause. */
+	pointer?: { plan: string; phase: string };
 }): string {
 	const frontmatter = [
 		`id: ${o.id}`,
 		`promise: ${o.promise}`,
+		...(o.clause ? [`clause: ${clauseScalar(o.clause)}`] : []),
 		`source: ${o.source}`,
 		...(o.environment ? [`environment: ${JSON.stringify(oneLine(o.environment))}`] : []),
 		"status: open",
@@ -159,7 +204,14 @@ export function incidentText(o: {
 		...o.evidence,
 	];
 	const suspects = o.suspects ? `## ${SUSPECTS}\n\n${o.suspects}\n\n` : "";
-	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${oneLine(o.symptom)}\n\n${suspects}## Proven by\n\n${o.provenBy}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
+	const signal = o.clause
+		? `Signal: \`${o.promise}/${oneLine(o.clause)}\`${
+				o.pointer
+					? ` — added by plan \`${oneLine(o.pointer.plan)}\`, ${oneLine(o.pointer.phase)}`
+					: ""
+			}\n\n`
+		: "";
+	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${signal}${oneLine(o.symptom)}\n\n${suspects}## Proven by\n\n${o.provenBy}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
 }
 
 /**
@@ -215,7 +267,9 @@ export function recordViolations(
 			// that names the wrong one sends a person to the wrong logs.
 			environment: newest.environment,
 			// The registry directory is `<plan root>/.indusk/promises`.
-			provenBy: provenBy(resolve(registry.dir, "..", ".."), promise),
+			provenBy: provenBy(resolve(registry.dir, "..", ".."), promise, newest.clause),
+			...(newest.clause ? { clause: newest.clause } : {}),
+			...(newest.clause && newest.signal ? { pointer: newest.signal } : {}),
 		}),
 	);
 	ensurePromiseCarries(registry, promise, id);
