@@ -22,6 +22,7 @@ An unattended session asks each choice the plan does not settle as a question th
 ### In Scope
 
 - One question record (options, recommendation and reason, stated and effective cost, stored deadline, state, answer, what was done, follow-on link), carried on the existing session `question` event and kept in the plan's history.
+- A structured `ask_decision` tool on the indusk MCP server, the only channel that can carry a recommendation, a reason, a cost and what an option changes; the build path (`lib/build/build-session.ts`) taking it and no longer refusing every question.
 - The admin raising a question to expensive from what its options declare they change; the timer sweep; stop-and-free-the-slot and resume for expensive ones.
 - The follow-on plan opened by a late disagreeing answer, and the release refusal that names it.
 - A save-time check that refuses "decided unattended" with no question reference.
@@ -53,7 +54,7 @@ An unattended session asks each choice the plan does not settle as a question th
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | T1 | A question with fewer than two options, no recommendation, no reason, or a cost other than cheap / moderate / expensive is refused with what is missing; an empty reply is not an answer | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-mcp/src/lib/questions/record.test.ts |
 | T2 | A question an unattended session asks appears on the plan's page with its options, the recommended one marked with its reason, and its cost | Build Phase 5 | Build Phase 5 | planned | contract | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-admin/src/__tests__/question-row.test.tsx |
-| T3 | A document saved by an unattended run that records a choice as decided unattended with no question reference is refused naming the line; the same line with a reference saves; review and acceptance lines are not checked | Test Phase 1 | Build Phase 4 | planned | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts |
+| T3 | A document saved by an unattended run that records a choice as decided unattended with no question reference is refused naming the line; the same line with a reference to a question that exists in the plan's record saves, and a made-up id is refused; review and acceptance lines are not checked | Test Phase 1 | Build Phase 4 | planned | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts |
 | T4 | A cheap question goes ahead at five minutes, not at four (where an answer is used); a moderate one at an hour, not at five minutes | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-cost-sets-the-wait/cheap-and-moderate-go-ahead | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
 | T5 | The deadline is a stored time: a question read after the admin was down goes ahead on that read, and a restart never gives it more time | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-cost-sets-the-wait/cheap-and-moderate-go-ahead | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
 | T6 | A question that went ahead says so on its row: what was done and when | Build Phase 5 | Build Phase 5 | planned | contract | clause: the-cost-sets-the-wait/cheap-and-moderate-go-ahead | apps/indusk-admin/src/__tests__/question-row.test.tsx |
@@ -70,9 +71,11 @@ An unattended session asks each choice the plan does not settle as a question th
 | T17 | A late answer that changes the brief still stops for re-approval, and no timer however long approves a brief, test plan, look or ADR | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-change-to-what-was-agreed-needs-the-person, promise: only-a-person-reapproves | apps/indusk-mcp/src/lib/questions/approval-guard.test.ts |
 | T18 | A plan with questions open is no more or less accepted than the same plan without; a failure no promise claims still opens its bugfix plan, with the follow-on opened beside it | Build Phase 3 | Build Phase 3 | planned | unit | promise: nothing-ships-until-accepted, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/lib/questions/beside-bugfix.test.ts |
 | T19 | A conversation session with the person present asks as it does today, with no cost and no timer | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: the brief leaves planning conversations out | apps/indusk-mcp/src/lib/session/conversation-question.test.ts |
-| T20 | A real unattended run that asks a cheap question and is left alone continues after five minutes; one stopped by an expensive question finishes its phase using the answer given in the admin; the plan is under Needs you meanwhile; and every choice the planning run records has a question on the page | Build Phase 5 | Build Phase 5 | planned | live check | promise: decisions-wait-in-one-place, promise: a-build-runs-to-review-unasked, clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/__tests__/system/questions-live.tiers.test.ts |
-| T21 | `indusk release` run in a real repository with an open follow-on refuses before any publish step | Test Phase 1 | Build Phase 3 | planned | live check | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/__tests__/system/release-follow-on.tiers.test.ts |
-| T22 | The three question rows and the changed decision card render as the approved looks, held by value in Chromium: cheap with time left and a reply, expensive in red with no timer, went-ahead with a late-answer offer; a plan waiting on an expensive question sits under Needs you as any wait | Build Phase 5 | Build Phase 5 | planned | live check | look: question-row.cheap, look: question-row.expensive, look: question-row.went-ahead, look: plan.needs-you, look: nav.expanded | apps/indusk-admin/src/__tests__/question-looks.tiers.test.ts |
+| T20 | A real unattended run that asks a cheap question and is left alone continues after five minutes; one stopped by an expensive question finishes its phase using the answer given in the admin; the plan is under Needs you meanwhile; and every choice the planning run records has a question on the page | Build Phase 5 | Build Phase 5 | planned | live check | promise: decisions-wait-in-one-place, promise: a-build-runs-to-review-unasked, clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/__tests__/questions-live.test.ts |
+| T21 | `indusk release` run in a real repository with an open follow-on refuses before any publish step | Test Phase 1 | Build Phase 3 | planned | live check | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/__tests__/release-follow-on.test.ts |
+| T22 | The three question rows and the changed decision card render as the approved looks, held by value in Chromium: cheap with time left and a reply, expensive in red with no timer, went-ahead with a late-answer offer; a plan waiting on an expensive question sits under Needs you as any wait | Build Phase 5 | Build Phase 5 | planned | live check | look: question-row.cheap, look: question-row.expensive, look: question-row.went-ahead, look: plan.needs-you, look: nav.expanded | apps/indusk-admin/src/__tests__/question-looks.test.ts |
+| T23 | The sweep sends a due cheap or moderate question's session on with its recommendation and marks it went-ahead with the time and what was done; it leaves an expensive question, and a cheap one raised to expensive, waiting however long they are left | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-cost-sets-the-wait/cheap-and-moderate-go-ahead, clause: what-was-agreed-is-never-cheap/never-timed-out | apps/indusk-mcp/src/lib/questions/sweep.test.ts |
+| T24 | A plan carrying `follow_on_of` is never moved to the archive by the dead-draft sweep however old and untouched, so the release keeps refusing until a person closes it | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/lib/planning/archive-dead-follow-on.test.ts |
 
 ## Checklist
 
@@ -91,7 +94,7 @@ This phase writes the tests whose subject exists today and so can fail on an ass
 - [ ] Write the save-time check's test and the live release check, and see both fail on their own assertions.
   <details><summary>Technical</summary>
 
-  T3 in `apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts`: spawns `hooks/validate-decided-unattended.js` (does not exist yet, so authoring it as a spawn of the path makes the test fail on a missing-script assertion, not on a load error) with a Write payload containing "decided unattended" and no `question:` reference; expects exit 2 naming the line. T21 in the system tier (`vitest.tiers.ts` picks up `*.tiers.test.ts`): makes a temp repo with a plan whose frontmatter carries `follow_on_of: q-1` and status `draft`, runs `indusk release --dry-run`, expects a refusal naming the plan; today it does not refuse.
+  T3 in `apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts`: spawns `hooks/validate-decided-unattended.js` (does not exist yet, so authoring it as a spawn of the path makes the test fail on a missing-script assertion, not on a load error) with a Write payload containing "decided unattended" and no `question:` reference; expects exit 2 naming the line. T21 (`src/__tests__/release-follow-on.test.ts`, listed in the `SYSTEM` array of `vitest.tiers.ts`, which is an explicit file list): makes a temp repo with a plan whose frontmatter carries `follow_on_of: q-1` and status `draft`, runs the follow-on refusal step the release calls (`indusk release` has no dry-run option, and none is added), expects a refusal naming the plan; today no such step exists.
 
   </details>
 - [ ] Write the two guards and see them pass.
@@ -168,8 +171,32 @@ This phase writes the tests whose subject exists today and so can fail on an ass
   });
   ```
 
+- **T23** — the sweep, `lib/questions/sweep.ts`, is a new module. Body reviewed:
+
+  ```typescript
+  import { describe, expect, it } from "vitest";
+  import { sweep } from "./sweep.js";
+
+  describe("sweep", () => {
+    it("T23 — goes ahead on due timed questions only", () => {
+      const sent: string[] = [];
+      const now = Date.parse("2026-10-19T12:00:00Z");
+      const qs = [
+        waiting({ id: "c", cost: "cheap", askedAt: now - 6 * 60_000 }),
+        waiting({ id: "r", cost: "cheap", askedAt: now - 6 * 60_000, options: [opt("a", ["look"]), opt("b")] }),
+        waiting({ id: "e", cost: "expensive", askedAt: 0 }),
+      ];
+      const out = sweep(qs, now, (q, choice) => sent.push(`${q.id}:${choice}`));
+      expect(sent).toEqual(["c:a"]);
+      expect(out.find((q) => q.id === "c")?.state).toBe("went-ahead");
+      expect(out.filter((q) => q.state === "waiting").map((q) => q.id)).toEqual(["r", "e"]);
+    });
+  });
+  ```
+
 #### Deferred to Build Phase 3
 
+- **T24** — `lib/planning/archive-dead.ts` skipping a plan with `follow_on_of`; the fixture is a follow-on brief that is old and untouched, expected to stay out of `archived`; it is a new test beside an existing module, written in Build Phase 3 with the change.
 - **T12, T15, T17, T18** — their subjects, the follow-on opener (`lib/questions/follow-on.ts`) and the release refusal (`lib/release/follow-on-refusal.ts`), are new modules. Body reviewed:
 
   ```typescript
@@ -302,6 +329,12 @@ This phase adds the one module that knows what a question is: the record, the re
 
 This phase connects the record to running sessions. An unattended session's question becomes a record; an expensive one stops the session and releases its slot; the person's answer resumes it; and the admin's sweep sends a cheap or moderate question's session on with its recommendation once the stored deadline has passed.
 
+- [ ] Add the structured `ask_decision` tool and let its request become a question record, in builds as well as admin sessions.
+  <details><summary>Technical</summary>
+
+  A tool on the indusk MCP server taking the record's fields (options with `changes`, `recommended`, `reason`, `cost`); `lib/session/protocol.ts` `controlRequestEvents` turns a `can_use_tool` for it into the `question` event; `lib/build/build-session.ts` (line ~167, which answers every question with `refuseBuildQuestion`) records it instead, and its prompt (line 36, "nobody will answer a question") is rewritten to say a choice is asked with `ask_decision` and cheap ones go ahead; `lib/session/permissions.ts` `refuseBuildQuestion` now refuses a plain `AskUserQuestion` naming `ask_decision`; update `build-session-gates.test.ts` and `protocol.test.ts`, which pin the old refusal (ADR decision 12). First check whether a stopped build can be resumed with the answer (Notes 8).
+
+  </details>
 - [ ] Let an unattended session's question carry its options, recommendation, reason and cost, and leave a conversation session's question as it is.
   <details><summary>Technical</summary>
 
@@ -317,7 +350,7 @@ This phase connects the record to running sessions. An unattended session's ques
 - [ ] Add the sweep that sends a due cheap or moderate question's session on with its recommendation, marks it as gone ahead with the time and what was done, and runs on every admin read.
   <details><summary>Technical</summary>
 
-  `lib/questions/sweep.ts` called from the admin's recorder loop (`lib/admin/recorder-loop.ts`) and on each read of a plan's questions; uses `isDue` against the stored `dueAt`; sets state `went-ahead`; never acts on an expensive question; never approves anything (T17).
+  `lib/questions/sweep.ts` (T23) called from the admin's recorder loop (`lib/admin/recorder-loop.ts`) and on each read of a plan's questions; uses `isDue` against the stored `dueAt`; sets state `went-ahead`; never acts on an expensive question; never approves anything (T17).
 
   </details>
 - [ ] Rewrite the promise that says when a build stops, so it names an expensive question.
@@ -338,7 +371,7 @@ This phase connects the record to running sessions. An unattended session's ques
 - [ ] The stop, slot and resume tests pass, and the conversation guard still does.
   <details><summary>Technical</summary>
 
-  T7, T8, T10: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/session/question-wait.test.ts src/lib/session/conversation-question.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/session/protocol.ts src/lib/session/manager.ts src/lib/plans/waiting.ts`
+  T7, T8, T10, T23: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/session/question-wait.test.ts src/lib/questions/sweep.test.ts src/lib/session/conversation-question.test.ts src/__tests__/build-session-gates.test.ts src/lib/session/protocol.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/session/protocol.ts src/lib/session/manager.ts src/lib/plans/waiting.ts`
 
   </details>
 
@@ -364,7 +397,13 @@ This phase makes a wrong timed-out answer cost a plan instead of a stop: a late,
 - [ ] Write this phase's tests from the recorded bodies.
   <details><summary>Technical</summary>
 
-  T12, T15, T17, T18 in `lib/questions/{follow-on,approval-guard,beside-bugfix}.test.ts` and `lib/release/follow-on-refusal.test.ts`.
+  T12, T15, T17, T18, T24 in `lib/questions/{follow-on,approval-guard,beside-bugfix}.test.ts`, `lib/release/follow-on-refusal.test.ts` and `lib/planning/archive-dead-follow-on.test.ts`.
+
+  </details>
+- [ ] Keep a follow-on out of the dead-draft sweep.
+  <details><summary>Technical</summary>
+
+  `lib/planning/archive-dead.ts`: a plan whose brief carries `follow_on_of` is never listed as dead (T24; ADR decision 13).
 
   </details>
 - [ ] Add the opener that makes one draft follow-on plan for a late, differing answer and links it from the question.
@@ -391,13 +430,13 @@ This phase makes a wrong timed-out answer cost a plan instead of a stop: a late,
 - [ ] The follow-on and release tests pass and landing's guard still does.
   <details><summary>Technical</summary>
 
-  T12, T15, T17, T18, T16: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/questions src/lib/release/follow-on-refusal.test.ts src/lib/plans/land-follow-on.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/questions/follow-on.ts src/lib/release/run.ts src/lib/build/release-config.ts`
+  T12, T15, T17, T18, T24, T16: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/questions src/lib/release/follow-on-refusal.test.ts src/lib/planning/archive-dead-follow-on.test.ts src/lib/plans/land-follow-on.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/questions/follow-on.ts src/lib/release/run.ts src/lib/build/release-config.ts`
 
   </details>
 - [ ] The release check against a real repository passes.
   <details><summary>Technical</summary>
 
-  T21 passes in the system tier (`pnpm test:system`), run once at landing and never in the phase loop.
+  T21 passes in the system tier (`pnpm test:system`), run once at landing and never in the phase loop; its file is added to the `SYSTEM` array in `vitest.tiers.ts`.
 
   </details>
 
@@ -428,7 +467,7 @@ This phase makes the rule that a choice is always a question something the syste
 - [ ] Add the check that refuses a saved document recording a choice as decided unattended with no question reference.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/hooks/validate-decided-unattended.js`, registered with the other PreToolUse write hooks by the same path `init`/`update` install them: in a plan's documents during an unattended run (`INDUSK_GATE_POLICY=auto`), a line matching /decided unattended/i without `question: <id>` on the line or the next is refused (exit 2) naming file and line, with `lesson: choices-are-asked-as-questions` in the message. Review and acceptance text is not matched (T3). Hook rules: `hooks/CLAUDE.md`.
+  `apps/indusk-mcp/hooks/validate-decided-unattended.js`, registered with the other PreToolUse write hooks by the same path `init`/`update` install them: in a plan's documents during an unattended run (`INDUSK_GATE_POLICY=auto`), a line matching /decided unattended/i without `question: <id>` on the line or the next, or with an id the plan's question record does not hold, is refused (exit 2) naming file and line, with `lesson: choices-are-asked-as-questions` in the message. Review and acceptance text is not matched (T3). Hook rules: `hooks/CLAUDE.md`.
 
   </details>
 - [ ] Add the lesson the refusal names.
@@ -476,12 +515,12 @@ This phase makes the rule that a choice is always a question something the syste
 
 **Tier**: med — the work step's default
 
-This phase draws what the earlier phases keep: each open question as a row on the plan's decision card and under Needs you, the expensive ones first, with a reply in words, and the record of every question after it goes ahead. The three new looks are the mockups the person already approved or approves in the cockpit; the agent never approves one.
+This phase draws what the earlier phases keep: each open question as a row on the plan's decision card and under Needs you, the expensive ones first, with a reply in words, and the record of every question after it goes ahead. The three new looks are the mockups the person already approved in the cockpit; the agent never approves one.
 
 - [ ] Build the question row in its three states from the approved looks.
   <details><summary>Technical</summary>
 
-  `apps/indusk-admin/src/components/question-row.tsx`: `cheap` (question, recommendation, cost, time left, reply), `expensive` (red, no timer), `went-ahead` (what was done, and a late-answer offer that opens the follow-on). Values from the DTCG foundation, no raw values. Mockups: `.indusk/mockups/indusk-admin/screens/` (`question-row.went-ahead` is approved; the other two are approved in the cockpit before this phase is run).
+  `apps/indusk-admin/src/components/question-row.tsx`: `cheap` (question, recommendation, cost, time left, reply), `expensive` (red, no timer), `went-ahead` (what was done, and a late-answer offer that opens the follow-on). Values from the DTCG foundation, no raw values. Mockups: `.indusk/mockups/admin/screens/question-row.{cheap,expensive,went-ahead}.html`, all three recorded approved in `.indusk/mockups/admin/approved.json` (2026-10-19).
 
   </details>
 - [ ] Show every open question on the decision card, expensive first, and list a plan waiting on an expensive one under Needs you.
@@ -520,7 +559,7 @@ This phase draws what the earlier phases keep: each open question as a row on th
 - [ ] The looks are held and the live checks recorded.
   <details><summary>Technical</summary>
 
-  T22 (Chromium, by value) and T20 (a real unattended run) are system-tier; run once at landing, their result recorded in the plan, and never in the phase loop.
+  T22 (Chromium, by value) and T20 (a real unattended run) are system-tier, their files added to the `SYSTEM` list of the package's `vitest.tiers.ts` (the admin's, for T22); run once at landing, their result recorded in the plan, and never in the phase loop.
 
   </details>
 
@@ -589,7 +628,10 @@ This phase writes the pages the ADR's documentation plan names, so a person usin
 | File | Change |
 |------|--------|
 | `apps/indusk-mcp/src/lib/questions/` | new: record, cost, deadline, sweep, history, follow-on |
-| `apps/indusk-mcp/src/lib/session/{protocol,manager}.ts`, `question-wait.ts` | question fields on the event; stop, free, resume |
+| `apps/indusk-mcp/src/lib/session/{protocol,manager,permissions}.ts`, `question-wait.ts`, `lib/build/build-session.ts` | question fields on the event; the `ask_decision` tool; the build path records instead of refusing; stop, free, resume |
+| `apps/indusk-mcp/src/lib/planning/archive-dead.ts` | a follow-on is never dead-archived |
+| `apps/indusk-mcp/vitest.tiers.ts` (and the admin's) | the live checks listed in `SYSTEM` |
+| `build-session-gates.test.ts`, `lib/session/protocol.test.ts` | updated: they pinned the old refusal |
 | `apps/indusk-mcp/src/lib/plans/waiting.ts` | list a plan waiting on an expensive question with no timer |
 | `apps/indusk-mcp/src/lib/release/{run,follow-on-refusal}.ts`, `build/release-config.ts` | the refusal and its workflow step |
 | `apps/indusk-mcp/src/lib/config.ts` | the two wait keys |
@@ -602,7 +644,7 @@ This phase writes the pages the ADR's documentation plan names, so a person usin
 
 ## Dependencies
 
-- The three new looks approved in the cockpit before Build Phase 5 (`question-row.went-ahead` already is).
+- The three new looks approved in the cockpit before Build Phase 5: done, all three are in `approved.json`; a mockup edited later needs approving again.
 - None on another plan: `run-the-graph` narrows the hold later.
 
 ## Notes
@@ -611,8 +653,10 @@ Decisions made unattended (`INDUSK_GATE_POLICY=auto`), for the reviewer:
 
 1. **The follow-on is marked `follow_on_of: <plan>/<question-id>` in its brief's frontmatter.** Reason: the release needs to tell it from an ordinary plan (T15) and a frontmatter field is what every other plan-level fact uses. Alternative, a separate registry file, rejected as a second place to lose it.
 2. **The release refusal is its own named workflow step, `release_follow_on`, default on.** Reason: the ADR says a project whose main deploys moves it to the pull request; a named step is the existing way. Only the default is built.
-3. **Live checks live in the system tier as `*.tiers.test.ts`.** Reason: the slow tier never blocks landing or release (`/decisions/release-checks-run-once`). The file paths are my reading of the `vitest.tiers.ts` convention; confirm at Test Phase 1.
+3. **Live checks live in the system tier, by listing their files in `vitest.tiers.ts`'s `SYSTEM` array** (corrected by the plan review; there is no `*.tiers.test.ts` convention). Reason: the slow tier never blocks landing or release (`/decisions/release-checks-run-once`).
 4. **The hook matches only unattended runs.** Reason: a person present is asked, not checked (T19 guards that conversations are untouched).
 5. **T21 is written red in Test Phase 1 but not run there.** Reason: it spawns `indusk release` in a real repository, which belongs to the system tier.
 6. **Two exact-path assumptions to check when the phase starts:** the admin's plan page route and the `question-wait.ts` module name; if either differs, move the file, not the row.
 7. **Test plan assertions are consolidated into 22 rows** where several shared one level and one subject (the test plan's A-numbers are in the `Asserts` text, not the IDs).
+8. **Resume is unchecked.** A build session is one `claude -p` turn; I found no resume for it. At Build Phase 2, first look for one; if none, resume by starting a new session on the same worktree with the answer as its first message. Reason: the plan review could not confirm it (`plan-review.md`, finding 9).
+9. **Added by the plan review** (`plan-review.md`): `ask_decision` (ADR decision 12), the build path, the dead-draft exemption (ADR decision 13), T23, T24, the hook's id check, real tier paths, no dry-run flag, mockup paths.
