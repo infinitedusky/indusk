@@ -1,7 +1,7 @@
 ---
 title: "Decisions as questions"
 date: 2026-10-19
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -57,7 +57,7 @@ An unattended session asks each choice the plan does not settle as a question th
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | T1 | A question with fewer than two options, no recommendation, no reason, or a cost other than cheap / moderate / expensive is refused with what is missing; an empty reply is not an answer | Build Phase 1 | Build Phase 1 | planned | unit | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-mcp/src/lib/questions/record.test.ts |
 | T2 | A question an unattended session asks appears on the plan's page with its options, the recommended one marked with its reason, and its cost | Build Phase 5 | Build Phase 5 | planned | contract | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-admin/src/__tests__/question-row.test.tsx |
-| T3 | A document saved by an unattended run that records a choice as decided unattended with no question reference is refused naming the line; the same line with a reference to a question that exists in the plan's record saves, and a made-up id is refused; review and acceptance lines are not checked | Test Phase 1 | Build Phase 4 | planned | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts |
+| T3 | A document saved by an unattended run that records a choice as decided unattended with no question reference is refused naming the line; the same line with a reference to a question that exists in the plan's record saves, and a made-up id is refused; review and acceptance lines are not checked | Test Phase 1 | Build Phase 4 | written | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts |
 | T4 | With nothing set, a cheap, a moderate and an expensive question each stay waiting with no timer however long they are left, and the answer when it comes is used | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-cost-sets-the-wait/holds-by-default | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
 | T5 | The deadline is a stored time: a question on a set time read after the admin was down goes ahead on that read, and a restart never gives it more time | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
 | T6 | A question that went ahead says so on its row: what was done and when | Build Phase 5 | Build Phase 5 | planned | contract | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-admin/src/__tests__/question-row.test.tsx |
@@ -70,12 +70,12 @@ An unattended session asks each choice the plan does not settle as a question th
 | T13 | On the question's row the opened follow-on is linked | Build Phase 5 | Build Phase 5 | planned | contract | clause: a-late-answer-opens-a-follow-on/disagreement-opens-a-plan | apps/indusk-admin/src/__tests__/question-row.test.tsx |
 | T14 | A question in each state (waiting, answered in time, gone ahead, answered late) is readable on the plan's page and, after landing and archiving, in its history, with recommendation, answer and what was done | Build Phase 5 | Build Phase 5 | planned | contract | clause: a-late-answer-opens-a-follow-on/every-decision-stays | apps/indusk-mcp/src/lib/questions/history.test.ts, apps/indusk-admin/src/__tests__/question-row.test.tsx |
 | T15 | A release with one open follow-on refuses and names its plan; with three names all three; it proceeds once each is landed, abandoned or archived; an ordinary plan never blocks | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/lib/release/follow-on-refusal.test.ts |
-| T16 | Landing an accepted plan succeeds with a follow-on open, and landing the follow-on itself succeeds while it is open | Test Phase 1 | Test Phase 1 | planned | unit | clause: a-release-waits-for-a-known-wrong/landing-never-waits | apps/indusk-mcp/src/lib/plans/land-follow-on.test.ts |
+| T16 | Landing an accepted plan succeeds with a follow-on open, and landing the follow-on itself succeeds while it is open | Test Phase 1 | Test Phase 1 | passing | unit | clause: a-release-waits-for-a-known-wrong/landing-never-waits | apps/indusk-mcp/src/lib/plans/land-follow-on.test.ts |
 | T17 | A late answer that changes the brief still stops for re-approval, and no timer however long approves a brief, test plan, look or ADR | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-change-to-what-was-agreed-needs-the-person, promise: only-a-person-reapproves | apps/indusk-mcp/src/lib/questions/approval-guard.test.ts |
 | T18 | A plan with questions open is no more or less accepted than the same plan without; a failure no promise claims still opens its bugfix plan, with the follow-on opened beside it | Build Phase 3 | Build Phase 3 | planned | unit | promise: nothing-ships-until-accepted, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/lib/questions/beside-bugfix.test.ts |
-| T19 | A conversation session with the person present asks as it does today, with no cost and no timer | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: the brief leaves planning conversations out | apps/indusk-mcp/src/lib/session/conversation-question.test.ts |
+| T19 | A conversation session with the person present asks as it does today, with no cost and no timer | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the brief leaves planning conversations out | apps/indusk-mcp/src/lib/session/conversation-question.test.ts |
 | T20 | A real unattended run with nothing set that asks a cheap question and is left alone does not continue, frees its slot, and finishes its phase using the answer given in the admin; with cheap set to `immediate` the same run continues at once; the plan is under Needs you while it holds; and every choice the planning run records has a question on the page | Build Phase 5 | Build Phase 5 | planned | live check | promise: decisions-wait-in-one-place, promise: a-build-runs-to-review-unasked, clause: a-decision-is-a-question/never-decided-silently, clause: the-cost-sets-the-wait/holds-by-default, clause: the-cost-sets-the-wait/a-hold-frees-the-slot | apps/indusk-mcp/src/__tests__/questions-live.test.ts |
-| T21 | `indusk release` run in a real repository with an open follow-on refuses before any publish step | Test Phase 1 | Build Phase 3 | planned | live check | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/__tests__/release-follow-on.test.ts |
+| T21 | `indusk release` run in a real repository with an open follow-on refuses before any publish step | Test Phase 1 | Build Phase 3 | written | live check | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/__tests__/release-follow-on.test.ts |
 | T22 | The three question rows and the changed decision card render as the approved looks, held by value in Chromium: cheap with time left and a reply, expensive in red with no timer, went-ahead with a late-answer offer; a plan waiting on an expensive question sits under Needs you as any wait | Build Phase 5 | Build Phase 5 | planned | live check | look: question-row.cheap, look: question-row.expensive, look: question-row.went-ahead, look: plan.needs-you, look: nav.expanded | apps/indusk-admin/src/__tests__/question-looks.test.ts |
 | T23 | The sweep sends a question whose cost's setting has come due (its set time passed, or `immediate`) on with its recommendation and marks it went-ahead with the time and what was done; it leaves waiting, however long they are left, a question whose cost holds or has no setting, and one whose option changes what was agreed even with its cost set to `immediate` | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-cost-sets-the-wait/the-setting-decides, clause: the-cost-sets-the-wait/holds-by-default, clause: what-was-agreed-is-never-cheap/never-timed-out | apps/indusk-mcp/src/lib/questions/sweep.test.ts |
 | T24 | A plan carrying `follow_on_of` is never moved to the archive by the dead-draft sweep however old and untouched, so the release keeps refusing until a person closes it | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/lib/planning/archive-dead-follow-on.test.ts |
@@ -98,25 +98,25 @@ An unattended session asks each choice the plan does not settle as a question th
 
 This phase writes the tests whose subject exists today and so can fail on an assertion: the save-time check (it is a script a test can run), the release check against a real repository, and the two guards (landing and conversation questions). It records the tests whose subject is a module the build phases create, with their bodies, and hands the red tests to Build Phases 3 and 4.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   Created by `indusk plans start feature decisions-as-questions`; `indusk worktree list`. Worktree-per-plan default; `worktree: none` is not set.
 
   </details>
-- [ ] Write the save-time check's test and the live release check, and see both fail on their own assertions.
+- [x] Write the save-time check's test and the live release check, and see both fail on their own assertions.
   <details><summary>Technical</summary>
 
   T3 in `apps/indusk-mcp/src/__tests__/decided-unattended-hook.test.ts`: spawns `hooks/validate-decided-unattended.js` (does not exist yet, so authoring it as a spawn of the path makes the test fail on a missing-script assertion, not on a load error) with a Write payload containing "decided unattended" and no `question:` reference; expects exit 2 naming the line. T21 (`src/__tests__/release-follow-on.test.ts`, listed in the `SYSTEM` array of `vitest.tiers.ts`, which is an explicit file list): makes a temp repo with a plan whose frontmatter carries `follow_on_of: q-1` and status `draft`, runs the follow-on refusal step the release calls (`indusk release` has no dry-run option, and none is added), expects a refusal naming the plan; today no such step exists.
 
   </details>
-- [ ] Write the two guards and see them pass.
+- [x] Write the two guards and see them pass.
   <details><summary>Technical</summary>
 
   T16 in `apps/indusk-mcp/src/lib/plans/land-follow-on.test.ts` (landing an accepted plan with a draft follow-on in the planning folder succeeds; so does landing the follow-on); T19 in `apps/indusk-mcp/src/lib/session/conversation-question.test.ts` (the `question` event from a conversation session reaches the admin with no cost or deadline).
 
   </details>
-- [ ] Make sure no test fails only because a file it loads is missing.
+- [x] Make sure no test fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   Every red test above fails on an assertion; every other row waits in the register below.
@@ -262,13 +262,14 @@ This phase writes the tests whose subject exists today and so can fail on an ass
 
 #### Test Phase 1 Verification
 
-- [ ] The red test fails on its own assertion and the two guards pass.
+- [x] The red test fails on its own assertion and the two guards pass.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/decided-unattended-hook.test.ts src/lib/plans/land-follow-on.test.ts src/lib/session/conversation-question.test.ts` — T3 red on its assertion, T16 and T19 green. T21 is a system-tier test and is written red here, not run here (the slow tier never blocks the phase loop).
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [x] Every deferred test body above has been read and judged.
+  Judged unattended: each body compiles at the phase it names once that phase writes the module it imports. The Build Phase 2 sweep body and the Build Phase 3 follow-on body call helpers they do not define (`waiting`, `tmpPlanning`, `wentAhead`, `frontmatter`); the phase that writes the test defines them beside it. The follow-on body's second `openFollowOn` for the same question returns `opened: false` and updates the draft, which is what the test-phase row asserts ("exactly one").
   <details><summary>Technical</summary>
 
   Each body checked on two questions: will it compile at the phase it names, and does it assert what its row claims?
@@ -277,11 +278,11 @@ This phase writes the tests whose subject exists today and so can fail on an ass
 
 #### Test Phase 1 Context
 
-- [ ] (none needed — Test Phase 1 writes tests only and changes no rule about how the project works)
+- [x] (none needed — Test Phase 1 writes tests only and changes no rule about how the project works)
 
 #### Test Phase 1 Document
 
-- [ ] (none needed — no user-facing behaviour exists until the build phases; Build Phase 6 documents it)
+- [x] (none needed — no user-facing behaviour exists until the build phases; Build Phase 6 documents it)
 
 ### Build Phase 1: The question record and its rules
 
