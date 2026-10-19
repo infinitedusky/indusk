@@ -79,3 +79,5 @@ reviewed), 0 judged wrong by a human.
 Landed on main at d8cd4eafc, 2026-10-19. Installed with `pnpm install:local`; nothing published. Accepted with the plan's own build, since the installed one did not yet read the admin's exclude list.
 
 The install that failed after this landing succeeded once admin-builds-with-the-planning-reader landed (d25bf51d).
+
+Live check (T9), run after landing on the installed build, 2026-10-19: `indusk plans accept-brief` on a throwaway feature plan (`live-check-version-path`) started the unattended run with no other action; it committed the test plan 18 s, the ADR 1 min 06 s and the impl 2 min 24 s after acceptance; the contract check and the impl structure check both passed; the run stopped with the impl in draft and the ADR proposed, nothing approved or built. The throwaway plan was then withdrawn and removed.
