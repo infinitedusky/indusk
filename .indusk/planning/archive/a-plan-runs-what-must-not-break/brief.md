@@ -21,7 +21,10 @@ every phase; choosing tests by what each test actually executes belongs to the
 sampler, which can record it as it runs.
 
 `indusk promises change` rewrites a promise's sentence but not its clauses, so the
-change needs that too.
+change needs that too. The changed promise's clauses become `its-own-tests` (each phase runs its rows'
+tests), `what-must-not-break` (each phase and the landing run the Must-not-break
+promises' tests) and `nothing-else-runs` (no other test runs while a plan is built or
+landed); `what-its-changes-reach` goes.
 
 ## Expectations
 
@@ -43,7 +46,7 @@ None.
 
 **Changes**
 
-- **`a-plan-runs-its-tests-and-what-must-not-break`**. While a plan is built, each phase runs the tests of the rows it writes or makes pass and the tests of the promises its brief lists as Must not break, a landing runs every row's tests and those same tests, and no other test runs. Its clauses become `its-own-tests` (each phase runs its rows' tests), `what-must-not-break` (each phase and the landing run the Must-not-break promises' tests) and `nothing-else-runs` (no other test runs while a plan is built or landed); `what-its-changes-reach` goes.
+- **`a-plan-runs-its-tests-and-what-must-not-break`**. While a plan is built, each phase runs the tests of the rows it writes or makes pass and the tests of the promises its brief lists as Must not break, a landing runs every row's tests and those same tests, and no other test runs.
 
 **Replaces**
 
