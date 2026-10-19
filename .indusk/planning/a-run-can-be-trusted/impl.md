@@ -957,12 +957,26 @@ This phase makes the admin's offer of approval and the approve command ask one r
 
 #### Build Phase 5 Document
 
-- [ ] Document when a plan is offered for approval and what needing its plan review means.
+- [x] Document when a plan is offered for approval and what needing its plan review means.
   <details><summary>Technical</summary>
+
+  Done 2026-10-19: `reference/cli/plans.md`'s `plans approve` lists the plan-review refusal with its three states and the one reader the admin shares; `reference/admin-ui/overview.md` says the Planning audit reads stale as to do, and gains "When a plan is offered for approval": the four states, which one offers Approve, and that a plan still being written is listed as neither.
 
   Update `apps/docs/src/reference/cli/plans.md` (the `plans approve` entry) and the admin overview page: the three states and the single reader.
 
   </details>
+
+#### Build Phase 5 Forward Intelligence
+
+- **Trajectory**: A50, A52, A54 and A88 are `passing`; A51, A53 and A55 stayed passing. A88 was written red on its own assertion (a real plan folder read through `readPlanReview`, an answered review recording another hash reading done) before the reader changed; A52 had no red window, as Test Phase 1's Forward Intelligence said. `indusk plans tests --phase 5`: 21 of 22 files; `admin-recorder.test.ts` (A59, Build Phase 6) is the expected red.
+- **Decision**: stale outranks unanswered, and a review with no `read:` (or frontmatter that cannot be read) is stale. A review written by an older `/audit --before-approval` that recorded no hash now needs a new cold read before approval; the planning run already treated it so.
+- **Decision**: `plans approve` refuses without an answered review, for normal and workbench plans alike (Decision 11). Every system-tier test that approves through the CLI now writes a current answered review first through `__tests__/helpers/plan-review-fixture.ts` (`approveWithReview`, `writeCurrentPlanReview`, `answeredPlanReview`); the review is written after the documents, since it goes stale with them, and approval commits it with the plan's other `.indusk/` files. A new test that approves through the CLI must use it, or it is refused "needs its plan review".
+- **Decision**: approval sets the impl's `status: approved`, which changes the impl and so the hash: every approved plan's review reads stale afterwards. Nothing asks the review after approval for a decision (the waiting list needs a draft impl; the Planning audit step and its signal read an approved impl as done; the planning run is over), so this is harmless today. A later reader that asks the review of an approved plan must not take stale as "needs its plan review".
+- **Decision**: the Verification command filters the admin as `@infinitedusky/indusk-admin`, which matches no package (its name is `indusk-admin`); pnpm exits 0 having run nothing. The admin parts were run with `--filter indusk-admin`. Build Phase 6's Verification names only the package filter, so it is unaffected; the retrospective should not copy that filter.
+- **Watch out**: admin `vitest related src/lib/planning-reader.ts` reaches eleven `|browser (chromium)|` files whose pages render nothing in this environment (64 tests); the two checked at this phase's start commit fail the same 30 of 30. Read only the node project's results there.
+- **Watch out**: `apps/indusk-mcp/CLAUDE.md` is past its nested budget (about 29.6 KB of 16 KB); the budget hook refuses any edit that grows it. Build Phase 6's Context item adds a line there, so it must also remove at least as many bytes (fold a narrative behind a pointer).
+- **Watch out**: `biome check --write` over a glob of `src/__tests__/*.test.ts` reformats unrelated files; name the changed files.
+
 
 ### Build Phase 6: Make the recorder landing test wait for its incident
 
