@@ -68,18 +68,18 @@ clause it broke.
 | A1 | Closing a plan is refused when a test that proves one of its clauses fails at close, though its row says passing; the refusal names the clause and the file | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-tests-run.test.ts |
 | A2 | Landing a plan is refused when a test that proves one of its clauses fails, naming the clause | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/plans/land-clause-tests.test.ts |
 | A3 | A failing test is reported against the clause its file names | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-clause-is-proved-twice/verified-before-release | apps/indusk-mcp/src/lib/promises/clause-tests-run.test.ts |
-| A4 | A clause whose signal reported upheld in a real run reads upheld on the promise page and in `promises status` | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
-| A5 | A clause with passing tests and no report from its signal does not read upheld | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
+| A4 | A clause whose signal reported upheld in a real run reads upheld on the promise page and in `promises status` | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
+| A5 | A clause with passing tests and no report from its signal does not read upheld | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A6 | A signal whose only source is a test run is not the clause's signal: the clause reads no signal however often the test passes | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/signal-test-run.test.ts |
-| A7 | A clause whose signal reports broken reads broken, its promise reads broken, and an incident opens naming the clause and its symptom | Build Phase 3 | Build Phase 5 | planned | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-break.test.ts |
-| A8 | A split is broken by missing its budget at its point; a limit by one report over its bound, however many were inside | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
+| A7 | A clause whose signal reports broken reads broken, its promise reads broken, and an incident opens naming the clause and its symptom | Build Phase 3 | Build Phase 5 | written | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-break.test.ts |
+| A8 | A split is broken by missing its budget at its point; a limit by one report over its bound, however many were inside | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A9 | A plan written as clauses cannot close while a clause has a failing test or no signal that reported upheld; the refusal says which is missing | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
 | A10 | When such a plan closes, its promise is enforced | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
 | A11 | A clause's signal run against the real system through the local daemon reports upheld and the clause then reads upheld end to end | Build Phase 6 | Build Phase 6 | planned | live check | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/__tests__/clause-signal.live.test.ts |
-| A12 | A clause whose signal never reported reads no signal on the promise page, in `promises status` and in the admin, never drawn as holding | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
-| A13 | A clause that last reported upheld, whose watcher has gone silent past its heartbeat, reads no signal | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
-| A14 | A promise with one clause upheld and another reading no signal is not holding: the worst clause decides | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
-| A15 | A promise made only of resting clauses has the standing of those promises and closes when they are in force, with no row of its own | Build Phase 3 | Build Phase 4 | planned | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts, apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
+| A12 | A clause whose signal never reported reads no signal on the promise page, in `promises status` and in the admin, never drawn as holding | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
+| A13 | A clause that last reported upheld, whose watcher has gone silent past its heartbeat, reads no signal | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
+| A14 | A promise with one clause upheld and another reading no signal is not holding: the worst clause decides | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
+| A15 | A promise made only of resting clauses has the standing of those promises and closes when they are in force, with no row of its own | Build Phase 3 | Build Phase 4 | written | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts, apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
 | A16 | When a clause's signal reports broken, the event it emits carries the promise and the clause | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/clause-break-event.test.ts |
 | A17 | The incident a broken clause opens names the promise and the clause and, when recorded, the plan and phase that added the signal, as a pointer | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-names-clause.test.ts |
 | A18 | From an incident a person reaches the clause's tests and the place that emits its signal, with no search by file name | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-clause-is-proved-twice/a-break-names-its-clause | apps/indusk-mcp/src/lib/promises/incident-names-clause.test.ts |
@@ -383,49 +383,55 @@ broken on a break. A promise then reads as the worst of its clauses. Build Phase
 closing rule asks this reader, and the promise page, the status command and the admin all read
 through it.
 
-- [ ] Add the reader that gives one clause its standing from its reports.
+- [x] Add the reader that gives one clause its standing from its reports.
   <details><summary>Technical</summary>
 
   `clauseStanding(clause, { reports, heartbeatOk }, { testsPassing })` in `lib/promises/standing.ts`, returning `"broken" | "no-signal" | "holding"`; the reports are the clause's spans after the Build Phase 1 filter, `heartbeatOk` from the watcher's heartbeat (`watch.ts`, `watcher-heartbeat`). A split is broken by a report that misses its budget at its point; a limit by any one report over its bound. Passing tests alone never yield `holding` (A5). The clock and the reads are inputs (`lesson: code-that-decides-takes-its-clock-and-its-reads`).
 
   </details>
-- [ ] Make a promise's standing the worst of its clauses, and a resting clause the standing of the promise it rests on.
+  **Decision D-14:** `clauseStanding(clause, { reports, heartbeatOk })` takes two arguments, not the three in the Test Phase 1 sketch: tests are deliberately not an input (A5), so a `testsPassing` parameter would be dead. It lives in `lib/promises/clause-standing.ts` (like `look-standing.ts`) and `standing.ts` re-exports it, so `import … from "./standing.js"` still works. A split is judged by its newest report, a limit by any one over its bound; a report also breaks when its measured `value` exceeds its `bound`.
+- [x] Make a promise's standing the worst of its clauses, and a resting clause the standing of the promise it rests on.
   <details><summary>Technical</summary>
 
   In `standingOf`/`readStanding`: order broken, then no signal, then holding (A14); a `rests-on` clause takes the named promise's standing (A15, standing half); a promise with no clauses keeps today's rule untouched.
 
   </details>
-- [ ] Make every place a clause is shown use that reader.
+  `readStanding` now also returns `clauses` and `signal` per promise (optional fields, so admin fixtures built before them still type-check); a broken signal makes the promise `broken`. The heartbeat is the project's sources: any source read blind makes `heartbeatOk` false. **Decision D-15:** to read a `state` promise's clause at all, one rule `readsSignal` (behaviour, or any promise with split/limit clauses) replaces three copies of "behaviour and not retired" in the timeline, the store and `sources.ts`. `health.ts`, `watch.ts` and `after-close.ts` keep behaviour-only; Build Phase 5 widens the recorder.
+- [x] Make every place a clause is shown use that reader.
   <details><summary>Technical</summary>
 
   `promises status` (`status.ts`), the promise page, and the admin's DTO read `readStanding`; no second computation. The admin app gets only the new field through the package's reader (its CLAUDE.md: read-only).
 
   </details>
-- [ ] Review the new reader against the TypeScript extension's rules.
+  `promises status` prints one line per clause from `clauseStanding`; the promise page's proof (`proof.ts`) and so the admin's DTO carry `clauses` and `signal` from `readStanding`. **Decision D-16:** the admin draws nothing new — the brief's Looks is "None" — it receives the fields; the clause views are the later cut. `no signal` is therefore visible in `promises status` and in the proof data, not yet as a new admin element.
+- [x] Review the new reader against the TypeScript extension's rules.
   <details><summary>Technical</summary>
 
   Shape review; findings as unchecked items here.
 
   </details>
+  Shape: `clauseStanding` is pure and takes its reads as inputs; `standingRows` grew a nested resolver (`signalOf`/`clausesOf`) to resolve resting clauses with a cycle guard — left in place because it needs the first pass's rows; nothing else found.
 
 #### Build Phase 3 Verification
 
-- [ ] A clause reads upheld, no signal or broken exactly as the tests say, and a promise reads as its worst clause.
+- [x] A clause reads upheld, no signal or broken exactly as the tests say, and a promise reads as its worst clause.
   <details><summary>Technical</summary>
 
   A4, A5, A8, A12, A13, A14 pass (A15 stays planned until Build Phase 4; A7 until Build Phase 5): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/clause-standing.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/standing.ts src/lib/promises/status.ts`.
 
   </details>
-- [ ] (write red) The incident half of the break test is written and fails on its assertion.
+  `clause-standing.test.ts` 15 passed (A4, A5, A8, A12, A13, A14, the standing half of A15, A7's reading half, and `promises status` words); `tsc --noEmit` clean; `vitest related` green except the `src/lib/run/*` tests that fail without this change too and A7's incident half (red by design). The four system-tier readers (`promise-sources`, `promise-timeline-reader`, `monitor-status`, `monitor-watch`) skip without a built `dist/`, so they run at landing.
+- [x] (write red) The incident half of the break test is written and fails on its assertion.
   <details><summary>Technical</summary>
 
   A7 in `clause-break.test.ts`: the clause reads broken and the promise reads broken (passes), and an incident opens naming the clause (fails until Build Phase 5).
 
   </details>
+  `clause-break.test.ts`: the reading half passes, the incident half fails on `expected … to match /^clause: never-twice$/m`.
 
 #### Build Phase 3 Context
 
-- [ ] Record the standing rule in the promises area's rules.
+- [x] Record the standing rule in the promises area's rules.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: a clause with no report reads no signal; a promise is its worst clause; one reader, `clauseStanding`; guard: `clause-standing.test.ts`.
@@ -434,7 +440,7 @@ through it.
 
 #### Build Phase 3 Document
 
-- [ ] (none needed — the guide page in Build Phase 6 documents how a clause reads, once the closing rule that depends on it exists)
+- [x] (none needed — the guide page in Build Phase 6 documents how a clause reads, once the closing rule that depends on it exists)
 
 ### Build Phase 4: Closing and landing read the system
 

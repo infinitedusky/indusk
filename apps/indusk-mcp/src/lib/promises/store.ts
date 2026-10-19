@@ -1,3 +1,4 @@
+import { readsSignal } from "./clause-standing.js";
 import type { Registry } from "./registry.js";
 import { healthWindowMs, resolveMarkSources, type SourceName } from "./sources.js";
 import type { MarkedSpan, MarkedSpansResult, PromiseMarks } from "./telemetry.js";
@@ -92,12 +93,12 @@ export type WindowRead =
 	  };
 
 function markKey(m: TimelineMark): string {
-	return `${m.traceId}|${m.at}|${m.outcome}`;
+	return `${m.traceId}|${m.at}|${m.outcome}|${m.clause ?? ""}`;
 }
 
 function behaviourNames(registry: Registry): string {
 	return registry.promises
-		.filter((p) => p.kind === "behaviour" && p.state !== "retired")
+		.filter(readsSignal)
 		.map((p) => p.name)
 		.sort()
 		.join(",");

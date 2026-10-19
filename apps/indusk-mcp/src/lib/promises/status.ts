@@ -1,6 +1,12 @@
+import {
+	type ClauseReport,
+	clauseStanding,
+	readsSignal,
+	standingWords,
+} from "./clause-standing.js";
 import { type HealthRule, healthOf } from "./health.js";
 import type { IncidentEntry, PromiseEntry } from "./registry.js";
-import { type MarkedSpansResult, silencePastExpectation } from "./telemetry.js";
+import { type MarkedSpansResult, type PromiseMarks, silencePastExpectation } from "./telemetry.js";
 
 /**
  * `indusk promises status`'s text (day-monitor, ADR D5).
@@ -25,6 +31,27 @@ export function windowPhrase(window: number | string): string {
 	return `the last ${window} day${window === 1 ? "" : "s"}`;
 }
 
+/**
+ * One line per clause the promise states: what its own signal says, never what
+ * its tests say. A clause nothing reported reads `no signal`, in the same words
+ * the promise page and the admin use (`clauseStanding`); a resting clause names
+ * the promise it rests on.
+ */
+function clauseLines(p: PromiseEntry, m: PromiseMarks | undefined): string[] {
+	return (p.clauses ?? []).map((c) => {
+		if (c.kind === "rests-on")
+			return `  clause ${c.name}: rests on ${c.restsOn ?? "another promise"}`;
+		const seen = m?.byClause?.[c.name];
+		const reports: ClauseReport[] = [
+			...(seen?.violations ?? []).map((s) => ({ outcome: s.outcome, at: s.at.toISOString() })),
+			...(seen?.lastUpheld
+				? [{ outcome: seen.lastUpheld.outcome, at: seen.lastUpheld.at.toISOString() }]
+				: []),
+		];
+		return `  clause ${c.name} (${c.kind}): ${standingWords(clauseStanding(c, { reports, heartbeatOk: true }))}`;
+	});
+}
+
 export function formatStatus(
 	promises: PromiseEntry[],
 	marks: MarkedSpansResult,
@@ -41,7 +68,7 @@ export function formatStatus(
 			blocks.push(`${head}\n  retired — not watched`);
 			continue;
 		}
-		if (p.kind !== "behaviour") {
+		if (!readsSignal(p)) {
 			blocks.push(`${head}\n  watched by the suite at head, not by telemetry`);
 			continue;
 		}
@@ -50,7 +77,11 @@ export function formatStatus(
 		const attentionLine = silence ? `  needs attention — ${silence}` : null;
 		if (!m || (m.violations.length === 0 && m.lastUpheld === null)) {
 			const noSignal = `  no signal in ${phrase}`;
-			blocks.push([head, noSignal, ...(attentionLine ? [attentionLine] : [])].join("\n"));
+			blocks.push(
+				[head, noSignal, ...(attentionLine ? [attentionLine] : []), ...clauseLines(p, m)].join(
+					"\n",
+				),
+			);
 			continue;
 		}
 		const lines = [head];
@@ -73,6 +104,7 @@ export function formatStatus(
 				? `  last seen holding ${iso(m.lastUpheld.at)} (${m.lastUpheld.traceId})`
 				: `  not seen holding in ${phrase}`,
 		);
+		lines.push(...clauseLines(p, m));
 		blocks.push(lines.join("\n"));
 	}
 	return blocks.join("\n\n");

@@ -137,6 +137,21 @@ export interface PromiseMarks {
 	truncated: boolean;
 	/** The newest upheld span in the window, or null. */
 	lastUpheld: MarkedSpan | null;
+	/** The same two, per clause the spans name; a span naming none is in neither. */
+	byClause?: Record<string, { violations: MarkedSpan[]; lastUpheld: MarkedSpan | null }>;
+}
+
+/** The marked spans (newest first) split by the clause they name. */
+function byClause(all: MarkedSpan[]): NonNullable<PromiseMarks["byClause"]> {
+	const out: NonNullable<PromiseMarks["byClause"]> = {};
+	for (const s of all) {
+		if (!s.clause) continue;
+		const c = out[s.clause] ?? { violations: [], lastUpheld: null };
+		out[s.clause] = c;
+		if (s.outcome === "broken") c.violations.push(s);
+		else if (c.lastUpheld === null) c.lastUpheld = s;
+	}
+	return out;
 }
 
 export interface MarkedSpansResult {
@@ -377,6 +392,7 @@ export async function markedSpans(opts: {
 			truncated,
 			violations: all.filter((s) => s.outcome === "broken"),
 			lastUpheld: all.find((s) => s.outcome === "upheld") ?? null,
+			byClause: byClause(all),
 		});
 	}
 	return { queryUrl, since: opts.since, byPromise };

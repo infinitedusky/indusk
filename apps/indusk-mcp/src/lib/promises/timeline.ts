@@ -1,3 +1,4 @@
+import { readsSignal } from "./clause-standing.js";
 import { markProjectId } from "./config.js";
 import { WatcherBlind } from "./probe.js";
 import type { PromiseEntry, Registry } from "./registry.js";
@@ -35,6 +36,8 @@ export interface TimelineMark {
 	traceId: string;
 	/** `deployment.environment`, as the span said, or null — a red row names it. */
 	environment: string | null;
+	/** The clause the signal concerns (`indusk.clause`); absent when the span names none. */
+	clause?: string;
 }
 
 /** A range whose query was still full at the smallest slice: there may be more runs in it. */
@@ -75,7 +78,7 @@ export interface ReadTimelineOptions {
 	to: Date;
 	/** Read only this source; every source the project has when absent. */
 	source?: SourceName;
-	/** Read only these promises; every behaviour promise not retired when absent. */
+	/** Read only these promises; every promise whose telemetry is read (`readsSignal`) when absent. */
 	promises?: string[];
 	timeoutMs?: number;
 }
@@ -87,10 +90,7 @@ export async function readTimeline(
 ): Promise<TimelineRead[]> {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	const behaviour = registry.promises.filter(
-		(p) =>
-			p.kind === "behaviour" &&
-			p.state !== "retired" &&
-			(opts.promises === undefined || opts.promises.includes(p.name)),
+		(p) => readsSignal(p) && (opts.promises === undefined || opts.promises.includes(p.name)),
 	);
 	const project = markProjectId(root);
 	const resolved = (await resolveMarkSources(root)).filter(
@@ -158,6 +158,7 @@ async function readSourceWindow(
 					outcome: m.outcome,
 					traceId: m.traceId,
 					environment: m.environment,
+					...(m.clause ? { clause: m.clause } : {}),
 				})),
 			atLeast,
 		});
