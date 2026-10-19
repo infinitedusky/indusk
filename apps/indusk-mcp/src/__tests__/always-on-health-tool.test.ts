@@ -131,8 +131,8 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — promise health for the session",
 		const cli = runCli(fixture.root, ["promises", "status"], { INDUSK_HOME: jaeger.home });
 		const text = cli.stdout + cli.stderr;
 		expect(cli.code, text).toBe(0);
-		const printed = text.match(/(\d+) violations?\b/);
-		expect(printed, `the CLI printed no violation count:\n${text}`).not.toBeNull();
+		const printed = text.match(/(\d+) breaks?\b/);
+		expect(printed, `the CLI printed no break count:\n${text}`).not.toBeNull();
 		expect(Number(printed?.[1]), "the two surfaces report the same number").toBe(fromTool);
 	});
 

@@ -66,3 +66,17 @@ export function tokenPattern(kind: TokenKind, name: string): RegExp {
 export function anyTokenPattern(kind: TokenKind): RegExp {
 	return new RegExp(`${openerFor(kind)}${kind}:[ \\t]*([a-z][a-z0-9-]*)(?![a-z0-9-])`, "g");
 }
+
+/**
+ * Matches the clause token for one clause of one promise (plans-are-promises,
+ * Build Phase 6): the test file of a row that proves a clause carries
+ * `clause: <promise>/<clause>`, placed where the other tokens are. It is not
+ * a `TokenKind`: no scanner reads clauses across the repository, only closing
+ * asks of one file whether it names one clause.
+ */
+export function clauseTokenPattern(promise: string, clause: string): RegExp {
+	const escaped = (n: string) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return new RegExp(
+		`${TOKEN_OPENER}clause:[ \\t]*${escaped(promise)}/${escaped(clause)}(?![a-z0-9-])`,
+	);
+}

@@ -17,7 +17,8 @@ tests:
   - apps/indusk-mcp/src/lib/session/trust.test.ts
   - apps/indusk-admin/src/components/session/SessionPanel.test.tsx
   - apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts
-incidents: []
+incidents:
+  - i-2026-10-16-a-plan-can-start-from-the-admin
 ---
 
 A plan can be started from the admin in any project, normal or workbench, as well as from the editor or a terminal: in the admin, the person has the planning conversation, answers its questions in the panel and accepts its promises, and either way it is the same plan in the same files.

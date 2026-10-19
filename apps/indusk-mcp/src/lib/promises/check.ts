@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { readConfig } from "../config.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import { citedNames } from "./citations.js";
+import { restsOnly } from "./clause-standing.js";
 import { checkAllContracts } from "./contract.js";
 import { planFolderStatus } from "./plan-folder.js";
 import {
@@ -207,13 +208,15 @@ function stateRefusals(
 					});
 				}
 			}
-			if (tests === 0) {
+			// A promise made only of resting clauses is kept by what it rests on: no test or site of its own (mark-first A15).
+			const resting = restsOnly(p);
+			if (tests === 0 && !resting) {
 				refusals.push({
 					file: registryFile(p.file),
 					message: `${p.name}: enforced ${p.kind} promise has no test naming it (a test file listed under \`tests:\` carrying "promise: ${p.name}")`,
 				});
 			}
-			if (p.kind !== "structure" && sites === 0) {
+			if (p.kind !== "structure" && sites === 0 && !resting) {
 				refusals.push({
 					file: registryFile(p.file),
 					message: `${p.name}: enforced ${p.kind} promise has no code site naming it (a file listed under \`sites:\` carrying "promise: ${p.name}")`,
@@ -292,6 +295,7 @@ export async function checkPromises(
 	refusals.push(...checkAllContracts(planRoot, { activeOnly: true, registry }).refusals);
 
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
+	refusals.push(...restingRefusals(registry));
 	for (const i of registry.incidents) {
 		// day-monitor, ADR D6: the monitor writes a symptom, never a root cause;
 		// an incident cannot close on a finding nobody made.
@@ -339,6 +343,24 @@ export async function checkPromises(
 		return { ok: false, refusals };
 	}
 	return { ok: true, summary: summarize(registry), registry };
+}
+
+/**
+ * A clause resting on a promise the registry no longer holds (plans-are-promises
+ * ADR D6): it can never be satisfied, so it is refused where it is written,
+ * not discovered as a close that cannot succeed. A clause resting on the
+ * promise itself is refused by the entry's own reading.
+ */
+function restingRefusals(registry: Registry): CheckRefusal[] {
+	const known = new Set(registry.promises.flatMap((p) => [p.name, ...p.aliases]));
+	return registry.promises.flatMap((p) =>
+		(p.clauses ?? [])
+			.filter((c) => c.kind === "rests-on" && c.restsOn !== undefined && !known.has(c.restsOn))
+			.map((c) => ({
+				file: registryFile(p.file),
+				message: `${p.name}: clause ${c.name} rests on ${c.restsOn}, which the registry does not hold — point it at a promise that exists, or retire the clause`,
+			})),
+	);
 }
 
 /** Domains are declared in planning, never free: every promise's domain is on the list. */

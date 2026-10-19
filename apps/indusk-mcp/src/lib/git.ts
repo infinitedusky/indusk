@@ -153,6 +153,24 @@ export async function changedPathsPartitioned(root: string, sha: string): Promis
 }
 
 /**
+ * Every path that differs from `ref` where this branch left it: committed
+ * since the two diverged (`git diff ref...HEAD`), modified in the working tree,
+ * and untracked. What a check of "what changed" is asked about. Throws when
+ * `ref` is not a revision.
+ */
+export async function changedSinceRef(root: string, ref: string): Promise<string[]> {
+	const lines = (raw: string) =>
+		raw
+			.split("\n")
+			.map((l) => l.trim())
+			.filter((l) => l !== "");
+	const committed = await git(root, "diff", "--name-only", `${ref}...HEAD`);
+	const unstaged = await git(root, "diff", "--name-only", "HEAD");
+	const untracked = await git(root, "ls-files", "--others", "--exclude-standard");
+	return [...new Set([...lines(committed), ...lines(unstaged), ...lines(untracked)])].sort();
+}
+
+/**
  * A working-tree snapshot: each path's content before a step touched it, or
  * null when it did not exist. Taken before a multi-file write so a failure
  * part-way can put the tree back exactly.
@@ -200,7 +218,7 @@ export interface GitWorktree {
 	branch: string | null;
 	/** The first entry git lists: the repository's main working tree. */
 	main: boolean;
-	/** Git's own mark that the directory is gone but the entry was never pruned. */
+	/** Git's own flag that the directory is gone but the entry was never pruned. */
 	prunable: boolean;
 }
 

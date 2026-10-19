@@ -9,6 +9,9 @@ import { toolCaller } from "./helpers/tool-call.js";
 
 /**
  * promise: a-briefs-promises-are-in-the-registry — planner-promises A1, A2.
+ * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A3, A11 (declaration).
+ * clause: a-plan-holds-the-promises-it-lands/brief-holds-clauses
+ * clause: a-plan-holds-the-promises-it-lands/closing-per-clause
  *
  * A promise reaches the registry from the planning conversation through a
  * command, never by a person typing a file: `indusk promises declare` writes
@@ -181,3 +184,79 @@ describe.skipIf(SHOULD_SKIP)("A37 — nothing is written that the registry canno
 		);
 	});
 });
+
+/**
+ * plans-are-promises A3 and A11 (declaration half) — a promise's clauses are
+ * written with it, by `--clause`, in the sub-entry grammar a brief uses. A
+ * clause of an unknown kind, or resting on a promise the registry does not
+ * hold, is refused with nothing written.
+ */
+describe.skipIf(SHOULD_SKIP)(
+	"plans-are-promises A3 — declaring a promise records its clauses",
+	() => {
+		const FAST = "Answers in under a second.";
+		const LOST = "No write is lost.";
+		const declareClauses = (p: PromiseProject, ...clauses: string[]) =>
+			runCli(p.root, [
+				"promises",
+				"declare",
+				NAME,
+				"--plan",
+				PLAN,
+				"--kind",
+				"state",
+				"--domain",
+				"seating",
+				"--statement",
+				SENTENCE,
+				...clauses.flatMap((c) => ["--clause", c]),
+			]);
+
+		it("writes each clause's name, kind and sentence into the registry file", () => {
+			const p = project(["seating"]);
+			const r = declareClauses(p, `fast (split). ${FAST}`, `never-lost (limit). ${LOST}`);
+			expect(r.code, r.stdout + r.stderr).toBe(0);
+			const clauses = matter(readFileSync(promiseFile(p), "utf-8")).data.clauses as Array<
+				Record<string, unknown>
+			>;
+			expect(clauses?.map((c) => c.name)).toEqual(["fast", "never-lost"]);
+			expect(clauses?.map((c) => c.kind)).toEqual(["split", "limit"]);
+			expect(clauses?.map((c) => c.statement)).toEqual([FAST, LOST]);
+		});
+
+		it("refuses a kind that is not split, limit or rests-on, naming the clause, and writes nothing", () => {
+			const p = project(["seating"]);
+			const r = declareClauses(p, `fast (split). ${FAST}`, "odd (sometimes). It happens.");
+			expect(r.code, r.stdout + r.stderr).toBe(2);
+			expect(r.stderr).toContain("odd");
+			expect(existsSync(promiseFile(p)), "nothing written").toBe(false);
+		});
+	},
+);
+
+describe.skipIf(SHOULD_SKIP)(
+	"plans-are-promises A11 — a resting clause names a promise that exists",
+	() => {
+		it("refuses one resting on a promise the registry does not hold, naming it, and writes nothing", () => {
+			const p = project(["seating"]);
+			const r = runCli(p.root, [
+				"promises",
+				"declare",
+				NAME,
+				"--plan",
+				PLAN,
+				"--kind",
+				"state",
+				"--domain",
+				"seating",
+				"--statement",
+				SENTENCE,
+				"--clause",
+				"base (rests on no-such-promise)",
+			]);
+			expect(r.code, r.stdout + r.stderr).toBe(2);
+			expect(r.stderr).toContain("no-such-promise");
+			expect(existsSync(promiseFile(p)), "nothing written").toBe(false);
+		});
+	},
+);

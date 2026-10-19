@@ -6,6 +6,7 @@ import type {
 	SegmentState,
 } from "../lifecycle.js";
 import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "../workflow-types.js";
+import type { PlanReviewState } from "./plan-review.js";
 
 /**
  * A plan's two workflows as lists of steps (plan-cockpit, ADR decision 3):
@@ -64,6 +65,10 @@ export interface PlanSnapshot {
 	documents: Partial<Record<DocumentPosition, { status?: string }>>;
 	/** Falsification, cleanup or audit skipped with a reason. */
 	skippedRituals?: ReadonlyArray<{ ritual: SkippedRitual; reason?: string }>;
+	/** Falsification, cleanup or audit finished: its phase closed or its report written. */
+	finishedRituals?: ReadonlyArray<SkippedRitual>;
+	/** Its plan-review.md as `plans/plan-review` read it; absent reads as missing. */
+	planReview?: PlanReviewState;
 }
 
 export interface PlanWorkflows {
@@ -142,6 +147,7 @@ function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<Releas
 	if (ritual) {
 		const skipped = plan.skippedRituals?.find((r) => r.ritual === ritual);
 		if (skipped) return named("skipped", skipped.reason);
+		if (plan.finishedRituals?.includes(ritual)) return named("done");
 	}
 	const segment = (state: SegmentState): StepState =>
 		state === "done"
@@ -196,6 +202,26 @@ export function planSteps(plan: PlanSnapshot): PlanWorkflows {
 		),
 		release: RELEASE_STEPS.map((name) => releaseStep(name, plan)),
 	};
+}
+
+/**
+ * The step a plan is at: the first step, Planning then Release, that is current
+ * or needs the person; else the first not yet begun (an approved impl not yet
+ * built is at Build); null when none is left.
+ */
+export function stepAt(
+	plan: PlanSnapshot,
+): (PlanStep<string> & { workflow: "planning" | "release" }) | null {
+	const { planning, release } = planSteps(plan);
+	const steps = [
+		...planning.map((s) => ({ ...s, workflow: "planning" as const })),
+		...release.map((s) => ({ ...s, workflow: "release" as const })),
+	];
+	return (
+		steps.find((s) => s.state === "current" || s.state === "needs-you") ??
+		steps.find((s) => s.state === "not-yet") ??
+		null
+	);
 }
 
 /**

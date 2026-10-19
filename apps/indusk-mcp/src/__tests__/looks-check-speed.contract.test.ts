@@ -9,7 +9,7 @@ import { readApp } from "../lib/looks/mockups.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 /**
- * promise: a-look-check-costs-what-changed — looks-check-speed A10, A11, A12, A14.
+ * promise: a-look-check-runs-what-changed — looks-check-speed A10, A11, A12, A14.
  * promise: tokens-are-held-exactly — looks-check-speed A12 (a page measured in
  * place still reads the approved values), A36 (a page that reads its size once
  * on mount is measured as a fresh load would).

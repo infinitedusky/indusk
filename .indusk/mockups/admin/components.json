@@ -1,4 +1,6 @@
 {
+	"renderedFrom": "d452d8e55b5ecf672da8310e4c60f20bc6bc6acdd115d4d728e18c5a0a9283bd",
+	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
 			"name": "amendment-card",
@@ -1133,7 +1135,7 @@
 				{
 					"name": "you",
 					"id": "ui-message--you",
-					"snapshotHash": "49e58d7e8117c2b85c5c20046b4766b443a10ebe918aea9adde94b0443515883",
+					"snapshotHash": "458bccd1de5cd77cda514c58e4f09fa12d4c15fa123e0d8390a0c631079c32a9",
 					"content": {
 						"children": [
 							[
@@ -1146,7 +1148,7 @@
 				{
 					"name": "agent",
 					"id": "ui-message--agent",
-					"snapshotHash": "610a400a814d02dfc03e7f756b29c27ce5589243e3a34bd086d52781a2e0fd95",
+					"snapshotHash": "282ba8755460f04a6bee898b105cb22b637c7465fb1b0648f6bf5c6210b47c8e",
 					"content": {
 						"children": [
 							{
@@ -1162,7 +1164,7 @@
 				{
 					"name": "agent-folded",
 					"id": "ui-message--agent-folded",
-					"snapshotHash": "0efbe9906dc4d534cd03d92184e370385864e317d71261074b18082978dfd48f",
+					"snapshotHash": "c277af5511d05dfbc12eaf4fc24ac3a546b8dbf96f7312213923a822273aa104",
 					"content": {
 						"children": [
 							{
@@ -1178,7 +1180,7 @@
 				{
 					"name": "agent-open",
 					"id": "ui-message--agent-open",
-					"snapshotHash": "c4a9ea11bf390a8f5d989aae640a2bdb9c93163b11b9a9c84bad941a2e228a51",
+					"snapshotHash": "00943cf3680cf0b36b41d991d47074c3c2695d5f043a5c2e9572d169d547c745",
 					"content": {
 						"children": [
 							{
@@ -1194,18 +1196,18 @@
 				{
 					"name": "agent-working",
 					"id": "ui-message--agent-working",
-					"snapshotHash": "92d333839ba51a52644669bea4e716b455fc3ca5bcde15809479774b641327f9",
+					"snapshotHash": "8c7a221cb85fa7d6384ff8d1ac91867daa2b8fe735de5da175467d1d108ff6fa",
 					"content": {}
 				},
 				{
 					"name": "agent-stopped",
 					"id": "ui-message--agent-stopped",
-					"snapshotHash": "e05b425ebe23bdc7498d010e74136cf84b3f4696e2681e3ceb9ff84e58a8427b",
+					"snapshotHash": "31d5f31ad2a500e5bf16cb7d399959fbe44262446e11645df5b42799b9b6745f",
 					"content": {}
 				}
 			],
 			"stylesheet": "components/message.css",
-			"stylesheetHash": "2aa4de27ff8aa5f227c964f2853815b932044c869658e67cf476311b8b3d91be"
+			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca"
 		},
 		{
 			"name": "nav",
@@ -2216,6 +2218,12 @@
 					"description": "Where the row goes. A link when given, a button when not."
 				},
 				{
+					"name": "worktree",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Beside the stage, outside the row's link: the worktree mark."
+				},
+				{
 					"name": "className",
 					"type": "unknown",
 					"required": false,
@@ -2432,10 +2440,42 @@
 							]
 						]
 					}
+				},
+				{
+					"name": "worktree",
+					"id": "ui-planrow--worktree",
+					"snapshotHash": "cfc6ecaed21058b482d7285b55c8222656398bb2aa646a18bea1ccf390a6a4ae",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/plan-row.css",
-			"stylesheetHash": "07b69b630ba109e10d811414731a9046befe5368c851feb5217cbe0de5d22940"
+			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598"
 		},
 		{
 			"name": "project-card",
@@ -2464,17 +2504,30 @@
 					"description": "Where it opens."
 				},
 				{
-					"name": "extra",
-					"type": "ReactNode",
+					"name": "shape",
+					"type": "\"workbench\" | \"normal-mode\"",
 					"required": false,
-					"description": "What the page adds beneath the count: a shape, an in-progress badge, when it was last seen."
+					"description": "A workbench or a normal-mode project, when known."
+				},
+				{
+					"name": "inProgress",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Whether any of its plans is being worked."
+				},
+				{
+					"name": "lastSeen",
+					"type": "string",
+					"required": true,
+					"description": "When it was last seen, in words (`6d ago`)."
 				}
 			],
 			"states": [
 				{
 					"name": "default",
 					"id": "ui-projectcard--default",
-					"snapshotHash": "39104a137d61747cd9dcc494dcbf2ced8abbe22adc1eb7d2ae027dc10822c0a4",
+					"snapshotHash": "caf235214c469ebec4f93c7f236b13d0384c03aa7534d28a0a06a46038231a73",
 					"content": {
 						"name": [
 							[
@@ -2489,12 +2542,111 @@
 								1,
 								0
 							]
+						],
+						"shape": [
+							[
+								0,
+								3,
+								0,
+								1
+							]
+						],
+						"lastSeen": [
+							{
+								"at": [
+									0,
+									3,
+									1,
+									0
+								],
+								"before": "last seen "
+							}
+						]
+					}
+				},
+				{
+					"name": "in-progress",
+					"id": "ui-projectcard--in-progress",
+					"snapshotHash": "896aaf5a4a2babbda57b3341ab4178efbe5827907960d576fa670f960efc2630",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"path": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"shape": [
+							[
+								0,
+								3,
+								0,
+								1
+							]
+						],
+						"lastSeen": [
+							{
+								"at": [
+									0,
+									3,
+									2,
+									0
+								],
+								"before": "last seen "
+							}
+						]
+					}
+				},
+				{
+					"name": "workbench",
+					"id": "ui-projectcard--workbench",
+					"snapshotHash": "b02d5f7490b6d905cea4ccfb207c0bee41a50e8c35181c50baaa29f92332378a",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"path": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"shape": [
+							[
+								0,
+								3,
+								0,
+								1
+							]
+						],
+						"lastSeen": [
+							{
+								"at": [
+									0,
+									3,
+									2,
+									0
+								],
+								"before": "last seen "
+							}
 						]
 					}
 				}
 			],
 			"stylesheet": "components/project-card.css",
-			"stylesheetHash": "4b2f698887b372e86b009b0e2ce3bbb72106a9c9ead521f15fe324e0e7e72e26"
+			"stylesheetHash": "6d830055ab28d18c3c9d616942ec9ad270d627d5a3ae4b2e2d6604348a042c17"
 		},
 		{
 			"name": "promise-row",
@@ -3752,6 +3904,55 @@
 			],
 			"stylesheet": "components/workflow-strip.css",
 			"stylesheetHash": "3473cfd6dbbea9d45cf908bc3fd92c5bda568b80ed4ac5f888d97902a7fbefca"
+		},
+		{
+			"name": "worktree-mark",
+			"file": "apps/indusk-admin/src/components/ui/WorktreeMark.tsx",
+			"properties": [
+				{
+					"name": "name",
+					"type": "string",
+					"required": true,
+					"description": "The worktree's name, shown when open and always in the label."
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": false,
+					"description": "Where it is, for the title: \"Read from the worktree at <path> (<branch>)\"."
+				},
+				{
+					"name": "open",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Opened by a click from the start: for a story."
+				}
+			],
+			"states": [
+				{
+					"name": "closed",
+					"id": "ui-worktreemark--closed",
+					"snapshotHash": "dfe28ecefe8d7bc8eb6edae57d39f58aab340b42de8034e333bcdf24c44dad1a",
+					"content": {}
+				},
+				{
+					"name": "open",
+					"id": "ui-worktreemark--open",
+					"snapshotHash": "ee0591d6f7d8b72ae16c59a9a25c85a51c0fdcc238f1e992a55560645001067f",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/worktree-mark.css",
+			"stylesheetHash": "5b97646af3fff653735845f114f3f9e393a0384c9910d45295852170b59e0b83"
 		}
 	]
 }

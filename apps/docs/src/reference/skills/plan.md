@@ -155,12 +155,17 @@ flowchart TD
 
 ## Phase summaries for a reader without the shorthand
 
-A new impl sets `phase_summary: required` in its frontmatter and is written in one shape. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain sentence saying what will be true when it is done, and its instruction sits in an indented `<details><summary>Technical</summary>` fold beneath: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. The save check refuses a missing paragraph, a row label in the paragraph, and code or a row label on a task line. The planner's impl template and the bugfix and refactor templates are written this way.
+A new impl sets `phase_summary: required` in its frontmatter and is written in one shape. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain instruction saying what to do, and each verification item one plain statement of what must hold; a task's technical detail sits in an indented `<details><summary>Technical</summary>` fold beneath: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. The save check refuses a missing paragraph, a row label in the paragraph, and code or a row label on a task line. The planner's impl template and the bugfix and refactor templates are written this way.
 
 The reader is someone who has worked on the project and knows none of the plan's shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. The test before writing a sentence is whether someone who has worked here, but never read the plan, would know what every noun in it refers to.
 
 - Before: "Build Phase 1: the checkers only read top-level lines."
 - After: "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate."
+
+A task is an instruction, not an outcome, so a person reading a phase can tell the work from the checks:
+
+- Before: "The prompt box draws in the app's font."
+- After: "Make the prompt box's text area use the app's font."
 
 The rule is checked on every edit to an impl that has opted in, not only when the whole file is written: an edit that deletes a phase's paragraph, puts code or a row label on a task line, leaves a task with nothing after its box, or leaves a task's fold open is refused, and only the problems that edit adds are refused, so an old problem elsewhere in the file never blocks an unrelated edit. A task's `<details>` fold must close before the next task or heading; a fold left open would hide every line after it from the checks that skip folded text, so the save check refuses it, naming the task.
 
@@ -315,6 +320,38 @@ When this brief was accepted, the planner called `declare_promise` twice and
 `indusk promises contract payment-flow` passed. What exists today and why
 additive changes are needed (the billing module has eight dependents) is in
 `research.md`, not here.
+
+#### The clause plan
+
+A brief with `clauses: required` states each promise's clauses beneath it, and
+`test-plan.md` becomes the **clause plan**, written before the ADR so done is
+fixed before how to build is decided. It has one section per promise and one
+per clause, each clause with the signal that will read it:
+
+```markdown
+## `webhook-events-applied-once`
+
+### `no-double-apply` — A repeated delivery changes nothing.
+
+- Signal: the `webhook.apply` span; upheld when a repeat ends ok with no write; broken reports the event id.
+```
+
+The contract check refuses a missing promise or clause section and a clause with
+no `- Signal:` line, and, once the impl exists, a split or limit clause no test
+row names (`clause: <promise>/<clause>` in the row's `For` cell).
+
+**Closing per clause.** A promise stated as clauses is confirmed
+(`indusk promises confirm <plan>`, and the retrospective's readiness check)
+only when every `split` and `limit` clause has a passing row with a test file,
+that file carries `clause: <promise>/<clause>` (a comment, the way it carries the
+promise token), and every promise a clause rests on is in force. A resting
+clause needs no row of its own. The refusal names the clause, for example
+`seat-map-accurate: clause never-stale: row A4 is planned`, or the clause and the
+file that does not carry its token, and the promise stays `declared`.
+
+The planner groups promises whose work shares code into one plan; promises that
+share none are separate plans under a master. The planner suggests, the person
+decides.
 
 ### 4. ADR (`adr.md`)
 

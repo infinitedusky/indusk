@@ -233,7 +233,6 @@
 			"Bash(/usr/bin/curl -sS -o /dev/null -w \"https://docs.dft.dawn/ \u2192 HTTP %{http_code}\\\\n\" https://docs.dft.dawn/)",
 			"Bash(indusk telemetry *)",
 			"Bash(curl -sf -o /dev/null -w \"Jaeger UI: %{http_code}\\\\n\" http://localhost:16686/)",
-			"Bash(curl -sf -o /dev/null -w \"OTLP HTTP: %{http_code}\\\\n\" http://localhost:4318/v1/traces -X POST -H \"Content-Type: application/json\" -d '{}')",
 			"Bash(indusk --help)"
 		],
 		"additionalDirectories": [

@@ -20,16 +20,28 @@ export interface InterfaceFile {
 	path: string;
 }
 
-/** Every app's declared `sources`, as `{app, source}` pairs, from the checkout at `root`. */
-export function interfaceSources(root: string): Array<{ app: string; source: string }> {
+const trimmed = (path: string): string => path.replace(/\/+$/, "");
+
+/**
+ * Every app's declared `sources`, as `{app, source}` pairs, from the checkout
+ * at `root`, each with the app's `exclude` — paths under a source that draw
+ * nothing (an app's API routes) and so are not its interface.
+ */
+export function interfaceSources(
+	root: string,
+): Array<{ app: string; source: string; exclude: string[] }> {
 	return listApps(root).flatMap((app) => {
-		const declared = readJsonSync<{ sources?: string[] }>(
+		const declared = readJsonSync<{ sources?: string[]; exclude?: string[] }>(
 			join(root, MOCKUPS_DIR, app, "screens.json"),
 			{},
 		);
-		return (declared.sources ?? []).map((source) => ({ app, source: source.replace(/\/+$/, "") }));
+		const exclude = (declared.exclude ?? []).map(trimmed);
+		return (declared.sources ?? []).map((source) => ({ app, source: trimmed(source), exclude }));
 	});
 }
+
+const under = (path: string, folder: string): boolean =>
+	path === folder || path.startsWith(`${folder}/`);
 
 /** The paths under a declared interface among `paths`, each with the app whose interface holds it. */
 export function interfaceFilesAmong(root: string, paths: readonly string[]): InterfaceFile[] {
@@ -39,7 +51,8 @@ export function interfaceFilesAmong(root: string, paths: readonly string[]): Int
 		// A test changes no look. A story is still interface: it renders an approved snapshot.
 		if (isTestFile(path)) continue;
 		const hit = sources.find(
-			({ source }) => source !== "" && (path === source || path.startsWith(`${source}/`)),
+			({ source, exclude }) =>
+				source !== "" && under(path, source) && !exclude.some((folder) => under(path, folder)),
 		);
 		if (hit) out.push({ app: hit.app, path });
 	}

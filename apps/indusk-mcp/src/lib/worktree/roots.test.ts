@@ -1,4 +1,5 @@
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	LAYOUTS,
@@ -6,7 +7,7 @@ import {
 	twoRepos,
 	type VersionedWorkbench,
 } from "../../__tests__/helpers/versioned-workbench.js";
-import { isRootsRefusal, resolveExecutionRoots } from "./roots.js";
+import { isRootsRefusal, PLAN_CODE_FILE, readPlanCode, resolveExecutionRoots } from "./roots.js";
 
 /**
  * The one resolver for "where is the plan, where is the code".
@@ -79,5 +80,26 @@ describe("a flat project", () => {
 		wb = makeVersionedWorkbench({ repos: [{ name: "alpha" }], layout: "nested" });
 		const r = resolveExecutionRoots(wb.repos[0].dir);
 		expect(r).toEqual({ planRoot: wb.repos[0].dir, codeRoot: wb.repos[0].dir, split: false });
+	});
+});
+
+describe("a workbench plan's code file", () => {
+	// clause: a-plan-is-found-in-the-archive/one-lookup
+	// promise: a-plan-is-found-in-the-archive
+	it("T10 is found when the plan is archived", () => {
+		wb = makeVersionedWorkbench({
+			repos: [{ name: "alpha" }],
+			layout: "nested",
+			shape: "workbench",
+		});
+		const dir = join(wb.root, ".indusk", "planning", "archive", "p");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, PLAN_CODE_FILE),
+			JSON.stringify({ repo: "alpha", branch: "plan/p", worktree: wb.repos[0].rel }),
+		);
+		const read = readPlanCode(wb.root, "p");
+		expect(read, "an archived plan's code.json was not found").not.toBeNull();
+		expect(read?.ok, JSON.stringify(read)).toBe(true);
 	});
 });

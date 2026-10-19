@@ -649,6 +649,9 @@ export async function autoEnableExtensions(projectRoot: string): Promise<void> {
 		if (isEnabled(projectRoot, ext.name)) continue;
 		if (ext.required) continue; // already handled in Pass 1
 		if (!ext.detect) continue;
+		// An opt-out holds against detection too: a declined telemetry recommendation
+		// must not come back because an instrumentation file was found.
+		if (isExtensionExplicitlyDisabled(projectRoot, ext.name)) continue;
 
 		let detected = false;
 		let reason = "";

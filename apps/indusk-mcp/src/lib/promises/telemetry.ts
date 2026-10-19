@@ -1,15 +1,24 @@
 import { sanitizeGroupId } from "../config.js";
-import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
+import { daemonMetaPath, resolveLocalDaemonHere } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
-import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome, readOutcome } from "./vocabulary.js";
+import {
+	APP_RESOURCE_KEYS,
+	APP_SIGNAL_KEYS,
+	ENVIRONMENT_ATTRIBUTE,
+	LOOK_MARK,
+	PROMISE_MARK,
+	type PromiseOutcome,
+	readOutcome,
+	TEST_RUN_VALUE,
+} from "./vocabulary.js";
 
 /**
- * The one query for promise marks (day-monitor, ADR D4).
+ * The one query for promise signals (day-monitor, ADR D4).
  *
  * Reads the local telemetry daemon's Jaeger — the one backend the loop has —
  * through its HTTP query API: list the services, then for each promise ask
  * each service for traces tagged `indusk.promise=<name>` in the window. What
- * comes back is every marked span, per promise, split into violations and
+ * comes back is every signalling span, per promise, split into violations and
  * upholds.
  *
  * When Jaeger cannot be reached this throws `JaegerUnreachable`, naming where
@@ -48,6 +57,17 @@ export interface MarkedSpan {
 	environment: string | null;
 	/** Which look a look check's mark is for (`indusk.look.*`); absent on any other mark. */
 	look?: LookKey;
+	/** The clause of the promise this signal concerns (`indusk.clause`); absent when the span names none. */
+	clause?: string;
+	/** The plan and phase that added the signal, read from a break's event or else its span; absent when it named none. */
+	signal?: { plan: string; phase: string };
+	/**
+	 * The measurement the signal carried (`indusk.signal.value`, `.bound`),
+	 * read only as numbers — a value that arrived as anything else is dropped,
+	 * never coerced (mark-first decision D-33).
+	 */
+	value?: number;
+	bound?: number;
 }
 
 /** The app, screen, state and device a look check's span names. */
@@ -82,7 +102,7 @@ function lookOf(tags: JaegerTag[] | undefined): LookKey | null {
  * way to reach Jaeger.
  */
 export interface JaegerEndpoint {
-	/** e.g. `http://localhost:16686` — no trailing slash. */
+	/** e.g. `http://localhost:<interface port>` — no trailing slash. */
 	queryUrl: string;
 	headers?: Record<string, string>;
 }
@@ -127,10 +147,49 @@ export interface PromiseMarks {
 	truncated: boolean;
 	/** The newest upheld span in the window, or null. */
 	lastUpheld: MarkedSpan | null;
+	/** The same two, per clause the spans name; a span naming none is in neither. */
+	byClause?: Record<string, { violations: MarkedSpan[]; lastUpheld: MarkedSpan | null }>;
+}
+
+/** An upheld report whose measurement is past its bound: it breaks a limit clause, however it was reported. */
+export function measuredPastBound(s: Pick<MarkedSpan, "value" | "bound">): boolean {
+	return s.value !== undefined && s.bound !== undefined && s.value > s.bound;
+}
+
+/**
+ * The signalling spans (newest first) split by the clause they name. A
+ * clause's `violations` are the reports that can break it: those saying
+ * broken, and those reported upheld but measured past their bound — kept so a
+ * limit clause still sees one when a later report sits inside its bound
+ * (`clauseStanding` decides from the numbers).
+ */
+function byClause(all: MarkedSpan[]): NonNullable<PromiseMarks["byClause"]> {
+	const out: NonNullable<PromiseMarks["byClause"]> = {};
+	for (const s of all) {
+		if (!s.clause) continue;
+		const c = out[s.clause] ?? { violations: [], lastUpheld: null };
+		out[s.clause] = c;
+		if (s.outcome === "broken" || measuredPastBound(s)) c.violations.push(s);
+		else if (c.lastUpheld === null) c.lastUpheld = s;
+	}
+	return out;
+}
+
+/** The plan and phase that added a signal, when both are among `tags` as strings. */
+function pointerIn(tags: JaegerTag[] | undefined): MarkedSpan["signal"] {
+	const plan = tag(tags, APP_SIGNAL_KEYS.plan);
+	const phase = tag(tags, APP_SIGNAL_KEYS.phase);
+	return typeof plan === "string" && typeof phase === "string" ? { plan, phase } : undefined;
+}
+
+/** A numeric tag as a number; anything else (a string, a missing tag) is no number. */
+function numberTag(tags: JaegerTag[] | undefined, key: string): number | undefined {
+	const v = tag(tags, key);
+	return typeof v === "number" && Number.isFinite(v) ? v : undefined;
 }
 
 export interface MarkedSpansResult {
-	/** The query endpoint that answered, e.g. `http://localhost:16686`. */
+	/** The query endpoint that answered, e.g. `http://localhost:<interface port>`. */
 	queryUrl: string;
 	since: Date;
 	/** One entry per requested promise, present even when nothing was marked. */
@@ -156,14 +215,6 @@ export interface JaegerTrace {
 	spans: JaegerSpan[];
 	processes: Record<string, { serviceName: string; tags?: JaegerTag[] }>;
 }
-
-/**
- * OpenTelemetry's own resource attribute for the deployment environment. We
- * read the conventional name rather than invent an `indusk.` one: a system
- * that is already instrumented has set this, and asking it to set a second
- * attribute for us is asking it to carry InDusk in its code (ADR D6).
- */
-export const ENVIRONMENT_ATTRIBUTE = "deployment.environment";
 
 export const DEFAULT_TIMEOUT_MS = 5_000;
 /** Jaeger's own default is 20 traces per query, which would silently truncate a busy window. */
@@ -229,6 +280,12 @@ export function parseMarkedSpan(
 	 */
 	processTags?: JaegerTag[],
 ): MarkedSpan | null {
+	// A span a test run produced is not a clause's signal (mark-first ADR D3).
+	// The mark is a resource attribute (`telemetry-settings.ts`), so a run
+	// marked through OTEL_RESOURCE_ATTRIBUTES carries it only in the process
+	// tags; the environment is read the same way below.
+	const run = tag(span.tags, APP_RESOURCE_KEYS.run) ?? tag(processTags, APP_RESOURCE_KEYS.run);
+	if (run === TEST_RUN_VALUE) return null;
 	const promise = tag(span.tags, PROMISE_MARK.promise);
 	const outcome = readOutcome(tag(span.tags, PROMISE_MARK.outcome));
 	if (typeof promise !== "string") return null;
@@ -236,12 +293,21 @@ export function parseMarkedSpan(
 	const environment =
 		tag(span.tags, ENVIRONMENT_ATTRIBUTE) ?? tag(processTags, ENVIRONMENT_ATTRIBUTE);
 	let symptom: string | null = null;
+	let signal: MarkedSpan["signal"];
 	for (const log of span.logs ?? []) {
 		if (tag(log.fields, "event") !== PROMISE_MARK.violatedEvent) continue;
 		const s = tag(log.fields, PROMISE_MARK.symptom);
 		if (typeof s === "string") symptom = s;
+		signal = pointerIn(log.fields) ?? signal;
 	}
+	// An app's own helper puts the pointer on the span, not on the break event
+	// (`templates/signal.ts`); `markPromise` puts it on the event. Both count,
+	// the event first (mark-first decision D-32).
+	if (!signal && outcome === "broken") signal = pointerIn(span.tags);
 	const look = lookOf(span.tags);
+	const clause = tag(span.tags, PROMISE_MARK.clause);
+	const value = numberTag(span.tags, APP_SIGNAL_KEYS.value);
+	const bound = numberTag(span.tags, APP_SIGNAL_KEYS.bound);
 	return {
 		promise,
 		outcome,
@@ -253,6 +319,10 @@ export function parseMarkedSpan(
 		symptom,
 		environment: typeof environment === "string" ? environment : null,
 		...(look ? { look } : {}),
+		...(typeof clause === "string" ? { clause } : {}),
+		...(signal ? { signal } : {}),
+		...(value !== undefined ? { value } : {}),
+		...(bound !== undefined ? { bound } : {}),
 	};
 }
 
@@ -337,11 +407,11 @@ export async function markedSpans(opts: {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	let endpoint = opts.endpoint;
 	if (!endpoint) {
-		const status = await daemonStatus();
-		if (!status.running) {
+		const daemon = await resolveLocalDaemonHere("promises");
+		if (daemon === null) {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
-		endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+		endpoint = jaegerEndpoint(`http://localhost:${daemon.uiPort}`);
 	}
 	const queryUrl = endpoint.queryUrl;
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
@@ -371,6 +441,7 @@ export async function markedSpans(opts: {
 			truncated,
 			violations: all.filter((s) => s.outcome === "broken"),
 			lastUpheld: all.find((s) => s.outcome === "upheld") ?? null,
+			byClause: byClause(all),
 		});
 	}
 	return { queryUrl, since: opts.since, byPromise };

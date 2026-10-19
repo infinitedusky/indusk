@@ -621,31 +621,46 @@ program
 // Telemetry daemon (Jaeger + otelcol) — same parent+subcommand + optsWithGlobals
 // pattern as `indusk ui` above. Commander@13 drops duplicated options when they
 // appear on both parent and child, so options live only on the parent.
+interface TelemetryPortFlags {
+	otlpPort?: string;
+	uiPort?: string;
+	logsPort?: string;
+	mcpPort?: string;
+}
+
 const telemetryCmd = program
 	.command("telemetry")
 	.description("Local telemetry daemon lifecycle (start/stop/restart/status)")
-	.option("--otlp-port <port>", "OTLP HTTP port for Jaeger (0 = pick free)", "4318")
-	.option("--ui-port <port>", "Jaeger UI port (0 = pick free)", "16686");
+	.option("--otlp-port <port>", "Traces port (a temporary home only; 0 = pick free)")
+	.option("--ui-port <port>", "Jaeger interface port (a temporary home only; 0 = pick free)")
+	.option("--logs-port <port>", "Logs port (a temporary home only; 0 = pick free)")
+	.option("--mcp-port <port>", "Jaeger MCP port (a temporary home only; 0 = pick free)");
 
 telemetryCmd
 	.command("start")
-	.description("Start the telemetry daemon (Jaeger + otelcol)")
-	.option(
-		"--allow-port-bump",
-		"Start on a different port when the requested one is already in use (default: refuse)",
+	.description(
+		"Start the telemetry daemon (Jaeger + otelcol) on its stored address, or take over the one already running",
 	)
 	.action(async function (this: Command) {
-		const opts = this.optsWithGlobals() as {
-			otlpPort: string;
-			uiPort: string;
-			allowPortBump?: boolean;
-		};
+		const opts = this.optsWithGlobals() as TelemetryPortFlags;
 		const { telemetryStart } = await import("./commands/telemetry.js");
-		await telemetryStart({
-			otlpPort: opts.otlpPort,
-			uiPort: opts.uiPort,
-			allowPortBump: opts.allowPortBump,
-		});
+		await telemetryStart(opts);
+	});
+
+telemetryCmd
+	.command("address")
+	.description(
+		"Print the daemon's stored address (traces, logs, interface, MCP); --json for init to hand to an application",
+	)
+	.option("--json", "Print the address as JSON")
+	.option(
+		"--reset",
+		"Choose the address again, the one way it changes (every application given the old one needs the new one)",
+	)
+	.action(async function (this: Command) {
+		const opts = this.opts() as { json?: boolean; reset?: boolean };
+		const { telemetryAddress } = await import("./commands/telemetry.js");
+		await telemetryAddress(opts);
 	});
 
 telemetryCmd
@@ -679,9 +694,9 @@ telemetryCmd
 telemetryCmd
 	.command("reap")
 	.description(
-		"Kill telemetry processes whose --config path no longer exists (orphans from deleted temp homes)",
+		"Stop this home's strays: daemon processes the record does not name, config file present or gone",
 	)
-	.option("--dry-run", "List what would be killed without signalling anything")
+	.option("--dry-run", "List what would be stopped without signalling anything")
 	.action(async function (this: Command) {
 		const opts = this.opts() as { dryRun?: boolean };
 		const { telemetryReap } = await import("./commands/telemetry.js");
@@ -692,18 +707,11 @@ telemetryCmd
 	.command("restart")
 	.description("Stop + start — picks up new binaries from `npm i -g` of a newer indusk-mcp")
 	.action(async function (this: Command) {
-		const parent = this.parent as Command;
-		const opts = parent.opts() as { otlpPort: string; uiPort: string };
-		// Only forward ports when explicitly set; otherwise daemonRestart
-		// inherits the previously-bound ports from the running daemon's meta,
-		// which is the correct restart semantics ("same daemon, fresh processes").
-		const otlpExplicit = parent.getOptionValueSource("otlpPort") === "cli";
-		const uiExplicit = parent.getOptionValueSource("uiPort") === "cli";
+		// Ports are forwarded only when given on the command line (a temporary
+		// home); the real home restarts on its stored address.
+		const opts = this.optsWithGlobals() as TelemetryPortFlags;
 		const { telemetryRestart } = await import("./commands/telemetry.js");
-		await telemetryRestart({
-			otlpPort: otlpExplicit ? opts.otlpPort : undefined,
-			uiPort: uiExplicit ? opts.uiPort : undefined,
-		});
+		await telemetryRestart(opts);
 	});
 
 telemetryCmd
@@ -778,9 +786,9 @@ telemetryCmd
 		"Stop the daemon, clear in-memory trace storage + log sink, and restart. Human-only — not exposed as an MCP tool.",
 	)
 	.action(async function (this: Command) {
-		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
+		const opts = this.optsWithGlobals() as TelemetryPortFlags;
 		const { telemetryReset } = await import("./commands/telemetry.js");
-		await telemetryReset({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
+		await telemetryReset(opts);
 	});
 
 const workbenchCmd = program
@@ -1052,6 +1060,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("accept-brief <name>")
+	.description(
+		"Accept a plan's draft brief once its contract check passes — the brief is settled and the plan can be written from it",
+	)
+	.action(async (name: string) => {
+		const { plansAcceptBrief } = await import("./commands/plans.js");
+		await plansAcceptBrief(process.cwd(), name);
+	});
+
+plansCmd
 	.command("model <name>")
 	.description(
 		"The tier and model a phase is built on, or a step runs on — `<tier> <model>`, or `session` when the project names no model for it",
@@ -1067,6 +1085,32 @@ plansCmd
 	});
 
 plansCmd
+	.command("tests <name>")
+	.description(
+		"Run a plan's own tests: its rows' tests, the tests its changes reach and, at landing, the tests of the promises its brief lists as Must not break — each file printed with its reason; exit 1 when any fails",
+	)
+	.option("--phase <ref>", 'A phase: "Build Phase 1", "Test Phase 1" or a bare build number')
+	.option(
+		"--landing",
+		"The whole plan: every row, what its branch changed, and the Must-not-break promises",
+	)
+	.option("--list", "Print the rows' and Must-not-break promises' files and run nothing")
+	.action(async (name: string, opts: { phase?: string; landing?: boolean; list?: boolean }) => {
+		const { plansTests } = await import("./commands/plans.js");
+		await plansTests(rootOrExit(), name, opts);
+	});
+
+plansCmd
+	.command("time <name>")
+	.description(
+		"How long a plan took: its phases, unattended steps and test runs with their durations, and a total from the brief's acceptance to the plan's landing — what has no record is named, never hidden",
+	)
+	.action(async (name: string) => {
+		const { plansTime } = await import("./commands/plans.js");
+		await plansTime(rootOrExit(), name);
+	});
+
+plansCmd
 	.command("audit-inputs <name>")
 	.description(
 		"What the auditor is handed, as JSON: the plan's documents, the impl as merged at approval, the trajectory as it stands, the branch's diff and a stat of the whole tree",
@@ -1078,6 +1122,27 @@ plansCmd
 	.action(async (name: string, opts: { approved?: string }) => {
 		const { plansAuditInputs } = await import("./commands/plans.js");
 		await plansAuditInputs(process.cwd(), name, opts.approved);
+	});
+
+plansCmd
+	.command("review-inputs <name>")
+	.description(
+		"What the plan review's reader is handed before approval, as JSON: the plan's brief, test plan, ADR and impl as they stand and every tracked file — never the research",
+	)
+	.action(async (name: string) => {
+		const { plansReviewInputs } = await import("./commands/plans.js");
+		await plansReviewInputs(process.cwd(), name);
+	});
+
+plansCmd
+	.command("audit-answers <name>")
+	.description(
+		"Every dismissal and amendment answer in the plan's audit.md, for the person; exits 2 naming each finding or question still to answer",
+	)
+	.option("--plan-review", "Read plan-review.md, the read before approval, instead of audit.md")
+	.action(async (name: string, opts: { planReview?: boolean }) => {
+		const { plansAuditAnswers } = await import("./commands/plans.js");
+		await plansAuditAnswers(process.cwd(), name, opts.planReview === true);
 	});
 
 plansCmd
@@ -1227,10 +1292,19 @@ looksCmd
 		"check just these looks, a screen state (home.empty) or a story (badge.ok); repeatable or comma-separated",
 	)
 	.option("--all", "open every look, even one unchanged since it last held")
-	.action(async (app: string, opts: { url?: string; only?: string[]; all?: boolean }) => {
-		const { looksCheck } = await import("./commands/looks.js");
-		await looksCheck(rootOrExit(), app, opts);
-	});
+	.option(
+		"--changed <ref>",
+		"open only the looks drawn from files changed since <ref>, and report every other look from its last held result",
+	)
+	.action(
+		async (
+			app: string,
+			opts: { url?: string; only?: string[]; all?: boolean; changed?: string },
+		) => {
+			const { looksCheck } = await import("./commands/looks.js");
+			await looksCheck(rootOrExit(), app, opts);
+		},
+	);
 
 looksCmd
 	.command("stories <app>")
@@ -1350,6 +1424,11 @@ promisesCmd
 	.requiredOption("--kind <kind>", "behaviour | state | structure")
 	.requiredOption("--domain <domain>", "one of the project's declared domains")
 	.requiredOption("--statement <sentence>", "the promise, in one plain sentence")
+	.option(
+		"--clause <spec>",
+		"a clause of the promise, repeatable: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`",
+		(spec: string, all: string[] = []) => [...all, spec],
+	)
 	.action(async function (this: Command, name: string) {
 		const { promisesDeclare } = await import("./commands/promises.js");
 		promisesDeclare(rootOrExit(), name, this.opts());
@@ -1363,6 +1442,11 @@ promisesCmd
 	.requiredOption("--plan <plan>", "the plan changing it")
 	.requiredOption("--statement <sentence>", "the promise as it now reads")
 	.requiredOption("--reason <reason>", "why it changed")
+	.option(
+		"--clause <spec>",
+		"a clause of the promise, repeatable, replacing its clauses: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`; without it the clauses stay",
+		(spec: string, all: string[] = []) => [...all, spec],
+	)
 	.action(async function (this: Command, name: string) {
 		const { promisesChange } = await import("./commands/promises.js");
 		promisesChange(rootOrExit(), name, this.opts());

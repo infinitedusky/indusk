@@ -68,6 +68,12 @@ export interface DashboardRow {
   lastActivity: string | null;
   /** The newest break: a heard break, or the alarm source's last sighting while broken. */
   lastBreak: string | null;
+  /**
+   * The package's signal standing — the promise's worst clause — or null for
+   * a promise stated before clauses (mark-first); absent from a row built
+   * before the field existed. Never decided here.
+   */
+  signal?: StandingRow["signal"] | null;
 }
 
 export interface RowContext {
@@ -89,15 +95,21 @@ function titled(ctx: RowContext, handle: string): string {
 
 /**
  * An enforced promise nothing has reported on: no signal, drawn grey and never
- * as holding (one-promise-language). The one reading of it — the row's dot and
- * the page's look state both ask here.
+ * as holding (one-promise-language). Also one whose package signal reads no
+ * signal — a clause nothing reported, or a blind watcher — however many past
+ * days were held: the worst clause decides (mark-first A38). The one reading
+ * of it — the row's dot and the page's look state both ask here.
  *
  * promise: a-promise-is-upheld-or-broken
+ * clause: a-clause-is-proved-twice/no-signal-is-not-holding
  */
 export function readsNoSignal(
-  row: Pick<DashboardRow, "standing" | "held">,
+  row: Pick<DashboardRow, "standing" | "held" | "signal">,
 ): boolean {
-  return row.standing === "enforced" && row.held === null;
+  return (
+    row.standing === "enforced" &&
+    (row.held === null || row.signal === "no-signal")
+  );
 }
 
 /** One row per promise, from the package's standing and thirty days, in words, with its plan's title and Path. */
@@ -121,6 +133,7 @@ export function buildRows(
       broke: s.thirtyDays.broke,
       lastActivity: s.lastActivity,
       lastBreak: s.lastBreak,
+      signal: s.signal ?? null,
     };
   });
 }

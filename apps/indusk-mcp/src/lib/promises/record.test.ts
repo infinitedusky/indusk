@@ -219,6 +219,8 @@ describe("A3 — a pass marks itself", () => {
 		expect(attributes).toEqual({
 			"indusk.promise": "a-production-break-is-recorded-unasked",
 			"indusk.promise.outcome": "upheld",
+			// Written under a test runner, so the span says so and no reader counts it (mark-first A6).
+			"indusk.run": "test",
 		});
 	});
 });

@@ -10,14 +10,21 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
-import { type Span, SpanStatusCode, type Tracer, trace } from "@opentelemetry/api";
+import { type Span, SpanStatusCode, type Tracer } from "@opentelemetry/api";
 import matter from "gray-matter";
 import { readRegistry, removeProject } from "../admin/registry.js";
 import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { induskMcpPackageRoot } from "../package-root.js";
+import { commandTracer, flushCommandTracer } from "../telemetry/command-tracer.js";
 import { installProblems } from "./install.js";
 import { isUnderParent, parentSetBy, readParent, repositoryAround } from "./parent.js";
-import { loadProposal, type Proposal, ProposalError, readProposal } from "./proposal.js";
+import {
+	loadProposal,
+	type Proposal,
+	ProposalError,
+	readProposal,
+	TELEMETRY_RECOMMENDATION,
+} from "./proposal.js";
 import {
 	type CreationRecord,
 	type CreationStepId,
@@ -225,6 +232,24 @@ function recordChoices(root: string, proposal: Proposal): void {
 	});
 }
 
+/** The extensions a declined telemetry recommendation turns off. */
+const TELEMETRY_EXTENSIONS = ["local-telemetry", "otel"] as const;
+
+/**
+ * A declined telemetry recommendation turns both telemetry extensions off before `init`
+ * runs, so init enables neither (no daemon registered) and scaffolds nothing; the reason
+ * is still recorded afterwards by `recordChoices`.
+ *
+ * promise: a-recommendation-can-be-declined
+ */
+function disableDeclinedTelemetry(root: string, proposal: Proposal): void {
+	const telemetry = proposal.recommendations.find((rec) => rec.name === TELEMETRY_RECOMMENDATION);
+	if (!telemetry || telemetry.kept) return;
+	const config = readConfig(root) ?? ({} as InduskConfig);
+	const disabled = new Set([...(config.disabled_extensions ?? []), ...TELEMETRY_EXTENSIONS]);
+	writeConfig(root, { ...config, disabled_extensions: [...disabled] });
+}
+
 /** The workbench's own git repository and first commit; the repositories and worktrees inside it are ignored. */
 async function commitWorkbench(root: string, proposal: Proposal): Promise<void> {
 	await git(root, ["init", "-q", "-b", "main"]);
@@ -292,10 +317,9 @@ export async function createProject(
 		throw err;
 	} finally {
 		endSpan(span, options.now);
+		if (!options.tracer) await flushCommandTracer();
 	}
 }
-
-const TRACER_NAME = "@infinitedusky/indusk-mcp/new-project";
 
 /**
  * The `new_project.create` span (new-project-flow, OTel): it starts when the
@@ -317,7 +341,7 @@ function startCreateSpan(
 ): Span | null {
 	try {
 		const created = projectDraftCreatedAt(draft);
-		const span = (tracer ?? trace.getTracer(TRACER_NAME)).startSpan(
+		const span = (tracer ?? commandTracer()).startSpan(
 			"new_project.create",
 			created ? { startTime: created } : {},
 		);
@@ -388,6 +412,7 @@ async function makeProject(
 		progress.set("repository", "done");
 
 		begin("install");
+		disableDeclinedTelemetry(root, proposal);
 		await run(
 			process.execPath,
 			[

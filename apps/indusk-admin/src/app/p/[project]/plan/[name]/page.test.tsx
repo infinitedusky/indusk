@@ -96,6 +96,10 @@ vi.mock("@/lib/decisions-reader", () => ({
 
 // The plan page's brief parts are read by the package from disk (node:fs), which
 // the browser project cannot import; these pages have no brief to show.
+// The plan page reads each promise's health through the package (node:fs); these pages show none.
+vi.mock("@/lib/plan-health", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).planHealthMock(),
+);
 vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
   readPlanParts: async (_root: string, plan: string) => ({
     plan,
@@ -148,7 +152,7 @@ describe("T11 — subplan rows resolve active over archived on a name collision"
       '[data-component="subplan-row"][href$="/plan/twin"]',
     );
     expect(card, "expected a row for the twin subplan").not.toBeNull();
-    expect(card?.textContent).toContain("Building");
+    expect(card?.textContent).not.toContain("Closed");
     expect(
       card?.textContent,
       "row must not show the archived copy's status",

@@ -1,3 +1,4 @@
+// promise: the-nav-says-where-a-plan-is
 // promise: every-plan-is-one-click-away
 // promise: paths-keep-their-order
 // promise: a-plan-can-start-from-the-admin
@@ -76,6 +77,10 @@ vi.mock("@/lib/planning-reader", async () =>
 );
 vi.mock("@/lib/promises-reader", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).promisesReaderMock(),
+);
+// The layout reads the plans' worktrees' promises through the plan-health reader (node:fs); these pages show none.
+vi.mock("@/lib/plan-health", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).planHealthMock(),
 );
 vi.mock("@infinitedusky/indusk-mcp/promises/health", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).healthMock(),

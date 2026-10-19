@@ -25,6 +25,7 @@ import { masterStory } from "@/lib/master-story";
 import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
 import { buildGroups, groupOf } from "@/lib/plan-groups";
+import { readPlanHealth } from "@/lib/plan-health";
 import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
 import {
@@ -54,15 +55,6 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // The dates the released card reads come from the package.
   const dates = (await readHealthNames(projectPath)).planDates[name];
 
-  // What the page offers, one rule for a normal-mode plan (its worktree) and
-  // a workbench plan (its code file) — workbench-plan-authoring A10.
-  const actions = planActions({
-    worktree: plan.worktree,
-    code: plan.code,
-    implStatus: plan.impl?.frontmatter.status as string | undefined,
-    position: plan.position?.position,
-  });
-
   // The one decision the plan waits on, and what it was answered before
   // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
   // the card while it waits on them, so neither is offered twice.
@@ -70,12 +62,23 @@ export default async function PlanPage({ params }: PlanPageProps) {
     ? undefined
     : (await readWaiting(project, projectPath, [plan]))[0];
 
+  // What the page offers, one rule for a normal-mode plan (its worktree) and
+  // a workbench plan (its code file) — workbench-plan-authoring A10.
+  const actions = planActions({
+    worktree: plan.worktree,
+    code: plan.code,
+    implStatus: plan.impl?.frontmatter.status as string | undefined,
+    position: plan.position?.position,
+    waitingOn: waiting?.on,
+  });
+
   // The brief's three parts, read by the package from the checkout the plan is
   // worked in (its worktree, else the project's own), on every request, so a
   // promise or a look the agent writes shows on the next refresh.
   const checkout = plan.worktree?.path ?? projectPath;
   const parts = await readPlanParts(checkout, name, {
     archived: plan.archived || Boolean(plan.archivedInWorktree),
+    health: await readPlanHealth(projectPath, checkout),
   });
 
   // A master (a plan that declares subplans) tells its story where a plan's

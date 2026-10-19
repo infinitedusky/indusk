@@ -1,5 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { clauseTestRunner, localSignalReader } from "../lib/promises/closing-inputs.js";
+import { markClosing } from "../lib/promises/closing-signal.js";
 import { confirmPlan } from "../lib/promises/confirm.js";
 import { openIncidentsAt, promiseHealth } from "../lib/promises/health.js";
 import { WatcherBlind } from "../lib/promises/probe.js";
@@ -67,11 +69,17 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 			inputSchema: {
 				name: z.string().describe("kebab-case, starting with a letter; it becomes the file name."),
 				...promiseFields,
+				clauses: z
+					.array(z.string())
+					.optional()
+					.describe(
+						"The promise's clauses, one string each: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`. Give them when the brief states the promise as clauses; a bad kind or a resting clause on an unknown promise is refused with nothing written.",
+					),
 			},
 		},
-		async ({ name, plan, kind, domain, statement }) =>
+		async ({ name, plan, kind, domain, statement, clauses }) =>
 			written(() => {
-				declarePromise(projectRoot, { name, plan, kind, domain, statement });
+				declarePromise(projectRoot, { name, plan, kind, domain, statement, clauses });
 				return { declared: name, owner: plan, state: "declared" };
 			}),
 	);
@@ -86,13 +94,19 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 				plan: z.string().describe("The plan changing it."),
 				statement: z.string().describe("The promise as it now reads, in one plain sentence."),
 				reason: z.string().describe("Why it changed, in a sentence."),
+				clauses: z
+					.array(z.string())
+					.optional()
+					.describe(
+						"The promise's clauses, one string each: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`. Given, they replace its clauses and the History keeps the old ones; omitted, the clauses stay.",
+					),
 			},
 		},
-		async ({ name, plan, statement, reason }) =>
+		async ({ name, plan, statement, reason, clauses }) =>
 			written(() => {
 				const before = readPromises(projectRoot);
 				const was = before.ok ? before.registry.promises.find((p) => p.name === name) : undefined;
-				changePromise(projectRoot, { name, plan, statement, reason });
+				changePromise(projectRoot, { name, plan, statement, reason, clauses });
 				return { changed: name, owner: plan, previousOwner: was?.owner ?? null };
 			}),
 	);
@@ -158,7 +172,14 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 				if (isRootsRefusal(roots)) return text({ error: roots.error }, true);
 				codeRoot = roots.codeRoot;
 			}
-			const result = await confirmPlan({ planRoot: projectRoot, codeRoot, plan });
+			const result = await confirmPlan({
+				planRoot: projectRoot,
+				codeRoot,
+				plan,
+				runTests: clauseTestRunner(projectRoot, codeRoot),
+				readSignals: localSignalReader(projectRoot),
+			});
+			await markClosing(projectRoot, plan, result);
 			if (!result.ok) {
 				return text({ refusals: result.refusals, written: result.written }, true);
 			}

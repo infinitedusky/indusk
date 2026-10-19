@@ -17,8 +17,27 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **Now (2026-10-08): the InDusk demo.** The project is [indusk-demo](planning/indusk-demo/master.md) — show a promise breaking and the system catching it. Steps 0–4 and step 8 are closed: **incident-recording landed 2026-10-08** ([archive](planning/archive/incident-recording/)). **vscode-extension (demo step 9) is closed** (2026-10-09; [archive](planning/archive/vscode-extension/)): markers, the Promises panel, Fix with Claude; a break showed in VS Code 5.3 s after it happened. **plan-cockpit closed 2026-10-10** ([archive](planning/archive/plan-cockpit/)): the admin is the cockpit — nav by Path, dashboard, promise page with a fix, plan page as two workflows with its decision; audit findings left for a follow-on. **ui-promises closed 2026-10-11** ([archive](planning/archive/ui-promises/)): the admin's look is held to eleven approved mockups on one token foundation — a token changed in the admin alone shows broken on the dashboard; 54 of 66 looks unchecked until the nav, promise and plan pages report their state, and the admin's layout does not yet match its mockups (a component-rebuild follow-on, scope set by the demo design). Next: demo-rehearsal; and the graph-tools leftovers a security researcher reported (unreachable since 1.33.1, still shipped in 1.67.0's `dist/`) to remove, released with credit. **server-provisioning (demo step 5) is closed** (landed 2026-10-08, ahead of order; [archive](planning/archive/server-provisioning/)): `indusk server connect` and `server deploy`; a Fly server is about $8/month and ~6 min to deploy. Not yet published: the first release that publishes the server image needs `docker login ghcr.io` first (known-issues). Any agent starting work on dusk starts there unless Sandy says otherwise.
 
+**Stabilize — the one list is the master plan [stabilize](planning/stabilize/master.md)** (Sandy, 2026-10-19), first in the nav: five plans in order, then parked work. Done when three plans in a row go from accepted brief to landed and closed unattended, with no hand fixes; no new features until then. Supersedes every order below.
+**Next (Sandy, 2026-10-18) — speed first, then quality.** Speed: (1) `archived-plans-are-found` — closed 2026-10-18; (2) brief to build unattended — closed 2026-10-19 (`a-brief-is-planned-unasked`); (3) phase and plan durations recorded and shown; (4) `decisions-as-questions` (run-the-master). Quality, right after: `a-promise-can-be-retired` (a pivot shows its reach) then retire the fast/slow tier split, `the-sampler`, `a-promise-claims-what-the-plan-builds`, `audit-concerns-are-answered` — widened (Sandy, 2026-10-19) to one plan: a cold review of the brief, test plan, ADR and impl as the planning run's last step, before approval; a code-only audit before review, not after acceptance; the agent answers every finding and stops for the person only when the fix would change an approved promise, expectation, look or scope. Its brief is accepted, so the widening is an amendment for Sandy to re-approve; it starts after `the-admin-knows-the-package-root`. **Hardening (not started; decide later, Sandy 2026-10-19):** a landing check that builds the shipped package (the admin's production bundle) when a plan touched indusk-mcp or the admin — `a-brief-is-planned-unasked` broke `pnpm install:local` on main and nothing caught it before landing; the planning run's ADR check is only non-empty, and a planning step is not stopped from editing files other than its own document; the plan test set's reached-tier history and the guard's helper-through-helper gap (from `tests-never-make-us-wait`). **Gates are skipped by shell edits (found 2026-10-19, first in priority):** the impl hooks (check-gates, validate-impl-structure, the amendment hold) run on Edit and Write only; an unattended build session checked `audit-concerns-are-answered`'s Build Phase 3 off through a `python3` heredoc while an amendment waited, and nothing refused it. Claude Code's bypass-permissions mode tells agents shell edits are fine. Fix at two levels: the loop reads the plan itself (the named amendment stop `audit-concerns-are-answered` adds), and a Bash guard refuses a command that writes a plan document. **A release that dies after acceptance has no restart** (2026-10-19): `audit-concerns-are-answered`'s release session ended (likely an admin restart) and nothing showed it stopped or offered to rerun it. **A plan with clauses needs a signals phase**: since `mark-first`, `promises confirm` refuses a clause no signal reported upheld in a real run; the planner and the impl hook should require an item emitting each clause's signal. **audit-concerns-are-answered landed 2026-10-19 (`58b0e18f`, then again with its amendment commits), not closed:** `promises confirm` refuses four clauses until real runs report their signals (A32); the ten real findings its audit left are a follow-on (its retrospective, Follow-ups), then confirm and archive. Also: a brief's Changes entry must be the new sentence exactly — wrapping it in "Now: … (Was: …)" made a false amendment mid-build.
+**Next (Sandy, 2026-10-18) — speed first, then quality.** Speed: (1) `archived-plans-are-found` — accept, reapprove and the landing test set read a plan under `planning/` or `planning/archive/`; (2) brief to build unattended — closed 2026-10-19 (`a-brief-is-planned-unasked`); (3) phase and plan durations recorded and shown, and every `indusk plans tests` run recorded (plan, phase or landing, files by reason — row, reached, must-not-break — seconds, result) so whether to run Must-not-break every phase and reached tests at landing is decided from data (Sandy, 2026-10-18: keep the rule as is until then); (4) `decisions-as-questions` (run-the-master). Quality, right after: `a-promise-can-be-retired` (a pivot shows its reach) then retire the fast/slow tier split, `the-sampler`, `a-promise-claims-what-the-plan-builds`, `audit-concerns-are-answered`.
+
+**Next (Sandy, 2026-10-17) — tests stop making us wait, before anything else.** In order: (1) close `storybook-components`' two Maintenance phases (their checks pass since mockups-draw-components-as-stories landed); (2) `tests-never-make-us-wait` — closed 2026-10-18; then `a-promise-can-be-retired` (a pivot shows its reach, draft) so its follow-up can retire the fast/slow tier split, and `the-sampler` (draft); (3) `a-break-runs-its-tests` — a clause's break runs that clause's tests; (4) `run-the-master`. `mark-first` is in its close: landing is blocked on `admin-recorder.test.ts` (see its retrospective). `plan-page-shows-its-looks` is parked until (2) lands (it touches looks); `clean-release-build`, `a-new-project-starts-instrumented` and `audit-concerns-are-answered` slot in after (2). See promise-core/master.md and telemetry-from-day-one/master.md.
+
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
+- **the-admin-knows-the-package-root (closed 2026-10-19)** — the admin's bundled code finds shipped files through the package root `indusk ui` hands down; sessions the admin starts do not inherit it. Open: the live checks T6 and T7 run once on an installed build; a running admin needs `indusk ui restart` after landing; `mark-first` and `a-plan-says-how-long-it-took` can be planned again once it lands. See [archive](planning/archive/the-admin-knows-the-package-root/).
+- **admin-builds-with-the-planning-reader (closed 2026-10-19)** — the admin's production build works again: the planning reader runs the impl hook through `process.execPath` and the package root (Turbopack resolved `spawnSync("node", …)`). See [archive](planning/archive/admin-builds-with-the-planning-reader/).
+- **a-brief-is-planned-unasked (closed 2026-10-19)** — `indusk plans accept-brief`; an accepted brief with approved looks is planned unattended (test plan, ADR, impl, each checked) and stops for approval; approving starts the build; the admin's interface excludes its server code. Open: the live check after landing; the ADR check is only non-empty; a planning step is not stopped from editing other files. See [archive](planning/archive/a-brief-is-planned-unasked/).
+- **a-plan-says-how-long-it-took (closed 2026-10-18)** — `indusk plans time <name>` prints each phase, unattended step and test run with its duration, and the plan's total from acceptance to landing; a record never blocks the work. Phase close is derived, not recorded (no production caller for `recordPhaseClose`). See [archive](planning/archive/a-plan-says-how-long-it-took/).
+- **a-plan-runs-what-must-not-break (closed 2026-10-18)** — a phase runs its rows and the Must-not-break tests, a landing every row and those tests; the reached-tests search is gone (9 files in 12 s, from about 100); `promises change --clause`. Precise test choice is the sampler's. See [archive](planning/archive/a-plan-runs-what-must-not-break/).
+- **archived-plans-are-found (closed 2026-10-18)** — every plan command finds a plan in `planning/` or `planning/archive/` through one lookup (`findPlanFolder`, `lib/promises/plan-folder.ts`); re-approval reads the approved brief at its old path. Open: the plan test set's reached system-tier tests overload the machine in one batch (carried to the tier-retire follow-up). See [archive](planning/archive/archived-plans-are-found/).
+- **tests-never-make-us-wait (closed 2026-10-18)** — a plan runs its own tests, what its changes reach and its Must-not-break tests (`indusk plans tests`); a look check of what changed opens only touched looks; `pnpm test` 150 s → 33 s. Open: retire `everyday-tests-never-wait` and the tier logic once retiring exists; a changed `package.json` reruns a package's whole suite; the planner template and `quality_check` still say whole suite. See [archive](planning/archive/tests-never-make-us-wait/).
+- **a-new-project-starts-instrumented (closed 2026-10-17)** — a scaffolded project reports to the local daemon from its first run, in its code repo, named, with project and environment on every span; it writes signals from a helper it owns; init and the skills say true things. Open from its audit: a declined telemetry recommendation counts only when named `telemetry`, Node/Python/browser still need one hand-wired line, several rows are narrower than their clause; `day-monitor` e2e A24 still waits for "1 violation" where `promises status` says "1 break" (trunk). See [archive](planning/archive/a-new-project-starts-instrumented/).
+- **plan-page-promise-health (closed 2026-10-17)** — a plan's page and brief page colour each promise by its health from `planPromiseHealth`, the nav's red dot reads the same worktree promises, and the pages are tested as drawn. Open: eleven audit findings not taken (a known-broken state promise draws amber; see its `audit.md`). See [archive](planning/archive/plan-page-promise-health/).
+- **daemon-found-not-guessed (closed 2026-10-17)** — one telemetry daemon per machine on its stored address (`indusk telemetry address`: 24318 traces, 24319 logs, 24316 interface, 24317 MCP), found from what runs when its record is lost, never a second; each clause reports itself as a span. An application that sent to 4318 needs the stored address. Open: the extension manifest's health checks, 2,663 dead test entries in the telemetry project registry. See [archive](planning/archive/daemon-found-not-guessed/).
+- **impl-tasks-are-instructions (closed 2026-10-17)** — a task in a new impl reads as an instruction and a verification item as what must hold; a whole-repo gone test guards the old wording. See [archive](planning/archive/impl-tasks-are-instructions/).
+- **daemon-found-not-guessed (closed 2026-10-17)** — one telemetry daemon per machine on its stored address (`indusk telemetry address`: 24318 traces, 24319 logs, 24316 interface, 24317 MCP), found from what runs when its record is lost, never a second; each clause reports itself as a span. An application that sent to 4318 needs the stored address. Open: the extension manifest's health checks, 2,663 dead test entries in the telemetry project registry, and the plan page reading a promise's registry state instead of its health (a bugfix plan). See [archive](planning/archive/daemon-found-not-guessed/).
+- **plans-are-promises (closed 2026-10-16)** — a promise can be stated as clauses (`clauses: required` in a brief, `declare --clause`, `clause:` rows) and a plan closes per clause; accepted and landed by a person next. Open: a promise of only resting clauses cannot close, `change`/`replace` carry no clauses, `indusk plans start` fails under `init --local`. See [archive](planning/archive/plans-are-promises/).
 - **brief-as-the-contract (closed 2026-10-13)** — the brief is the contract: looks in the brief, approval of the brief, amendments wait for the person, a brief page with the agent beside it, a plan starts as a draft outside the repo. See [archive](planning/archive/brief-as-the-contract/) for full detail.
 - **cockpit-redraw (closed 2026-10-14)** — the nav redrawn from the original cockpit and dragged wider, the brief page drawn, re-approval a person's; the admin's look check names a missing page unchecked and goes on. See [archive](planning/archive/cockpit-redraw/).
 - **plan-stories (closed 2026-10-15)** — plans read by their title in the admin and the editor; a master plan's page tells its story (`subplan-row`) and keeps a plan page's controls; Needs you counts amendments. Still to get a title from their next session: `demo-scenarios`, `approve-then-improve`, `main-suite-green`, `skip-reason-why`, `release-preconditions`; Sandy's calls from its research (close `release-preconditions`, `indusk-release`, `jev-decision-model`; the plan overlaps) are in the [archive](planning/archive/plan-stories/research.md). See [archive](planning/archive/plan-stories/). Parked, no plan: the re-approval guard misses `plans "reapprove"`, a line continuation and a shell `sed -i` on `approved_brief:`; 140 admin looks unchecked as "did not report state".
@@ -32,6 +51,8 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **story-first-phases (closed 2026-10-15)** — an impl phase opens with a plain paragraph and each task is one sentence with its technical detail folded beneath, held on every edit (`phase_summary: required`); folded text never ticks, skips or adds; the plan page shows both. See [archive](planning/archive/story-first-phases/).
 - **one-promise-language (closed 2026-10-16)** — every page, record and signal says upheld or broken (holding/broken live, no signal unknown); readers take `broken` and `violated` as broken, writers and `promises health --json` keep `violated` until `mark-first`; `known-broken` with `known-violated` still read; no signal is drawn grey. See [archive](planning/archive/one-promise-language/).
 - **looks-check-speed (closed 2026-10-16)** — a look check costs what changed: an unchanged look is reused from machine state, each opened look loads once, dev servers refused, `--only`/`--all`; ~35 min → 98 s full, the 57 s floor of never-checkable looks carried to looks-as-promises. See [archive](planning/archive/looks-check-speed/).
+- **nav-row-legible (closed 2026-10-16)** — a plan's worktree is a small ⎇ mark beside its stage in the nav, outside the row's link; hover or click widens it to the name, truncated inside the row. See [archive](planning/archive/nav-row-legible/).
+- **finished-rituals-stay-done (closed 2026-10-16)** — a plan's Falsify, Cleanup and Audit read done from their own files (closed phase, legacy log, `audit.md`) and stay done when a later build phase reopens it; a skip still reads skipped; one `finishedRitualsOf` in the package. Open: audit-as-signal goes into `mark-first`; two everyday tests fail on trunk (`impl-corpus` A4, `looks-admin-approvals-hold` A11). See [archive](planning/archive/finished-rituals-stay-done/).
 - **skip-reason-why (closed 2026-10-14)** — a skipped step reads "skipped" with a "why?" that opens its reason; a skip reason is one sentence of at most 120 characters, and an unattended build shortens a long one rather than re-running the ritual. See [archive](planning/archive/skip-reason-why/) for full detail.
 - **component-content (closed 2026-10-14)** — a mockup places a component with its own words; text and placed components only, refused otherwise. Approve does not yet refuse content findings (follow-on). See [archive](planning/archive/component-content/) for full detail.
 - **new-project-flow (closed 2026-10-14)** — a project starts as a conversation in the admin and is created with no command typed; follow-ups in `mark-first` (the creation span, marks for prompt-held promises) and `adopt-existing-project` ([archive](planning/archive/new-project-flow/)).
@@ -59,6 +80,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **admin-plan-authoring (closed, 2026-10-06)** — the admin plans, builds unattended to review, shows the evidence and releases on acceptance, through the developer's own `claude` and `indusk plans start | approve | accept | land | next | review`; falsification closed a DNS-rebinding hole. **Open**: U3, the smoke check of the published package right after `pnpm release` (New plan → Build → Accept → `plans land` in a scratch project), result recorded here. Follow-on draft: `bookkeeping-lives-where-it-is-read`. See [archive](planning/archive/admin-plan-authoring/).
 - **day-always-on-deploy (2026-10-04)** — the always-on server deployed on Fly (`indusk-always-on`) and smoked, idle hour passed; three server bugs found and fixed on the way (1.58.2–1.58.4), four more from falsification bumped as 1.58.5 ([archive](planning/archive/day-always-on-deploy/)).
 - **storybook-components (closed, 2026-10-12)** — the admin's nineteen components are each one file with a story per state, approved as snapshots that also bind their stylesheets; mockups compose them by name, a changed component reopens its mockups, and `components.json` is the catalog to read before writing a component. The cockpit does not yet match its mockups (U1), which is carried to mockup-matching. See the [archive](planning/archive/storybook-components/).
+- **mockups-draw-components-as-stories (closed, 2026-10-17)** — a component in a mockup draws as its story does (element resets scoped to components, a mockup's own styles to its page), checked at every device; approvals bind the element rules. storybook-components' Maintenance phases now verify and close the two 1.71.0 incidents. See the [archive](planning/archive/mockups-draw-components-as-stories/).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
@@ -104,6 +126,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-10-08: **1.66.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 2e2743d (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-08: **1.67.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 50a4e9a (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-10: **1.70.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit af82a8c (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-16: **1.71.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit b27bb20 (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
@@ -3156,10 +3179,111 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 ---
 
-## Session 8ae65d08 — starting catchup
+## Session 8ae65d08 — run-the-master briefs: run-the-graph + activity-and-graph drafts waiting on plans-are-promises to land
 
 **Session ID**: 8ae65d08-49fb-4c3f-810f-3b527885d1d6
-**Last updated**: 2026-10-16T14:21:15.530Z
+**Last updated**: 2026-10-16T18:57:34.385Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5feb490a — impl-tasks-are-instructions — Test Phase 1
+
+**Session ID**: 5feb490a-2253-4dc8-a75e-50679a24f52e
+**Last updated**: 2026-10-17T17:53:43.707Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+impl-tasks-are-instructions (worktree dusk-worktrees/impl-tasks-are-instructions, branch plan/impl-tasks-are-instructions) is at Test Phase 1 with its wording tests red: rows A1-A3 fail on their own assertions, A4 save-check guards green.
+
+### Open Questions
+
+None.
+
+### Cursor
+
+Next: Build Phase 1 (rewrite planner step 7, templates, shipped planning rules, resync copies, change the promise sentence).
+
+---
+
+## Session 3163f43a — starting catchup
+
+**Session ID**: 3163f43a-b150-41cc-9159-e18d687cbd21
+**Last updated**: 2026-10-17T02:32:18.040Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 3e5fed2c — mockups-draw-components-as-stories — Test Phase 1
+
+**Session ID**: 3e5fed2c-7d82-4f90-bbab-eff486c8cb83
+**Last updated**: 2026-10-17T03:18:20.848Z
+
+### In Flight
+
+`mockups-draw-components-as-stories` (bugfix closing the storybook-components incidents on `mockups-render-in-the-cockpit` and `a-mockup-composes-approved-components`) is at the end of Test Phase 1, in worktree `dusk-worktrees/mockups-draw-components-as-stories`. All five new checks are red on the defects: the generator's reset tests (A1–A3, `component-styles.test.ts`) fail because `componentReset` is not exported; the composition check reports only the project card and prompt box findings; the story-frame check fails only on `message.you`. Nothing about how the project works changes in this phase.
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+Next: Build Phase 1 of the impl — `componentReset` in `apps/indusk-mcp/src/lib/looks/component-styles.ts`, `_reset.css` written by `indusk looks stories`, mockup and story documents loading it. The browser checks need `pnpm --filter @infinitedusky/indusk-mcp build` before they load.
+
+---
+
+## Session f7a02150 — a-new-project-starts-instrumented — Test Phase 1
+
+**Session ID**: f7a02150-cfec-48ec-ad99-33924492d061
+**Last updated**: 2026-10-17T19:09:53.661Z
+
+### In Flight
+
+Plan a-new-project-starts-instrumented (worktree dusk-worktrees/a-new-project-starts-instrumented, branch plan/a-new-project-starts-instrumented) is at Test Phase 1 with its tests red: 14 rows written and red on their own assertions, the browser-trace and vendor-free guards green, 8 rows deferred in the register. Register reviewed with Sandy 2026-10-17: the span reader gains a clause field in Build Phase 2 (new item there).
+
+### Open Questions
+
+Two guesses to confirm in Build Phase 1: the placement test adds a src/ folder before update scaffolds; the declined-telemetry test assumes the recommendation is named `telemetry`.
+
+### Cursor
+
+Next: Build Phase 1 (tier strong), the scaffold per code repo.
+
+---
+
+## Session 31df1058 — starting catchup
+
+**Session ID**: 31df1058-950f-4b59-8aaa-9f8928e8459f
+**Last updated**: 2026-10-19T16:35:51.183Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 

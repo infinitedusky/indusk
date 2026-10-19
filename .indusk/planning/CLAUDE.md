@@ -17,8 +17,13 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   research.** Its shape is read by `indusk promises contract`, so keep the
   headings and each label on its own line; a draft is not held to the
   registry, an accepted brief is, by every `pnpm test`. The problem, the
-  context and the decisions made on the way go in `research.md`. — see
-  `/guide/briefs`
+  context and the decisions made on the way go in `research.md`. A draft brief
+  is accepted by `indusk plans accept-brief <plan>`, which runs the contract
+  check first — never by editing its status. — see `/guide/briefs`
+- **A brief may state its promises as clauses** (`clauses: required` in its
+  frontmatter): each promise it makes lists its splits, limits and the promises
+  it rests on beneath it, declared with `--clause`; the contract check holds
+  brief and registry equal. — see `/decisions/plans-are-promises`
 - **A plan that changes an app's interface lists its looks, or says why it
   has none.** Once the draft brief exists, ask "does this change how anything
   looks?"; a yes lists each look under `## Looks` as a drawn mockup — a
@@ -36,10 +41,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   — see `/guide/new-project`
 - **A plan document says a promise or clause is upheld or broken** (live:
   holding or broken; past: held or broke; unknown: no signal), and its
-  telemetry its signal — failed and passed are for tests only, and the old word
-  for a broken promise is not used. — guarded by `promise-words.test.ts`
-  (`promise: a-promise-is-upheld-or-broken`) — see
-  `/decisions/one-promise-language`
+  telemetry its signal, and the old word for it is not used — failed and passed
+  are for tests only, and the old word for a broken promise is not used. — guarded by
+  `promise-words.test.ts` (`promise: a-promise-is-upheld-or-broken`) and, for
+  the word signal, `signal-word.test.ts` — see `/decisions/one-promise-language`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
@@ -93,6 +98,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   the assertion, and it says when the test runs (a phase runs only its rows
   and related tests; both tiers run at landing). `For` says what the test is
   for: `promise: <name>`, `lesson: <name>`, or the reason it needs neither.
+  `clause: <promise>/<clause>` names one clause and counts for its promise; an
+  opted-in plan names every split and limit clause in some row.
   `test_levels: required` and `test_purpose: required` make the hook refuse a
   row without them. — see `/guide/test-levels`
 - Vitest is the committed test runner (adaptive first-connect setup); moved
@@ -114,9 +121,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   (`promise: hidden-detail-is-only-read`); see `/decisions/phase-summaries`
 - **A new impl opts in with `phase_summary: required` and is written for a
   reader without the plan's shorthand**: each phase opens with a paragraph
-  saying what it does for the whole plan, each task is one plain sentence for
-  someone who has worked on the project but knows none of the plan's
-  abbreviations or labels, and names, code and row labels go in the task's
+  saying what it does for the whole plan, each task is one plain
+  instruction saying what to do and each verification item a plain statement of
+  what must hold, for someone who has worked on the project but knows none of
+  the plan's abbreviations or labels, and names, code and row labels go in the task's
   folded `<details><summary>Technical</summary>`. The save check refuses a
   missing paragraph, a row label in the paragraph, and code or a row label on a
   task line; whether a sentence is plain is a person's, at approval. The rule is
@@ -176,17 +184,33 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
 - **Commit cadence**: one commit per checklist item on the plan's
   `plan/{name}` branch, intent-named; in a monorepo, one commit per app or
   context; merge and delete fast. — see `/reference/skills/work`
-- **Close-out rituals**: `/work` → `/falsify` (authors a Falsification Phase)
+- **A plan is read cold before it is presented, and audited before falsification;
+  the agent answers every concern.** `/audit {plan} --before-approval` has a fresh
+  reader write `plan-review.md`, answered before approval; the audit's `audit.md`
+  is answered the same way (a fix, a signal naming a clause, or a reason). An
+  answer that would change a promise, an expectation or a look is an amendment:
+  the session stops for the person. Every "nothing" answer is shown to the
+  person (`indusk plans audit-answers`). — see `/decisions/audit-concerns-are-answered`
+- **Close-out rituals**: `/work` → `/audit` (a fresh reader writes `audit.md`,
+  answered at once; advisory) → `/falsify` (authors a Falsification Phase)
   → `/work` → `/cleanup` (authors a Cleanup Phase; its threshold is
-  attention-focus, not a cap) → `/work` → `/audit` (a fresh reader writes
-  `audit.md`; advisory) → `/retrospective`, whose Step 0 blocks unless both
-  rituals are terminal or skipped with a reason and `audit.md` exists or the
-  impl carries `audit: skipped` + `audit_reason` — the file's existence is
-  read, never its content. Ritual phases are detected by titles that START
+  attention-focus, not a cap) → `/work` → `/retrospective`, whose Step 0
+  blocks unless both rituals are terminal or skipped with a reason and
+  `audit.md` exists or the impl carries `audit: skipped` + `audit_reason` —
+  the file's existence is read, never its content. Ritual phases are detected by titles that START
   with the ritual word. The retrospective
   confirms the plan's promises (`indusk promises confirm <plan>`) before it
-  archives; a declared promise no passing row names blocks the close. — see
-  `/decisions/falsification-ritual`, `/reference/skills/retrospective`
+  archives; a declared promise no passing row names blocks the close. A
+  promise stated as clauses is confirmed only when each split and limit clause
+  has a passing row, each such row's test file carries `clause: <promise>/<clause>`,
+  and each promise it rests on is in force. A clause may
+  rest on a promise the same plan makes; it counts once that promise is proved
+  in the same close, and a cycle between them is refused. A plan with
+  `clauses: required` closes only when each clause's tests pass when run at
+  close and its signal has reported it upheld in a real run (a stopped daemon
+  refuses); landing runs the same tests. — see
+  `/decisions/falsification-ritual`, `/reference/skills/retrospective`,
+  `/decisions/plans-are-promises`, `/decisions/mark-first`
 - **The retrospective's compaction step**: plan close demotes the plan's
   narrative to one line + archive link, compresses any context entries it
   authored to rule + pointer, and collapses one old root entry per close. — see

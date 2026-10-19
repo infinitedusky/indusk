@@ -1,0 +1,5 @@
+# plan-page-promise-health — decisions
+
+Each decision the plan waited on, the answer and who gave it, as the admin recorded them (`plans/history`). Not edited by hand.
+
+- 2026-10-17T18:18:43.483Z — amendment to the expectation expectation 1: was "A promise that reads broken on the Promises page or the nav never looks healthy on its plan's page. — Measure: the next time a behaviour promise breaks, its dot on the owning plan's page and brief page is the broken colour, as it is on the Promises page. — Look: at the next break of any behaviour promise.", now "A promise that reads broken in the nav, or in the Promises page's alarm source (production when there is one), never looks healthy on its plan's page. — Measure: the next time a behaviour promise breaks in the alarm source, its dot on the owning plan's page and brief page is the broken colour, as it is in that source's column on the Promises page. — Look: at the next break of any behaviour promise." — answered "Approve" by Sandy-Corsillo

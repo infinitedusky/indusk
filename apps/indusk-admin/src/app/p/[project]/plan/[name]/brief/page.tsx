@@ -7,8 +7,10 @@ import { FollowAgent } from "@/components/session/FollowAgent";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { WindowColumn } from "@/components/session/WindowColumn";
+import { readWaiting } from "@/lib/decisions-reader";
 import { briefLookState } from "@/lib/look-state";
 import { planActions } from "@/lib/plan-actions";
+import { readPlanHealth } from "@/lib/plan-health";
 import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
 import { readAdminRefreshMs } from "@/lib/project-reader";
@@ -32,15 +34,20 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
   if (!found) return null;
   const { projectPath, plan } = found;
 
+  const waiting = plan.archived
+    ? undefined
+    : (await readWaiting(project, projectPath, [plan]))[0];
   const actions = planActions({
     worktree: plan.worktree,
     code: plan.code,
     implStatus: plan.impl?.frontmatter.status as string | undefined,
     position: plan.position?.position,
+    waitingOn: waiting?.on,
   });
   const checkout = plan.worktree?.path ?? projectPath;
   const parts = await readPlanParts(checkout, name, {
     archived: plan.archived || Boolean(plan.archivedInWorktree),
+    health: await readPlanHealth(projectPath, checkout),
   });
   const documents = planDocuments(plan);
   const brief = documents.find((d) => d.slug === "brief");

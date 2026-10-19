@@ -1,7 +1,8 @@
+import type { PlanningStop } from "../build/planning-runner.js";
 import type { DocumentPosition } from "../lifecycle.js";
 import type { Question } from "../session/protocol.js";
 import { requiredDocuments } from "../workflow-types.js";
-import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
+import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
 
 /**
  * What a plan waits on a person for (plan-cockpit, ADR decision 4), at most
@@ -14,9 +15,16 @@ import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
  *     (the build's stop is held in memory; the position is on disk, so it
  *     survives a restart of the admin).
  *   - **approval** — its impl is a draft, every other document its type
- *     requires is accepted, and no session's turn is still open on it (an idle
- *     session waiting for the person is not writing): approving a
- *     plan its author has not finished would approve half of it.
+ *     requires is accepted, no session's turn is still open on it (an idle
+ *     session waiting for the person is not writing), no planning run for it
+ *     is going, and its plan review is written with every finding answered:
+ *     approving a plan its author has not finished would approve half of it.
+ *   - **plan-review** — the same plan, but `plan-review.md` is missing or
+ *     leaves a finding unanswered. It waits at Impl; its words are to the
+ *     plan's agent, never an approval. While the admin's planning run for the
+ *     plan is going nothing is listed; when that run stopped short of
+ *     approval, the decision says why. After an admin restart the run is
+ *     unknown and the file alone decides.
  *   - **amendment** — its brief changed after the person approved it
  *     (plan-stories, ADR decision 5). It waits at the Brief step, after a
  *     question and before review and approval, and is answered on the plan's
@@ -33,7 +41,15 @@ import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
  * promise: display-names-are-defined-once
  */
 
-export type WaitingOn = "question" | "approval" | "review" | "amendment";
+export const WAITING_KINDS = [
+	"question",
+	"approval",
+	"review",
+	"amendment",
+	"plan-review",
+] as const;
+
+export type WaitingOn = (typeof WAITING_KINDS)[number];
 
 export interface WaitingSession {
 	plan: string;
@@ -53,12 +69,23 @@ export interface WaitingBuild {
 	stoppedAt: string | null;
 }
 
+/** The admin's planning run for a plan, as the admin holds it. */
+export interface WaitingPlanning {
+	plan: string;
+	/** The run has not ended (between its steps counts as going). */
+	running: boolean;
+	/** Where the run stopped, as the admin holds it; null while it runs. */
+	stop?: PlanningStop | null;
+}
+
 export interface WaitingInput {
 	sessions: ReadonlyArray<WaitingSession>;
 	plans: ReadonlyArray<PlanSnapshot & { name: string }>;
 	builds?: ReadonlyArray<WaitingBuild>;
 	/** The amendments waiting per plan; a plan with a count above 0 waits on them. */
 	amendments?: ReadonlyArray<{ plan: string; count: number }>;
+	/** The admin's planning runs; absent (an admin restart) reads as no run. */
+	plannings?: ReadonlyArray<WaitingPlanning>;
 }
 
 /** One question of an ask: its words and the two answers the card offers. */
@@ -87,6 +114,8 @@ export interface Waiting {
 
 export const APPROVAL_DECISION =
 	"The plan is written. Approve it, so its documents and promises reach main and its build can start?";
+export const PLAN_REVIEW_DECISION =
+	"The plan needs its plan review: plan-review.md, written with every finding answered, before it can be approved.";
 export const REVIEW_DECISION =
 	"The build is done and waits for your review. Accept it, so the release runs?";
 
@@ -98,6 +127,7 @@ export function planWaiting({
 	plans,
 	builds = [],
 	amendments = [],
+	plannings = [],
 }: WaitingInput): Waiting[] {
 	const waiting: Waiting[] = [];
 	for (const plan of plans) {
@@ -105,7 +135,13 @@ export function planWaiting({
 			askedOf(plan, sessions) ??
 			(amended(plan.name, amendments) ? amendment(plan.name) : null) ??
 			(atReview(plan, builds) ? review(plan.name) : null) ??
-			(awaitingApproval(plan) && !beingWritten(plan, sessions) ? approval(plan.name) : null);
+			(awaitingApproval(plan) &&
+			!beingWritten(plan, sessions) &&
+			!planningGoing(plan.name, plannings)
+				? plan.planReview === "answered"
+					? approval(plan.name)
+					: planReview(plan.name, plannings)
+				: null);
 		if (one) waiting.push(one);
 	}
 	return waiting;
@@ -121,7 +157,7 @@ function askedOf(
 	return {
 		plan: plan.name,
 		on: "question",
-		step: currentStep(plan),
+		step: stepAt(plan)?.name ?? "Planning",
 		decision: first.question,
 		accept: first.options[0]?.label ?? "Yes",
 		alternative: first.options[1]?.label ?? "No",
@@ -145,13 +181,12 @@ function beingWritten(
 	return sessions.some((s) => s.plan === plan.name && !s.question && s.writing !== false);
 }
 
-/** The first step in either list that is being worked or waits on the person. */
-function currentStep(plan: PlanSnapshot): string {
-	const { planning, release } = planSteps(plan);
-	const step = [...planning, ...release].find(
-		(s) => s.state === "current" || s.state === "needs-you",
-	);
-	return step?.name ?? "Planning";
+/**
+ * The admin's planning run for the plan has not ended: the plan is still being written.
+ * promise: approval-waits-for-a-finished-plan
+ */
+function planningGoing(plan: string, plannings: ReadonlyArray<WaitingPlanning>): boolean {
+	return plannings.some((p) => p.plan === plan && p.running);
 }
 
 function atReview(plan: PlanSnapshot & { name: string }, builds: ReadonlyArray<WaitingBuild>) {
@@ -209,5 +244,30 @@ function approval(plan: string): Waiting {
 		decision: APPROVAL_DECISION,
 		accept: "Approve",
 		alternative: "Not yet — keep planning",
+	};
+}
+
+/**
+ * The plan needs its plan review; when its planning run stopped short of approval, the
+ * decision says why.
+ * promise: approval-waits-for-a-finished-plan
+ */
+function planReview(plan: string, plannings: ReadonlyArray<WaitingPlanning>): Waiting {
+	const stop = plannings.find((p) => p.plan === plan)?.stop;
+	const why =
+		stop?.step === "cannot-continue"
+			? stop.why.replace(/\.$/, "")
+			: stop?.step === "wait-for-looks"
+				? `it waits for its looks: ${stop.looks.join("; ")}`
+				: null;
+	return {
+		plan,
+		on: "plan-review",
+		step: "Impl",
+		decision: why
+			? `${PLAN_REVIEW_DECISION} Its planning run stopped: ${why}.`
+			: PLAN_REVIEW_DECISION,
+		accept: "Ask the agent to write it",
+		alternative: "Not yet",
 	};
 }

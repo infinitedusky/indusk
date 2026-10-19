@@ -4,7 +4,7 @@ kind: state
 lifetime: holds
 state: enforced
 domain: planning
-owner: plan-review-subagent
+owner: audit-concerns-are-answered
 sites:
   - apps/indusk-mcp/src/lib/build/next-step.ts
   - apps/indusk-mcp/src/lib/cleanup/gate.ts
@@ -17,8 +17,10 @@ tests:
 incidents: []
 ---
 
-Before a plan's retrospective, a reader that has not seen the building session reads the plan and writes what it finds to audit.md in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped.
+When a plan's build phases close, before falsification, a reader that has not seen the building session reads the plan and writes what it finds to `audit.md` in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped.
 
 ## History
 - 2026-10-09 — declared (plan-review-subagent), from its planning conversation.
 - 2026-10-09 — enforced, confirmed for plan-review-subagent: proven by row A1, row A2, row A3, row A4, row A18, row A22.
+- 2026-10-19 — changed by audit-concerns-are-answered: the audit's findings are answered before falsification and cleanup (Sandy, 2026-10-19). It read: "Before a plan's retrospective, a reader that has not seen the building session reads the plan and writes what it finds to audit.md in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped." Owned before by plan-review-subagent; audit-concerns-are-answered takes it over.
+- 2026-10-19 — changed by audit-concerns-are-answered: the audit's findings are answered before falsification and cleanup; the brief's Changes sentence, with its markdown, is the registry's sentence. It read: "When a plan's build phases close, before falsification, a reader that has not seen the building session reads the plan and writes what it finds to audit.md in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped."

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
+import { readsSignal } from "./clause-standing.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { type PromiseEntry, readPromises } from "./registry.js";
 import { maintenanceIncidentIds, ownerDir, type ReopenResult, reopenOwner } from "./reopen.js";
@@ -9,7 +10,7 @@ import type { IncidentSource } from "./vocabulary.js";
 
 /**
  * One monitor pass (day-monitor, ADR D5): read what Jaeger saw over the quiet
- * window, record each behaviour promise's new breaks as an incident, and
+ * window, record the new breaks of each promise whose telemetry is read (`readsSignal`) as an incident, and
  * send each promise's owner back to work with a Maintenance phase. Writes plan
  * documents and commits nothing — the person commits them. Throws
  * `JaegerUnreachable` rather than reporting a quiet window it never read.
@@ -25,6 +26,8 @@ export interface WatchChange {
 	kind: IncidentChange["kind"] | "unowned";
 	traces: string[];
 	promise: string;
+	/** The clause the incident is keyed by, when its break named one. */
+	clause?: string;
 	owner: string;
 	reopen: ReopenResult;
 }
@@ -104,9 +107,9 @@ export async function watchPromises(
 				: `the registry has malformed entries: ${read.problems.map((p) => `${p.file}: ${p.problem}`).join("; ")}`,
 		);
 	}
-	const behaviour = read.registry.promises.filter(
-		(p) => p.kind === "behaviour" && p.state !== "retired",
-	);
+	// A promise of any kind with a clause a signal can report is read, as a
+	// behaviour promise is (mark-first, Build Phase 5).
+	const signalled = read.registry.promises.filter(readsSignal);
 	// `--source` chooses what is read, not only what is written on the incident
 	// (promise-sources, ADR D6): `deployed` reads production, and is refused
 	// when the project names none; `local`, `smoke` and `desk` read the laptop.
@@ -119,18 +122,21 @@ export async function watchPromises(
 	// or at the laptop they are sitting in front of.
 	const source = marks.queryUrl;
 	const changes: WatchResult["changes"] = [];
-	for (const promise of behaviour) {
+	for (const promise of signalled) {
 		const violations = marks.byPromise.get(promise.name)?.violations ?? [];
 		const open = read.registry.incidents.filter(
 			(i) => i.promise === promise.name && i.status === "open",
 		);
 		if (violations.length === 0 && open.length === 0) continue;
 		const owner = await ownerReopener(planRoot, promise);
-		const change =
+		// One change per clause that broke (an incident is keyed by
+		// `promise/clause`); each reaches the owner. An id opened earlier in
+		// this pass is avoided by the next, as the owner's phases are.
+		const recorded =
 			violations.length > 0
 				? recordViolations(read.registry, promise, violations, opts.source, now, owner.taken())
-				: null;
-		if (change) {
+				: [];
+		for (const change of recorded) {
 			const reopen = owner.reopen(change.id, change.kind);
 			changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 		}
@@ -139,8 +145,9 @@ export async function watchPromises(
 		// it was left unowned by a reopen that failed then. Retry it every run:
 		// a quiet window must still repair it, or say it cannot (A6).
 		const owned = owner.taken();
+		const touched = new Set(recorded.map((c) => c.id));
 		for (const incident of open) {
-			if (incident.id === change?.id || owned.has(incident.id)) continue;
+			if (touched.has(incident.id) || owned.has(incident.id)) continue;
 			changes.push({
 				id: incident.id,
 				kind: "unowned",

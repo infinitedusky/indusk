@@ -8,6 +8,7 @@ import { type BuildPlan, nextBuildStep, type StepOutcome } from "./next-step.js"
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A13.
  * promise: a-skip-reason-is-one-sentence — skip-reason-why A15, below.
+ * promise: an-audit-concern-gets-a-solution — A12.
  *
  * A build that cannot continue stops and says why, instead of trying again
  * without end. Three causes, from ADR D4: the step's session ended in an
@@ -52,6 +53,7 @@ function fixturePlan(opts: { open?: boolean; blocker?: string } = {}): BuildPlan
 		impl: parseImplString(text),
 		trajectory: parseTrajectory(matter(text).content),
 		readiness: ready,
+		amendments: [],
 	};
 }
 
@@ -134,5 +136,55 @@ describe("A15 — an over-long skip reason is shortened, not re-run", () => {
 			),
 		);
 		expect(step).toMatchObject({ step: "shorten-reason", ritual: "cleanup" });
+	});
+});
+
+// clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person
+describe("A12 — a waiting amendment stops the build for re-approval", () => {
+	it("stops by name, instead of running a step", () => {
+		const plan = { ...fixturePlan(), amendments: ["promise a-x"] };
+		expect(nextBuildStep(plan)).toEqual({ step: "amendment", amendments: ["promise a-x"] });
+	});
+	it("stops by name when every phase is closed too", () => {
+		const plan = { ...fixturePlan({ open: false }), amendments: ["promise a-x"] };
+		expect(nextBuildStep(plan).step).toBe("amendment");
+	});
+});
+
+// promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes
+describe("A14 — the audit runs when the build phases close, before falsification", () => {
+	const closed = (missing: string[]) => {
+		const plan = fixturePlan({ open: false });
+		return { ...plan, readiness: { ...ready, passes: false, missing } };
+	};
+	it("is the audit while the audit, falsification and cleanup are to do", () => {
+		expect(nextBuildStep(closed(["falsification", "cleanup", "audit"]))).toEqual({ step: "audit" });
+	});
+	it("is falsification once the audit file exists", () => {
+		expect(nextBuildStep(closed(["falsification", "cleanup"]))).toEqual({ step: "falsify" });
+	});
+});
+
+// promise: an-audit-concern-gets-a-solution
+// clause: an-audit-concern-gets-a-solution/the-plan-answers — A33
+// promise: a-build-runs-to-review-unasked — A38
+describe("Build Phase 8 — the build waits for a complete audit and an approval it can read", () => {
+	it("A33 — an audit file that reads incomplete sends the build back to the audit step", () => {
+		const plan = { ...fixturePlan({ open: false }), auditOpen: true };
+		expect(nextBuildStep(plan)).toEqual({ step: "audit" });
+		expect(nextBuildStep({ ...plan, auditOpen: false }).step).toBe("review");
+	});
+
+	it("A38 — an approval record that cannot be read stops the build saying so and what to do", () => {
+		const plan = {
+			...fixturePlan({ open: false }),
+			approvalUnreadable: "no commit is its approval",
+		};
+		const step = nextBuildStep(plan);
+		expect(step.step).toBe("cannot-continue");
+		expect(step).toMatchObject({
+			why: expect.stringContaining("the approval record cannot be read: no commit is its approval"),
+		});
+		expect(step).toMatchObject({ why: expect.stringContaining("re-approve the plan") });
 	});
 });

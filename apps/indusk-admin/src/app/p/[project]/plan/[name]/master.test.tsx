@@ -78,6 +78,10 @@ vi.mock("@/lib/promises-reader", async () =>
 );
 // The plan page's brief parts are read by the package from disk (node:fs), which
 // the browser project cannot import; these pages have no brief to show.
+// The plan page reads each promise's health through the package (node:fs); these pages show none.
+vi.mock("@/lib/plan-health", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).planHealthMock(),
+);
 vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
   readPlanParts: async (_root: string, plan: string) => ({
     plan,
@@ -182,7 +186,7 @@ describe("a master plan's page tells its story", () => {
     expect(row("draft")?.getAttribute("href")).toBe(
       `/p/${PROJECT}/plan/beta-two`,
     );
-    expect(row("draft")?.textContent).toContain("Building");
+    expect(row("draft")?.textContent).toContain("Research");
     expect(row("queued")?.tagName).not.toBe("A");
     expect(row("queued")?.textContent).toContain("Queued");
     expect(row("queued")?.textContent).toContain("The third, not started.");

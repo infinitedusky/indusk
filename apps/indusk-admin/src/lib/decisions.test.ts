@@ -383,3 +383,84 @@ describe("A16 (plan-stories) — an amendment is answered on its own card", () =
     expect(release).not.toHaveBeenCalled();
   });
 });
+
+// promise: decisions-wait-in-one-place
+describe("approval-waits-for-the-planning-run A19 — a plan-review answer is words to the agent", () => {
+  const planReviewWaiting: Waiting = {
+    plan: PLAN,
+    on: "plan-review",
+    step: "Impl",
+    decision: "The plan needs its plan review: plan-review.md, answered.",
+    accept: "Ask the agent to write it",
+    alternative: "Not yet",
+  };
+
+  it("A19 accepting it neither approves nor releases; the words go to the plan's agent", async () => {
+    const d = deps();
+    const r = await answerDecision(d, PROJECT, planReviewWaiting, {
+      choice: "accept",
+    });
+    expect(d.approve).not.toHaveBeenCalled();
+    expect(d.release).not.toHaveBeenCalled();
+    expect(r.via).toBe("session");
+    expect(launched[0]?.prompt).toContain("Ask the agent to write it");
+  });
+
+  it("A19 its alternative neither approves nor releases either", async () => {
+    const d = deps();
+    await answerDecision(d, PROJECT, planReviewWaiting, {
+      choice: "alternative",
+    });
+    expect(d.approve).not.toHaveBeenCalled();
+    expect(d.release).not.toHaveBeenCalled();
+    expect(recorded[0]?.answer).toBe("Not yet");
+  });
+
+  it("A19 A24 with a session running, accepting says the decision and the words to it", async () => {
+    manager.start({
+      project: PROJECT,
+      plan: PLAN,
+      cwd: WORKTREE,
+      kind: "planning",
+      prompt: `/planner ${PLAN}`,
+      onEvent: () => {},
+    });
+    const d = deps();
+    const r = await answerDecision(d, PROJECT, planReviewWaiting, {
+      choice: "accept",
+    });
+    expect(d.release).not.toHaveBeenCalled();
+    expect(fake.say).toHaveBeenCalledWith(
+      `${planReviewWaiting.decision}\n\nAsk the agent to write it`,
+    );
+    expect(r.via).toBe("say");
+  });
+});
+
+// promise: approval-waits-for-a-finished-plan
+describe("approval-waits-for-the-planning-run A22 — an answer for a decision the plan moved past is refused", () => {
+  const nowApproval: Waiting = {
+    plan: PLAN,
+    on: "approval",
+    step: "Impl",
+    decision: "The plan is ready for approval.",
+    accept: "Approve",
+    alternative: "Not yet — keep planning",
+  };
+
+  it("A22 an Accept given on a plan-review card approves nothing once the plan waits on approval", async () => {
+    const d = deps();
+    await expect(
+      answerDecision(d, PROJECT, nowApproval, { choice: "accept" }, "plan-review"),
+    ).rejects.toThrow(/now waits on approval, not plan-review/);
+    expect(d.approve).not.toHaveBeenCalled();
+    expect(d.release).not.toHaveBeenCalled();
+    expect(recorded).toHaveLength(0);
+  });
+
+  it("A22 an answer to the decision still waited on goes through", async () => {
+    const d = deps();
+    await answerDecision(d, PROJECT, nowApproval, { choice: "accept" }, "approval");
+    expect(d.approve).toHaveBeenCalled();
+  });
+});

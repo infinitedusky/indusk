@@ -58,7 +58,7 @@ The **falsification** requirement passes if ANY of the three conditions above ho
 - **Complete:** `audit.md` exists in the plan folder — `isAuditComplete(planRoot)`. The gate reads that the file exists, never what it says: an audit's findings are advisory.
 - **Skip:** the impl's frontmatter contains BOTH `audit: skipped` AND `audit_reason: "{non-empty text}"` — `isAuditSkipped(implContent)`.
 
-Cleanup runs AFTER falsification and the audit after cleanup: `/work` → `/falsify` → `/work` → `/cleanup` → `/work` → `/audit` → `/retrospective`. Evaluate the rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when ALL requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
+Cleanup runs AFTER falsification, and the audit before both, when the build phases close: `/work` → `/audit` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Evaluate the rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when ALL requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
 
 > **Retrospective blocked: ritual gate not satisfied for `{plan-name}` (missing: `{the `missing` list — falsification, cleanup, audit, rows and/or promises}`).**
 >
@@ -125,7 +125,7 @@ Review the test files created or modified during this plan.
 
 - Are there obvious coverage gaps? (untested error paths, edge cases, integration points)
 - Were any test files planned but not created?
-- Do all tests pass? Run `pnpm test` to confirm.
+- Do the plan's tests pass? Each phase already ran its rows' tests and the Must-not-break promises' tests; run `indusk plans tests <plan> --landing` to confirm every row and those same tests.
 
 Flag gaps but don't necessarily fix them all now — add them as items to a follow-up plan if they're significant.
 
@@ -330,7 +330,7 @@ The docs site now holds the published knowledge. The archive holds the process h
 
 Update `.indusk/current.md`'s Project (shared) region: the plan leaves the in-flight list and gets its one closed line there.
 
-### Step 10: Land — the branch reaches main, and is gone
+### Step 10: Land — the branch lands on main, and is gone
 
 Archival is the branch's last write. Worktree-per-plan opened a branch at Phase 1, and **a plan is not closed until that branch is on `main` and deleted**. Nothing before this step puts the archive, the docs pages or the code on trunk; the retrospective's own commits sit on the branch until someone merges. The cost of leaving this to memory is on the record: plans have shipped on branches nobody merged, had their code dropped as superseded, and once a publish went out a minute before a plan branch merged.
 
@@ -339,7 +339,7 @@ Archival is the branch's last write. Worktree-per-plan opened a branch at Phase 
 Do it in this order, all from the plan's worktree until the merge itself:
 
 1. **Confirm the branch is clean and closed** — `git status --short` empty; Steps 0–9 done (the archive folder is committed on the branch).
-2. **Integrate trunk into the branch** — `git fetch origin && git merge main` (or `origin/main`) *in the worktree*, and resolve what conflicts once. Do not rebase a plan branch: a rebase replays every commit and re-asks the same append-only-ledger conflict on each of them. Then run the project's everyday tests and, if it declares slow tests, `indusk checks slow` — landing is when the slow tier runs, since phases run only what they touched; a green branch before the merge says nothing about the branch after it. `indusk checks slow` records a fully green run on a clean tree, so the release on the same code does not run it again. A ledger that conflicts here is missing its `merge=union` line in `.gitattributes` — add it in the same commit that resolves the conflict.
+2. **Integrate trunk into the branch** — `git fetch origin && git merge main` (or `origin/main`) *in the worktree*, and resolve what conflicts once. Do not rebase a plan branch: a rebase replays every commit and re-asks the same append-only-ledger conflict on each of them. Then run `indusk plans tests <plan> --landing` — every row's tests and the tests of the promises its brief lists as Must not break, and nothing else; a green branch before the merge says nothing about the branch after it. A ledger that conflicts here is missing its `merge=union` line in `.gitattributes` — add it in the same commit that resolves the conflict.
 3. **Check trunk's working tree on every path the branch touches** — `git -C <trunk> status --short`. A merge is refused when trunk has uncommitted changes on a file the branch also changed (`.indusk/planning/master.md` and `.indusk/current.md` are the usual ones — every plan writes both). Those changes belong to whoever made them: if `indusk agent list` shows another live session on trunk, **ask** — never commit, stash or discard another session's work to clear your own path. A bare `git stash` on a shared stack is off the table regardless (see the git skill).
 4. **Land** — `indusk plans land {plan-name}`. It refuses a plan that has not been accepted (`indusk plans accept {plan-name}`, Accept in the admin, or a project set to `release.auto_accept`), naming it: a plan's build reaches `main` only once someone, or its workflow, has accepted it. It then merges `main` into the branch, runs `plans.land_checks` from `.indusk/config.json`, merges the branch into `main` with `--no-ff`, releases the assignment, removes the worktree and deletes the branch — and refuses, with nothing done, when the trunk has uncommitted changes on a path the branch touches (step 3), or when the `indusk` running it is installed from the plan's worktree, which it would delete mid-run (an install run on the branch links it there): install from the trunk first, then land. With reviewers instead: push and open the PR, merge it, pull trunk, then `indusk worktree release {plan-name}`, `git worktree remove <worktree-path>` and `git branch -d plan/{plan-name}`.
 5. **Delete the remote branch** if it was pushed — `git push origin --delete plan/{plan-name}`. A worktree left behind is a stale build lock, a stale build output, and a `⚠ collision` in the next `indusk agent list`.
@@ -376,7 +376,7 @@ When a plan genuinely did both, it is a minor. When you cannot tell, it is a min
 
 If trunk-guard refuses editing the version file or the changelog on trunk, make the two edits on a short release branch, commit `chore(release): X.Y.Z` there, and fast-forward trunk to it, so trunk's HEAD is the release commit. Never route around the refusal with a shell write.
 
-**Then stop.** Running `indusk release` is the operator's decision, and a publish usually needs a credential an agent cannot enter. Say that the bump is committed and the tree is ready. Before handing over: if the project declares slow tests at landing, run `indusk checks slow --unless-covered` — it should say they are covered by landing's green run, and if it runs them instead, something the release covers changed since landing, so say so before the operator finds out the slow way. If the project's release command begins with its own guard script, run that guard alone too, so its refusals are not the first thing the operator sees. If the release also publishes an image (dusk's builds and pushes the recording server's before `pnpm publish`), say that the release machine needs Docker running and a one-time `docker login` to its registry — a refused push stops the release with nothing published.
+**Then stop.** Running `indusk release` is the operator's decision, and a publish usually needs a credential an agent cannot enter. Say that the bump is committed and the tree is ready. Before handing over: the release's own tests run after the publish and block nothing, so nothing here runs them. If the project's release command begins with its own guard script, run that guard alone too, so its refusals are not the first thing the operator sees. If the release also publishes an image (dusk's builds and pushes the recording server's before `pnpm publish`), say that the release machine needs Docker running and a one-time `docker login` to its registry — a refused push stops the release with nothing published.
 
 ## Important
 

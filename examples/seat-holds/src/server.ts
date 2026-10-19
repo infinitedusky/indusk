@@ -12,8 +12,9 @@
  */
 import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { createSeats } from "./seats.js";
-import { markRelease, startTelemetry, stopTelemetry } from "./telemetry.js";
+import { createSeats, type Release, releaseVerdict } from "./seats.js";
+import { signal } from "./signal.js";
+import { startTelemetry, stopTelemetry } from "./telemetry.js";
 
 const num = (v: string | undefined, d: number) => (v && Number.isFinite(Number(v)) ? Number(v) : d);
 
@@ -28,6 +29,17 @@ const seats = createSeats({
 });
 
 const page = readFileSync(new URL("../public/index.html", import.meta.url), "utf-8");
+
+/**
+ * Mark one release: upheld when it came on time, broken when it came late.
+ *
+ * promise: a-held-seat-is-released-in-time
+ */
+function markRelease(r: Release): void {
+	const { symptom, ...measured } = releaseVerdict(r);
+	if (symptom !== undefined) signal.broken({ ...measured, symptom });
+	else signal.upheld(measured);
+}
 
 startTelemetry();
 const sweeper = setInterval(() => {

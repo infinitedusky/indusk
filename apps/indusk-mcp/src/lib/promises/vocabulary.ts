@@ -19,6 +19,14 @@ export const PROMISE_KINDS = ["behaviour", "state", "structure"] as const;
 export type PromiseKind = (typeof PROMISE_KINDS)[number];
 
 /**
+ * A clause of a promise (plans-are-promises ADR D3): a `split` is a point
+ * reached within its budget on the way to the goal, a `limit` is a bound that
+ * always holds, and `rests-on` is another promise, of the part beneath it.
+ */
+export const PROMISE_CLAUSE_KINDS = ["split", "limit", "rests-on"] as const;
+export type PromiseClauseKind = (typeof PROMISE_CLAUSE_KINDS)[number];
+
+/**
  * `declared` — stated in planning, not yet established; the owner is an open
  * plan. `enforced` — upheld; a break is a bug. `known-broken` — the
  * implementation provably cannot uphold it; carries the incident that proves
@@ -113,7 +121,7 @@ export function anyPromiseTokenPattern(): RegExp {
 export const PROMISE_MARK = {
 	/** Span attribute: the promise's registry name. */
 	promise: "indusk.promise",
-	/** Span attribute: `upheld` or `violated`. */
+	/** Span attribute: `upheld` or `broken` (the older `violated` is still read). */
 	outcome: "indusk.promise.outcome",
 	/** Span event, present on a violation. */
 	violatedEvent: "indusk.promise.violated",
@@ -122,11 +130,19 @@ export const PROMISE_MARK = {
 	/**
 	 * Optional span attribute: the project the mark belongs to. Needed when
 	 * one service marks promises for many projects — InDusk's own evaluator
-	 * marks `every-commit-evaluated` in every project on the machine — and
-	 * absent from an application's own spans, whose service is its project.
-	 * The reader drops a mark that names a different project.
+	 * marks `every-commit-evaluated` in every project on the machine. A
+	 * scaffolded application's helper writes it too (a-new-project-starts-
+	 * instrumented ADR D4, D6): the service is the code repo, the project is
+	 * the InDusk id, and the two differ in a workbench. The reader drops a
+	 * mark that names a different project.
 	 */
 	project: "indusk.project",
+	/**
+	 * Optional span attribute: which part of the promise this signal concerns,
+	 * when a promise is held by several (the key a signal's spans carry beside
+	 * the promise). A reader that does not read it still reads the promise.
+	 */
+	clause: "indusk.clause",
 } as const;
 
 /**
@@ -150,7 +166,49 @@ export const LOOK_MARK = {
 	measuredAt: "indusk.look.measured_at",
 } as const;
 
-/** A signal's verdict as the code holds it. The wire still carries `violated` this release (see `readOutcome`). */
+/**
+ * The span keys a scaffolded application's signal helper writes
+ * (a-new-project-starts-instrumented ADR D6, D7): the first five are
+ * `PROMISE_MARK`'s, the last four are the optional measurement a signal can
+ * carry. `templates/signal.ts` and `templates/signal.py` spell these as
+ * strings, because an app imports nothing from InDusk, and
+ * `signal-vocabulary-pin.test.ts` holds both equal to this — change them
+ * together.
+ *
+ * promise: an-app-writes-its-signal-from-a-helper-it-owns
+ */
+export const APP_SIGNAL_KEYS = {
+	promise: PROMISE_MARK.promise,
+	clause: PROMISE_MARK.clause,
+	outcome: PROMISE_MARK.outcome,
+	violatedEvent: PROMISE_MARK.violatedEvent,
+	symptom: PROMISE_MARK.symptom,
+	value: "indusk.signal.value",
+	bound: "indusk.signal.bound",
+	plan: "indusk.signal.plan",
+	phase: "indusk.signal.phase",
+} as const;
+
+/**
+ * The resource keys every span of a scaffolded application carries: the
+ * InDusk project id the readers compare, OpenTelemetry's own environment key
+ * (read, never invented — a system already instrumented has set it), and the
+ * test-run marker. Spelled as strings in `templates/telemetry-settings.ts`
+ * and `templates/instrumentation.py`, held equal by the same pin test.
+ */
+export const APP_RESOURCE_KEYS = {
+	project: PROMISE_MARK.project,
+	environment: "deployment.environment",
+	run: "indusk.run",
+} as const;
+
+/** The value of `indusk.run` on a test run's spans; a run outside a test runner carries no `indusk.run`. */
+export const TEST_RUN_VALUE = "test";
+
+/** OpenTelemetry's own resource attribute for the deployment environment. */
+export const ENVIRONMENT_ATTRIBUTE = APP_RESOURCE_KEYS.environment;
+
+/** A signal's verdict as the code holds it. The wire carries `broken`; `violated` from older writers is still read (see `readOutcome`). */
 export const PROMISE_OUTCOMES = ["upheld", "broken"] as const;
 export type PromiseOutcome = (typeof PROMISE_OUTCOMES)[number];
 

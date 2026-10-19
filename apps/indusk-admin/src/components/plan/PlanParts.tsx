@@ -1,4 +1,5 @@
 import type { PlanParts as Parts } from "@infinitedusky/indusk-mcp/plans/parts";
+import { PROMISE_HEALTH_CHIP } from "@/components/bars/labels";
 import { Markdown } from "@/components/Markdown";
 import { AmendmentCard } from "@/components/ui/AmendmentCard";
 import { ExpectationRow } from "@/components/ui/ExpectationRow";
@@ -38,6 +39,7 @@ const DOT: Record<string, string> = {
   unregistered: "bg-idle",
 };
 
+// promise: a-promise-reads-the-same-on-its-plan-page
 /**
  * The parts of a plan's brief, each folded to a closed row of its name and one
  * line, in the approved order: Promises, Expectations, Looks. The Phases and
@@ -77,11 +79,12 @@ export function PlanParts({
               data-testid="plan-promise"
               data-promise={p.name}
               data-state={p.state}
+              data-health={p.health}
               title={p.sentence}
               className="inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-3 py-snug text-sm leading-3 font-medium"
             >
               <span
-                className={`size-dot rounded-pill ${DOT[p.state] ?? "bg-idle"}`}
+                className={`size-dot rounded-pill ${(p.health ? PROMISE_HEALTH_CHIP[p.health].dot : DOT[p.state]) ?? "bg-idle"}`}
               />
               {p.name}
             </span>

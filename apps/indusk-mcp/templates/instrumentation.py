@@ -1,57 +1,78 @@
 """
-OpenTelemetry Auto-Instrumentation for Python
+OpenTelemetry setup for Python
 
-Run your application with the auto-instrumentation wrapper:
-
-    opentelemetry-instrument python your_app.py
-
-Or import this module before your application code:
+Import this module first in your application's entry point, before other imports:
 
     import instrumentation  # noqa: F401
     from your_app import main
     main()
 
-Configuration via environment variables:
-    OTEL_SERVICE_NAME              — service name (defaults to "unknown-service")
-    OTEL_EXPORTER_OTLP_ENDPOINT   — OTLP backend URL
+Do not start the app through OpenTelemetry's own command-line wrapper: it builds its own tracer
+provider from the environment (the standard port, `unknown_service`) before this module
+loads, so the spans would miss the daemon and carry no service name or project.
+
+Where spans go, the service name and the resource are decided below (RENDERED and
+the lines after it): with nothing set, the local InDusk daemon (`indusk telemetry address`).
+
+Configuration via environment variables (each wins over the rendered values):
+    OTEL_SERVICE_NAME              — service name
+    OTEL_EXPORTER_OTLP_ENDPOINT   — OTLP collector URL
+    OTEL_RESOURCE_ATTRIBUTES      — e.g. "deployment.environment=production"
     OTEL_EXPORTER_OTLP_HEADERS    — auth headers (e.g., "Authorization=Bearer xxx")
     OTEL_PYTHON_LOG_CORRELATION   — set to "true" for trace context in logs (default)
 
 Install required packages:
-    pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp
-
-Then auto-install all available instrumentations:
-    opentelemetry-bootstrap --action=install
+    pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
 """
 
 import os
+import sys
 import logging
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    ConsoleSpanExporter,
-)
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME
 
-# Configure resource with service name
-resource = Resource.create(
-    {SERVICE_NAME: os.environ.get("OTEL_SERVICE_NAME", "unknown-service")}
-)
+# Telemetry settings: the same decisions as telemetry-settings.ts in a Node app.
+# Replaced whole by the scaffold; one line, so a render is one substitution.
+RENDERED = {"service": "", "project": "", "traces": "", "logs": ""}
 
-provider = TracerProvider(resource=resource)
 
-# Use OTLP exporter if endpoint is configured, otherwise console
-otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
-if otlp_endpoint:
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-        OTLPSpanExporter,
-    )
+def _endpoint(own, rendered, path):
+    """The signal's own endpoint as given, else the general one or the rendered address with the path."""
+    given = os.environ.get(own)
+    if given:
+        return given
+    base = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or rendered
+    return base.rstrip("/") + path
 
-    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
-else:
-    provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+
+def _resource_attribute(key):
+    """One key of OTEL_RESOURCE_ATTRIBUTES (k=v,k2=v2), or None when it is not set there."""
+    for pair in os.environ.get("OTEL_RESOURCE_ATTRIBUTES", "").split(","):
+        name, eq, value = pair.partition("=")
+        if eq and name.strip() == key:
+            return value.strip()
+    return None
+
+
+SERVICE = os.environ.get("OTEL_SERVICE_NAME") or RENDERED["service"]
+TRACES_URL = _endpoint("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", RENDERED["traces"], "/v1/traces")
+LOGS_URL = _endpoint("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", RENDERED["logs"], "/v1/logs")
+# A run under pytest is marked on the resource, so what reads these spans can tell a test's from a user's.
+TEST_RUN = "pytest" in sys.modules or bool(os.environ.get("PYTEST_VERSION"))
+RESOURCE_ATTRIBUTES = {
+    SERVICE_NAME: SERVICE,
+    "indusk.project": RENDERED["project"],
+    "deployment.environment": _resource_attribute("deployment.environment") or "development",
+}
+if TEST_RUN:
+    RESOURCE_ATTRIBUTES["indusk.run"] = "test"
+
+provider = TracerProvider(resource=Resource.create(RESOURCE_ATTRIBUTES))
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=TRACES_URL)))
 
 trace.set_tracer_provider(provider)
 

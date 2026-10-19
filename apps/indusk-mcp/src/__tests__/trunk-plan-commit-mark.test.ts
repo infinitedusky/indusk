@@ -124,12 +124,17 @@ describe("A29 — the mark has one definition", () => {
 		expect(attrs).toEqual({
 			[PROMISE_MARK.promise]: "a-plan-is-written-on-its-own-branch",
 			[PROMISE_MARK.project]: "proj",
-			[PROMISE_MARK.outcome]: "violated",
+			[PROMISE_MARK.outcome]: "broken",
+			// Written under a test runner, so the span says so and no reader counts it (mark-first A6).
+			"indusk.run": "test",
 		});
 		expect(events).toEqual([
 			{
 				name: PROMISE_MARK.violatedEvent,
-				attrs: { [PROMISE_MARK.symptom]: "seats was written on main" },
+				attrs: {
+					[PROMISE_MARK.promise]: "a-plan-is-written-on-its-own-branch",
+					[PROMISE_MARK.symptom]: "seats was written on main",
+				},
 			},
 		]);
 	});

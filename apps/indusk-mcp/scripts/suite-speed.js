@@ -1,60 +1,33 @@
 /**
- * The everyday suite's speed, as a promise mark (test-kinds, ADR D7).
+ * The everyday suite's duration, recorded (tests-never-make-us-wait).
  *
- * `everyday-suite-stays-fast` is watched, never a gate: a run is marked held
- * or broken with how long it took, and a slow run fails nothing — it reads red
- * on the Promises page. A run that overlapped another test run (an
- * evaluator's, usually) is not judged: its duration says nothing about the
- * suite. With no telemetry daemon running, nothing is marked and the reason is
- * said.
+ * Each run of the root `pnpm test` appends one line to
+ * `suite-durations.jsonl` in the project's machine-state home
+ * (`indusk eval home`): when it ended, how long it took, whether it passed and
+ * whether it overlapped another test run (an evaluator's, usually, which says
+ * nothing about the suite). It marks no promise; the brief's expectation
+ * ("the suite under a minute") is met by degree and read from this record.
+ * A record that cannot be written is said and never changes the run's result.
  *
- * Plain JS, run by `with-daemon-guard.js`. The decision takes its inputs and
- * the sending takes its daemon and sender, so both are tested without a daemon
+ * Plain JS, run by `with-daemon-guard.js`. The record takes its clock and its
+ * folder as inputs, so it is tested without either
  * (lesson: code-that-decides-takes-its-clock-and-its-reads).
  */
 
 import { execFileSync } from "node:child_process";
+import { appendFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 
-export const SUITE_PROMISE = "everyday-suite-stays-fast";
-/** Twice the about-60 s target: loose enough for a busy machine. */
-export const THRESHOLD_MS = 120_000;
+/** The file, inside the project's machine-state home, one JSON line per run. */
+export const DURATION_FILE = "suite-durations.jsonl";
 
 /**
- * A run that failed under the threshold is not judged: a crash at startup —
- * a build error, a missing dependency — exits in seconds and would read as a
- * fast suite that never ran (test-kinds A23). A failed run over the threshold
- * is still broken: it was slow, whatever else it was.
+ * One run as a line of the record.
  *
- * The outcome stays `violated` on the wire this release (a recording server
- * already deployed reads that word); the line it prints says broken. Both
- * move together in `.indusk/planning/mark-first/`.
- *
- * @param {{ durationMs: number, overlapped: boolean, exitCode?: number }} run
- * @returns {{ outcome: "upheld" | "violated", durationMs: number } | { skip: string }}
+ * @param {{ durationMs: number, overlapped: boolean, exitCode?: number, at: string }} run
  */
-export function suiteSpeedMark({ durationMs, overlapped, exitCode = 0 }) {
-	if (overlapped) {
-		return {
-			skip: "another test run overlapped this one; its duration says nothing about the suite",
-		};
-	}
-	if (durationMs >= THRESHOLD_MS) return { outcome: "violated", durationMs };
-	if (exitCode !== 0) {
-		return {
-			skip: `the run failed (exit ${exitCode}) in ${Math.round(durationMs / 1000)} s; a failed run says nothing about how fast the suite is`,
-		};
-	}
-	return { outcome: "upheld", durationMs };
-}
-
-/** The mark's span attributes, in the promise vocabulary every reader uses. */
-export function suiteSpanAttributes(mark, project) {
-	return {
-		"indusk.promise": SUITE_PROMISE,
-		"indusk.promise.outcome": mark.outcome,
-		"indusk.suite.duration_ms": mark.durationMs,
-		"indusk.project": project,
-	};
+export function suiteDurationRecord({ durationMs, overlapped, exitCode = 0, at }) {
+	return { at, durationMs: Math.round(durationMs), passed: exitCode === 0, overlapped };
 }
 
 /**
@@ -98,28 +71,23 @@ export async function otherTestRunAlive(settleMs = 0) {
 }
 
 /**
- * Send `mark` to the local daemon. Returns what happened, in words, and never
- * throws: a mark that cannot be sent must not change the run's result.
+ * Append `record` to the project's duration record. Returns what happened, in
+ * words, and never throws: a record that cannot be written must not change the
+ * run's result.
  *
- * @param {string} root
- * @param {{ outcome: string, durationMs: number } | { skip: string }} mark
- * @param {{ status?: () => Promise<{ running: boolean, otlpPort?: number }>, send?: (intake: string, body: unknown) => Promise<void>, project?: (root: string) => string, body?: (name: string, attrs: object) => { body: unknown } }} [deps]
+ * @param {string} root the main checkout
+ * @param {ReturnType<typeof suiteDurationRecord>} record
+ * @param {{ home?: (root: string) => Promise<string> | string }} [deps]
  */
-export async function sendSuiteMark(root, mark, deps = {}) {
-	if ("skip" in mark) return `no signal sent: ${mark.skip}`;
+export async function recordSuiteDuration(root, record, deps = {}) {
 	try {
-		const status = deps.status ?? (await import("../dist/lib/telemetry/status.js")).daemonStatus;
-		const probe = deps.send && deps.body ? null : await import("../dist/lib/promises/probe.js");
-		const project = deps.project ?? (await import("../dist/lib/promises/config.js")).markProjectId;
-		const daemon = await status();
-		if (!daemon.running) return "no signal sent: no telemetry daemon is running";
-		const { body } = (deps.body ?? probe.watcherSpanBody)(
-			"everyday-suite",
-			suiteSpanAttributes(mark, project(root)),
-		);
-		await (deps.send ?? probe.sendWatcherSpan)(`http://localhost:${daemon.otlpPort}`, body);
-		return `signal sent: ${SUITE_PROMISE} ${mark.outcome === "violated" ? "broken" : mark.outcome} (${Math.round(mark.durationMs / 1000)} s)`;
+		const home =
+			(await deps.home?.(root)) ??
+			(await import("../dist/lib/bookkeeping/roots.js")).bookkeepingRoots(root).home;
+		mkdirSync(home, { recursive: true });
+		appendFileSync(join(home, DURATION_FILE), `${JSON.stringify(record)}\n`);
+		return `recorded ${Math.round(record.durationMs / 1000)} s${record.overlapped ? " (overlapped another test run)" : ""}`;
 	} catch (err) {
-		return `no signal sent: ${err instanceof Error ? err.message : String(err)}`;
+		return `not recorded: ${err instanceof Error ? err.message : String(err)}`;
 	}
 }

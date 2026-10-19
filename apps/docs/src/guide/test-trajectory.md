@@ -134,7 +134,7 @@ Add when the plan benefits from the extra dimension; the template does not inclu
 | Column | Values | When to add |
 |--------|--------|-------------|
 | `Level` | `unit`, `contract`, `live check`, `smoke`, `promise` | Every new impl: set `test_levels: required` and the hook refuses a row with no level or another word — see [Test levels](/guide/test-levels). First spelled `Kind` and `test_kinds: required`, which still validate |
-| `For` | `promise: <name>`, `lesson: <name>` (one or more, comma-separated), or the reason the test needs neither | Every new impl: set `test_purpose: required` and the hook refuses a row that does not say what it is for |
+| `For` | `promise: <name>`, `lesson: <name>`, `clause: <promise>/<clause>` (one or more, comma-separated), or the reason the test needs neither. A `clause:` token names one clause of a promise and counts as naming the promise, and the test file in the row's `Test` cell carries the same `clause: <promise>/<clause>` (a comment, as it carries `promise: <name>`) or closing refuses the clause; a plan whose brief says `clauses: required` names every split and limit clause in some row | Every new impl: set `test_purpose: required` and the hook refuses a row that does not say what it is for |
 | `Scope` | `unit`, `integration`, `e2e` | Older impls only; the kind replaces it |
 
 Impls written before test levels may carry the older style words in `Kind` (`example`, `property`, `contract`, `approval`, `formal`); without `test_levels: required` (or its first spelling, `test_kinds: required`) they validate as they always did.
@@ -226,7 +226,7 @@ the fold as raw text until the next phase.
 ````
 
 - **Each phase opens with a paragraph** between its `**Tier**:` line and its first task: what the phase does for the whole plan, and how it hands to the next.
-- **Each task is one plain sentence**, written for someone who has worked on the project but knows none of the plan's shorthand. The instruction an agent needs — names, paths, commands, code, row labels — goes in the indented `<details><summary>Technical</summary>` block beneath it, which folds on GitHub, in this site and on the plan page alike.
+- **Each task is one plain instruction saying what to do** ("Make the prompt box's text area use the app's font"), and each verification item one plain statement of what must hold, written for someone who has worked on the project but knows none of the plan's shorthand. The detail an agent needs — names, paths, commands, code, row labels — goes in the indented `<details><summary>Technical</summary>` block beneath it, which folds on GitHub, in this site and on the plan page alike.
 - **The save check refuses** a phase with no paragraph, a paragraph naming a row label, and a task line carrying code (a backtick) or a row label (`T3`, `A2`), naming the phase or the task. Gate tasks — Verification, Context, Document — follow the same shape. Register entries (`#### Deferred to …`, `#### Regression Guards`) are not tasks and are not read.
 - **A Verification task names its rows in its detail.** In an opted-in impl the cross-reference rule reads row labels from the folded detail as well as the line, so the sentence can stay plain.
 - **Folded detail is only read.** For every impl, opted in or not, a checkbox or an opt-out (`(none needed)`, `skip-reason:`) counts only on a column-zero line: a box-shaped or opt-out-shaped line indented under a task never ticks a box, skips a gate or adds a task.
@@ -292,6 +292,10 @@ The validator's error messages are baseline-aware — they read "later than Phas
 The `check-gates` hook blocks phase advancement when any trajectory row with `Passes at: Phase N` (for N ≤ the phase being advanced into, minus one) is still in state `planned`, `writable`, or `written`. Only `passing`, `skipped`, or `blocked` states allow phase close.
 
 This is the structural guarantee that deferral is impossible by construction. The implementer cannot close Phase 3 and start Phase 4 while Phase-3-committed tests are still unwritten or failing.
+
+### Closing a plan written as clauses
+
+A `passing` cell is a claim about a run, not a run. For a plan whose brief says `clauses: required`, closing runs the tests the rows prove each clause with, now, and refuses a clause whose test fails whatever its row says, naming the clause and the file; landing runs the same tests. Closing also asks the local daemon whether each clause's signal has reported upheld, which is the second proof. See [Signals](/guide/signals).
 
 ## State lifecycle
 

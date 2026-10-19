@@ -19,6 +19,12 @@ export interface BuildPlan {
 	trajectory: Trajectory;
 	/** The retrospective's readiness: which rituals are satisfied, which rows are open. */
 	readiness: RetrospectiveReadiness;
+	/** What the brief says now that the person did not approve, one `<part> <name>` each; empty when nothing waits. */
+	amendments: string[];
+	/** `audit.md` exists and its answers do not read complete: the audit step is not done. */
+	auditOpen?: boolean;
+	/** Why the approval record cannot be read, when it cannot; the build cannot tell what changed. */
+	approvalUnreadable?: string;
 }
 
 /** What one step's session did. */
@@ -44,6 +50,7 @@ export type BuildStep =
 	| ({ step: "shorten-reason" } & ShortenReason)
 	| { step: "judgement"; phase: string; item: string; items: string[] }
 	| { step: "review" }
+	| { step: "amendment"; amendments: string[] }
 	| { step: "cannot-continue"; why: string };
 
 export function nextBuildStep(
@@ -56,6 +63,16 @@ export function nextBuildStep(
 	if (last && previous && !last.progressed && !previous.progressed) {
 		return { step: "cannot-continue", why: "two steps in a row made no progress" };
 	}
+
+	if (plan.approvalUnreadable) {
+		return {
+			step: "cannot-continue",
+			why: `the approval record cannot be read: ${plan.approvalUnreadable} — re-approve the plan`,
+		};
+	}
+
+	// A waiting amendment is the person's to re-approve; no step runs past it.
+	if (plan.amendments.length > 0) return { step: "amendment", amendments: plan.amendments };
 
 	const open = plan.impl.phases.find(isOpen);
 	if (open) {
@@ -76,10 +93,11 @@ export function nextBuildStep(
 			return { step: "shorten-reason", ritual, length: long.length, sentences: long.sentences };
 		}
 	}
+	// promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — read once, when the build phases close, before falsification
+	// An `audit.md` that exists but is not answered is not a finished audit: the step runs again.
+	if (missing.includes("audit") || plan.auditOpen) return { step: "audit" };
 	if (missing.includes("falsification")) return { step: "falsify" };
 	if (missing.includes("cleanup")) return { step: "cleanup" };
-	// promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — read once, after cleanup, before review
-	if (missing.includes("audit")) return { step: "audit" };
 	if (missing.includes("rows")) {
 		return {
 			step: "cannot-continue",

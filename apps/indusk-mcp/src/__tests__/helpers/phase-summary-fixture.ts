@@ -1,6 +1,6 @@
 /**
  * An impl in the shape `phase_summary: required` introduces (story-first-phases):
- * each phase opens with a paragraph, each task is one plain sentence, and the
+ * each phase opens with a paragraph, each task is one plain instruction, and the
  * technical instruction is folded beneath it. Text only; `validateWrite` /
  * `runHook` put it in front of the real hooks.
  *

@@ -7,6 +7,7 @@ updated: 2026-09-25
 # parent (e.g. dawn-*) are declared in the PARENT's master.md, never here —
 # one source of truth per link.
 parents:
+  - stabilize
   - promise-core
 roadmap:
   - workbench-trust-fixes
@@ -329,6 +330,7 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **audit-concerns-are-answered — open, standalone** (2026-10-19): landed twice on main, not archived. `promises confirm` refuses four clauses until a real planning run and a real amendment stop report their signals (A32, in its impl). Follow-on owed: a brief for the ten real findings its audit left "real" (its retrospective, Follow-ups 2); not yet filed.
 - **Two release plans, one boundary** (written 2026-09-25 — they had overlapped
   unreconciled since 2026-09-21, and `release-ritual` was declared nowhere).
   Both stay; the split is by question, not by folder age:
@@ -361,6 +363,11 @@ lesson title, or a chat log.
   promises, commands write the registry, every test row says what it is for,
   a plan cannot build while its brief, rows and registry disagree, and closes
   with its promises confirmed. See `/decisions/planner-promises`.
+- **Closed, standalone bugfix** (2026-10-17): [mockups-draw-components-as-stories](archive/mockups-draw-components-as-stories/brief.md)
+  — a component in a mockup draws as its story does (element resets scoped to
+  components, a mockup's own styles scoped to its page), checked at every
+  device; approvals bind the element rules. Closes the two 1.71.0 incidents
+  once storybook-components' Maintenance phases verify.
 - **Closed, standalone bugfix** (2026-10-06): [publish-hygiene](archive/publish-hygiene/brief.md)
   — before 1.63.0 published: the tarball drops its source maps (41.5 → 14.5
   MB unpacked), the release stops listing every packed file, and the system

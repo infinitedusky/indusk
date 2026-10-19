@@ -5,16 +5,18 @@ import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 /**
- * Regression: the doc-comment on `commands/telemetry.ts` has always claimed
- * "daemon restart refreshes every registered project's entry", but pre-fix
- * only the `register` subcommand actually wrote `.mcp.json`. After daemon
- * stop/start the OS-assigned `mcpPort` rotates; every registered project's
- * `.mcp.json` then pointed at a stale port and the agent's jaeger MCP
- * silently broke.
+ * A registered project's `.mcp.json` names the daemon's MCP port, and nothing
+ * but registering that project moves it:
  *
- * This test exercises `telemetry start` and `telemetry restart` against
- * registered projects and asserts every jaeger URL converges on the daemon's
- * current live `mcpPort` after each lifecycle event.
+ *  - registering writes the project's own `jaeger` entry at the daemon's MCP
+ *    port;
+ *  - `restart` keeps the address, so every project's file stays byte-for-byte
+ *    as it was (a rewrite would make the file look edited);
+ *  - `start` leaves another project's stale URL alone: it is that project's
+ *    own file, and only that project's `update` or `register` repairs it;
+ *  - `update` repairs this project's stale entry.
+ *
+ * promise: the-daemon-readers-follow-is-the-one-running
  */
 
 const REPO_ROOT = resolve(__dirname, "../../../..");
@@ -74,35 +76,36 @@ function readLiveMcpPort(): number {
 	return meta.mcpPort;
 }
 
-describe("telemetry daemon syncs every registered project's .mcp.json", () => {
+describe("a registered project's .mcp.json is written only by that project", () => {
 	it.skipIf(SHOULD_SKIP)(
-		"telemetry restart re-points every registered project's jaeger url at the new mcpPort",
+		"telemetry restart keeps the address and leaves every entry byte-for-byte unchanged",
 		async () => {
 			expect(runCli(["telemetry", "register", projectA]).code).toBe(0);
 			expect(runCli(["telemetry", "register", projectB]).code).toBe(0);
 
-			const initialPort = readLiveMcpPort();
-			expect(readJaegerUrl(projectA)).toBe(`http://localhost:${initialPort}/mcp`);
-			expect(readJaegerUrl(projectB)).toBe(`http://localhost:${initialPort}/mcp`);
+			const port = readLiveMcpPort();
+			expect(readJaegerUrl(projectA)).toBe(`http://localhost:${port}/mcp`);
+			expect(readJaegerUrl(projectB)).toBe(`http://localhost:${port}/mcp`);
+			const before = [projectA, projectB].map((p) => readFileSync(join(p, ".mcp.json"), "utf-8"));
 
 			const restart = runCli(["telemetry", "restart"]);
 			expect(restart.code, restart.stderr).toBe(0);
 
-			const newPort = readLiveMcpPort();
-			expect(readJaegerUrl(projectA)).toBe(`http://localhost:${newPort}/mcp`);
-			expect(readJaegerUrl(projectB)).toBe(`http://localhost:${newPort}/mcp`);
+			expect(readLiveMcpPort(), "the MCP port is the same after a restart").toBe(port);
+			expect([projectA, projectB].map((p) => readFileSync(join(p, ".mcp.json"), "utf-8"))).toEqual(
+				before,
+			);
 		},
-		60_000,
+		90_000,
 	);
 
 	it.skipIf(SHOULD_SKIP)(
-		"telemetry start refreshes a stale jaeger url written before the current daemon spawn",
+		"telemetry start leaves another project's stale jaeger url alone",
 		async () => {
 			expect(runCli(["telemetry", "register", projectA]).code).toBe(0);
 			expect(runCli(["telemetry", "stop"]).code).toBe(0);
 
-			// Hand-corrupt the .mcp.json to simulate a stale port left over from
-			// a prior daemon spawn — the exact failure mode this fix targets.
+			// Hand-corrupt the .mcp.json to simulate a port set by someone else.
 			const mcpJsonPath = join(projectA, ".mcp.json");
 			const data = JSON.parse(readFileSync(mcpJsonPath, "utf-8")) as {
 				mcpServers?: Record<string, { type?: string; url?: string }>;
@@ -113,13 +116,13 @@ describe("telemetry daemon syncs every registered project's .mcp.json", () => {
 				url: "http://localhost:1/mcp",
 			};
 			writeFileSync(mcpJsonPath, JSON.stringify(data, null, 2));
-			expect(readJaegerUrl(projectA)).toBe("http://localhost:1/mcp");
+			const stale = readFileSync(mcpJsonPath, "utf-8");
 
 			const start = runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
 			expect(start.code, start.stderr).toBe(0);
 
-			const livePort = readLiveMcpPort();
-			expect(readJaegerUrl(projectA)).toBe(`http://localhost:${livePort}/mcp`);
+			expect(readFileSync(mcpJsonPath, "utf-8")).toBe(stale);
+			expect(readJaegerUrl(projectA)).toBe("http://localhost:1/mcp");
 		},
 		60_000,
 	);

@@ -139,8 +139,24 @@ does, a domain it does not declare is refused, naming the ones it does. It
 refuses a name the registry already holds, a kind that is not a kind, and a
 plan that is not a folder under `.indusk/planning/`.
 
+A promise stated as clauses takes `--clause`, once per clause:
+
 ```
-indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>"
+indusk promises declare <name> ... --clause "released-in-time (split). A seat is released within a second." \
+  --clause "never-lost (limit). No hold is ever lost." \
+  --clause "clock-is-trusted (rests on server-clock-is-one)"
+```
+
+A clause is `name (split). sentence`, `name (limit). sentence` or
+`name (rests on promise-name)`, the same grammar a brief's sub-entries use. The
+clauses are written into the promise's file as a `clauses:` list. A kind that is
+none of split, limit or rests on, a clause given twice, or a clause resting on a
+promise the registry does not hold is refused with exit **2**, naming the
+clause, and nothing is written. The MCP `declare_promise` tool takes the same
+specs as `clauses`.
+
+```
+indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>" [--clause "<spec>" ...]
 ```
 
 Improves a promise in place, when a later plan partly changes what it commits
@@ -148,7 +164,10 @@ to. The sentence is replaced, the plan takes the promise over, and its History
 gains a line with the old sentence, the reason and the plan that owned it
 before. Its name, state, incidents and aliases are untouched, so the signals
 that name it and its incidents stay attached. If it breaks later, the plan
-that changed it is the one reopened.
+that changed it is the one reopened. A repeatable `--clause` (the same specs
+`declare` takes; the MCP `change_promise` tool takes `clauses`) replaces the
+promise's clauses, and the History line names the ones it replaced; without it
+the clauses stay.
 
 ```
 indusk promises replace <old> --by <new> --plan <plan> --kind <kind> --domain <domain> --statement "<sentence>"
@@ -265,6 +284,43 @@ with nothing written, naming:
 | The brief lists a promise under **Changes** that the plan never changed | the promise, and the `change` command |
 | The brief lists a replacement that was declared without recording what it replaces | both promises, and the `replace` command |
 | A name that is not a plan folder | the name |
+
+### A plan written as clauses
+
+When the plan's brief says `clauses: required`, a row's `passing` is not
+enough: closing reads the system. After the checks above pass, for each
+promise with a split or limit clause it
+
+1. **runs the tests** the clause's rows name, now, with the project's own
+   test command (`verify.testRunner` or `verify.testCommand`), each file once;
+2. **asks the local daemon** — through the read `promises status` makes —
+   whether each clause's signal has reported it upheld in a run of the real
+   system. A span written under a test runner carries `indusk.run=test` and is
+   not counted.
+
+A clause is refused when either half is missing, and the refusal names
+`promise/clause` and the half:
+
+| Situation | Refusal |
+|---|---|
+| A clause's test fails when run now, whatever its row says | `a-promise/a-clause: tests — src/a.test.ts fails when run now (row A1 says passing)` |
+| The run did not report a file | `… tests — src/a.test.ts was not reported by the test run` |
+| No signal has reported the clause upheld, or the watcher is blind | `a-promise/a-clause: signal — no signal has reported it upheld in a run of the real system` |
+| The clause's signal reports broken | `a-promise/a-clause: signal — its signal reports broken` |
+| The daemon is not running | `a-promise: signal — the daemon is not running or cannot be read …` naming `indusk telemetry start`; never a pass |
+| A clause's test file ran no test — every test in it was skipped (`describe.skipIf`, `it.skip`, `it.todo`) | `a-promise/a-clause: tests — src/a.test.ts ran no test (skipped) …` |
+| A clause's test file carries the clause's token and asserts nothing (no `expect(` or `assert(` call outside comments and import statements) | the promise, the clause and the file |
+
+A failing file is reported against the clause whose `clause: <promise>/<clause>`
+token it carries. Only when both halves hold for every clause is the promise
+`enforced`. A promise made only of clauses resting on other promises closes
+when those are in force, with no row, test or code site of its own. A real
+close also writes its own signal, for `a-clause-is-proved-twice`'s
+`verified-before-release` and `upheld-by-its-signal`, to the local daemon.
+
+A plan without `clauses: required` closes on its rows, as above, and is asked
+no signal. `indusk plans land` runs the same clause tests before its land
+checks and refuses by clause the same way; landing asks no signal.
 
 A plan with nothing to change says so and exits **0**, so running it twice is
 safe; a run that stopped partway is finished by the next. A plan archived
@@ -416,7 +472,7 @@ line that starts with its name:
 Promises observed in the last 7 days, from Jaeger at http://localhost:16686
 
 every-commit-evaluated (behaviour, gates, enforced)
-  1 break in the last 7 days
+  broken — 1 break in the last 7 days
     4bf92f3577b34da6a3ce929d0e0e4736  2026-09-19T10:14:40Z  indusk-eval-agent  claude exited with code 1: There's an issue with the selected model …
   last seen upheld 2026-09-19T02:30:20Z (3147fdaa7db94980735c887ff6ce47f0)
 
@@ -430,8 +486,21 @@ phase-boundary-record-never-malformed (state, planning, enforced)
 - A **behaviour** promise lists its breaks in the window with each
   trace id, when, the service and the symptom from the break event, then
   when it was last seen upheld.
+- The break-count line opens with **`broken — `** while a break is live and
+  **`broke — fixed — `** when every break's incident is fixed, by the same
+  rule (`healthOf`) the admin and the editor use. Each source is judged by
+  its own rule, as the admin judges it (`ruleFor`): the local section by its
+  newest signal when the project also has a production source, and by its
+  incidents otherwise; the production section by its incidents.
 - **Not seen** means no run marked it in the window. It is never reported as
   upheld or as zero breaks.
+- A promise stated as **clauses** gets one line per clause, from its own
+  signal: `clause <name> (<kind>): holding`, `no signal` or `broken`; a
+  resting clause names the promise it rests on.
+- Each run writes one signal of its own, for `a-clause-is-proved-twice`'s
+  clause `no-signal-is-not-holding`, to the local daemon: upheld when every
+  clause it shows as holding has a report, broken naming any clause shown
+  holding without one. A run that shows no clause writes nothing.
 - **State** and **structure** promises are listed as watched by the suite:
   their health is the last run of their test or check at head, not telemetry.
 - A **retired** promise is listed and not watched.
@@ -485,7 +554,7 @@ Promises observed in the last 7 days, from Jaeger at https://indusk-always-on.fl
 …
 ```
 
-The same promise can be red in one and green in the other: a break on the
+Each section is judged by the rule the admin uses for that source: `local` by its newest signal when the project also has production (a local break followed by a newer upheld report reads as holding there), `production` by its incidents. The same promise can be red in one and green in the other: a break on the
 laptop is work in progress, and a break in production is the alarm. A source
 that could not be read says so in its own section, naming where it looked,
 and the other source is still printed. The exit code follows the **alarm
@@ -650,10 +719,10 @@ committed in the repo.
 It commits on a **trunk branch only** (`worktree.trunk_guard.branches`,
 default `main` and `master`). Run from a plan worktree, or from a trunk
 checkout left on another branch, it writes the incident and commits nothing,
-says which branch it is on, and the pass is marked broken. A commit that
+says which branch it is on, and the pass reports broken. A commit that
 cannot be made — another git command holding the index — is not lost: the
 paths wait in the project's home (`pending-commit.json`), and every later pass,
-by any caller, commits them first and is marked broken until it does. The
+by any caller, commits them first and reports broken until it does. The
 inbox entry for the agent is written before the commit, so it does not wait
 on it.
 

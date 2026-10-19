@@ -48,6 +48,46 @@ It also carries a `description:` — the plan in one to three tight sentences, w
 1. **`seat-released-on-timeout`** (state). A held seat is released when its
    hold runs out.
 
+### Promises as clauses
+
+A promise can be stated as **clauses**, its parts. A **split** is a point
+reached, within its budget, on the way to the promise's goal; a **limit** is a
+bound that always holds; and a clause can **rest on** another promise, of the
+part beneath it. A brief opts in with `clauses: required` in its frontmatter,
+and then every promise it makes lists its clauses beneath it:
+
+```markdown
+---
+clauses: required
+---
+
+### This plan makes
+
+1. **`seat-released-on-timeout`** (state). A held seat is released when its
+   hold runs out.
+   - **`released-in-time`** (split). A seat is released within a second of its hold running out.
+   - **`never-lost`** (limit). No hold is ever lost.
+   - **`clock-is-trusted`** (rests on `server-clock-is-one`).
+```
+
+The registry keeps the same clauses with the promise, written by
+`indusk promises declare --clause`, and the contract check refuses a brief whose
+clauses differ from the registry's, naming the clause. A promise with no clause
+in an opted-in brief is refused. A clause may rest on another promise the same
+plan makes: it counts once that promise is proved in the same close, so both
+close together. Two promises that rest on each other cannot close, and the
+refusal names both. A clause that rests on its own promise, or on one the
+registry does not hold, is refused by `indusk promises check`, naming the
+clause. A brief without `clauses: required` is read as it always was.
+
+A clause is proved twice. Its **tests** (the rows that name it, each carrying
+the clause's token) are run when the plan closes or lands, whatever the row's
+State says. Its **signal** is written from the clause's sentence, not copied
+from a test, and has to have reported upheld in a run of the real system
+before the plan closes; a clause that never reported reads *no signal*, not
+holding. When a clause's signal later reports broken, the incident it opens
+names `promise/clause`. See [Signals](/guide/signals).
+
 ### Existing promises
 
 **Must not break**
@@ -104,9 +144,21 @@ also how a plan decides what telemetry it needs.
 Each promise is one plain sentence about what will be true, with a name and a
 kind (`behaviour`, `state` or `structure`). The agent writes each to the
 registry with `indusk promises declare` when you accept the brief; nobody
-types a registry file. One you then drop or rename is taken back with
+types a registry file. Accepting is `indusk plans accept-brief <plan>`: it runs the
+contract check, refuses with its message if the brief and the registry disagree,
+and otherwise brings main into the plan's branch, so the plan is written against current code (a conflict is refused, naming the files, with nothing changed), sets the brief accepted, then asks the running admin to write the rest
+of the plan. The admin's planning start brings main in too, so a brief accepted another way is still planned on current main. One you then drop or rename is taken back with
 `indusk promises withdraw`. A promise starts `declared` and becomes `enforced` when the
 plan closes with a passing test that names it.
+
+#### After the brief is accepted
+
+With the admin running (`indusk ui start`), accepting a brief starts an unattended
+session that writes the plan's test plan, its ADR when the workflow has one, and its
+impl, each checked before the next. It waits while a look the brief names is not
+approved, and starts when the last one is. A brief is usually accepted from inside the planning conversation, so the run holds back while that conversation is open: the agent tells you the brief is accepted and ends the conversation, and the run starts as the conversation ends. Only the conversation that accepted the brief starts it: the brief records `accepted_at`, and a conversation that began after that moment, or a brief accepted by hand with none, starts nothing when it ends (you can still ask it to plan by hand). It stops at your approval and never
+approves for you. Approving the plan, in the admin, starts the build, which runs to
+review as it always has. See `/decisions/a-brief-is-planned-unasked`.
 
 ### Existing promises
 

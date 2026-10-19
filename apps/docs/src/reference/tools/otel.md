@@ -1,10 +1,10 @@
 # OpenTelemetry
 
-Auto-instrumentation, structured logging, and category-based filtering for every InDusk project. Backend-agnostic — works with Dash0, Jaeger, Grafana, or any OTLP-compatible backend.
+Auto-instrumentation, structured logging, and category-based filtering for every InDusk project. Spans go to the local daemon from the first run (`indusk telemetry address` prints where it listens), and any OTLP-compatible backend takes them by setting one endpoint variable.
 
 ## What `init` Creates
 
-`indusk-mcp init` detects your runtime and scaffolds the right instrumentation:
+`indusk init` detects your runtime and scaffolds the right instrumentation into the app's own folder (the declared code repo in a workbench). Every server app also gets `telemetry-settings.ts` (the service named in code, the daemon's stored address as the default endpoint, the project and environment on every span) and the signal helper `signal` that writes a promise's signal as a span. Whatever `init` prints, it prints once and every command it names exists.
 
 ### Node.js (Express, Fastify, plain HTTP)
 
@@ -13,10 +13,12 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 | `src/instrumentation.ts` | OTel SDK with auto-instrumentation + FilteringExporter |
 | `src/filtering-exporter.ts` | Category-based span filtering |
 | `src/logger.ts` | Pino structured logger (stdout + OTLP) |
+| `src/telemetry-settings.ts` | Service name, the daemon's address, project and environment |
+| `src/signal.ts` | The signal helper: `signal.upheld(...)` and `signal.broken(...)` |
 
 **Wire it**: `node --import ./src/instrumentation.ts src/index.ts`
 
-**Install**: `pnpm add @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-trace-base @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/core pino pino-opentelemetry-transport`
+**Install**: `pnpm add @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-trace-base @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/core pino pino-opentelemetry-transport`
 
 ### Next.js
 
@@ -25,16 +27,19 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 | `instrumentation.ts` (root) | Server-side: `@vercel/otel` — API routes, server components, middleware |
 | `src/instrumentation.web.ts` | Client-side: OTel Web SDK — page loads, fetch, user interactions |
 | `src/logger.ts` | Pino structured logger (stdout + OTLP) |
+| `src/telemetry-settings.ts` | Service name, the daemon's address, project and environment |
+| `src/signal.ts` | The signal helper (server side) |
 
-**Wire it**: Server loads automatically. Client: `import './instrumentation.web'` in your root client component.
+**Wire it**: Server loads automatically. Client: `import './instrumentation.web'` from a client component (one that starts with `"use client"`), not the root layout.
 
-**Install**: `pnpm add @vercel/otel pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
+**Install**: `pnpm add @vercel/otel @opentelemetry/api pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
 
 ### React SPA (Vite)
 
 | File | Purpose |
 |------|---------|
 | `src/instrumentation.ts` | OTel Web SDK — page loads, fetch, user interactions |
+| `src/telemetry-settings.ts` | Service name, the daemon's address, project and environment |
 
 **Wire it**: `import './instrumentation'` at the top of `main.tsx`
 
@@ -44,11 +49,16 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 
 | File | Purpose |
 |------|---------|
-| `instrumentation.py` | OTel SDK with auto-instrumentation |
+| `instrumentation.py` | OTel SDK setup, sending to the local daemon |
+| `indusk_signal.py` | The signal helper (named so it does not hide Python's `signal` module) |
 
-**Wire it**: `opentelemetry-instrument python your_app.py`
+**Wire it**: `import instrumentation` as the first import of your entry point. Do not start the app through OpenTelemetry's `opentelemetry-instrument` wrapper: it builds its own tracer provider (the standard port, `unknown_service`) before the scaffold loads, so the spans would miss the daemon.
 
-**Install**: `pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp`
+**Install**: `pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http`
+
+## A Promise's Signal
+
+A behaviour promise's signal is a span written with the helper, never a log line; see [the signal helper](/reference/telemetry/signal-helper). A log line is for diagnosis.
 
 ## How to Add Manual Traces
 
@@ -209,7 +219,7 @@ console.log('Hand started for room ' + roomCode);
 |-------|---------|------------|
 | `error` | Something is broken | Unhandled errors, failed operations that should succeed |
 | `warn` | Degraded but functional | Approaching limits, fallback behavior, retries |
-| `info` | Business events | State transitions, user actions, completed operations |
+| `info` | What happened, for diagnosis | Completed operations, state changes worth reading around a failure |
 | `debug` | Development details | Variable values, flow tracing — disable in production |
 
 ## Error Propagation
@@ -261,10 +271,10 @@ flowchart TD
     OTLP_logs --> Backend[OTLP Backend]
     OTLP_traces --> Backend
     OTLP_browser --> Backend
-    Backend --> Dash0[Dash0 / Jaeger / Grafana]
+    Backend --> Daemon[Local daemon / any OTLP backend]
 
     style Backend fill:#ff9,stroke:#333
-    style Dash0 fill:#9f9,stroke:#333
+    style Daemon fill:#9f9,stroke:#333
 ```
 
 ## Environment Variables
@@ -273,8 +283,8 @@ flowchart TD
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `OTEL_SERVICE_NAME` | Service name in traces | Set by init |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Backend URL | Not set (console exporter) |
+| `OTEL_SERVICE_NAME` | Service name in traces | Named in `telemetry-settings.ts` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Backend URL | The daemon's stored traces address (`indusk telemetry address`) |
 | `OTEL_EXPORTER_OTLP_HEADERS` | Auth headers | Not set |
 | `OTEL_ENABLED_CATEGORIES` | Active categories | All enabled |
 | `LOG_LEVEL` | Pino log level | `info` |
@@ -310,26 +320,13 @@ VITE_OTEL_PROPAGATE_TO=http://localhost:3000,https://*.dev.example.com
 
 ## Connecting to a Backend
 
-### Dash0 (recommended)
+The scaffold already sends to the local daemon: the address is chosen once per machine and stored, `indusk telemetry address` prints it, and the app's `telemetry-settings.ts` reads it as the default. To send somewhere else, set the standard variable; a set endpoint wins over the default:
 
-1. Run `pnpm ce env:build` to generate `.indusk/extensions/dash0/.env` from the contract
-2. Run `npx @infinitedusky/indusk-mcp extensions enable dash0` — auto-configures MCP server
-3. Set the OTLP env vars in your app's composable.env contract:
-   ```json
-   {
-     "OTEL_EXPORTER_OTLP_ENDPOINT": "${dash0.HTTP_ENDPOINT}",
-     "OTEL_EXPORTER_OTLP_HEADERS": "${dash0.OTLP_HEADERS}"
-   }
-   ```
-
-### Other OTLP backends
-
-Set the env vars directly:
 ```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318  # Jaeger, Grafana, etc.
+OTEL_EXPORTER_OTLP_ENDPOINT=https://your-collector.example.com  # any OTLP/HTTP backend
 ```
 
-No code changes needed — all instrumentation uses standard OTLP.
+No code changes needed — all instrumentation uses standard OTLP. The standard port 4318 belongs to a recording server (`indusk server connect`), not to the local daemon.
 
 ## OTel Gate
 
@@ -405,7 +402,7 @@ INDUSK_EVAL_OTEL=1 INDUSK_EVAL_OTEL_DATASET=agent git commit -m "..."
 
 Endpoint comes from the standard `OTEL_EXPORTER_OTLP_ENDPOINT` env var — same one the per-project instrumentation uses. The exporter posts to `{endpoint}/v1/traces` (HTTP protobuf).
 
-**Dash0 dataset routing.** Eval agent spans are routed to a specific Dash0 dataset via the `Dash0-Dataset` HTTP header on the OTLP exporter. The default is `agent` — a dedicated bucket for eval agent traces so they don't mix with the project-under-evaluation's own traces. Override per-project via `eval.otel.dataset` in config or per-invocation via `INDUSK_EVAL_OTEL_DATASET`. If you set `Dash0-Dataset` directly via `OTEL_EXPORTER_OTLP_HEADERS`, that env-set header takes precedence (per OTel SDK contract).
+**Dataset routing.** Eval agent spans are routed to a named dataset through a dataset HTTP header on the OTLP exporter, for a backend that reads one. The default is `agent` — a dedicated bucket for eval agent traces so they don't mix with the project-under-evaluation's own traces. Override per-project via `eval.otel.dataset` in config or per-invocation via `INDUSK_EVAL_OTEL_DATASET`. A dataset header set directly via `OTEL_EXPORTER_OTLP_HEADERS` takes precedence (per OTel SDK contract).
 
 ### Default State
 
@@ -437,7 +434,7 @@ The eval agent runs as a detached child process that exits quickly — batched s
 
 ### Service Identity
 
-All eval agent spans carry the resource attribute `service.name = indusk-eval-agent`. This makes them easy to filter out in Dash0 if you only want to see spans from the project under evaluation, not the evaluator itself.
+All eval agent spans carry the resource attribute `service.name = indusk-eval-agent`. This makes them easy to filter out in your backend if you only want to see spans from the project under evaluation, not the evaluator itself.
 
 ## Health Checks
 

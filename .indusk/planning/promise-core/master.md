@@ -11,7 +11,8 @@ subplans:
   - one-promise-language
   - looks-check-speed
   - plans-are-promises
-  - mark-first
+  - tests-never-make-us-wait
+  - telemetry-from-day-one
   - run-the-master
   - expectations-loop
   - looks-as-promises
@@ -245,9 +246,28 @@ parent with its own `master.md` naming them.
      holds one or more promises of clauses (2026-10-16; was "a plan is one
      promise"); each promise's clause plan replaces the test plan and is written
      before the ADR; a clause can rest on another promise.
+   - **`tests-never-make-us-wait`** (closed 2026-10-18; [retrospective](../archive/tests-never-make-us-wait/retrospective.md); the sampler is `the-sampler`) (Sandy, 2026-10-17: before `mark-first`;
+     not yet written) — development had slowed to a crawl on tests: a CSS
+     bugfix took five build phases, one story-frame check 23 minutes, the
+     everyday suite 3 m 45 s. The change made now is checked now, in seconds;
+     regression is sampled over time. Visual regression leaves every phase,
+     landing and release and becomes a background spot checker whose findings
+     are a list to come back to; the everyday suite finishes in under a minute
+     (tests that start a CLI, a git repo or a workbench move to the system
+     tier); a failing slow test opens no incident, no Maintenance phase and no
+     "broke in production" (moved here from `a-break-runs-its-tests`). It does
+     not wait for telemetry to be good enough: what needs clause-keyed signals
+     is `a-break-runs-its-tests`, after `mark-first`. The philosophy: software
+     that keeps moving and fixing itself, not perfect at every commit.
    - **`mark-first`** ("Signal first") — `a-clause-is-proved-twice`: verified by
      its tests before release, upheld by its signal in use; plans in the new
-     shape close on both.
+     shape close on both. Since 2026-10-16 the third child of
+     [telemetry-from-day-one](../telemetry-from-day-one/master.md), a parent
+     made after a cold audit of `mark-first` against the goal (its research,
+     "Audit against the goal") found it reshapes how InDusk reads a signal and
+     leaves what a new project is handed or emits unchanged: a daemon that is
+     found, a scaffold that reports from its first run, production that is
+     heard, and a look that comes due are its siblings there.
    Only what `run-the-master` needs; the later cut (a break leading to its
    cause, diagnosis, broken traces kept, browser signals, every break becoming a
    test, approvals as questions, clause views) follows `run-the-master` — see
@@ -260,6 +280,9 @@ parent with its own `master.md` naming them.
    and worktree per phase off the plan branch, and earlier plans first when
    phases contend for a file. Its first
    master to run is Homework Gate's milestones, not this one. Its dependencies come from promises from the start.
+   A parent since 2026-10-16 (Sandy) — [run-the-master/master.md](../run-the-master/master.md):
+   `run-the-graph`, `decisions-as-questions`, `activity-and-graph`;
+   briefed now, built after `mark-first`.
 2. **`expectations-loop`** — expectations read back at their look time into
    what is built next.
 3. **`looks-as-promises`** — visual promises; approvals on the plan page; the

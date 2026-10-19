@@ -1,0 +1,7 @@
+# A test that asserts a reader returns whatever the function it calls returns proves the two agree with each other, not that either is correct
+
+A test shaped like `expect(readerFunction(x)).toBe(derivingFunction(x))` (or any variant that calls the same underlying logic on both sides) will always pass, by construction — it's tautological. It confirms the reader correctly forwards to the function, which is a real but much weaker claim than "the function computes the right answer." If the deriving function itself has a bug, this test is blind to it: both sides of the assertion are wrong the same way, in agreement, and green.
+
+**Why:** nav-stage-matches-plan-page (dusk, 2026-10-16, archived at `.indusk/planning/archive/nav-stage-matches-plan-page/`). The cold audit found row A1 shaped exactly this way — comparing the nav's reader against the same `stepAt` function it calls — and named it explicitly: "A test that compares a reader with the function it calls proves agreement, not correctness."
+
+**How to apply:** when writing a test for a reader that wraps or forwards to another function, assert against an independently-derived expected value (a literal, a fixture built by hand, or a different code path that answers the same question a different way) — never against a second call to the exact function under test. If the only way to state the expectation is "whatever the function returns," the test is proving the plumbing works, not that the destination is correct; name that limitation explicitly if it's accepted, don't let it read as a correctness proof.

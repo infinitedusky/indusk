@@ -38,6 +38,21 @@ export function planFolderStatus(planRoot: string, plan: string): PlanFolderStat
 	return "missing";
 }
 
+/**
+ * Where `plan`'s folder is: the planning folder, else the archive (the
+ * retrospective archives a plan before it lands, and every command that acts
+ * on a plan must still find it), else null — also null for a name that is not
+ * a plan's folder (the archive folder, a file, an unusable segment). The
+ * planning folder wins when a plan is in both.
+ *
+ * promise: a-plan-is-found-in-the-archive
+ */
+export function findPlanFolder(planRoot: string, plan: string): string | null {
+	const status = planFolderStatus(planRoot, plan);
+	if (status === "active") return planFolderPath(planRoot, plan);
+	return status === "archived" ? planFolderPath(planRoot, plan, true) : null;
+}
+
 export interface PlanFolder {
 	plan: string;
 	archived: boolean;

@@ -86,15 +86,25 @@ function attribute(key: string, value: AttrValue) {
 	return { key, value: v };
 }
 
+/** A span event as the SDK-free body carries it. */
+export interface SpanEvent {
+	name: string;
+	attributes?: Record<string, AttrValue>;
+}
+
 /**
- * One `indusk-watcher` span as an OTLP/JSON export body — the probe's and the
- * server heartbeat's shape, so both travel the path a promise mark does.
+ * One span as an OTLP/JSON export body — the probe's and the server
+ * heartbeat's shape (service `indusk-watcher` unless `service` says otherwise),
+ * so both travel the path a promise signal does. `events` are the span's events,
+ * which is where a broken signal carries what was seen.
  */
 export function watcherSpanBody(
 	name: string,
 	attributes: Record<string, AttrValue>,
 	at: Date = new Date(),
+	opts: { service?: string; events?: SpanEvent[] } = {},
 ): { body: unknown; traceId: string } {
+	const service = opts.service ?? WATCHER_SERVICE;
 	const traceId = hex(16);
 	const nanos = BigInt(at.getTime()) * 1_000_000n;
 	return {
@@ -102,10 +112,10 @@ export function watcherSpanBody(
 		body: {
 			resourceSpans: [
 				{
-					resource: { attributes: [attribute("service.name", WATCHER_SERVICE)] },
+					resource: { attributes: [attribute("service.name", service)] },
 					scopeSpans: [
 						{
-							scope: { name: WATCHER_SERVICE },
+							scope: { name: service },
 							spans: [
 								{
 									traceId,
@@ -115,6 +125,11 @@ export function watcherSpanBody(
 									startTimeUnixNano: String(nanos),
 									endTimeUnixNano: String(nanos + 1_000_000n),
 									attributes: Object.entries(attributes).map(([k, v]) => attribute(k, v)),
+									events: (opts.events ?? []).map((e) => ({
+										timeUnixNano: String(nanos),
+										name: e.name,
+										attributes: Object.entries(e.attributes ?? {}).map(([k, v]) => attribute(k, v)),
+									})),
 								},
 							],
 						},

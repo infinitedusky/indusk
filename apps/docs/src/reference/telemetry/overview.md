@@ -4,7 +4,7 @@ title: Local Telemetry — Overview
 
 # Local Telemetry — Overview
 
-Local telemetry is a **required-by-default** InDusk extension that turns your own machine into the dev-environment observability backend. While your code is running locally, OTel traces and logs emit to `localhost:4318` where a machine-global daemon (Jaeger v2 + OTel Collector core) absorbs them; the agent queries them through MCP tools; you query them through `indusk telemetry *` subcommands.
+Local telemetry is a **required-by-default** InDusk extension that turns your own machine into the dev-environment observability backend. While your code is running locally, OTel traces and logs emit to the daemon's own address (`localhost:24318` for traces, `24319` for logs) where a machine-global daemon (Jaeger v2 + OTel Collector core) absorbs them; the agent queries them through MCP tools; you query them through `indusk telemetry *` subcommands.
 
 Available since indusk-mcp **1.28.0**.
 
@@ -29,7 +29,7 @@ One machine. One set of processes. Every registered project emits into them.
 sequenceDiagram
     autonumber
     participant App as Your code<br/>(indusk-mcp,<br/>admin-ui,<br/>Numero…)
-    participant OTLP as Jaeger's OTLP<br/>receiver<br/>(:4318)
+    participant OTLP as Jaeger's OTLP<br/>receiver<br/>(traces port)
     participant Jaeger as Jaeger v2<br/>(traces + UI + MCP)
     participant Otelcol as otelcol core<br/>(logs pipeline)
     participant Sink as Log sink<br/>~/.indusk/telemetry/<br/>logs.jsonl
@@ -37,7 +37,7 @@ sequenceDiagram
     participant You as You<br/>(terminal)
 
     App->>OTLP: traces (POST /v1/traces)
-    App->>Otelcol: logs (POST /v1/logs on :4319)
+    App->>Otelcol: logs (POST /v1/logs on the logs port)
     OTLP->>Jaeger: indexed in-memory
     Otelcol->>Sink: JSONL, rotated at 10 MB × 5
 
@@ -56,6 +56,46 @@ sequenceDiagram
 - **Trace storage is ephemeral**: Jaeger v2's in-memory backend, capped at 100k spans. Retention is "until the daemon restarts or the ring buffer wraps." Good enough for inner-loop debugging; not a substitute for Dash0.
 - **Log storage is an append-only JSONL file**: otelcol writes OTLP-envelope logs to `~/.indusk/telemetry/logs.jsonl`, rotated at 10 MB × 5 backups = 50 MB buffer total. Reset by `indusk telemetry reset`.
 
+## The daemon's ports {#the-daemons-ports}
+
+The daemon has **one address per machine**, chosen once at first setup and stored in `~/.indusk/telemetry-address.json`. InDusk never moves it on its own: every start, restart and automatic start uses it, and only `indusk telemetry address --reset`, run by a person, chooses it again.
+
+| Role | Port | What reaches it |
+|------|------|-----------------|
+| traces | `24318` | applications' span exporters (OTLP HTTP) |
+| logs | `24319` | applications' log exporters (OTLP HTTP) |
+| interface | `24316` | Jaeger's UI and query API |
+| MCP | `24317` | the `jaeger` MCP server in each project's `.mcp.json` |
+
+If another program holds one of these at the moment of first setup, a free port is picked once for that role instead, and the start says which. A port picked is stored like the rest. Once the address is stored, a start that finds one of its ports held by a stranger refuses, naming the port and the process; it never moves a port on its own. `indusk telemetry address` prints the address (`--json` for `init` to hand to an application), and `--reset` is the only way to choose again.
+
+InDusk's daemon deliberately does not take the standard `4318`: that port is left to a person's other tools, and an application is handed the daemon's own traces port instead. A recording server (`telemetry serve` on Fly) is a dedicated machine and keeps the standard ports there.
+
+## What counts as InDusk's daemon {#what-counts-as-the-daemon}
+
+A process is InDusk's daemon of a home when it runs InDusk's shipped Jaeger or collector binary (the `telemetry-binaries-<platform>` package) with its `--config` file in that home. Nothing else decides it: not a port answering (a busy reader sees a healthy port as slow), not a start time, not the binary file still existing. A daemon started in a temporary home belongs to that home and is never taken for the machine's own.
+
+The **record** is `~/.indusk/telemetry.json` (with `telemetry.pid`): the two process ids, the ports, the start time. It is a note about the daemon, not the daemon. A status read never removes it: only `indusk telemetry stop` does, and `start` writes over one whose processes are gone.
+
+### A lost record is found
+
+When the record is gone, or names only dead processes, and the daemon still runs, the next command that looks finds it. It reads the process list for this home's Jaeger and collector, reads the ports each one really listens on from the operating system (`lsof`, or `/proc` on Linux when `lsof` is missing), pairs them (a Jaeger holding the stored traces port with the collector holding the stored logs port first, then by start time), and writes the record again (removing a dead record first, under the lock), with an exclusive create under `~/.indusk/telemetry.lock` so that only one command writes when several look at once. A port is never guessed: a role whose port no socket or rendered config file can name is left unknown and said so. When several daemons of the home run, it takes the one holding the traces port and leaves the others for `status` to list as strays. Every reader of the local daemon (`promises status` and `watch`, the promise health tool, the admin, the evaluator, `update`, `demo`, `telemetry reset`) asks the same resolver, so none of them can disagree about whether a daemon runs.
+
+## The promise's signal {#the-promises-signal}
+
+The daemon is held by a promise, `the-daemon-readers-follow-is-the-one-running`: every reader of promises, every InDusk command and every application on a machine reaches the same one local daemon. Its six parts each have a signal, and the signal is a span the running daemon itself receives, sent by the InDusk command that knows the answer at the moment it knows it. They are sent as the service `indusk-telemetry`, not as the watcher's `indusk-watcher`: the watcher's probe is frequent, and mixed in with it these reports would fill the 1,500 traces a query reads and push a broken one out of sight. A report is posted straight to the daemon's traces port, only after the daemon is confirmed to be InDusk's, and is dropped if the daemon does not take it in about two seconds; a report never holds a command and never fails one. Reports from telemetry commands carry no project; a promise reader's carries the project it read for.
+
+| Part of the promise | Who sends it, and when | Upheld when | Broken, and what it says |
+|---|---|---|---|
+| `one-daemon-on-its-own-ports` | `telemetry status` when the daemon is running, or partly running while its Jaeger is alive to receive it; `start` and `restart` once the daemon is ready; a takeover | one InDusk Jaeger and one collector hold the four ports of the stored address | another InDusk daemon runs beside it (each by process id, start time and ports), or a stored port the daemon does not hold (naming the port it holds instead), or a recorded process that has stopped (naming it and the ports it no longer holds) |
+| `a-read-never-loses-the-daemon` | upheld: a promise reader (`promises status`, `watch`, the promise health tool, the admin) when it reached the daemon through an intact record, at most once per project every 15 minutes. Broken: whichever command finds a lost daemon and writes the record again | a reader reached the daemon through its record | the record was missing while a Jaeger ran, naming that Jaeger and the command that found it. A loss is reported when it is found, not when it happens |
+| `a-lost-daemon-is-found` | the command that found the daemon, after it writes the record; every `start` or `restart` that launched a daemon, once ready | a lost daemon was found and its record rebuilt, or a start had nothing beside it | a start found another InDusk daemon beside the one it just started |
+| `nothing-starts-a-second` | `register`, at its end | no second InDusk daemon, and no other project's `.mcp.json` entry changed | a second daemon, or another project's entry changed (path, old address, new address). A refused register sends nothing |
+| `strays-are-cleared` | `telemetry reap`, at its end, to the recorded daemon; nothing when there is none | no stray remains | each stray still running |
+| `the-log-is-readable` | `telemetry status` when the daemon is running | no line of Jaeger failing to trace itself since this daemon started | the count of such lines and the first |
+
+Every broken report opens with the part's name, so a reader can tell which part broke. Three parts report only when someone runs a telemetry command (`the-log-is-readable`, most of `one-daemon-on-its-own-ports`, `strays-are-cleared`), so between runs they read as no signal. A partly running daemon (a collector that has died beside a live Jaeger) is reported broken by `status`; with the Jaeger gone too there is nothing to receive it. A start refused because a stranger holds a stored port, or because the address file is unreadable, sends nothing, because no InDusk daemon is there to receive it. A slow port misread as gone, with the record untouched, also sends nothing. The reports are live telemetry: a test run produces none of them, and only a running daemon proves one arrives.
+
 ## Jaeger v2 is an OTel Collector distribution
 
 The load-bearing discovery from the Phase 1 spike: Jaeger v2 is **implemented as an OTel Collector distribution**. A single binary bundles:
@@ -63,9 +103,9 @@ The load-bearing discovery from the Phase 1 spike: Jaeger v2 is **implemented as
 - `otlp` receiver (OTLP HTTP/gRPC)
 - `batch` / `memory_limiter` / `filter` / `tail_sampling` processors
 - `jaeger_storage_exporter` (in-memory or Badger backend)
-- `jaeger_query` extension (REST API + UI on :16686)
+- `jaeger_query` extension (REST API + UI on the interface port)
 - `jaeger_mcp` extension (agent-facing MCP tools — see below)
-- `healthcheckv2` extension (on :13133)
+- `healthcheckv2` extension (on an internal port picked at start)
 
 So the "Jaeger vs OTel Collector" framing is wrong. There's one binary that does both — it IS the Collector. That collapsed what Phase 1 thought would be a two-binary-per-trace-path setup into one child process for traces.
 
@@ -94,8 +134,8 @@ The daemon resolves binaries via `createRequire(import.meta.url).resolve("@infin
 
 **Enable-time** (`indusk extensions enable local-telemetry` or `indusk init` on a fresh project):
 
-1. Writes the extension's `.env` component, routing `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in the `development` profile only. Staging + production profiles stay on Dash0.
-2. Calls `indusk telemetry register $(pwd)` — appends to `~/.indusk/telemetry/projects.json`, auto-starts the daemon if it's not running, and upserts a `jaeger` MCP server entry in the project's `.mcp.json` pointing at the daemon's current `mcpPort` (the port `jaeger_mcp` is listening on).
+1. Writes no environment file: an app reaches the daemon through the settings file `init` scaffolds into it (see [what a project is handed](#what-a-project-is-handed)), with nothing set.
+2. Calls `indusk telemetry register $(pwd)` — appends to `~/.indusk/telemetry/projects.json`, takes over the running daemon or starts the one daemon on its stored address (choosing the address first if none is stored; never a second daemon), and upserts a `jaeger` MCP server entry in **this project's** `.mcp.json` pointing at the stored MCP port. The file is rewritten only when the entry differs, and no other project's entry is touched.
 3. The `.mcp.json` entry follows the same shape as the `dash0` extension's — a plain `{ type: "http", url: "http://localhost:{mcpPort}/mcp" }` block. Claude Code loads it on the next session start.
 
 **Disable-time** (`indusk extensions disable local-telemetry`):
@@ -104,7 +144,7 @@ The daemon resolves binaries via `createRequire(import.meta.url).resolve("@infin
 2. Calls `indusk telemetry deregister $(pwd)` — removes the project from the registry.
 3. If the registry becomes empty, gracefully stops the daemon. Otherwise the daemon keeps running for the other registered projects.
 
-**Escape hatch**: if you don't want local telemetry on a specific project, add `disabled_extensions: ["local-telemetry"]` to `.indusk/config.json`. The required-by-default logic respects explicit disables. No data lost, no weird coexistence — the project simply routes `development` OTel to whatever its `.env` component says (usually Dash0 as a fallback, or nowhere).
+**Escape hatch**: if you don't want local telemetry on a specific project, add `disabled_extensions: ["local-telemetry"]` to `.indusk/config.json`. The required-by-default logic and detection-based enabling both respect explicit disables. A project created through the new-project flow with the telemetry recommendation declined gets `disabled_extensions: ["local-telemetry", "otel"]` written before `init` runs, so neither is enabled and nothing is scaffolded; the reason is recorded under `recommendations`.
 
 The escape hatch shape:
 
@@ -159,29 +199,56 @@ Returns OTLP log records within the window. The tool is gated on `isTelemetryAct
 
 **Why the split**: traces are rich + structured + queryable by many dimensions — Jaeger's 8 pre-computed tools are the right abstraction and writing our own would be strictly worse. Logs are flat lines — a single filter/limit MCP tool beats forcing a Jaeger UI for the "grep my app's output" workflow. A later [unified-telemetry-query plan](#future-work) may eventually give any agent one interface across local + Dash0 as a user-facing convenience, but local-only consumers (like the watcher agent in §Future Work) talk to `jaeger_mcp` + `tail_logs` directly — no unified layer required.
 
-## Environment routing
+## What a project is handed {#what-a-project-is-handed}
 
-The extension writes its `.env` component such that the `development` profile points `OTEL_EXPORTER_OTLP_ENDPOINT` at `http://localhost:4318` while staging + production stay on Dash0. ce + composable.env do the profile selection, not the extension.
+`indusk init` and every `indusk update` scaffold OpenTelemetry into the project's app through one module (`lib/scaffold/`). The app then reports to the local daemon on its first run with nothing set in its environment: a Next.js app's server with no file edited by hand, any other app once it adds the one line `init` prints for it (the `wire:` or `import` line).
 
-Expected effective environment values:
+```mermaid
+flowchart LR
+  cmd["indusk init / indusk update"] --> scaffold["scaffold, per declared code repo<br/>(else the project root)"]
+  scaffold --> app["the app: instrumentation +<br/>telemetry-settings.ts"]
+  app -- "traces" --> traces["daemon traces port<br/>(indusk telemetry address)"]
+  app -- "logs" --> logs["daemon logs port"]
+  traces --> readers["promise readers, jaeger MCP"]
+  logs --> tail["tail_logs"]
+```
 
-| Profile | `OTEL_EXPORTER_OTLP_ENDPOINT` | Where traces + logs land |
-|---------|-------------------------------|--------------------------|
-| `development` | `http://localhost:4318` | Local daemon (Jaeger + otelcol) |
-| `staging` | Dash0 URL | Dash0 `staging` dataset |
-| `production` | Dash0 URL | Dash0 `production` dataset |
+**Where the files go.** In a workbench, into each declared code repo (`worktree.repos[]`), never the workbench root, where no app runs. Elsewhere, into the project root. The runtime is read from the files at the repo's root: `next.config.*` (Next.js), `vite.config.*` (a browser app), `requirements.txt` or `pyproject.toml` (Python), `package.json` (Node). A repo with none of them gets nothing and a line saying it has no app yet; the next `indusk update` scaffolds it once one appears. `--local` mode and a project with `otel` in `disabled_extensions` get no scaffold.
 
-If your service doesn't pick up the new `development` endpoint, check `ce doctor` + the order of `.env` component merging. The local-telemetry component must sort after any component that hardcodes a Dash0 URL in the `development` profile.
+| Runtime | Files |
+|---------|-------|
+| Node | `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts`, `telemetry-settings.ts`, `signal.ts` (in `src/` when the app has one) |
+| Next.js | `instrumentation.ts` in the folder that holds `app/` or `pages/` (the app root, or `src/` when the pages live there, which is where Next.js looks for it); `src/logger.ts`, `src/instrumentation.web.ts`, `src/telemetry-settings.ts`, `src/signal.ts` |
+| Browser app | `instrumentation.ts`, `telemetry-settings.ts` (in `src/` when the app has one); no signal helper, it has no server |
+| Python | `instrumentation.py`, with the settings inline at its top, imported first in the entry point (not run under `opentelemetry-instrument`, whose own provider ignores it); `indusk_signal.py` |
+
+The signal file is how the app tells InDusk a promise held or broke: see [the signal helper](./signal-helper). An app that already sets up OpenTelemetry itself gets only that file and the settings it reads.
+
+**How an app finds the daemon.** Each app carries a small settings file, `telemetry-settings.ts`, rendered with four values: the service name (the code repo's name in a workbench, the project folder's otherwise), the InDusk project id, and the daemon's stored traces and logs addresses (InDusk's block, `24318` and `24319`, when none is stored yet). Every template reads it, so every runtime sends to the daemon with nothing set; a set endpoint still wins:
+
+| Set in the environment | Effect |
+|------------------------|--------|
+| nothing | traces to `<traces address>/v1/traces`, logs to `<logs address>/v1/logs` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | both go there, with `/v1/traces` and `/v1/logs` added |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` / `_LOGS_ENDPOINT` | that signal goes to the URL as given |
+| `OTEL_SERVICE_NAME` | the service name |
+| `OTEL_RESOURCE_ATTRIBUTES` with `deployment.environment=…` | the environment |
+
+**Where a span ran.** Every span's resource carries `indusk.project` (the InDusk project id, what the promise readers compare) and `deployment.environment` (`development` unless set). A browser app reads the same names under its bundler's prefix (`VITE_OTEL_…`, `NEXT_PUBLIC_OTEL_…`).
+
+**The newer-version file.** InDusk records a fingerprint of each file it writes in `.indusk/scaffold.json` (the workbench root in a workbench); the fingerprint ignores whitespace, line breaks, semicolons, trailing commas and quote style, so reformatting a scaffolded file with Biome or Prettier is not an edit (a record written as a hash of the exact text still matches). On each run a missing file is created (unless InDusk recorded writing it and you deleted it: it is left out, with one line saying so, and `init --force` writes it back), a file still as InDusk wrote it is refreshed to the newer template, and a file you changed (a changed word, not its layout), or one InDusk never wrote, is left byte for byte with the newer version written beside it as `<file>.indusk-new`, and the run says so. A lost record makes every file unrecorded, and an unrecorded file is never overwritten. `init --force` overwrites them all.
+
+A workbench's code repo also gets its own `.mcp.json` naming the `indusk` server, so the evaluator that runs there can score its first commit; one that exists is never rewritten.
 
 ## Migration from Dash0-only
 
 Projects initialized before 1.28 have only the `dash0` extension and route all OTel traffic to Dash0 regardless of profile. Migration happens automatically on `indusk update`:
 
 1. `indusk update` detects that `local-telemetry` is not in the enabled extensions set and treats it as a migration step.
-2. Writes the extension's `.env` component — redirects `development` profile to `http://localhost:4318`.
+2. Scaffolds the app's instrumentation where it has none (see [what a project is handed](#what-a-project-is-handed)); a file it did not write is left, with the newer version beside it.
 3. Registers the project with the daemon (auto-starts the daemon if needed).
 4. Upserts the `jaeger` MCP server entry in `.mcp.json`.
-5. Leaves `instrumentation.ts` unchanged — the OTel SDK reads the endpoint from env at boot, so no code changes are needed.
+5. Leaves an existing `instrumentation.ts` byte for byte.
 6. Leaves the `dash0` extension alone — both extensions coexist; the active profile (via ce) decides the endpoint.
 
 After `indusk update`, the first `next dev` / `pnpm dev` / equivalent in the `development` profile emits to the local daemon. Staging + production runs still emit to Dash0 unchanged.
@@ -190,7 +257,7 @@ After `indusk update`, the first `next dev` / `pnpm dev` / equivalent in the `de
 
 ## Known gotchas
 
-- **Port conflicts**: Jaeger wants `4318` (OTLP HTTP), `4317` (OTLP gRPC), `16686` (UI), `13133` (health), plus `mcpPort` (auto-assigned for `jaeger_mcp`). otelcol wants `4319` (logs OTLP HTTP). If any is taken, `start` auto-bumps to a free one and prints the chosen value. Passing `--otlp-port 0` or `--ui-port 0` forces auto-pick.
+- **Port conflicts**: the daemon's four ports (traces, logs, interface, MCP) are chosen once and stored (see [the daemon's ports](#the-daemons-ports)); a start that finds one held by another process refuses and names it rather than moving. Jaeger's gRPC receiver, health ports and the collector's health port are internal and picked free at each start.
 - **Jaeger self-metrics are disabled** via `service.telemetry.metrics.level: none` in the bundled config. This avoids a port 8888 Prometheus exporter collision on rapid spawn/stop cycles. If you want Jaeger's self-metrics, edit `~/.indusk/telemetry-jaeger.yaml` after `start` (it's regenerated every `start`, so the edit is per-start).
 - **Storage is in-memory, capped at 100k spans**: the 100k-and-oldest-wins trace ring is a hard limit for the 1.28.x line. `indusk telemetry reset` is the right escape hatch when you want a clean slate before reproducing an issue.
 - **Log sink is 50 MB max** (10 MB × 5 rotated backups). Old records are evicted oldest-first. `tail` is windowed (`--since <minutes>`) so you rarely hit the rotation boundary.

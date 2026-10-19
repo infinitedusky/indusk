@@ -46,6 +46,7 @@ const planOf = (phases: ImplPhase[], missing: string[]): BuildPlan => ({
 	impl: { title: "seats", status: "in-progress", phases } as ParsedImpl,
 	trajectory: noRows,
 	readiness: ready(missing),
+	amendments: [],
 });
 
 /** A plan that advances one state each time a step runs; `stuck` keeps it where it is. */
@@ -120,17 +121,18 @@ describe("A11 — the runner works through phases, falsification and cleanup wit
 	});
 });
 
-describe("plan-review-subagent A4 — after cleanup the build runs the audit, then stops at review unasked", () => {
-	it("runs work, falsify, cleanup, audit, then stops at review — accept never called", async () => {
+describe("plan-review-subagent A4 — when the build closes the build runs the audit, then stops at review unasked", () => {
+	it("runs work, audit, falsify, cleanup, then stops at review — accept never called", async () => {
 		const s = scripted([
 			planOf([phase("Seats", false)], ["falsification", "cleanup", "audit"]),
 			planOf([phase("Seats", true)], ["falsification", "cleanup", "audit"]),
-			planOf([phase("Seats", true)], ["cleanup", "audit"]),
-			planOf([phase("Seats", true)], ["audit"]),
+			planOf([phase("Seats", true)], ["falsification", "cleanup"]),
+			planOf([phase("Seats", true)], ["cleanup"]),
 			BUILT,
 		]);
 		const stop = await runBuild({ ...s.deps, autoAccept: false });
-		expect(s.ran).toEqual(["work", "falsify", "cleanup", "audit"]);
+		// Moved by audit-concerns-are-answered A14: the audit reads before falsification and cleanup.
+		expect(s.ran).toEqual(["work", "audit", "falsify", "cleanup"]);
 		expect(stop).toEqual({ step: "review" });
 		expect(s.accepted).toEqual([]);
 	});

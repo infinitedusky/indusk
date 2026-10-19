@@ -2,10 +2,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { Tracer } from "@opentelemetry/api";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { git } from "../../__tests__/helpers/test-git.js";
 import { markEvaluation } from "../eval/otel.js";
 import { type LookResult, reportLooks } from "../looks/report.js";
+import { type Report, reportBody } from "../telemetry/daemon-reports.js";
 import { markPromise } from "./mark.js";
 import { recorderMark } from "./record.js";
 import { parseMarkedSpan } from "./telemetry.js";
@@ -14,15 +15,20 @@ import { trunkCommitMarks } from "./trunk-commit.js";
 // promise: a-promise-is-upheld-or-broken
 
 /**
- * A3 of one-promise-language: InDusk's own signals — the evaluator's, the
- * recorder's, the trunk-commit signal's and the looks check's — still write
- * the word `violated` on the wire this release, so a recording server already
- * deployed keeps reading them; and what they wrote reads back as broken.
- * Switching the asserted wire word to `broken` is the `mark-first` plan's.
+ * A3 of one-promise-language, switched by mark-first (A26): InDusk's own
+ * signals — the evaluator's, the recorder's, the trunk-commit signal's and the
+ * looks check's — write the word `broken` on the wire, and what they wrote
+ * reads back as broken. Every reader still takes the older `violated` too.
  *
  * Each caller is driven through its own path against a recording span; what
  * it wrote is then handed to the span parser as Jaeger would return it.
  */
+
+// A writer under a test runner marks its span as a test run and the readers skip it
+// (A6). These tests round-trip a writer through the reader, so they write as a
+// running system would: outside a test runner.
+beforeEach(() => vi.stubEnv("VITEST", ""));
+afterEach(() => vi.unstubAllEnvs());
 
 interface Recorded {
 	attributes: Record<string, string>;
@@ -74,14 +80,23 @@ function readBack(rec: Recorded) {
 	);
 }
 
-/** The assertions every writer shares: `violated` on the wire, the event carried, broken on the way back. */
+/** The assertions every writer shares: `broken` on the wire, the event carried, broken on the way back. */
 function expectWrittenViolatedReadBroken(rec: Recorded) {
-	expect(rec.attributes["indusk.promise.outcome"]).toBe("violated");
+	expect(rec.attributes["indusk.promise.outcome"]).toBe("broken");
 	expect(rec.events.map((e) => e.name)).toContain("indusk.promise.violated");
 	expect(readBack(rec)?.outcome).toBe("broken");
 }
 
-describe("A3 — InDusk's own signals write violated this release and read back broken", () => {
+describe("A26 — every reader still reads the older word", () => {
+	it("a span an older InDusk wrote as violated reads back as broken", () => {
+		const { span, rec } = recordingSpan();
+		span.setAttribute("indusk.promise", "a-promise");
+		span.setAttribute("indusk.promise.outcome", "violated");
+		expect(readBack(rec)?.outcome).toBe("broken");
+	});
+});
+
+describe("A26 — InDusk's own signals write broken and read back broken", () => {
 	it("the evaluator's failed evaluation", () => {
 		const { span, rec } = recordingSpan();
 		markEvaluation(span as never, { error: true, message: "the model refused" } as never, "demo");
@@ -124,7 +139,7 @@ describe("A3 — InDusk's own signals write violated this release and read back 
 			for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
 		});
 
-		it("is a broken verdict in code, written violated and read back broken", async () => {
+		it("is a broken verdict in code, written broken and read back broken", async () => {
 			const dir = mkdtempSync(join(tmpdir(), "signal-writers-"));
 			dirs.push(dir);
 			git(dir, ["init", "-q", "-b", "main"]);
@@ -144,6 +159,66 @@ describe("A3 — InDusk's own signals write violated this release and read back 
 			const { span, rec } = recordingSpan();
 			markPromise(span, { promise: "a-plan-is-written-on-its-own-branch", ...(mark as never) });
 			expectWrittenViolatedReadBroken(rec);
+		});
+	});
+
+	describe("the daemon's own reports", () => {
+		type OtlpAttr = { key: string; value: Record<string, string> };
+		const flat = (attrs: OtlpAttr[]) =>
+			attrs.map((a) => ({ key: a.key, value: Object.values(a.value)[0] as string }));
+
+		/** An OTLP/JSON span body as Jaeger would hand it back, parsed as the reader parses it. */
+		function readReport(report: Report) {
+			const body = reportBody(report) as {
+				resourceSpans: {
+					scopeSpans: {
+						spans: { attributes: OtlpAttr[]; events: { name: string; attributes: OtlpAttr[] }[] }[];
+					}[];
+				}[];
+			};
+			const span = body.resourceSpans[0]?.scopeSpans[0]?.spans[0];
+			if (!span) throw new Error("no span");
+			return {
+				tags: flat(span.attributes),
+				parsed: parseMarkedSpan(
+					{
+						traceID: "t",
+						spanID: "s",
+						operationName: "daemon.report",
+						startTime: 1_000_000,
+						duration: 1_000,
+						processID: "p",
+						tags: flat(span.attributes),
+						logs: span.events.map((e) => ({
+							timestamp: 0,
+							fields: [{ key: "event", value: e.name }, ...flat(e.attributes)],
+						})),
+					},
+					"indusk",
+				),
+			};
+		}
+
+		it("a broken report is written broken, carries its clause, and reads back broken", () => {
+			const { tags, parsed } = readReport({
+				clause: "strays-are-cleared",
+				outcome: "broken",
+				symptom: "strays-are-cleared: still running: jaeger 4",
+				attributes: {},
+			});
+			expect(tags).toContainEqual({ key: "indusk.promise.outcome", value: "broken" });
+			expect(tags).toContainEqual({ key: "indusk.clause", value: "strays-are-cleared" });
+			expect(parsed?.outcome).toBe("broken");
+		});
+
+		it("an upheld report is written upheld and read back upheld", () => {
+			const { tags, parsed } = readReport({
+				clause: "the-log-is-readable",
+				outcome: "upheld",
+				attributes: {},
+			});
+			expect(tags).toContainEqual({ key: "indusk.promise.outcome", value: "upheld" });
+			expect(parsed?.outcome).toBe("upheld");
 		});
 	});
 });

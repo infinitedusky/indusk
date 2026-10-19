@@ -1,0 +1,3 @@
+# Scope a handed environment value to the process it was handed to
+
+When a parent process hands a value to a child through an environment variable, every grandchild the child spawns inherits it too. If the value means something specific to the child (for example, "the package root this daemon's bundle should read"), a grandchild that runs a different install will trust it and answer for the wrong code. Pass the value only to the process that needs it, strip it from the environments of processes it does not concern, and guard both with tests. In the-admin-knows-the-package-root, falsification found this after the first build had already shipped the inheriting version.

@@ -1,5 +1,12 @@
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import {
+	type ClauseReport,
+	type ClauseRow,
+	type ClauseStanding,
+	clauseRows,
+	promiseSignal,
+} from "./clause-standing.js";
+import {
 	type HealthDeps,
 	type HealthRow,
 	healthRows,
@@ -13,6 +20,7 @@ import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
 import { type PlanRow, rowsNamingEach } from "./rows.js";
 import { alarmSource, type SourceName, sourceNames } from "./sources.js";
 import { readWindow } from "./store.js";
+import type { TimelineMark } from "./timeline.js";
 
 /**
  * Where a promise stands (plan-cockpit, ADR decision 1): the one word the
@@ -52,6 +60,14 @@ export interface StandingResult {
 	thirtyDays: ThirtyDays;
 	/** The newest break: a heard violation, or the alarm source's sighting while broken and newer; null when none. */
 	lastBreak: string | null;
+	/** Each clause with the standing its own signal gives it; empty for a promise stated before clauses, absent from a row built before this field existed. */
+	clauses?: ClauseRow[];
+	/**
+	 * What the promise's signal says: its worst clause (broken, then no signal,
+	 * then holding), or null for a promise with no clause a signal can report.
+	 * `no-signal` here is never drawn as holding (mark-first A12, A14).
+	 */
+	signal?: ClauseStanding | null;
 }
 
 /**
@@ -151,7 +167,16 @@ export function standingOf(
 	);
 	const standing = standingFor(entry, byName, tests, sources);
 	const { thirtyDays, lastBreak } = heardOver(entry, standing, newest, ctx);
-	return { standing, health: byName, tests, lastActivity: newest, thirtyDays, lastBreak };
+	return {
+		standing,
+		health: byName,
+		tests,
+		lastActivity: newest,
+		thirtyDays,
+		lastBreak,
+		clauses: [],
+		signal: null,
+	};
 }
 
 /** The thirty days and the last break, from the breaks heard for this promise (or an earlier name of it). */
@@ -215,22 +240,24 @@ export async function readStanding(
 	const reads = deps.health ?? (await readHealth(projectRoot, registry, deps));
 	const heard = deps.heard ?? readHeard(deps.home ?? bookkeepingRoots(projectRoot).home);
 	const now = (deps.now ?? Date.now)();
-	const upheld = await upheldRuns(projectRoot, registry, now, deps);
-	return standingRows(projectRoot, registry, reads, { heard, upheld, now });
+	const marks = await windowMarks(projectRoot, registry, now, deps);
+	const heartbeatOk = reads.every((r) => r.ok || !r.blind);
+	return standingRows(projectRoot, registry, reads, { heard, marks, heartbeatOk, now });
 }
 
 /**
- * Each promise's upheld runs in the window, across the project's sources, from
- * the store (`promises/store`) the page's days read too. A source that cannot
- * be read adds nothing: a day is held only when a run was seen on it.
+ * Each promise's runs in the window, across the project's sources, from the
+ * store (`promises/store`) the page's days read too. A source that cannot be
+ * read adds nothing: a day is held only when a run was seen on it, and a
+ * clause is `no signal` until one was.
  */
-async function upheldRuns(
+async function windowMarks(
 	projectRoot: string,
 	registry: Registry,
 	nowMs: number,
 	deps: StandingDeps,
-): Promise<Map<string, string[]>> {
-	const byPromise = new Map<string, string[]>();
+): Promise<Map<string, TimelineMark[]>> {
+	const byPromise = new Map<string, TimelineMark[]>();
 	for (const source of sourceNames(projectRoot)) {
 		const window = await readWindow(
 			projectRoot,
@@ -242,9 +269,7 @@ async function upheldRuns(
 		);
 		if (!window.ok) continue;
 		for (const [name, marks] of window.marks) {
-			const held = byPromise.get(name) ?? [];
-			for (const m of marks) if (m.outcome === "upheld") held.push(m.at);
-			byPromise.set(name, held);
+			byPromise.set(name, [...(byPromise.get(name) ?? []), ...marks]);
 		}
 	}
 	return byPromise;
@@ -254,26 +279,78 @@ function standingRows(
 	projectRoot: string,
 	registry: Registry,
 	reads: SourceHealthRead[],
-	ctx: { heard: HeardRow[]; upheld: Map<string, string[]>; now: number },
+	ctx: {
+		heard: HeardRow[];
+		marks: Map<string, TimelineMark[]>;
+		heartbeatOk: boolean;
+		now: number;
+	},
 ): StandingRow[] {
 	const chips = reads.flatMap((r) =>
 		r.ok ? [{ source: r.name, rows: healthRows(registry, r, ruleFor(r, reads)) }] : [],
 	);
 	const named = rowsNamingEach(projectRoot, registry.promises);
 	const sources = reads.map((r) => r.name);
-	return registry.promises.map((entry) => {
+	const marksOf = (entry: PromiseEntry) =>
+		[entry.name, ...entry.aliases].flatMap((n) => ctx.marks.get(n) ?? []);
+	const base = registry.promises.map((entry) => {
 		const health = chips.flatMap((c) =>
 			c.rows[entry.name] ? [{ ...c.rows[entry.name], source: c.source }] : [],
 		);
 		const rows = named.get(entry.name)?.rows ?? [];
-		const upheld = [entry.name, ...entry.aliases].flatMap((n) => ctx.upheld.get(n) ?? []);
+		const upheld = marksOf(entry)
+			.filter((m) => m.outcome === "upheld")
+			.map((m) => m.at);
 		return {
 			entry,
 			rows,
 			...standingOf(entry, health, rows, sources, { heard: ctx.heard, upheld, now: ctx.now }),
 		};
 	});
+
+	// A clause that rests on a promise reads as that promise does: its own signal
+	// when it has clauses, else its standing (enforced holds, broken is broken).
+	const byName = new Map(base.map((r) => [r.entry.name, r]));
+	const signalOf = (name: string, seen: ReadonlySet<string>): ClauseStanding => {
+		const row = byName.get(name);
+		if (!row || seen.has(name)) return "no-signal";
+		if (row.entry.clauses?.length) {
+			return promiseSignal(clausesOf(row, new Set([...seen, name]))) ?? "no-signal";
+		}
+		return row.standing === "broken"
+			? "broken"
+			: row.standing === "enforced"
+				? "holding"
+				: "no-signal";
+	};
+	const clausesOf = (row: (typeof base)[number], seen: ReadonlySet<string>): ClauseRow[] => {
+		const marks = marksOf(row.entry);
+		const reportsOf = (clause: string): ClauseReport[] =>
+			marks.filter((m) => m.clause === clause).map(clauseReport);
+		return clauseRows(row.entry, reportsOf, ctx.heartbeatOk, (name) => signalOf(name, seen));
+	};
+	return base.map((row) => {
+		const clauses = row.entry.state === "retired" ? [] : clausesOf(row, new Set([row.entry.name]));
+		const signal = promiseSignal(clauses);
+		return {
+			...row,
+			clauses,
+			signal,
+			standing: signal === "broken" && row.standing !== "retired" ? "broken" : row.standing,
+		};
+	});
+}
+
+/** A held signal as a clause report: its outcome, time and any measurement it carried. */
+function clauseReport(m: TimelineMark): ClauseReport {
+	return {
+		outcome: m.outcome,
+		at: m.at,
+		...(m.value !== undefined ? { value: m.value } : {}),
+		...(m.bound !== undefined ? { bound: m.bound } : {}),
+	};
 }
 
 // A look's standing is its own module; this file re-exports it so `promises/standing` is unchanged.
+export * from "./clause-standing.js";
 export * from "./look-standing.js";

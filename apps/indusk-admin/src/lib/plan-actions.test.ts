@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planActions } from "./plan-actions";
+import { type PlanActionInput, planActions } from "./plan-actions";
 
 /**
  * promise: a-plan-can-start-from-the-admin — workbench-plan-authoring A10.
@@ -10,6 +10,9 @@ import { planActions } from "./plan-actions";
  * named in `code.json`. Either one is "started", and gets the same buttons
  * at the same moments.
  */
+
+// promise: approval-waits-for-a-finished-plan
+const offered = (input: PlanActionInput) => planActions(input);
 
 const worktree = { path: "/p-worktrees/seats", branch: "plan/seats" };
 const code = { repo: "web", branch: "plan/seats", worktree: "/wb/seats" };
@@ -25,7 +28,9 @@ describe("A10 — a workbench plan gets the buttons a normal-mode plan gets", ()
         canApprove: false,
         showBuild: false,
       });
-      expect(planActions({ ...where, implStatus: "draft" })).toMatchObject({
+      expect(
+        offered({ ...where, implStatus: "draft", waitingOn: "approval" }),
+      ).toMatchObject({
         canPlan: true,
         canApprove: true,
       });
@@ -61,5 +66,17 @@ describe("A10 — a workbench plan gets the buttons a normal-mode plan gets", ()
       canBuild: false,
       inReview: false,
     });
+  });
+});
+
+describe("A14 — Approve follows the package's waiting answer", () => {
+  it("A14 a draft impl offers Approve only when the plan waits on approval", () => {
+    const draft = { worktree, implStatus: "draft" };
+    expect(offered({ ...draft, waitingOn: "approval" }).canApprove).toBe(true);
+    expect(offered({ ...draft, waitingOn: "plan-review" }).canApprove).toBe(
+      false,
+    );
+    expect(offered({ ...draft, waitingOn: "question" }).canApprove).toBe(false);
+    expect(offered({ ...draft }).canApprove).toBe(false);
   });
 });

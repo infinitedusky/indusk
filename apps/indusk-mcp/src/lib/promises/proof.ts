@@ -6,6 +6,7 @@ import type { BrokenPromise } from "./fix.js";
 import { type HealthDeps, healthLine, readHealth, type SourceHealthRead } from "./health.js";
 import { type HeardRow, readHeard } from "./heard.js";
 import {
+	findPromise,
 	type IncidentEntry,
 	type PromiseEntry,
 	type Registry,
@@ -76,7 +77,14 @@ export interface Proof {
 	/** Where the promise stands, the dashboard's word, with its tests and thirty days. */
 	standing: Pick<
 		StandingRow,
-		"standing" | "tests" | "lastActivity" | "lastBreak" | "thirtyDays" | "health"
+		| "standing"
+		| "tests"
+		| "lastActivity"
+		| "lastBreak"
+		| "thirtyDays"
+		| "health"
+		| "clauses"
+		| "signal"
 	>;
 	/** The break *Start a fix plan* starts from; null unless the promise is broken in a source. */
 	broken: BrokenPromise | null;
@@ -113,7 +121,7 @@ export async function proofOf(
 ): Promise<Proof | null> {
 	const read = readPromises(projectRoot);
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
-	const entry = registry?.promises.find((p) => p.name === name || p.aliases.includes(name));
+	const entry = registry ? findPromise(registry.promises, name) : undefined;
 	if (!registry || !entry) return null;
 
 	const now = deps.now ?? Date.now;
@@ -138,6 +146,8 @@ export async function proofOf(
 			lastBreak: standing.lastBreak,
 			thirtyDays: standing.thirtyDays,
 			health: standing.health,
+			clauses: standing.clauses,
+			signal: standing.signal,
 		},
 		broken: standing.standing === "broken" ? brokenOf(registry, entry, health, now()) : null,
 		rows,

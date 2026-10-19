@@ -1,5 +1,7 @@
+// promise: a-plan-is-read-cold-before-approval
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { planReviewInputs } from "../lib/audit/inputs.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { briefText, implText } from "./helpers/plan-fixture.js";
 import {
@@ -12,6 +14,7 @@ import { git } from "./helpers/test-git.js";
 
 /**
  * promise: the-auditor-sees-the-plan-not-the-session — plan-review-subagent A5, A6, A7, A15, A16, A17.
+ * clause: a-plan-is-read-cold-before-approval/the-reader-sees-documents-only — audit-concerns-are-answered A18.
  *
  * `indusk plans audit-inputs <plan>` hands the auditor the plan's brief, test
  * plan and ADR, the impl as it was merged at approval, the trajectory table as
@@ -167,5 +170,28 @@ describe.skipIf(SHOULD_SKIP)("indusk plans audit-inputs", () => {
 		expect(tree).toContain("src/seat-release.ts");
 		expect(tree).not.toContain(".indusk/");
 		expect(textOf(got.stat)).not.toContain("README.md");
+	});
+});
+
+describe("planReviewInputs", () => {
+	it("A18 — the plan review is handed the four documents and the tracked files, nothing else", async () => {
+		p.commit(
+			wt,
+			{
+				[`${planDir}/brief.md`]: `${briefText(PLAN, { makes: [{ name: NAME, sentence: SENTENCE }] })}\nMARK-BRIEF\n`,
+				[`${planDir}/test-plan.md`]: "# Test Plan\n\nMARK-TESTPLAN\n",
+				[`${planDir}/adr.md`]: "# ADR\n\nMARK-ADR\n",
+				[`${planDir}/research.md`]: "# Research\n\nMARK-RESEARCH\n",
+				[`${planDir}/impl.md`]: implText(PLAN, { status: "draft", rows: [{ state: "planned" }] }),
+			},
+			"plan documents",
+		);
+		const inputs = await planReviewInputs(wt, PLAN);
+		expect(Object.keys(inputs).sort()).toEqual(["documents", "plan", "read", "tree"]);
+		expect(Object.keys(inputs.documents).sort()).toEqual(["adr", "brief", "impl", "testPlan"]);
+		expect(inputs.documents.brief?.text).toContain("MARK-BRIEF");
+		expect(JSON.stringify(inputs)).not.toContain("MARK-RESEARCH");
+		expect(inputs.tree).toContain("README.md");
+		expect(inputs.tree).not.toContain(".indusk/");
 	});
 });

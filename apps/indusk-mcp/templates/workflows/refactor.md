@@ -82,7 +82,7 @@ phase_summary: required
 
 {A paragraph saying what this phase does for the whole plan and how it hands to the next, written for someone who has worked on the project but knows none of this plan's shorthand.}
 
-- [ ] {One plain sentence saying what will be true once this step is done.}
+- [ ] {One plain instruction saying what to change in this step.}
   <details><summary>Technical</summary>
 
   {The refactoring step: names, paths and code go here.}
@@ -90,13 +90,13 @@ phase_summary: required
   </details>
 
 #### Phase 1 Verification
-- [ ] {One plain sentence saying what proves nothing broke.}
+- [ ] {One plain statement of what must hold: nothing broke.}
   <details><summary>Technical</summary>
 
   {All existing tests pass}
 
   </details>
-- [ ] {One plain sentence saying behavior is unchanged.}
+- [ ] {One plain statement of what must hold: behavior is unchanged.}
   <details><summary>Technical</summary>
 
   {No behavior changes — same inputs produce same outputs}

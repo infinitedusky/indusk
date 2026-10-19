@@ -1,12 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { copyFileSync, existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import { daemonAddress } from "./telemetry/daemon-address.js";
+import { induskHome } from "./telemetry/status.js";
+import { declaredRepoDirs } from "./worktree/repos.js";
 
 /**
  * A project's `.mcp.json` — the per-machine list of MCP servers Claude Code
  * connects to. It is not versioned (untrack-mcp-json): `.gitignore` carries it,
- * `ensureMcpJson` writes one when a checkout has none, and the telemetry daemon
- * edits the local copy's `jaeger` port.
+ * `ensureMcpJson` writes one when a checkout has none, and registering a project
+ * writes its own `jaeger` entry, only when it differs.
  */
 export interface McpServerEntry {
 	type?: string;
@@ -45,9 +48,16 @@ function hasGlobalIndusk(): boolean {
 }
 
 // promise: a-clone-without-an-mcp-config-gets-the-keep-list
+/** Whether the project has the telemetry extension enabled: its manifest is shipped on enable. */
+function hasTelemetryExtension(projectPath: string): boolean {
+	return existsSync(join(projectPath, ".indusk", "extensions", "local-telemetry", "manifest.json"));
+}
+
 /**
- * Write a `.mcp.json` naming the `indusk` server when a checkout has none. A file
- * that exists is never read, merged or rewritten: it is the person's.
+ * Write a `.mcp.json` naming the `indusk` server when a checkout has none, and
+ * the `jaeger` server too when the telemetry extension is enabled and the
+ * daemon's address is stored. A file that exists is never read, merged or
+ * rewritten: it is the person's.
  * `globalBinary` mirrors `init`: the installed `indusk`, else `npx`; left out, it is
  * looked up on the PATH.
  */
@@ -65,8 +75,31 @@ export function ensureMcpJson(
 				args: ["--yes", "@infinitedusky/indusk-mcp", "serve"],
 				env: { PROJECT_ROOT: "." },
 			};
-	writeMcpJson(projectPath, { mcpServers: { indusk } });
+	const mcpServers: Record<string, McpServerEntry> = { indusk };
+	const address = hasTelemetryExtension(projectPath) ? daemonAddress(induskHome()) : null;
+	if (address !== null) mcpServers.jaeger = { type: "http", url: address.mcp };
+	writeMcpJson(projectPath, { mcpServers });
 	return "created";
+}
+
+/**
+ * Give each declared code repo of a workbench its own `.mcp.json` when it has none, the
+ * way a checkout gets one, so the evaluator that runs in the repo can reach the server.
+ * A repo whose checkout is not there is passed over; one with a file is never touched.
+ * Returns the created files, relative to the project root.
+ */
+export function ensureCodeRepoMcpJson(
+	projectRoot: string,
+	opts: { globalBinary?: boolean } = {},
+): string[] {
+	const created: string[] = [];
+	for (const repo of declaredRepoDirs(projectRoot)) {
+		if (!existsSync(repo.dir) || !statSync(repo.dir).isDirectory()) continue;
+		if (ensureMcpJson(repo.dir, opts) === "created") {
+			created.push(join(relative(projectRoot, repo.dir), MCP_JSON));
+		}
+	}
+	return created;
 }
 
 /**
@@ -82,16 +115,24 @@ export function provisionMcpJson(fromProject: string, toProject: string): void {
 	else ensureMcpJson(toProject);
 }
 
-/** Point the `jaeger` entry at the daemon's live MCP port, creating the file (and entry) if missing. */
-export function upsertJaegerEntry(projectPath: string, mcpPort: number): void {
+/** The `jaeger` entry a project should have for the daemon's MCP port, or `null` when its entry already is that. */
+export function jaegerEntryChange(
+	current: McpServerEntry | null | undefined,
+	mcpPort: number,
+): McpServerEntry | null {
+	const wanted = { type: "http", url: `http://localhost:${mcpPort}/mcp` };
+	return current?.type === wanted.type && current.url === wanted.url ? null : wanted;
+}
+
+/** Point the project's `jaeger` entry at the daemon's MCP port, writing the file only on a change. Whether it wrote. */
+export function upsertJaegerEntry(projectPath: string, mcpPort: number): boolean {
 	ensureMcpJson(projectPath);
 	const data = readMcpJson(projectPath);
-	data.mcpServers = data.mcpServers ?? {};
-	data.mcpServers.jaeger = {
-		type: "http",
-		url: `http://localhost:${mcpPort}/mcp`,
-	};
+	const change = jaegerEntryChange(data.mcpServers?.jaeger, mcpPort);
+	if (change === null) return false;
+	data.mcpServers = { ...data.mcpServers, jaeger: change };
 	writeMcpJson(projectPath, data);
+	return true;
 }
 
 export function removeJaegerEntry(projectPath: string): void {

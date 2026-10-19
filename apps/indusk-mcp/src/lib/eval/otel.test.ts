@@ -2,6 +2,13 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+	collectorCmd,
+	fakeReads,
+	HOME,
+	jaegerCmd,
+	rec,
+} from "../../__tests__/helpers/daemon-reads.js";
 import { evalDir } from "../bookkeeping/roots.js";
 import { __resetEvalOtelForTests, initEvalOtel, isEvalOtelEnabled } from "./otel.js";
 
@@ -201,43 +208,34 @@ describe("eval.otel dataset resolution (Dash0-Dataset header)", () => {
 });
 
 describe("the local telemetry daemon (day-monitor)", () => {
-	function liveDaemon(otlpPort: number): void {
-		const home = process.env.INDUSK_HOME as string;
-		mkdirSync(home, { recursive: true });
-		// This process's own PID stands in for a live Jaeger.
-		writeFileSync(
-			join(home, "telemetry.json"),
-			JSON.stringify({ jaegerPid: process.pid, otlpPort }),
-		);
-	}
+	// The daemon is judged by its processes' command lines, so a test describes a machine
+	// (`DaemonReads`) rather than writing a record that names this process.
+	const machine = (otlpPort: number, running = true) => ({
+		reads: fakeReads({
+			record: rec(1, 2, { otlpPort }),
+			processes: running ? [jaegerCmd(1, HOME), collectorCmd(2, HOME)] : [],
+		}),
+		home: HOME,
+	});
 
 	it("while it runs, the evaluator exports to it with nothing configured", () => {
-		liveDaemon(4999);
-		const state = isEvalOtelEnabled(projectRoot);
+		const state = isEvalOtelEnabled(projectRoot, machine(4999));
 		expect(state.enabled).toBe(true);
 		expect(state.endpoint).toBe("http://localhost:4999");
 	});
 
 	it("an explicit endpoint wins over the daemon's", () => {
-		liveDaemon(4999);
 		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://collector:4318";
-		expect(isEvalOtelEnabled(projectRoot).endpoint).toBe("http://collector:4318");
+		expect(isEvalOtelEnabled(projectRoot, machine(4999)).endpoint).toBe("http://collector:4318");
 	});
 
 	it("eval.otel.enabled: false keeps it off even while the daemon runs", () => {
-		liveDaemon(4999);
 		writeConfig({ eval: { otel: { enabled: false } } });
-		expect(isEvalOtelEnabled(projectRoot).enabled).toBe(false);
+		expect(isEvalOtelEnabled(projectRoot, machine(4999)).enabled).toBe(false);
 	});
 
-	it("a daemon whose Jaeger PID is dead is not running", () => {
-		const home = process.env.INDUSK_HOME as string;
-		mkdirSync(home, { recursive: true });
-		writeFileSync(
-			join(home, "telemetry.json"),
-			JSON.stringify({ jaegerPid: 2 ** 22 + 7, otlpPort: 4999 }),
-		);
-		const state = isEvalOtelEnabled(projectRoot);
+	it("a daemon whose Jaeger process is gone is not running", () => {
+		const state = isEvalOtelEnabled(projectRoot, machine(4999, false));
 		expect(state.enabled).toBe(false);
 		expect(state.endpoint).toBeNull();
 	});

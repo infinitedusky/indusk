@@ -20,7 +20,8 @@ tests:
   - apps/indusk-admin/src/__tests__/plan-parts.test.tsx
   - apps/indusk-admin/src/__tests__/plan-parts.contract.test.ts
   - apps/indusk-mcp/src/__tests__/plan-parts-description.test.ts
-incidents: []
+incidents:
+  - i-2026-10-16-a-plan-page-shows-the-parts-of-its-brief
 ---
 
 A plan's brief page shows its description, promises, expectations and looks beside the agent writing them, each updated as it writes; the plan page opens with the description and whether the brief is finished, one click from the brief.

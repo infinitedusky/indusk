@@ -1,4 +1,5 @@
 import { fencedLineMask } from "../impl-headings.js";
+import { PROMISE_CLAUSE_KINDS, PROMISE_NAME, type PromiseClauseKind } from "./vocabulary.js";
 
 /**
  * The one reader of a brief's contract (planner-promises ADR D1).
@@ -49,11 +50,70 @@ export interface BriefExpectation {
 	look: string | null;
 }
 
+/**
+ * One clause of a promise (plans-are-promises ADR D2): a split, a limit, or
+ * the promise it rests on. The brief's sub-entry and `declare --clause` share
+ * this shape and the one parser below.
+ */
+export interface BriefClause {
+	name: string;
+	kind: PromiseClauseKind;
+	/** The clause's sentence; empty for a resting clause. */
+	sentence: string;
+	/** The promise a `rests-on` clause rests on. */
+	restsOn?: string;
+}
+
 export interface BriefMade {
 	name: string;
 	/** The kind in brackets, or null when the brief gives none. */
 	kind: string | null;
 	sentence: string;
+	/** The clauses stated as sub-entries beneath the promise. */
+	clauses: BriefClause[];
+}
+
+/**
+ * Read one clause spec: `name (split). sentence`, `name (limit). sentence` or
+ * `name (rests on promise-name)`. The brief writes the name as
+ * **\`name\`**, which is stripped first. The one grammar for the brief's
+ * sub-entries and `indusk promises declare --clause`.
+ */
+export function parseClauseSpec(
+	spec: string,
+): { ok: true; clause: BriefClause } | { ok: false; error: string } {
+	const text = collapseSpace(spec).replace(/^\*\*`([^`]+)`\*\*/, "$1");
+	const m = /^(\S+?)\s*\(([^)]*)\)[.:]?\s*(.*)$/.exec(text);
+	if (!m) {
+		return {
+			ok: false,
+			error: `"${text}" is not a clause — write it as \`name (split). sentence\`, \`name (limit). sentence\` or \`name (rests on promise-name)\``,
+		};
+	}
+	const [, name, what, rest] = m;
+	if (!PROMISE_NAME.test(name)) {
+		return { ok: false, error: `clause "${name}" is not kebab-case, starting with a letter` };
+	}
+	const resting = /^rests\s+on\s+`?([^`\s]+)`?$/i.exec(what.trim());
+	if (resting) {
+		if (!PROMISE_NAME.test(resting[1])) {
+			return { ok: false, error: `clause ${name}: "${resting[1]}" is not a promise name` };
+		}
+		return {
+			ok: true,
+			clause: { name, kind: "rests-on", sentence: rest.trim(), restsOn: resting[1] },
+		};
+	}
+	const kind = what.trim().toLowerCase();
+	if (kind !== "split" && kind !== "limit") {
+		return {
+			ok: false,
+			error: `clause ${name}: "${what.trim()}" is not a kind of clause — ${PROMISE_CLAUSE_KINDS.join(" | ")} (a resting clause is written \`(rests on promise-name)\`)`,
+		};
+	}
+	if (rest.trim() === "")
+		return { ok: false, error: `clause ${name}: a ${kind} needs its sentence` };
+	return { ok: true, clause: { name, kind, sentence: rest.trim() } };
 }
 
 /** What a brief's `## Looks` section says: the Promises shape, with looks for promises. */
@@ -78,9 +138,13 @@ export interface BriefContract {
 	 */
 	noExpectations: string | null;
 	makes: BriefMade[];
+	/** Frontmatter `clauses: required`: the brief states every promise it makes as clauses. */
+	clausesRequired: boolean;
 	mustNotBreak: string[];
 	changes: Array<{ name: string; sentence: string }>;
 	replaces: Array<{ old: string; by: string }>;
+	/** The `### Not promised` list under `## Promises`: what was chosen not to promise, one entry each. */
+	notPromised: string[];
 	/** The `## Looks` section; null when the brief has none. */
 	looks: BriefLooks | null;
 	/** Lines in the contract's sections that are not in its shape. */
@@ -111,6 +175,8 @@ interface Item {
 	text: string;
 	/** Its sub-bullets, each with its wrapped lines joined. */
 	subs: string[];
+	/** The brief's line number of each sub-bullet, parallel to `subs`. */
+	subNs: number[];
 	n: number;
 }
 
@@ -143,15 +209,27 @@ function section(lines: Line[], level: number, title: string): Line[] | null {
  * spaces in, as markdown allows), each
  * with what is wrapped or nested under it. A blank line ends an item's
  * wrapped text but not the item — a sub-bullet may follow one.
+ *
+ * `nest`: a bullet indented to where the item's text starts is a sub-bullet
+ * of it (markdown), which is how a promise's clauses are written. Only a brief
+ * that opted in with `clauses: required` reads that way; without it the bullet
+ * is an entry of its own, as it was before clauses.
  */
-function items(lines: Line[], marker: RegExp): Item[] {
+function items(lines: Line[], marker: RegExp, nest = false): Item[] {
 	const out: Item[] = [];
 	let current: Item | null = null;
 	let target: "text" | "sub" = "text";
+	// Where the current item's text starts: a bullet indented to there is nested
+	// under it (markdown), not a new item — `   - clause` under `1. **promise**`.
+	let contentIndent = 0;
 	for (const line of lines) {
-		const top = marker.exec(line.text);
+		const lead = /^ */.exec(line.text)?.[0].length ?? 0;
+		const nested: boolean =
+			nest && current !== null && lead >= contentIndent && /^\s+[-*]\s/.test(line.text);
+		const top: RegExpExecArray | null = nested ? null : marker.exec(line.text);
 		if (top) {
-			current = { text: line.text.slice(top[0].length), subs: [], n: line.n };
+			contentIndent = top[0].length;
+			current = { text: line.text.slice(top[0].length), subs: [], subNs: [], n: line.n };
 			out.push(current);
 			target = "text";
 			continue;
@@ -166,6 +244,7 @@ function items(lines: Line[], marker: RegExp): Item[] {
 		const sub = /^\s+[-*]\s+(.*)$/.exec(line.text);
 		if (sub) {
 			current.subs.push(sub[1]);
+			current.subNs.push(line.n);
 			target = "sub";
 		} else if (target === "sub") {
 			current.subs[current.subs.length - 1] += ` ${line.text.trim()}`;
@@ -222,9 +301,10 @@ function readMakes(
 	problems: string[],
 	read: Set<number>,
 	noun = "promise",
+	clausesRequired = false,
 ): BriefMade[] {
 	const makes: BriefMade[] = [];
-	for (const item of items(lines, ENTRY)) {
+	for (const item of items(lines, ENTRY, clausesRequired)) {
 		read.add(item.n);
 		const m = /^\*\*`([^`]+)`\*\*\s*(?:\(([^)]*)\))?[.:]?\s*(.*)$/.exec(item.text);
 		if (!m) {
@@ -233,7 +313,15 @@ function readMakes(
 			);
 			continue;
 		}
-		makes.push({ name: m[1], kind: m[2]?.trim() || null, sentence: m[3].trim() });
+		const clauses: BriefClause[] = [];
+		for (const [i, sub] of item.subs.entries()) {
+			if (!/^\*\*`[^`]+`\*\*/.test(sub)) continue;
+			read.add(item.subNs[i]);
+			const clause = parseClauseSpec(sub);
+			if (clause.ok) clauses.push(clause.clause);
+			else if (clausesRequired) problems.push(`line ${item.n}: ${m[1]}: ${clause.error}`);
+		}
+		makes.push({ name: m[1], kind: m[2]?.trim() || null, sentence: m[3].trim(), clauses });
 	}
 	return makes;
 }
@@ -378,6 +466,8 @@ export function parseBriefContract(text: string): ParsedBrief {
 		.map((t, i) => ({ text: t.replace(/\s+$/, ""), n: i + 1 }))
 		.filter((_, i) => !fenced[i]);
 
+	const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? "";
+	const clausesRequired = /^clauses:[ \t]*["']?required["']?[ \t]*$/m.test(frontmatter);
 	const promises = section(lines, 2, "Promises");
 	const lookLines = new Set((section(lines, 2, "Looks") ?? []).map((l) => l.n));
 	if (promises === null) {
@@ -395,9 +485,11 @@ export function parseBriefContract(text: string): ParsedBrief {
 			shape: "contract",
 			...readExpectations(section(lines, 2, "Expectations") ?? []),
 			makes: [],
+			clausesRequired,
 			mustNotBreak: [],
 			changes: [],
 			replaces: [],
+			notPromised: [],
 			looks: null,
 			problems: [
 				`line ${newParts[0].n}: the brief is written in the parts of a contract but has no "## Promises" heading above them, so none of its promises is read — add "## Promises" above "### This plan makes"`,
@@ -413,7 +505,7 @@ export function parseBriefContract(text: string): ParsedBrief {
 			'"## Promises" has no "### This plan makes" section — the promises this plan makes are listed there, or it says None.',
 		);
 	}
-	const made = makes === null ? [] : readMakes(makes, problems, read);
+	const made = makes === null ? [] : readMakes(makes, problems, read, "promise", clausesRequired);
 	const existing = readExisting(section(promises, 3, "Existing promises") ?? [], problems, read);
 	problems.push(...unreadLines(promises, read));
 	const looks = readLooks(lines, problems);
@@ -421,7 +513,11 @@ export function parseBriefContract(text: string): ParsedBrief {
 		shape: "contract",
 		...readExpectations(section(lines, 2, "Expectations") ?? []),
 		makes: made,
+		clausesRequired,
 		...existing,
+		notPromised: items(section(promises, 3, "Not promised") ?? [], /^\s{0,3}(?:[-*]|\d+\.)\s+/).map(
+			(i) => i.text,
+		),
 		looks,
 		problems,
 	};

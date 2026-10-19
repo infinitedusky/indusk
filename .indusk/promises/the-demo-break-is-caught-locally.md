@@ -9,7 +9,8 @@ sites:
   - apps/indusk-mcp/src/bin/commands/demo.ts
 tests:
   - apps/indusk-mcp/src/__tests__/demo-command.test.ts
-incidents: []
+incidents:
+  - i-2026-10-16-the-demo-break-is-caught-locally
 ---
 
 Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it, and it stays broken after the switch is off, until the break is recorded and fixed.

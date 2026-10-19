@@ -2,6 +2,8 @@ import { resolve } from "node:path";
 import { text } from "node:stream/consumers";
 import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
+import { clauseTestRunner, localSignalReader } from "../../lib/promises/closing-inputs.js";
+import { markClosing } from "../../lib/promises/closing-signal.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { confirmPlan } from "../../lib/promises/confirm.js";
 import {
@@ -10,7 +12,7 @@ import {
 	checkPlanContract,
 	formatContract,
 } from "../../lib/promises/contract.js";
-import { type OpenIncident, openIncidents } from "../../lib/promises/health.js";
+import { type OpenIncident, openIncidents, ruleFor } from "../../lib/promises/health.js";
 import { fixIncident } from "../../lib/promises/incidents.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { recordBreaks } from "../../lib/promises/record.js";
@@ -22,7 +24,8 @@ import {
 	type SourceRead,
 	sourceAdvice,
 } from "../../lib/promises/sources.js";
-import { formatStatus, parseDuration } from "../../lib/promises/status.js";
+import { formatStatus, parseDuration, shownClauses } from "../../lib/promises/status.js";
+import { markStatusSignal, statusVerdict } from "../../lib/promises/status-signal.js";
 import { watchReport } from "../../lib/promises/watch.js";
 import {
 	changePromise,
@@ -99,11 +102,21 @@ export async function promisesStatus(
 	const promises = read.registry.promises;
 	const reads = await readSources(projectRoot, read.registry, { sinceMs });
 	const alarm = alarmSource(reads.map((r) => r.name));
+	// The signal of no-signal-is-not-holding, judged from the clauses this run
+	// shows (mark-first D-28): every source that answered, its watcher probed.
+	const verdict = statusVerdict(
+		reads.flatMap((r) => (r.ok ? shownClauses(promises, r.marks) : [])),
+		true,
+	);
+	if (verdict) await markStatusSignal(projectRoot, verdict);
 	if (reads.length === 1) {
 		// One source: today's output, with no section header (A7).
 		const [only] = reads;
-		if (only.ok) console.info(formatStatus(promises, only.marks, window));
-		else {
+		if (only.ok) {
+			console.info(
+				formatStatus(promises, only.marks, window, read.registry.incidents, ruleFor(only, reads)),
+			);
+		} else {
 			console.error(failureText(only));
 			process.exitCode = 2;
 		}
@@ -114,7 +127,7 @@ export async function promisesStatus(
 	// production server that answered is not a failed status run.
 	const sections = reads.map((r) =>
 		r.ok
-			? `${r.name} — ${r.label}\n${formatStatus(promises, r.marks, window)}`
+			? `${r.name} — ${r.label}\n${formatStatus(promises, r.marks, window, read.registry.incidents, ruleFor(r, reads))}`
 			: `${r.name} — ${r.label}\n${failureText(r)}`,
 	);
 	console.info(sections.join("\n\n"));
@@ -290,7 +303,14 @@ export async function promisesConfirm(
 		}
 		codeRoot = roots.codeRoot;
 	}
-	const result = await confirmPlan({ planRoot: projectRoot, codeRoot, plan });
+	const result = await confirmPlan({
+		planRoot: projectRoot,
+		codeRoot,
+		plan,
+		runTests: clauseTestRunner(projectRoot, codeRoot),
+		readSignals: localSignalReader(projectRoot),
+	});
+	await markClosing(projectRoot, plan, result);
 	if (!result.ok) {
 		for (const r of result.refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(
@@ -338,26 +358,28 @@ const AFTER_WRITE = "Run `indusk promises check` before committing.";
 export function promisesDeclare(
 	projectRoot: string,
 	name: string,
-	opts: { plan: string; kind: string; domain: string; statement: string },
+	opts: { plan: string; kind: string; domain: string; statement: string; clause?: string[] },
 ): void {
 	writing(() => {
-		declarePromise(projectRoot, { name, ...opts });
+		const { clause, ...rest } = opts;
+		declarePromise(projectRoot, { name, ...rest, ...(clause ? { clauses: clause } : {}) });
 		return `${name} declared by ${opts.plan}. ${AFTER_WRITE}`;
 	});
 }
 
 /**
- * `indusk promises change <name> --plan --statement --reason`. The promise
+ * `indusk promises change <name> --plan --statement --reason [--clause …]`. The promise
  * keeps its name; the plan takes it over; its History keeps what it read and
- * whose it was.
+ * whose it was. Given clauses replace its clauses; without them they stay.
  */
 export function promisesChange(
 	projectRoot: string,
 	name: string,
-	opts: { plan: string; statement: string; reason: string },
+	opts: { plan: string; statement: string; reason: string; clause?: string[] },
 ): void {
 	writing(() => {
-		changePromise(projectRoot, { name, ...opts });
+		const { clause, ...rest } = opts;
+		changePromise(projectRoot, { name, ...rest, ...(clause ? { clauses: clause } : {}) });
 		return `${name} changed by ${opts.plan}; its History keeps the sentence it replaced. ${AFTER_WRITE}`;
 	});
 }

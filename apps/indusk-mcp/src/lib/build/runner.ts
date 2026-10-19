@@ -1,3 +1,4 @@
+import { markAmendmentStop } from "./amendment-signal.js";
 import {
 	type BuildPlan,
 	type BuildStep,
@@ -51,6 +52,8 @@ export interface RunnerDeps {
 	) => Promise<{ error: string | null }>;
 	accept: (by: "person" | "auto") => Promise<void>;
 	onStep?: (update: RunnerUpdate) => void;
+	/** Where the run reports the clauses it keeps (the significant-concern clause); absent, it reports nothing. */
+	signals?: { root: string; plan: string };
 }
 
 export type RunnerUpdate =
@@ -68,6 +71,9 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 	for (;;) {
 		const before = await deps.read();
 		const next = nextBuildStep(before, { last, previous });
+		if (deps.signals) {
+			await markAmendmentStop(deps.signals.root, deps.signals.plan, before.amendments, next.step);
+		}
 		if (!isSessionStep(next)) {
 			if (next.step === "review" && deps.autoAccept) {
 				const release = await runRelease(deps, "auto");
@@ -117,5 +123,5 @@ function fingerprint(plan: BuildPlan): string {
 		p.gates.map((g) => g.items.map((i) => (i.checked ? 1 : 0)).join("")).join("|"),
 	);
 	const rows = plan.trajectory.rows.map((r) => `${r.id}:${r.state}`);
-	return JSON.stringify([items, rows, plan.readiness.missing]);
+	return JSON.stringify([items, rows, plan.readiness.missing, plan.auditOpen === true]);
 }

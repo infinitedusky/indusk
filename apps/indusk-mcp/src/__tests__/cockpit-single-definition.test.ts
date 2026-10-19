@@ -18,6 +18,7 @@ import { REPO_ROOT } from "./helpers/cli.js";
  *
  * promise: display-names-are-defined-once
  * promise: a-look-reports-like-any-promise — ui-promises A39 (a look's standing is defined once, in `promises/look-standing`).
+ * promise: the-nav-says-where-a-plan-is — nav-stage-matches-plan-page A3 (which step a plan is at is defined once, `plans/steps`'s `stepAt`).
  * lesson: structural-single-definition-test-for-must-agree-invariants
  */
 
@@ -33,8 +34,11 @@ const MODULES = [
 	["./promises/proof", "src/lib/promises/proof.ts", "proofOf"],
 	["./promises/fix", "src/lib/promises/fix.ts", "fixPrompt"],
 	["./plans/steps", "src/lib/plans/steps.ts", "planSteps"],
+	["./plans/steps", "src/lib/plans/steps.ts", "stepAt"],
 	["./plans/waiting", "src/lib/plans/waiting.ts", "planWaiting"],
 	["./plans/history", "src/lib/plans/history.ts", "appendDecision"],
+	// approval-waits-for-the-planning-run: a plan's review state is the package's.
+	["./plans/plan-review", "src/lib/plans/plan-review.ts", "readPlanReview"],
 	// brief-as-the-contract Build Phase 4: a plan's promises, expectations, looks
 	// and waiting amendments are the package's, drawn by the plan page.
 	["./plans/parts", "src/lib/plans/parts.ts", "readPlanParts"],
@@ -44,6 +48,9 @@ const MODULES = [
 	["./looks/coverage", "src/lib/looks/coverage.ts", "coverageOf"],
 	["./looks/verdict", "src/lib/looks/verdict.ts", "verdict"],
 	["./promises/standing", "src/lib/promises/look-standing.ts", "lookStandingOf"],
+	// finished-rituals-stay-done Build Phase 3: which close-out rituals are finished
+	// is the package's, read by the plan page and by the retrospective gate.
+	["./cleanup/gate", "src/lib/cleanup/gate.ts", "finishedRitualsOf"],
 ] as const;
 
 /** Functions only the package may define. */
@@ -52,14 +59,19 @@ const PACKAGE_ONLY = [
 	"proofOf",
 	"fixPrompt",
 	"planSteps",
+	"stepAt",
+	"currentStep",
 	"planWaiting",
 	"appendDecision",
+	"readPlanReview",
+	"planReviewState",
 	"readPlanParts",
 	"approvalOf",
 	"coverageOf",
 	"verdict",
 	"lookStandingOf",
 	"lookStandingFor",
+	"finishedRitualsOf",
 ];
 
 function sources(dir: string): string[] {

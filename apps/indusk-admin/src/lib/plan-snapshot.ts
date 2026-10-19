@@ -19,5 +19,7 @@ export function snapshotOf(plan: Plan): PlanSnapshot & { name: string } {
       impl: plan.impl?.frontmatter,
     } as PlanSnapshot["documents"],
     skippedRituals: plan.skippedRituals,
+    finishedRituals: plan.finishedRituals,
+    planReview: plan.planReview,
   };
 }

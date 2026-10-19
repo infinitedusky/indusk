@@ -1,0 +1,131 @@
+// clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced
+// promise: a-new-project-reports-from-its-first-run
+//
+// a-new-project-starts-instrumented, Test Phase 1: T9 - `indusk update` never overwrites a
+// scaffolded file a person has changed; the newer version is written beside it as
+// `<file>.indusk-new` and update says so. A file nobody edited is left as InDusk wrote it
+// with nothing beside it. Run through the built CLI on a Node project.
+import {
+	appendFileSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
+
+const made: string[] = [];
+afterEach(() => {
+	for (const d of made.splice(0)) rmSync(d, { recursive: true, force: true });
+});
+
+function nodeProject(): string {
+	const parent = mkdtempSync(join(tmpdir(), "update-scaffold-refresh-"));
+	made.push(parent);
+	const dir = join(parent, "homework-gate");
+	mkdirSync(join(dir, "src"), { recursive: true });
+	git(dir, ["init", "-q"]);
+	writeFileSync(
+		join(dir, "package.json"),
+		JSON.stringify({ name: "homework-gate", version: "0.0.0", dependencies: { express: "5.0.0" } }),
+	);
+	writeFileSync(join(dir, "src", "index.ts"), "export {};\n");
+	return dir;
+}
+
+describe.skipIf(SHOULD_SKIP)("update-scaffold-refresh", () => {
+	it("T9: an edited scaffolded file is left byte for byte with the newer version beside it; an unedited one is untouched", () => {
+		const env = { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" };
+		const dir = nodeProject();
+		const init = runCli(dir, ["init"], env);
+		expect(init.code, `init exit\n${init.stderr}`).toBe(0);
+
+		const edited = join(dir, "src", "instrumentation.ts");
+		const untouched = join(dir, "src", "logger.ts");
+		expect(existsSync(edited), "init wrote src/instrumentation.ts").toBe(true);
+		expect(existsSync(untouched), "init wrote src/logger.ts").toBe(true);
+
+		appendFileSync(edited, "\n// the person's own line\n");
+		const editedBytes = readFileSync(edited);
+		const untouchedBytes = readFileSync(untouched);
+
+		const u = runCli(dir, ["update"], env);
+		expect(u.code, `update exit\n${u.stderr}`).toBe(0);
+
+		expect(readFileSync(edited).equals(editedBytes), "the edited file is byte for byte").toBe(true);
+		expect(existsSync(`${edited}.indusk-new`), "the newer version sits beside the edit").toBe(true);
+		expect(u.stdout, "update says so").toContain("src/instrumentation.ts.indusk-new");
+
+		expect(readFileSync(untouched).equals(untouchedBytes), "the unedited file is as written").toBe(
+			true,
+		);
+		expect(existsSync(`${untouched}.indusk-new`), "nothing beside the unedited file").toBe(false);
+	});
+
+	// Build Phase 4, T29: a file InDusk wrote and a person then deleted stays deleted.
+	it("T29: a deleted scaffolded file is not written back by update, init --force writes it, and a file never recorded is still created", () => {
+		const env = { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" };
+		const dir = nodeProject();
+		const init = runCli(dir, ["init"], env);
+		expect(init.code, `init exit\n${init.stderr}`).toBe(0);
+
+		const logger = join(dir, "src", "logger.ts");
+		rmSync(logger);
+
+		const u = runCli(dir, ["update"], env);
+		expect(u.code, `update exit\n${u.stderr}`).toBe(0);
+		expect(existsSync(logger), "update did not write the deleted file back").toBe(false);
+		const told = u.stdout.split("\n").filter((l) => l.includes("left out: src/logger.ts"));
+		expect(told, "one line says it was left out").toHaveLength(1);
+		expect(u.stdout, "a deleted file is not a first scaffold: no install lines").not.toMatch(
+			/^\s*install:/m,
+		);
+
+		const again = runCli(dir, ["update"], env);
+		expect(again.code).toBe(0);
+		expect(existsSync(logger), "still deleted on the next update").toBe(false);
+
+		// A file with no record is still created: drop the record and a missing file comes back.
+		const forced = runCli(dir, ["init", "--force"], env);
+		expect(forced.code, `init --force exit\n${forced.stderr}`).toBe(0);
+		expect(existsSync(logger), "--force writes it").toBe(true);
+
+		rmSync(join(dir, ".indusk", "scaffold.json"));
+		rmSync(logger);
+		const fresh = runCli(dir, ["update"], env);
+		expect(fresh.code).toBe(0);
+		expect(existsSync(logger), "no record: created").toBe(true);
+	});
+
+	// Build Phase 5, T31: a formatter rewrapping the settings line is not an edit.
+	it("T31: the settings file reformatted as Biome prints it is not reported as changed by update", () => {
+		const env = { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" };
+		const dir = nodeProject();
+		const init = runCli(dir, ["init"], env);
+		expect(init.code, `init exit\n${init.stderr}`).toBe(0);
+
+		const settings = join(dir, "src", "telemetry-settings.ts");
+		const written = readFileSync(settings, "utf-8");
+		const wrapped = written.replace(
+			/^export const RENDERED: Rendered = \{ (.*) \};$/m,
+			(_all, body: string) =>
+				`export const RENDERED: Rendered = {\n${body
+					.split(", ")
+					.map((pair) => `\t${pair},`)
+					.join("\n")}\n};`,
+		);
+		expect(wrapped, "the values line is split across lines").not.toBe(written);
+		writeFileSync(settings, wrapped);
+
+		const u = runCli(dir, ["update"], env);
+		expect(u.code, `update exit\n${u.stderr}`).toBe(0);
+		expect(existsSync(`${settings}.indusk-new`), "nothing beside a reformatted file").toBe(false);
+		expect(u.stdout, "update does not say it was changed").not.toContain("you changed");
+		expect(readFileSync(settings, "utf-8"), "the person's layout is kept").toBe(wrapped);
+	});
+});

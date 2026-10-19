@@ -109,6 +109,20 @@ token rule (`indusk-new-tokens`) one level up — and a declared one is listed a
 needing a story until it has one. A reference to a component or state with no
 approved snapshot is refused.
 
+A mockup's own `<style>` rules reach its page and never a component it
+places: the cockpit scopes each selector of them to what is outside a component
+(`:not(:where([data-component], [data-component] *))`, which adds no
+specificity), so a mockup's `.grid { display: grid }` cannot change how a
+placed card draws. A rule that names the component's marker
+(`[data-component="card"] .grid`) is the mockup placing that component and is
+left as written. A component the mockup declares new
+(`<meta name="indusk-new-components">`) and draws itself is the exception: its
+marker is left out of the scope, so the mockup's own styles still reach it,
+since they are its only look. Each component's variant rules (under `@media`,
+`@supports` or `@container`) load after every component's plain rules, as the
+app's build orders them, so a hidden-on-a-phone class is not undone by another
+component's `flex`.
+
 `screens.json` may list `uncomposed`: mockups drawn before composition existed,
 which still write their components out. They are exempt from `component drawn
 in mockup` until rewritten, and the list only shrinks (the admin's eleven are
@@ -147,6 +161,8 @@ declarations — every entry written before they were bound — reads proposed
 until a person approves it again. Until a person approves the change, the app
 is held to the last approved version on the foundation and declarations as
 they are now, which `status` names.
+
+A `screens.json` can also list `exclude`: paths under a source that draw nothing, such as an app's server code and API routes. They are left out of the app's **interface** (the files a brief must answer for with a look or a reason) and nowhere else. `exclude` is outside the declarations hash, so adding one returns no approved mockup to proposed.
 
 An approval binds **what the person was shown**: Approve sends the hash of the
 mockup the page drew and of the foundation it drew it on, and a mockup or a
@@ -247,8 +263,8 @@ story card.default  approved  by sandy at 2026-10-12T09:00:00.000Z
 
 A proposed mockup with an approved version names that version's first eight
 hash characters: the reference the app is held to meanwhile — or, when that
-version was approved on another foundation or other declarations, says
-`last approved … — nothing held`. Exit 0; a missing
+version was approved on another foundation, other declarations or other
+element rules, says `last approved … — nothing held`. Exit 0; a missing
 app or an unreadable record exits 1 naming the file.
 
 ## `indusk looks coverage <app>`
@@ -298,7 +314,11 @@ admin: 8 snapshots for 1 components, catalog in .indusk/mockups/admin/components
 ```
 .indusk/mockups/admin/
 ├── components.json              # the catalog: every component, its properties, its states
-└── components/chip.passing.html # one snapshot per component state
+└── components/
+    ├── chip.passing.html        # one snapshot per component state
+    ├── chip.css                 # the app's compiled rules for that component's classes
+    ├── _base.css                # the app's `body` rules (its type, ink and ground)
+    └── _reset.css               # the app's element resets, scoped to components
 ```
 
 A **snapshot** is the markup Chromium drew for one story, in the app's own
@@ -308,6 +328,27 @@ root element carries and the state is the story's id after `--`, so a story
 `ui-badge--needs-you` of `badge` is `badge.needs-you`. A changed component
 changes its snapshot with no edit to the story, which is what makes the
 snapshot the component's approved artefact.
+
+**`_reset.css`** is the app's element rules (rules that name no class and no
+component marker: `a { color: inherit }`, `textarea { font: inherit }`, the
+box-sizing and margin resets) cut from the compiled CSS. A story renders in the
+served Storybook under those rules, and no component's own sheet holds them, so
+without this sheet a component drawn in a mockup came out in the browser's
+defaults: a blue link, a monospace text field. Every selector is written under
+`:where([data-component], [data-component] *)`, which adds no specificity and
+reaches only a component and what is inside it, so the page around a component
+draws as before. Rules for `html`, `body`, `:root` and `:host` are left out
+(`_base.css` holds `body`; a mockup's page is its own). The cockpit loads it
+after the foundation's tokens, under every mockup and every story. It is not
+part of an approval's `componentsHash`, as `_base.css` is not. An approval
+binds it another way: the catalog keeps a hash of these rules (`baseRulesHash`)
+and an approved story or mockup records the one it was approved under. When the
+app's element rules change, every look is drawn differently in the cockpit, so
+each approval that recorded the old hash reads proposed until a person approves
+it again. A proposed look whose last approval was drawn under other element
+rules is held to nothing, in the look check and in `looks status`, as one drawn
+on another foundation is, until it is approved again. An approval made before
+the hash was kept records none and reads as it always did.
 
 `components.json` is `{ components: [{ name, file, properties[], states[] }] }`:
 `file` is the component's one source file, `properties` are Storybook's
@@ -337,13 +378,14 @@ screen is the catalog's gap); a name in two is `duplicate component`, and when
 one is the component's own file by name every other is also
 `component markup outside its file: <file>:<line> <name>`.
 
-## `indusk looks check <app> [--url <url>] [--only <look>...] [--all]`
+## `indusk looks check <app> [--url <url>] [--only <look>...] [--all] [--changed <ref>]`
 
 Holds the running app to what a person approved, by value, in a real Chromium.
 `--url` is the app's base URL; without it the check uses `url` in the app's
 `screens.json`, and with neither it refuses rather than guess. A screen is
 opened at `<url><path>?state=<state>`, where `path` is the screen's own `path`
 in `screens.json` and otherwise `/<name>`.
+A screen may also give `page`, the file that draws it relative to the project root, for a route the app-router match does not find (`indusk looks check --changed` reads its imports from it); it is ignored unless a non-empty string.
 
 For each declared screen state whose mockup is approved — or whose last
 approved version was approved on the foundation and declarations as they are
@@ -464,6 +506,40 @@ the key. **`--all`** opens
 every look whatever held: run it after a change the key cannot see, at a UI
 plan's live check, and as the slow tests do after every landing and at every
 release.
+
+**`--changed <ref>`** opens only the looks a change touched, and reports every
+other look from its last held result. The changed files are those committed
+since the branch left `<ref>` (`git diff <ref>...HEAD`), modified in the working
+tree, or untracked; the first line says how many looks they touch
+(`changed since main: 27 of 181 looks touched`). A look is touched when a
+changed file is one it is drawn from:
+
+- **A screen** is drawn from its page, the `layout` files above it, and
+  everything those import. The page is the screen's `page` in `screens.json`
+  (a path from the project root) when it names one, else the Next.js app-router
+  page its `path` (or the state's entry in `paths`) matches under the app's
+  `app/` folder: a `[param]` folder matches any one segment, a `(group)` folder
+  takes none, and the query string is ignored.
+- **A story** is drawn from its component's file (the catalog's) and
+  everything that imports.
+- **Either** is also held to its mockup or snapshot, so a changed
+  `screens/<screen>.<state>.html`, `components/<story>.html` or the component's
+  stylesheet touches it.
+- **Every look** is touched by a change to the app's foundation tokens,
+  `devices.json`, `screens.json`, the generated stylesheet and the other
+  stylesheets under `sources`, the Tailwind and PostCSS config, `.storybook`
+  and `pnpm-lock.yaml`.
+
+Imports are read with the app's own TypeScript (`typescript` loaded from the
+app's folder, with the app's `tsconfig` paths), staying inside the project. When
+the app has no TypeScript to load, or a screen's page cannot be found, what a
+change reaches cannot be told, so any change touches every look: the check
+over-reports and never under-reports. A touched look is opened on every device
+and scheme it is drawn for; an untouched look with a held result is reused
+**even when its key changed** (a page edit moves every screen's key, which is
+why `--changed` exists). An untouched look that was never held still opens,
+since there is nothing to report for it. `--all` and `--only` win over
+`--changed`.
 
 **A development server is refused.** Before any look opens, the check reads the
 page at the base URL's own path (and the first story's frame) over plain HTTP

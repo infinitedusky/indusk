@@ -222,7 +222,7 @@ if (contractRefusal) {
  * edit-time check below and the whole-file check further down.
  */
 function phaseSummaryRefusal(problems) {
-	return `Phase summary check failed (\`phase_summary: required\`):\n${problems.map((p) => `  - ${p}`).join("\n")}\n\nEach phase opens with a paragraph saying what it does for the whole plan, and each task is one plain sentence for someone who knows the project but none of its shorthand; code and row labels belong in its folded Technical detail.\npromise: an-impl-phase-explains-itself\n`;
+	return `Phase summary check failed (\`phase_summary: required\`):\n${problems.map((p) => `  - ${p}`).join("\n")}\n\nEach phase opens with a paragraph saying what it does for the whole plan, and each task is one plain instruction saying what to do, for someone who knows the project but none of its shorthand; code and row labels belong in its folded Technical detail.\npromise: an-impl-phase-explains-itself\n`;
 }
 
 // promise: an-impl-phase-explains-itself
@@ -482,7 +482,7 @@ const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
 	: 0;
-// Each phase opens with a summary and each task is one plain sentence, its
+// Each phase opens with a summary and each task is one plain instruction, its
 // technical detail folded beneath (story-first-phases). Line-anchored like the
 // keys above.
 const phaseSummaryRequiredFrontmatter = /^phase_summary:\s*required/m.test(frontmatter);

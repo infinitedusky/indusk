@@ -69,7 +69,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **One home per piece**: rows table `components/phases/`,
   progress lines `bars/ProgressLines`, display vocabulary (`phaseTitle`:
   `Phase 4`, not `phaseLabel`; a plan is `plan.title`, initials from it, the
-  handle only for links, data attributes; its stage is `planStage`, a queued
+  handle only for links, data attributes; its stage and mark are `planStage`/`navMarkOf` in `lib/plan-stage.ts`: waiting, else Released from a release's date, else the package's `stepAt` (`plans/steps`), else Closed — never the impl's `status:` (the project card's `hasWorkInProgress` and the copied markdown's `Stage:` line ask the same answer), which `/work` sets `completed` before the rituals; guarded by `plan-stage.test.ts` and `cockpit-single-definition.test.ts`; a queued
   plan's title rides its `buildGroups` placeholder) and chip/label maps in
   `bars/labels.ts`, badge maps `ui/badge-variant.ts`, research reads
   `lib/research-reader.ts`, project reads `lib/project-reader.ts` (config
@@ -113,7 +113,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   hand-written one beside them. — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
-  worktree chip, a broken assignment, unassigned worktrees and the record error.
+  nav's worktree mark (`PlanWorktreeMark` → `WorktreeMark`; the plan header
+  keeps its tag), a broken assignment, unassigned worktrees and the record error.
 - Tests: `next/link` needs a `vi.mock` stub in vitest browser tests
   (synchronous factory); a page that gains a `lib/*` import needs that module
   mocked in every browser test that renders it (`node:fs` is externalized);
@@ -145,7 +146,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `proof`, `fix`; `plans/steps`, `waiting`, `history`); the admin's `lib/` holds
   only fs-to-props glue, never a second definition. What a plan waits on is
   `planWaiting`'s answer alone, amendments included; the nav and the page add
-  none. Guarded by `cockpit-single-definition.test.ts`. — see
+  none. Every Approve asks it too: `planActions`' `canApprove` is true only when `planWaiting` lists the plan as waiting on approval (`waitingOn`), on the plan page and the brief page alike; a plan whose `plan-review.md` is not answered waits on `plan-review`, whose answers go to the agent as words — guarded by `plan-actions.test.ts`, `plan-actions-pages.test.ts` and `decisions.test.ts`. Guarded by `cockpit-single-definition.test.ts`. — see
   `/decisions/plan-cockpit`
 - **A look's state is read from `promises/standing` and `looks/*`, never
   computed here**: the Looks page reads `looks/overview`, the dashboard and the
@@ -176,7 +177,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   Looks page) and any waiting amendment come from the package's
   `readPlanParts`, read from the plan's own checkout on every request; Approve
   on an amendment posts to `plans/[name]/reapprove`. The review's `evidence`
-  group is read, not signed off. Guarded by `cockpit-single-definition.test.ts`
+  group is read, not signed off. Each promise's dot is its health from the
+  package's `planPromiseHealth` (the alarm source, as the nav's red) — a promise only the plan's
+  checkout registers too, so no signal is never the enforced green — its
+  registry state only when telemetry says nothing. The nav's red dot reads the same worktree
+  promises through `worktreePromises` (`lib/plan-health.ts`), so the two never disagree. Guarded by `cockpit-single-definition.test.ts`
   and `plan-parts.test.tsx` (A15). — see `/reference/admin-ui/overview`
 - **A task's Technical detail renders through `components/Markdown.tsx` in
   `PhaseItems`, never as raw text**: the phase's paragraph and each task's
@@ -187,7 +192,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
-  sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
+  sent, never failed; an answer carries the kind of decision the card showed
+  (`on`), and one the plan no longer waits on is refused before anything runs
+  — a plan-review card can become an approval without the person (guarded by
+  A22 in `decisions.test.ts`). Guarded by `src/lib/build-host.release.test.ts` and
   `src/lib/decisions.test.ts`. **A decision's card shows everything the agent
   asked, never the first of it**: an ask of several questions is shown whole and
   answered under each question's text (`choice: "answers"`), and an answer
@@ -216,7 +224,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   — see `/decisions/storybook-components`
 - **A component a mockup names is one file, with a story per state, and
   presentational**: its root carries `data-component="<name>"`, a second
-  marker anywhere is a finding, data arrives as props. Nineteen in
+  marker anywhere is a finding, data arrives as props. Twenty in
   `components/ui/`, listed in `/reference/admin-ui/component-conventions`.
   Guarded by `looks-components-cli.test.ts` (A1, A3) and
   `looks-admin-components.test.ts` (A2).
@@ -276,6 +284,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
   own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
   `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
+- **A control in a nav row is a sibling of the row's link, never inside it**:
+  `PlanRow`'s `worktree` slot draws the row as a container with its title's
+  link stretched over it. The stretched link carries the title (the full name
+  on hover) and the focus ring (`.nav-row-link:focus-visible::after`), since the
+  overlay is what the pointer and focus meet; an empty slot (`null`, `false`)
+  is no slot. Guarded by `PlanList.worktree.test.tsx` and
+  `PlanRow.worktree.test.tsx` — `promise: a-nav-row-keeps-its-parts-apart`.
 - **The brief page and plan page are held to `brief.*` and `plan.*`**: each
   reports its state with `data-look-state` (`lib/look-state.ts`), never a
   `?state=`; `screens.json` lists one path per state at A10's fixture plans,
@@ -285,4 +300,6 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `look-state.test.ts`, `cockpit-redraw.contract.test.ts` (A10). — see
   `/decisions/cockpit-redraw`
 - **A running agent's events are heard through `useSessionEvents`** — `components/session/use-session-events.ts`, the one subscription every conversation uses (the `EventSource` on `/api/sessions/:id/events`, `running`, a refresh on a write and on exit, an `onWrite` callback). A new view of a session uses it rather than opening its own `EventSource`; a draft's agent is found with `draftSession`/`stopDraftSession` in `lib/new-project-session.ts`, never by comparing `sessionManager().current()?.plan`. Guarded by `use-session-events.test.tsx` (A34).
-- **A promise is upheld or broken; live, holding or broken; past, held or broke; unknown, no signal** — never violated, unverified or not seen, and no signal is never green: an enforced promise nothing has reported is a grey dot and "no signal yet" in the list (`PromiseRow`'s `no-signal`). `PromiseWords.test.tsx` and `PromiseRow.test.tsx` hold it. — `promise: a-promise-is-upheld-or-broken`, see `/decisions/one-promise-language`
+- **A promise is upheld or broken; live, holding or broken; past, held or broke; unknown, no signal** — never violated, unverified or not seen, and no signal is never green: an enforced promise nothing has reported is a grey dot and "no signal yet" in the list (`PromiseRow`'s `no-signal`), and so is one whose package `signal` (its worst clause) reads `no-signal`, however many days it held (`readsNoSignal`). `PromiseWords.test.tsx`, `PromiseRow.test.tsx` and `promise-dashboard.test.ts` hold it. — `promise: a-promise-is-upheld-or-broken`, see `/decisions/one-promise-language`
+- **The admin's interface is its pages and components, not its server code**: `screens.json` keeps `sources` as `src` (an approval binds them) and `exclude`s `src/lib`, `src/app/api` and `instrumentation.ts`, so a change there needs no look. Guarded by `interface-files.test.ts` (T10 of a-brief-is-planned-unasked).
+- **The host starts planning runs as well as builds, and approval starts the build**: `build-host.ts`'s `startPlanning` (behind `POST /api/plans/plan`) takes `startBuild`'s slot, asks the package's `nextPlanningStep` first and starts nothing while it waits for looks, awaits approval or cannot continue; both are refused inside a planning step. `accept-brief` asks it over the address `indusk ui` recorded, the look approval asks for the plan whose worktree recorded it, a planning conversation's end asks too, but only when that conversation accepted the brief (the sessions route hands the manager an `onEnd` calling `planningConversationEnded` with the session's start; the brief's `accepted_at` must be at or after it, and a brief with none starts nothing; the run is held back while the conversation is open), and the approve route calls `startBuild` only after `approvePlan` returned. Guarded by `build-host.test.ts` (T2, T19, T22), `api/sessions/route.test.ts` and `api/plans/approve/route.test.ts` (T8). — see `/decisions/a-brief-is-planned-unasked`, `promise: an-accepted-brief-is-planned-unasked`

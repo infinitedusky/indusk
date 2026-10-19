@@ -4,7 +4,7 @@ import { type Coverage, coverageOf } from "../looks/coverage.js";
 import { type LooksApp, readApp } from "../looks/mockups.js";
 import { listApps } from "../looks/overview.js";
 import { LOOK_PROMISE } from "../looks/report.js";
-import { daemonStatus } from "../telemetry/status.js";
+import { resolveLocalDaemonHere } from "../telemetry/status.js";
 import { markProjectId } from "./config.js";
 import { jaegerEndpoint, jaegerGet, marksBetween } from "./telemetry.js";
 
@@ -260,11 +260,11 @@ export async function readLookRuns(
 	opts: { since: Date; timeoutMs: number },
 ): Promise<{ list: LookRun[]; status: LookStandingRead["runs"] }> {
 	try {
-		const status = await daemonStatus();
-		if (!status.running) {
+		const daemon = await resolveLocalDaemonHere("looks");
+		if (daemon === null) {
 			return { list: [], status: { ok: false, where: "no telemetry daemon is running" } };
 		}
-		const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+		const endpoint = jaegerEndpoint(`http://localhost:${daemon.uiPort}`);
 		const services = await jaegerGet<string>(endpoint, "/api/services", opts.timeoutMs);
 		const project = markProjectId(projectRoot);
 		const seen = new Map<string, LookRun>();

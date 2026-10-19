@@ -3,12 +3,14 @@ import { userInfo } from "node:os";
 import { dirname, join } from "node:path";
 import { withLock } from "../agents/lock.js";
 import { commitNote, currentMdPath, type NoteCommit, oneLine } from "../bookkeeping/notes.js";
+import { planningStepRefusal } from "../build/step-env.js";
 import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
 import {
 	type ApprovalEntry,
 	approvalOf,
 	approvalsPath,
+	bindingOf,
 	readRecord,
 	type StoryApprovalEntry,
 	standingOf,
@@ -117,6 +119,8 @@ export async function approve(
 	by: string,
 	seen: Seen = {},
 ): Promise<ApproveResult> {
+	const refused = planningStepRefusal(`approving ${appName}'s ${name}`);
+	if (refused) return { approved: false, reason: refused };
 	const opened = await openApp(checkout, appName, by, {
 		noOne: "an approval needs who gave it",
 		act: "approve",
@@ -177,8 +181,7 @@ async function approveMockup(
 				mockup: mockup.name,
 				mockupHash: mockup.hash,
 				...(mockup.uses.length > 0 ? { componentsHash: mockup.componentsHash, components } : {}),
-				foundationHash: app.foundation.hash,
-				declarationsHash: app.declarationsHash,
+				...bindingOf(app),
 				by,
 				at: new Date().toISOString(),
 				...(plan === null ? {} : { plan }),
@@ -221,8 +224,7 @@ async function approveStory(
 				story: story.name,
 				snapshotHash: story.hash,
 				...(story.stylesheetHash === null ? {} : { stylesheetHash: story.stylesheetHash }),
-				foundationHash: app.foundation.hash,
-				declarationsHash: app.declarationsHash,
+				...bindingOf(app),
 				by,
 				at: new Date().toISOString(),
 				...(plan === null ? {} : { plan }),

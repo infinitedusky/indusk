@@ -83,7 +83,7 @@ function maintenancePhaseInSummaryShape(
 				`#### Build Phase ${n} OTel`,
 				"",
 				...foldedTask(
-					"The fixed code still marks the promise on its span",
+					"The fixed code still signals the promise on its span",
 					"`indusk.promise`, `indusk.promise.outcome`.",
 				),
 				"",
@@ -149,7 +149,7 @@ function maintenancePhase(
 		? [
 				`#### Build Phase ${n} OTel`,
 				"",
-				"- [ ] The fixed code still marks the promise on its span (`indusk.promise`, `indusk.promise.outcome`)",
+				"- [ ] The fixed code still signals the promise on its span (`indusk.promise`, `indusk.promise.outcome`)",
 				"",
 			]
 		: [];

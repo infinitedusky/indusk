@@ -1,0 +1,1213 @@
+---
+id: i-2026-10-16-the-demo-app-starts-with-its-promise-holding
+promise: the-demo-app-starts-with-its-promise-holding
+source: release
+status: fixed
+date: '2026-10-16'
+opened: '2026-10-16T20:17:58Z'
+last_seen: '2026-10-16T20:17:58Z'
+tests:
+  - "apps/indusk-mcp/src/__tests__/demo-command.test.ts > indusk demo — the seat-holds example, its promise held and broken > A4 — the page starts, and a lapsed hold reads as the promise held"
+  - "apps/indusk-mcp/src/__tests__/demo-command.test.ts > indusk demo — the seat-holds example, its promise held and broken > A7 — with the switch on, a late release reads broken with its trace; off, it is still reported broken"
+release:
+  - "1.71.0 at 019d354"
+fixed: '2026-10-17T02:12:10Z'
+---
+
+## Symptom
+
+Release 1.71.0: apps/indusk-mcp/src/__tests__/demo-command.test.ts failed in the slow tests and was still failing when the release recorded it.
+
+## Suspects
+
+Release 1.71.0 (019d354) — failing: `apps/indusk-mcp/src/__tests__/demo-command.test.ts > indusk demo — the seat-holds example, its promise held and broken > A4 — the page starts, and a lapsed hold reads as the promise held`, `apps/indusk-mcp/src/__tests__/demo-command.test.ts > indusk demo — the seat-holds example, its promise held and broken > A7 — with the switch on, a late release reads broken with its trace; off, it is still reported broken`.
+
+Commits since the last green slow run (c804aaf) touching `apps`, `packages`, `examples`, `.claude`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `vitest.config.ts`, `biome.json`, `turbo.json`:
+
+- 019d35454 chore(indusk): lesson — a-skip-reason-that-says-nobody-looked-is-refused-spend-the-look-first
+- 215887a82 chore(indusk): lesson — write-the-promise-sentence-from-the-wanted-behaviour-before-the-test-phase
+- 2272871e4 chore(indusk): lesson — step-state-reads-finished-from-the-works-own-files-not-from-position
+- b27bb20e7 chore(release): 1.71.0 — plans stated as clauses, nav fixes, one promise language follow-ups
+- a1ad46b26 chore(indusk): lesson — a-closing-check-that-counts-passing-rows-proves-bookkeeping-not-testing
+- c8519c6cb Merge main into plan/plans-are-promises
+- 7fcd453e5 chore(indusk): lesson — when-one-refusal-blocks-a-whole-batch-test-the-rule-against-its-own-siblings
+- e7c9a2ad7 chore(indusk): lesson — adding-a-field-to-a-shared-type-run-the-everyday-suite-before-falsification
+- 6bb136165 chore(indusk): lesson — run-a-plan-against-its-own-closing-rule-before-the-audit
+- 82e50d033 plans-are-promises: decisions page and sidebar entry
+- c8ef04c66 plans-are-promises: admin test fixtures carry the new RowPurpose clauses field (found by the everyday suite at close)
+- d73e498ee plans-are-promises: docs say a clause's test file carries its token; impl completed
+- cf2dfb7e9 plans-are-promises: planning rules say a clause's test file carries the clause token
+- 95c816c6a plans-are-promises: Shape — clause-token check extracted from judge into clauseTokenRefusals
+- 3fe758f22 plans-are-promises: own promise held as five clauses; rows name their clause, test files carry the clause token
+- f1b5e1df6 plans-are-promises: a clause is proved only when its row's test file carries the clause token (A22 green)
+- 4aa598049 plans-are-promises: author A21 (whole story, passes today) and A22 (clause token in the test file, red)
+- 381fc52b6 chore(indusk): lesson — a-stretched-link-overlay-steals-tooltip-focus-and-empty-state-from-the-row
+- 4d47e8eba Merge branch 'main' into plan/nav-row-legible
+- 876b08a0b plan(nav-row-legible): retrospective; promise confirmed enforced, tokens at the code sites
+- 61701c592 plans-are-promises: the package rules name findPromise and clause-rules.ts
+- f123d805a plans-are-promises: the clause rules move to clause-rules.ts
+- 345b153e8 plans-are-promises: one findPromise for the name-or-alias lookup
+- 474a0610f plan(plans-are-promises): Build Phase 5 opens — A20 promise lookup test written, failing
+- c7cfe1fb7 plan(plans-are-promises): the planning guide says a resting clause may name a sibling promise and a cycle is refused
+- 7d81ec307 plan(plans-are-promises): the planning rules say a clause may rest on a sibling promise of the same plan
+- 8a39b6f87 plan(plans-are-promises): Build Phase 4 verification, A17-A19 passing; test text no longer cites a promise that does not exist
+- f8c1339d0 plan(plans-are-promises): the registry check refuses a clause resting on its own promise or on one it does not hold
+- 234c56cd4 plan(plans-are-promises): a brief that has not opted in reads an indented bullet as its own promise, as before clauses
+- 9b6d27100 plan(plans-are-promises): a clause may rest on a sibling promise proved in the same close; a cycle is refused
+- b9a116e08 plan(plans-are-promises): Build Phase 4 tests A17-A19 written, red on their own assertions
+- 143d0f66d plan(plans-are-promises): docs for closing per clause, and the changelog says what shipped
+- de4cfc489 plan(plans-are-promises): the planning rules say a plan closes per clause
+- 4a0627862 chore(indusk): lesson — progress-has-one-source-the-derived-position-not-a-hand-written-status
+- b8612ffd0 plan(plans-are-promises): the planner plans promises as clauses, and says which promises share a plan
+- 59c9559de plan(plans-are-promises): closing a plan wants every clause proved, and a resting clause wants its promise in force
+- 78a457cfd chore(indusk): lesson — a-test-comparing-a-reader-to-its-own-function-proves-agreement-not-correctness
+- 69af9cb06 chore(indusk): lesson — a-test-comparing-a-reader-to-the-function-it-calls-proves-agreement-not-correctness
+- 68afd1702 chore(indusk): lesson — derive-progress-from-files-never-trust-a-hand-written-status-word
+- 63ef037d2 chore(indusk): lesson — derive-progress-from-files-never-trust-a-hand-edited-status-word
+- aa964cb1c plan(plans-are-promises): Build Phase 2 closed — rows A5-A8, A14, A15 passing; rule and docs for clause rows and the clause plan
+- ce16852c0 Merge branch 'main' into plan/nav-stage-matches-plan-page
+- 1d687d8c4 test(nav-stage-matches-plan-page): cockpit-nav test carries the promise token its row names
+- 683c1ded2 plan(plans-are-promises): the clause plan is read and the contract holds clauses to it and to the rows
+- 3a965e99e docs(nav-stage-matches-plan-page): Build Phase 2 context, changelog; impl complete
+- 9c8548376 fix(admin): the project card and the copied plan markdown read the plan's step, not the impl's status word
+- b79b807f6 plan(plans-are-promises): a test row can name a clause, in both readers
+- d4b1fede2 fix(nav-row-legible): the stretched link carries the title and the focus ring; an empty worktree slot is no slot
+- a20b7458f test(nav-row-legible): tooltip, focus ring and empty slot, red where the stretched link takes them
+- fd8dd91a7 plan(plans-are-promises): docs for promises as clauses and declare --clause
+- 060b3909c plan(plans-are-promises): the planning rules say a brief may state promises as clauses
+- 94fadc14e plan(plans-are-promises): the contract check holds an opted-in brief's clauses to the registry
+- 5ca41c8de plan(plans-are-promises): declare takes --clause and refuses a bad one
+- 8bda501a8 plan(plans-are-promises): the registry carries a promise's clauses and reports a malformed list
+- 3034fa7cd plan(plans-are-promises): the brief reader returns each promise's clauses
+- b36500bda docs(nav-row-legible): Build Phase 2 context, docs and checklist; verification green
+- d9a5564dd feat(nav-row-legible): stories for the worktree mark and a plan row with one, so a person can approve them
+- e7755f4a4 test(plans-are-promises): build the A14 table's promise token so the registry check does not read it as a citation
+- 4606bfe86 test(plans-are-promises): the planner plans promises as clauses and groups them by shared code (A10,A12)
+- c6c748cdd test(plans-are-promises): closing wants every clause proved, a resting clause its promise in force (A9,A11)
+- a57effe38 test(plans-are-promises): a row naming a clause counts for its promise in both readers (A14,A15)
+- 1251aa598 test(plans-are-promises): declaring records clauses and refuses a bad one (A3,A11 declaration)
+- a16f53aed test(plans-are-promises): contract check holds clauses to registry, clause plan and rows (A1,A2,A4-A8,A13)
+- d10fdfde1 docs(nav-row-legible): Build Phase 1 context and docs; verification green
+- 38202fb46 docs(nav-stage-matches-plan-page): nav reference, changelog; impl complete
+- 965feeb4f fix(admin): the nav row reads the step the page shows; Released only once a release shipped it, Closed otherwise
+- 4615d4956 feat(plans): stepAt answers which step a plan is at, once, in plans/steps; Needs you asks it
+- 1ef3e26ee feat(nav-row-legible): the worktree is a mark outside the row's link
+- af7c26233 test(nav-stage-matches-plan-page): A5 master page reads each plan at the nav row's stage; red for a built plan
+- 36da7be66 test(nav-stage-matches-plan-page): A3 the step a plan is at is defined once in plans/steps; red until stepAt exists
+- d2c3f106b test(nav-stage-matches-plan-page): A2 a plan no release shipped never shows the finished mark; red today for built and closed plans
+- e824b2fe9 test(nav-row-legible): the nav row's tests, red where the worktree is crowded into the link
+- 9d2a961fb test(nav-stage-matches-plan-page): A1 nav stage must name the step the page shows; red for every built or in-flight plan
+- e0f023593 Merge branch 'main' into plan/looks-check-speed
+- 2e86918b3 chore(indusk-mcp): untrack the bundled admin copy
+- bbae818af Merge branch 'main' into plan/looks-check-speed
+- fbf2ba2f4 plan(looks-check-speed): archive — promise a-look-check-costs-what-changed enforced, closed line in current.md, decision page points at the archive
+- 04c924170 chore(indusk): lesson — work-that-decides-reuse-gets-trajectory-rows-when-added
+- 5e1a87aec chore(indusk): lesson — measure-the-no-change-floor-before-writing-a-timing-expectation
+- 0fd3a1e24 chore(indusk): lesson — return-browser-measurements-as-one-string
+- b58f326bc chore(indusk): lesson — a-reused-check-result-keys-on-what-the-check-measured-against-not-only-the-sources
+- 95745ba27 docs(looks): the decision page lists where each part of the check lives
+- 3ab0f24d1 docs(looks): the area context names which file holds each job of the check
+- b64b10fa1 refactor(looks): the planning of a run's reuse moves to reuse-run.ts
+- dd5e7b198 refactor(looks): the browser work moves to browser.ts
+- 4b316b55d refactor(looks): the reading of the served page moves to served.ts
+- 6bf648c44 docs(looks): a stale server's results are not kept; the checker and element rules are in the key
+- e3398d208 docs(looks): the area context says a stale server's results are never kept, and what each key holds
+- a1d88a337 refactor(looks): what reuse tells the person is its own function (Shape)
+- 287627c9f plan(looks-check-speed): A10 says what its test proves — only the app's root is requested
+- 2b023b3ec fix(looks): a page that reads its viewport or scheme once on mount is measured by fresh loads (A36)
+- 5e80186fd fix(looks): the served page is read at the base URL's own path (A35)
+- dd8b897b9 fix(looks): development markers are read from the assets a page loads, never its text (A34)
+- c88f675e8 fix(looks): the read of the served page has a time limit (A33)
+- 24d2ec340 fix(looks): a check writes only its own looks over the held record as it is now (A32)
+- 37153fd5c fix(looks): every look's reuse depends on the checker that measured it (A31)
+- dd518223a fix(looks): a story's reuse depends on the element and root rules it draws under (A30)
+- 8380347e1 fix(looks): a story whose own inputs are unchanged is reused on a server not yet rebuilt (A29)
+- 77a8fa44a fix(looks): a look measured on a server behind its sources is reported, never kept held (A28)
+- 23cf56012 test(looks-check-speed): Build Phase 4 rows A28-A37 written red; A38, A39 added; phase opened
+- c6b84d321 docs(looks): the refusal and serve declaration, the changelog, and the published decision
+- 40d294bce docs(looks): the looks rules say a development server is refused and how the served build and configuration are judged
+- 585ba336a fix(looks): the served build is judged against the sources, outside the key, so a rebuild does not reopen every look
+- b6448b3fe feat(looks): the styling and Storybook configuration and the lockfile are part of a look's key
+- 24392a681 feat(looks): a reused result is keyed on the build the page is served from
+- 501658063 feat(looks): an app declares the command that serves it; the admin declares its own
+- f92bd4599 feat(looks): the check refuses a development server before any look opens
+- 5cee879ac feat(looks): devServerMarker tells a development server's page from a production one
+- d45bab0b6 test(looks-check-speed): Build Phase 3 row A13 written red; phase opened
+- d06cf7b05 docs(looks): what a check reuses, where held results live, --all, and the reused signal
+- dbb7038a0 docs(looks): the looks rules say when a look is reused and where its last result is kept
+- fcdf7af7a test(looks): the scheme case opens its second run with --all
+- 53dfd9512 feat(looks): indusk looks check --all opens every look, whatever held
+- e4b574306 feat(looks): a reused look sends an upheld span marked reused, with when it was measured
+- c01fdcc64 feat(looks): an unchanged look is reported reused, and nothing to open starts no browser
+- eccdbc8d2 feat(looks): held results kept in the project's machine-state home
+- 654f723cc feat(looks): looks/reuse decides whether a look's last held result is reused
+- 1a282ab99 feat(looks): the render step records the sources the stories were rendered from
+- a5d88f837 feat(looks): a hash of an app's sources and of its page code, in mockups.ts
+- de3818706 test(looks-check-speed): Build Phase 2 rows A1-A9, A19 written red; phase opened
+- f13025bf4 docs(looks): one load per look and --only, in the looks rules, the root decisions and the command reference; rows A11 A16-A18 passing
+- 5a462d154 chore(looks): shape review of Build Phase 1 - drop an unused re-export; verification recorded
+- 99f55b2a7 test(looks): give the scheme case a timeout that fits its two CLI runs
+- 2400f7668 feat(looks): indusk looks check --only checks just the looks a person names
+- e96e48bf6 feat(looks): screens that need no seed open three at a time
+- 96a0eb158 feat(looks): each look loads once and is measured at every device and scheme in place
+- a88b3676f test(looks-check-speed): Build Phase 1 rows A16-A18 written red; phase opened; found work recorded
+- a6ba7b248 test(looks-check-speed): mark the slow-look test as proving the plan's promise
+- eb65f560e test(looks-check-speed): a look reported only as reused keeps reading holding
+- 24802727e test(looks-check-speed): full check of the admin with every look opened (system tier)
+- 1a807b182 test(looks-check-speed): contract tests for reuse, one request per look, in-place tripwire, dev-server refusal
+- 3a49d3a1c lessons: merge the two readers-first lessons from one-promise-language into one
+- 880ecface Merge branch 'main' into plan/one-promise-language
+- f17c8ded1 plan(one-promise-language): archived — its closed line in current.md, links repointed to the archive
+- 91d4794b9 promises(one-promise-language): a-promise-is-upheld-or-broken confirmed enforced — the two tests that prove it carry its token; the demo's test leaves A3's cell, since the copied demo is its own project
+- 1c7f3ab14 docs(one-promise-language): lessons page — reader-first value changes, the editor's wire, a scan proves only its patterns
+- 59613845e chore(indusk): lesson — readers-first-list-every-machine-reader
+- 6251177bf chore(indusk): lesson — stored-value-changes-reader-first
+- 4a9ed407a docs(one-promise-language): decision page and changelog record what Build Phases 4 and 5 built — the health JSON on violated, no signal drawn grey
+- 534ac1093 refactor(admin): one reading of no signal — readsNoSignal, asked by the row's dot and the page's look state
+- 47b4b7449 fix(admin): the promise list reports a no-signal row to the looks check
+- 78a81a0f1 docs(admin): no signal is a grey dot — context line and words table
+- 1d8c7738c feat(admin): an enforced promise with no signal is grey, 'no signal yet' (A21)
+- 7cedfa9ba test(admin): A21 — no signal is grey, never green (red)
+- 08a19b253 docs: editor guide shows retired and broke — fixed
+- fa932e6cd docs(vscode-extension): context says grey is retired, never holding
+- 62ebfb23e docs(indusk-mcp): promises context says the health line keeps violated until mark-first
+- b775f5e56 docs: pages say signal, and that InDusk's and the demo's signals are written violated this release and read as broken
+- 386ee58aa docs(seat-holds): README says one signal per release
+- b5c02dbaa fix(indusk-mcp): extension skills and server fly template say signal and break
+- 1678a110c fix(indusk-mcp): trace-shape failure messages say broken
+- 6d6cf4d3b fix(indusk-mcp): everyday-suite line says signal sent and broken, still writes violated
+- e4ff90ecc fix(indusk-admin): dashboard row and thirty-day legend say no signal
+- 7336a03cd fix(vscode-extension): retired is never holding; broke — fixed; no signal yet
+- 534e742f7 fix(indusk-mcp): health --json runs keep violated for a break so an installed editor reads broke
+- f55786e2e test(indusk-admin): one-promise-language A16 written red
+- 691a5527e test(vscode-extension): one-promise-language A15 written red
+- ccabbb122 test(indusk-mcp): one-promise-language Build Phase 4 rows A14, A17-A20 written red
+- 58ecb61a7 docs(one-promise-language): keep multi-line code spans on one line so the docs build
+- 8517fa63a docs(one-promise-language): changelog says the docs and skills speak the same words
+- f565ab092 docs(one-promise-language): planning rules say a promise is upheld or broken
+- 23779e378 docs(one-promise-language): publish the decision on the docs site
+- bbf19630f docs(one-promise-language): deploy file comments say break; check off skills item
+- 6ded440c7 docs(one-promise-language): the demo's README says read as broken
+- f6a38674b docs(one-promise-language): shipped skills and planning rules say break, not violation
+- ea7f8893c docs(one-promise-language): the words table, and check off the docs item
+- 3a40909c8 docs(one-promise-language): guide and reference say upheld, broken and signal
+- 275f0aa63 docs(one-promise-language): admin and editor pages show the new labels
+- f85ac0f19 docs(one-promise-language): admin context says what a promise's words are on screen
+- 386ebe9f1 fix(one-promise-language): admin proof page and dashboard tests expect the no signal wording
+- 0a1038fc2 feat(one-promise-language): editor says known broken and no signal
+- 7976f7108 feat(one-promise-language): promise tool descriptions say breaks and signals
+- 4aac52073 feat(one-promise-language): command line and always-on server say broken, held and no signal
+- 80087c607 feat(one-promise-language): admin says holding, broken, held, broke and no signal
+- 35f6b5e2a docs(one-promise-language): guide and demo README say a signal written either way is read as broken
+- 007669c71 docs(one-promise-language): changelog records both words read and known-broken
+- 4df905e40 docs(one-promise-language): promise code context says where a verdict and a state word are decided
+- 890604703 test(one-promise-language): fake Jaeger stamps its spans when made, not when answering; admin fixtures take the broken verdict
+- 2a9513006 test(one-promise-language): editor looks fixture uses the broken verdict
+- 4e977fec1 test(one-promise-language): admin fixtures use known-broken and the in-memory broken verdict
+- 1258e68a6 test(one-promise-language): existing promise-check assertions expect known-broken
+- 9fa4bf24f feat(one-promise-language): editor state label follows known-broken
+- e92c24d13 feat(one-promise-language): admin state keys and labels follow known-broken
+- 23701177a feat(one-promise-language): registry state known-broken, known-violated read as it on load
+- 064a147bb feat(one-promise-language): markPromise takes broken and writes violated on the wire this release
+- 22da0d0ec feat(one-promise-language): always-on server asks Jaeger for broken and violated signals
+- fda81e186 feat(one-promise-language): editor activity reads broken and violated alike
+- 40d7e9ccc feat(one-promise-language): admin timeline strip reads a break as broken
+- f36465a82 feat(one-promise-language): readers decide a signal's verdict through readOutcome
+- 3d96395ee test(one-promise-language): A10 — the word scan over the pages, skills, templates and descriptions people read
+- 03b0cce89 test(one-promise-language): A7, A9 editor half — labels say known broken and no signal, activity says broke for a broken run
+- aeaaa4732 test(one-promise-language): A7, A8 CLI half — status, watch, check and the always-on messages say broken, held and no signal
+- 65c38e756 test(one-promise-language): A6, A7 admin half — chips, timeline cells, health lines and plan-list warning say holding, broken and no signal
+- f5ef21fa5 test(one-promise-language): A11, A12 — a production signal saying broken is recorded and announced as a violated one is
+- fcc88357a test(one-promise-language): A4, A5 — a known-violated file reads known-broken, and incidents move promises in and out of it
+- 1f6f631fd test(one-promise-language): A3 — InDusk's own signals and the demo app write violated this release and read back broken
+- 65719811c test(one-promise-language): A1, A2, A13 — a signal saying broken or violated is read as broken, and the thirty days count both alike
+- d84de8c95 Merge branch 'main' into plan/template-reload-on-cold-cache
+- 795faf83d chore(indusk): lesson — nesting-derived-from-declarations-needs-a-strict-cycle-rule
+- c5ca3f0cf chore(indusk): lesson — a-comparison-row-needs-inputs-that-make-the-sides-differ
+- 9bc7b0acd chore(indusk): lesson — writing-is-a-turn-not-a-process
+- 4636228f1 chore(indusk): lesson — merge-main-into-a-built-plan-when-main-redraws-its-files
+- 076159901 test(indusk-mcp): follow the Dawn and Day masters into the archive
+- 1996a0c77 test(indusk-mcp): two tests follow the Dawn and Day masters into the archive
+- d72ac2bfe merge main into plan/cockpit-audit-fixes
+- 258aae934 chore(indusk-admin): the full-answer check carries a-question-is-answered-in-full
+- f259f68b2 chore(indusk-mcp): the thirty-day counter and the writing check carry their promises' tokens
+- a93755ad4 Merge branch 'main' into plan/template-reload-on-cold-cache
+- 4be520560 plan(template-reload-on-cold-cache): retrospective — promises confirmed, known issue closed
+- a411dea6a chore(indusk): lesson — prove-a-fix-for-an-intermittent-failure-by-recreating-the-cold-condition-several-times
+- 3b339614c chore(indusk): lesson — a-change-to-an-agent-performed-step-edits-the-skill-file-not-only-the-docs-page
+- 56e2bcf44 chore(indusk): lesson — a-static-guard-written-with-its-fix-covers-only-the-cases-its-author-imagined
+- 1b3449a15 Merge branch 'main' into plan/cockpit-audit-fixes
+- d0ef2c012 chore(indusk): lesson — vitest-project-inherits-nothing-without-extends
+- 74fddac99 Merge branch 'main' into plan/cockpit-audit-fixes
+- 90841c543 plan(template-reload-on-cold-cache): Build Phase 3 gates closed — A7 passing, impl completed
+- 74a4f20ca test(indusk-mcp): the pre-bundle guard keeps a deep import whole — A7 green
+- 17719e3bd docs(indusk-mcp): the retrospective skill says what a refused install means and how to recover
+- a4c89f427 docs(indusk-mcp): the retrospective skill's install step first syncs to the lockfile
+- 57fad9084 test(indusk-mcp): A7 red — the pre-bundle guard cuts a subpath import to its package
+- 688391deb chore(indusk): lesson — run-the-looks-question-against-the-diff-before-archiving
+- d2a08027c Merge branch 'main' into plan/decided-prompts-stay-closed
+- 095229c87 test(indusk-mcp): the pre-bundle guard reads the files the browser project runs, not two names
+- df90cc977 test(indusk-mcp): the pre-bundle guard counts every package an import names, in any form
+- bd62551d0 test(indusk-mcp): A5 and A6 red — the pre-bundle guard misses side-effect imports and unlisted browser tests
+- edd76c746 chore(indusk): lesson — check-who-writes-a-persisted-log-before-relying-on-a-callback
+- c8f35a55f chore(indusk): lesson — an-optimistic-early-close-ships-with-its-undo
+- c13eeb85e chore(indusk): lesson — readers-of-a-live-event-stream-build-a-map-first
+- 0e6e5c1d1 chore(indusk): lesson — a-decision-record-carries-what-was-chosen
+- 7f271c637 merge main into plan/decided-prompts-stay-closed
+- bb5539dae chore(indusk-admin): the decision reader and the panel carry their promises' tokens
+- 8673503f0 chore(indusk-mcp): the decided event's site carries a-decided-request-stays-decided
+- 75906ba73 docs(sessions): the outcome line is the panel's; the thread only stops listing a decided request
+- 362507cc7 fix(indusk-admin): a decided event draws no blank row in the panel's log
+- 78dee70d6 test(indusk-admin): A12 — a decision adds no blank row to the panel's log, red
+- 5c04a75c8 plan: promise-core is the one master — every open plan grouped under it; Dawn, Day and the demo masters closed; approve-then-improve, jev-decision-model, user-zero archived
+- 68f5d3e46 docs(indusk-admin): context — the two units that hold a request's decision
+- 6d497161c refactor(indusk-admin): Replied lives with the hook; Build Phase 4 verification, A11 passing, Shape reviewed
+- fd342069a refactor(indusk-admin): QuestionView in its own file
+- 8db6d98fd refactor(indusk-admin): request-decisions, the one reader of a request's decision
+- 45805d234 refactor(indusk-admin): useAnsweredRequests, the one early close of a click
+- 69e0c66d5 test(indusk-admin): A11 useAnsweredRequests, red on the missing module
+- caa1869e8 test(indusk-mcp): the pre-bundle guard's failure names the rule — a Vitest project inherits nothing without extends: true
+- 7737f839e docs(template-reload-on-cold-cache): landing's install syncs to the lockfile first
+- 995e76ad2 test(template-reload-on-cold-cache): day-monitor's incident assertion matches the model name too
+- 5e410d536 test(template-reload-on-cold-cache): day-monitor matches the model name at the two lines the plan names
+- 2ffda5719 fix(template-reload-on-cold-cache): landing's install syncs to the lockfile before it builds
+- ffa84253a fix(template-reload-on-cold-cache): the templates project inherits the root's pre-bundle list
+- 3416d21ab test(template-reload-on-cold-cache): A3 red — install:local builds before syncing to the lockfile
+- 3c6928fbc test(template-reload-on-cold-cache): A1 red — the templates project never sees the pre-bundle list
+- 1407ab154 docs: sessions — an answered question shows its answer; a refused click leaves the request open
+- 93fad7bbc docs(indusk-admin): context — a refused reply reopens; an answer is read from the decided event
+- 61a67ac9f plan(decided-prompts-stay-closed): Build Phase 3 verification passes, A9 and A10 passing
+- ab5b53f40 feat(indusk-admin): a refused reply reopens the request in the thread
+- ecfcb0282 feat(indusk-admin): an answered question shows its answer; a refused reply reopens the prompt
+- c77466072 feat(indusk-mcp): a person's answers are recorded on the decided event
+- 7da443bd0 plan(decided-prompts-stay-closed): A9, A10 written
+- ca79babca test(indusk-admin): A9, A10 — an answered question's outcome, a refused click
+- 9956e54eb test(indusk-mcp): A9 — a person's answers are recorded on the decision
+- 2a6e007de merge main into plan/decided-prompts-stay-closed
+- 028fca3f0 chore(indusk): lesson — a-test-file-is-not-an-apps-interface-even-though-a-story-is
+- 92c153db9 chore(indusk): lesson — a-failing-package-hides-every-later-packages-failures-in-turbo
+- f20a64dcb chore(indusk): lesson — turbo-caret-build-only-builds-dependencies-never-the-package-itself
+- 41c89f6d7 docs(briefs): a test file under an app's sources is not interface, a story is
+- b1d33e958 docs(looks): a test file is never an app's interface, a story is — recorded in the looks folder's rules
+- f61a45e4d fix(looks): a test file is no app's interface, so accept stops refusing a plan that only fixes tests
+- 4dbd698d3 plan(main-suite-green): A14 written — a test file under an app's sources is no look, red on its own assertion
+- 7932ca2b6 Merge main into plan/main-suite-green
+- fb04f3d6b chore(indusk): lesson — turbo-test-dependson-caret-build-does-not-build-the-package-under-test
+- a04db5362 chore(indusk): lesson — an-exemption-keyed-to-the-latest-record-must-be-per-item-and-need-evidence-of-what-landed
+- fd0e4e5ff chore(indusk): lesson — a-red-root-test-run-hides-later-packages-diagnose-with-turbo-continue
+- 16ff2e399 chore(indusk): lesson — a-test-imports-its-subject-at-the-top-of-the-file-never-inside-an-it
+- bac758282 chore(indusk-mcp): the suite promise's token at the two configs that keep the root run green
+- 7647c8199 docs(lessons): main-suite-green — cold imports in a test's budget, hidden packages, latest-record exemptions, ^build
+- af1ace46c docs(looks): the unimplemented-component row states the per-component hold, as the code now reads it
+- 25295e5c2 docs: a mockup whose landed approval recorded no components is held in full
+- 734e0249b docs(indusk-mcp): the root run builds the package before its tests, because a SHOULD_SKIP test skips silently without dist
+- 4318cffc2 build(turbo): indusk-mcp's tests wait for its own build, so the CLI-spawning tests do not skip silently on a clean checkout
+- 6c62ea517 fix(looks): a held approval that recorded no components leaves no record of what landed, so the mockup is held in full
+- 5ead85d36 style(main-suite-green): format A13
+- 537b3e1c1 test(main-suite-green): A13 — indusk-mcp's test task must wait for its own build
+- 99c887828 test(main-suite-green): A12 — a landed approval that recorded no components must hold the mockup in full
+- f70a42550 test(looks): one addApprovedMockup helper — A10 and appWithGhost repeated the same screen, markup and approval setup
+- 9f3905005 refactor(looks): one reader for a story name's component — the story reader, landed.ts and coverage.ts each split the name themselves
+- 076a52247 test(looks): A11 — a story name's component has one reader; red on a stub so it fails on its assertion, not on load
+- 27076a2ed docs(admin-ui): the component check's exemption is per component, not per mockup
+- 4678fe889 fix(looks): the landed-plans exemption is per component — a re-approval in flight no longer hides components a landed approval bound
+- 19b4345eb test(main-suite-green): A10 — a re-approval in flight must keep the components a landed approval bound (red: the mockup drops out whole)
+- a1c474012 merge main into plan/story-first-phases
+- c95da5edd test(indusk-mcp): pre-bundle instrumentation-xml-http-request for the template tests, since its late discovery reloaded the page mid-run
+- e27e8255b chore(indusk): lesson — a-live-check-row-moves-to-written-at-phase-start-or-the-tick-check-refuses-the-phase
+- 202e1bc1e chore(indusk): lesson — test-every-entry-point-of-a-promises-enforcer-and-run-the-root-budget-test-when-claude-md-changes
+- 323ce24a2 chore(indusk): lesson — a-story-composes-the-real-child-component-from-the-day-it-exists
+- a0a9378d5 chore(indusk): lesson — a-reader-that-skips-folded-text-must-fail-open-on-an-unclosed-fold
+- 5833a7741 chore(indusk): lesson — test-a-save-time-rule-on-both-the-write-and-the-edit-path
+- a68ef622e docs(apps/docs): the phase-summaries decision records what falsification and the audit added, a lessons page, and the changelog says the rule holds on every edit
+- 29b8df57c test(indusk-mcp): the planner-template check reads the template's phase-summary opt-in, as the save check does, so row labels in a Verification fold count
+- 14d30d4ce chore(indusk): lesson — a-plan-read-from-two-copies-gets-two-different-names
+- f1f68294b test(indusk-mcp): 15 s test budget, since spawning tests cross 5 s beside the admin suite in a root run
+- 9c80131b8 chore(context): component content moves from the root to the looks CLAUDE.md
+- fd39a74f6 fix(plan-stories): tests agree with main after the merge
+- 9c91b7290 docs(apps/docs): the planner reference says the rule is checked on every edit and an open fold is refused
+- 642ad6982 context(indusk-mcp): the planning rules say the summary rule holds on every edit and an open task fold is refused
+- aff458f8b refactor(indusk-mcp): the edit-time summary check is a named function in the rule's module
+- 781d91709 style(indusk-mcp): format the unclosed-fold check
+- d46816d4f docs(indusk-mcp): the skills and planning rules say what the save check refuses in a paragraph: a row label, not code
+- 1674599ac fix(indusk-admin): the plan page draws a phase's paragraph through markdown, code shown as code
+- 75bff2d8a docs(admin): rule for admin route tests, import the route at the top of the file
+- 097aa2cc1 Merge main into plan/plan-stories
+- 10cf24773 fix(indusk-mcp): the repair phase a broken promise adds follows the shape of an impl that has opted in
+- ac00e3470 fix(indusk-mcp): the gated loop reads ticked boxes from top-level lines, so a box ticked in a fold makes no checkoff commit
+- 763b01766 test(admin): new-project-parent imports its route at the top of the file; the same cold import timed out in the second root run
+- 350554be3 fix(indusk-mcp): the tick check counts boxes over the whole file, so an edit starting at a folded dash is no checkoff
+- a09731cc0 Merge branch 'main' into plan/main-suite-green
+- cb16b6518 test(admin): the new-project route tests import the route at the top of the file, so the cold import is not charged to a test's 5 s under a root run
+- b3c0e4f01 chore(indusk): lesson — a-lookup-over-real-data-needs-one-test-against-a-real-worktree-from-the-start
+- 26f231168 chore(indusk): lesson — a-promise-worded-wherever-gets-a-row-for-every-render-site-found-by-grep
+- 753235063 chore(indusk): lesson — replacing-a-page-body-with-an-early-return-drops-the-shared-frames-controls
+- 1a1c3246f chore(indusk): lesson — every-reader-naming-a-plan-resolves-its-copy-through-resolveplancopies
+- 09faaaa25 chore(context): Dawn hook parity moves from the root to the hooks' CLAUDE.md
+- b4f60cd1b plan(plan-stories): retrospective, promises confirmed, archived
+- de1376af1 fix(indusk-mcp): an unclosed task fold is refused when saved and hides nothing from the readers
+- d2201b92c fix(indusk-mcp): a task line with nothing after its box is refused on an opted-in impl
+- c4c593039 fix(indusk-mcp): the phase-summary rule holds on every edit, refusing only the problems that edit adds
+- 917f7fe34 test(indusk-admin): A27 written red - a parsed phase reaches the plan page formatted
+- 709e52733 test(indusk-mcp): A21-A26 written red - edit-time rule, empty task, open fold, dash-start tick, cadence, repair phase
+- cf5692ec1 docs(main-suite-green): the component promise holds landed plans' looks; Build Phase 2 verified, A3-A6 and A8 passing
+- 899f40634 plan(plan-stories): Build Phase 8 — verification green, A25-A27 passing, Context and Document
+- 04cda2a3e feat(looks): the unimplemented-component check holds only landed plans' mockups, since approval merges looks before code
+- 40775128f test(main-suite-green): inbox cases pin their clock, as the incident reminder (D7) depends on today's date
+- 59e0b0ac9 test(main-suite-green): registry scan stops flagging runCli, which sets a temp INDUSK_HOME since f67cf9bc0
+- f28c0d297 test(main-suite-green): worktree fixture ignores .mcp.json as init does, so A4's status can be clean
+- fad3b9fb5 test(main-suite-green): A3 counts the Jaeger URL form only, since file-path trims are another rule
+- 98b386601 docs(indusk-mcp): contract --impl-stdin reads an impl of any size; Shape and Context items closed
+- 774379baa plan(plan-stories): Build Phase 8 — the admin's amendment lookup tested over a real worktree
+- dac8a8a6d test(main-suite-green): Build Phase 1 verification — A1 and A2 passing
+- 1be543ad4 plan(plan-stories): Build Phase 8 — a declared subplan title goes through planTitle
+- d08353e0c plan(plan-stories): Build Phase 8 — the incidents table and the Looks checkout picker name a plan by its title
+- ccbf9aadf plan(plan-stories): Build Phase 8 — Promises page names a Path by its master's title and an untitled owner in words
+- 9b97a2057 fix(indusk-mcp): record two archived impls as known corpus failures
+- bb39295c5 fix(indusk-mcp): contract --impl-stdin reads stdin asynchronously
+- 0fb5962e6 plan(plan-stories): Build Phase 8 — a master's page keeps the trust notice, its decision and amendment, the way to ask and its history
+- 119694694 plan(plan-stories): Build Phase 8 — A25, A26, A27 written, red on their own assertions
+- 43d56fc2a test(main-suite-green): A2-A8 files carry the suite promise's token; A2-A5, A7 confirmed red as written
+- eb91de349 test(main-suite-green): A6 — pin the reminder half of the inbox contract to a clock
+- e7c2995fd test(main-suite-green): A8 — a component only an unlanded plan's mockup names is not unimplemented
+- ad828e359 test(main-suite-green): A1 — a 200 KB impl on a paused stdin pipe gets the file's answer
+- 217bdc6cc docs(apps/docs): component conventions say a story uses the real child component
+- 169b6c85b context(indusk-mcp): hook rules name the phase-summary module
+- 13d2ed321 plan(plan-stories): Build Phase 7 verification, context and document closed; A23, A24 passing
+- fed962945 plan(plan-stories): Build Phase 7 — a queued plan's title rides on its placeholder entry
+- 1bd326661 plan(plan-stories): Build Phase 7 — one planStage for the nav row and the master page
+- 07f312dc4 plan(plan-stories): Build Phase 7 — A24 red: a queued plan's entry carries its title
+- 41292575f refactor(indusk-admin): phase-row stories draw the real PhaseItems instead of copied markup
+- 6b236d1d7 refactor(indusk-mcp): phase-summary rule gets its own hook module, row-label pattern defined once
+- 8eb498c8d plan(plan-stories): Build Phase 6 shape, context and document — a plan reads by its worktree title on the Promises page
+- b6a5136c9 plan(plan-stories): Build Phase 6 verification — A22 passing; imports sorted
+- 5f90028db fix(promises): readHealthNames names a plan from the copy the nav reads, worktree first
+- a39489b81 plan(plan-stories): A22 written red — readHealthNames names a worktree plan by the trunk's title
+- 5023e9885 docs(apps/docs): ritual guides show the opted-in phase template
+- 0365f90f9 context(indusk-mcp): ritual and Shape box checks skip folds and fences
+- b051b1871 feat(indusk-mcp): falsify and cleanup skills hand out the opted-in phase template
+- 71cf3c6cf fix(indusk-mcp): Shape's verification check skips box lines in folds and fences
+- 8ab47c933 fix(indusk-mcp): ritual-phase finished check skips box lines in folds and fences
+- a1d205ee1 test(indusk-mcp): author A17 and A18 red for Build Phase 4
+- 0e7cec061 docs(plans): a new plan's title is its handle, read as words
+- 1f27942b7 docs(apps/docs): the planner reference and changelog describe the phase-summary shape
+- 605ef6133 context(indusk-mcp): the phase-summary rule points at the planner reference page that exists
+- 987f8b074 docs(plan-stories): the master plan page, the decision published with its sidebar entry, and the changelog line
+- d0a10915e context(admin): a master's page is plan.master with SubplanRows from lib/master-story, replacing the ParentPlanView clause, 15 bytes smaller
+- 19c07548f test(admin): six tests Build Phase 3 left red read again: planTitle stubbed where the browser cannot reach node:fs, fixture plans given titles
+- c96459048 looks(admin): plan.master places subplan-row by name, its inline row CSS and new-components meta gone; the number story arg is a string so a mockup can place each row's number
+- 3037f356c context(indusk-mcp): the planning rules and bugfix/refactor/feature templates carry the phase-summary shape
+- 2010dab25 feat(admin): /doc/master opens a master's master.md, the link the new page's count line carries
+- 324cfaf88 feat(admin): a plan with subplans draws plan.master in place of the bar, prose and cards (ParentPlanView and MasterBar went with the previous commit; no other importer)
+- 9d01de098 feat(admin): MasterStory draws a master's purpose, counts and rows as plan.master does; the frame carries the master plan tag
+- 23997b5a7 context(indusk-mcp): the planner tells itself to write phase summaries for a reader without the plan's shorthand
+- 6ec5e4589 context(indusk-mcp): the planner's impl template is written in the phase-summary shape and opts in
+- cca82bcf9 feat(admin): masterStory turns a Path group into rows and counts, so the master page and the nav's released/total cannot disagree
+- bfd02a5a2 feat(admin): planLookState answers plan.master for a master, so the look check sees the page it draws
+- 70767f478 Merge branch 'main' into plan/skip-reason-why
+- c52e12489 docs(apps/docs): the plan page's phases show a paragraph and a Technical fold per task
+- 25d8d9ae3 context(indusk-admin): a task's Technical detail renders through the shared markdown component
+- dcb6526d3 chore(indusk): lesson — never-run-indusk-update-from-a-worktree
+- 78065f79f refactor(indusk-admin): writing one task back to markdown has its own name
+- 9ed4d60d5 refactor(indusk-mcp): one place says what opens and closes a task's fold
+- cfb10d313 feat(admin): SubplanRow and its three stories, so a master's rows are one approved component
+- 04f1b379f chore(indusk): lesson — unchanged-indusk-version-proves-nothing-about-install
+- c4d956c8b chore(indusk): lesson — subagents-in-a-plan-worktree-never-run-indusk-update
+- ef5ce66f7 chore(indusk): lesson — refused-skip-reason-needs-its-own-next-step
+- e94dc485c chore(indusk): lesson — phase-editing-skills-runs-skill-sync-parity
+- d591801eb plan(plan-stories): A5 authored, red on its own assertion: a master's page must draw plan.master
+- 2c49392f2 docs(audit): the skip reason is refused for more than one sentence too
+- 3f406a592 docs(admin-ui): plans and Paths read by their titles; the transition note removed
+- 6b84bc29b context(admin): a plan is named by plan.title, folded into One home per piece, 13 bytes smaller
+- 9cfe96e04 test(admin): skipped-audit fixture off review — a plan at review waits on the person, so Needs you listed it
+- 2a8d5d2b9 docs(skip-reason-why): the shorten-reason build step
+- cfea7ac8a docs(skip-reason-why): CLAUDE.md — a skills phase resyncs .claude/skills and runs the parity test
+- 8c260c797 work(skip-reason-why): Build Phase 5 — shorten-reason is a session step; its prompt names the field and the limit
+- 95b32a3f8 work(skip-reason-why): Build Phase 5 — nextBuildStep answers shorten-reason before the ritual
+- e51c7895c work(skip-reason-why): Build Phase 5 — resync the four installed ritual skills; A14 passing; A15, A16 written red
+- f19661e8e test(indusk-admin): the Technical fold shows only its sentence until opened, then the detail as code
+- cea2b63a2 feat(indusk-admin): each task on the plan page is its sentence with a closed Technical fold
+- 6a3c0680f feat(indusk-admin): an open phase row draws its paragraph above its tasks
+- 1dc46c2ff feat(indusk-admin): the phase list carries each phase's paragraph and each task's detail
+- 2ffca53d4 feat(plan-stories): the Nav story names plans by title, reopening nav looks for approval
+- e9e83fd33 feat(plan-stories): the plan and brief page heading and crumb read the title
+- 66eb6c1dd feat(plan-stories): Needs you reads titles from the plans as read
+- 8affa5c04 feat(plan-stories): the nav names plans, Paths and queued rows by title
+- 61469e35d docs(plan-stories): Needs you lists a plan waiting on an amendment
+- 29b0d7786 docs(plan-stories): admin CLAUDE.md — a wait is planWaiting's answer alone
+- 4ad1500d6 refactor(plan-stories): readWaiting's amendment read is a named amendmentCounts
+- fd860951f feat(indusk-mcp): the impl parser keeps a phase's paragraph and a task's folded detail
+- 3322b66c1 feat(plan-stories): the decision route refuses an amendment's answer
+- c41183421 refactor(plan-stories): the plan page asks planWaiting alone; planPageWaiting goes
+- 435fa39c8 feat(plan-stories): readWaiting is async and hands planWaiting each plan's amendments
+- 10de58979 docs(skip-reason-why): the retrospective page names rituals/reason.ts
+- 1e979c92d work(skip-reason-why): flushSync out of Step; tests wait for the toggle; Build Phase 4 closed, A13 passing
+- 4f896bce4 feat(plan-stories): planWaiting counts an amendment, amendmentsWaiting reads it cheaply
+- 0cdd8896c test(plan-stories): A16 an amendment's wait is refused by the decision route's answer, RED
+- d7095b109 work(skip-reason-why): the reason rule in rituals/reason.ts, off lifecycle.ts
+- 21935681a work(skip-reason-why): skippedRitualsOf, the one list of skippable rituals (A13)
+- 7ee186cb4 docs(plan-stories): plans reference — a subplans entry may carry a title and description
+- 246839aa5 docs(plan-stories): briefs guide — title is a short name, description separate
+- 81b7bb33b docs(plan-stories): indusk-mcp CLAUDE.md names the one plan-title rule
+- d0bae30d1 refactor(plan-stories): Shape — readPlanFolder reads against one named context
+- fc5f4ea03 test(plan-stories): Build Phase 1 verified — A4, A8, A9, A10 and A13 passing
+- 40dcb866c feat(indusk-mcp): Shape writes a plain sentence with its file and rule folded beneath on an opted-in impl
+- aefc338e3 feat(plan-stories): the admin's Plan carries a title and description read from the copy it is read from
+- 1941fc93e feat(plan-stories): a master's subplans carry a title and description for plans not yet started
+- 25fac6d05 feat(plan-stories): the health line never carries a bare handle as a plan's title
+- c8e983b1a feat(plan-stories): planTitle falls back to the handle in words; readPlanName reads brief or master
+- 1b9b3029e test(plan-stories): Build Phase 1 rows A1-A3 and A13 written red
+- 5423c3e95 docs(skip-reason-why): one-sentence readiness rule and the skipped Audit step
+- 22c454287 style(skip-reason-why): Biome format of the A10 test and fixture
+- 0286e56fb work(skip-reason-why): a skip reason of more than one sentence is refused
+- 9a2fc069e work(skip-reason-why): the plan page reads a skipped audit from the impl
+- 8df3acb62 work(skip-reason-why): the Audit step reads skipped with its reason
+- 2e2e3cda8 docs(plan-stories): nav page notes plan rows are moving from handles to titles
+- dee6a24e3 test(skip-reason-why): Build Phase 3 rows A10-A12 authored; A10, A11 red, A12 green
+- 872382179 test(plan-stories): Shape — looks-fixtures' builder named for what it does
+- 4bc277c5f test(plan-stories): A6 red — plan.master and the subplan-row stories approved and held
+- 365c429ef docs(story-first-phases): the impl guide shows phase summaries; publish the decision
+- ca8ec98b9 docs(story-first-phases): planning rules — checkboxes and opt-outs read from column zero only
+- 803a8c790 test(plan-stories): A19 guard — the open drawer fits 400 px with the longest title
+- 0f28f7766 test(plan-stories): A12 red — the plan page's heading and crumb read the title
+- d4604f8b2 feat(story-first-phases): a Verification task may name its rows in its folded detail
+- 6ff0daf38 test(plan-stories): A15 red — a plan waiting on an amendment is under Needs you
+- 7d0185bb5 test(plan-stories): A11 red — nav rows, Paths and Needs you read by title
+- 5155de249 feat(story-first-phases): the save check holds an opted-in impl to the phase-summary shape
+- c279949fd test(plan-stories): A14 red — an amendment waits on the person
+- bc92d2b53 test(plan-stories): A4 red — a master's subplans may carry a title and description
+- 3bdbc7600 test(plan-stories): A10 red — an unreadable plan groups under its handle in words
+- 26dfc57f7 test(plan-stories): A8, A9 red — a plan reads by its title, a master by its master.md
+- a00cc8f5e fix(story-first-phases): a gate is opted out only by a top-level line
+- 30b5f6fa7 fix(story-first-phases): check-gates counts a ticked box only from a top-level line
+- b5c86de01 chore(indusk): lesson — a-fix-for-a-falsification-bug-can-itself-overshoot-test-the-fix-not-just-the-bug
+- 9fa338210 fix(cockpit): an idle author does not hide approval, a Path cycle lists its plan under both, a several-question card takes words per question
+- 193e8215a test(story-first-phases): every impl that has not opted in validates as before (A12 guard)
+- 5ee82a63b test(story-first-phases): folded detail never ticks a box, skips a gate or adds a task (A9, A10 red; A11 guard)
+- b97c691ad fix(cockpit): a plan and its promises sit under the innermost Path, on the dashboard and in the nav
+- 498bf3790 test(story-first-phases): the parser keeps a task's folded detail whole, red (A7)
+- 224c95a6c test(story-first-phases): an open phase row shows its paragraph, red (A5)
+- dc27dfe7d test(story-first-phases): the planner's impl template and instructions follow the shape, red (A4, A16)
+- ff85508bf fix(cockpit): a decision card answers every question; approval waits for the session writing the impl
+- e915131c3 test(story-first-phases): the save check's phase_summary rule, red (A1-A3, A14, A15)
+- ef63d72c6 fix(promises): thirty days count what was seen — one window, one counting rule for dashboard and page
+- 13319ab76 work(skip-reason-why): Build Phase 2 — docs: a skipped step's why?
+- 7c3d32bf5 work(skip-reason-why): Build Phase 2 — context: a step's reason is Step's prop
+- 1726935e6 work(skip-reason-why): Build Phase 2 — Step's why? toggles in step, four-column grid for a reasoned step
+- b97aa8475 fix(skip-reason-why): SKIP_REASON_MAX lives in lifecycle.ts so the admin bundle stays free of node:fs
+- 5a5545e89 test(cockpit-audit-fixes): Test Phase 1 — author A1-A11, reds on their own assertions
+- 20c99f2bf work(skip-reason-why): Build Phase 2 — PlanWorkflows passes the reason as a prop
+- 10e242633 work(skip-reason-why): Build Phase 2 — Skipped and SkippedOpen stories
+- 45b97ee19 work(skip-reason-why): Build Phase 2 — Step takes a reason shown by its why?
+- db8161676 merge main into plan/sessions-per-plan before landing
+- f6338b520 work(skip-reason-why): Build Phase 1 — shape, context and docs: the readiness check refuses a long skip reason
+- c186494dd work(skip-reason-why): Build Phase 1 — verification: A4-A7 pass, parity snapshot re-baselined
+- 2ed0360e7 work(skip-reason-why): Build Phase 1 — the skills show a one-sentence skip and name the limit
+- c1b852689 work(skip-reason-why): Build Phase 1 — the status says a skip reason is too long
+- 2b0b075fd work(skip-reason-why): Build Phase 1 — a skip reason over 120 characters keeps the ritual unsatisfied
+- 7f7ef2c6c test(skip-reason-why): A4-A7 red and A9 guard — a skip reason is one sentence
+- 94b01071a test(skip-reason-why): A1-A3 red and A8 guard — a skipped step reads skipped with a why?
+- e580fa163 docs(sessions-per-plan): decision page gains admitBuild and continue-here; lessons page and sidebar entry
+- 275940d14 chore(indusk-mcp): mark refusalFor with the a-session-belongs-to-its-plan token so the promise has a code site to confirm against
+- 62fcfd03b chore(indusk): lesson — cap-promise-needs-an-aggregate-invariant-row
+- 753d50c8e chore(indusk): lesson — plan-docs-edit-with-gated-tools
+- f4f9338b3 docs(sessions): a decided request shows its outcome; planning runs acceptEdits
+- 5c5f717f6 docs(indusk-admin): a view reads a request's decision from its decided event
+- ec0838ddb style(indusk-admin): biome format the decided-event readers
+- fb24d213d fix(indusk-admin): startBuild admits the build under the cap and frees its place when the build ends
+- 2da84d7b8 fix(indusk-mcp): an admitted build holds its place under the cap until it ends — between steps too — so pressing Build on several plans cannot exceed sessions.max
+- 6aba2eea4 feat(indusk-admin): the panel and the thread read a request's decided event
+- 32643a736 docs(indusk-mcp): decided events recorded by the manager
+- c792a7c00 docs(sessions): every request is recorded with how it was decided
+- 67410585b refactor(session): one decideByRule for the confined and planning paths
+- 71a6119b3 feat(session): the manager records a decided event for every request
+- a90e1d05d test(decided-prompts-stay-closed): panel and thread halves of A1-A4, A6, A7, A3 guard
+- 141270910 test(decided-prompts-stay-closed): package half of A1, A2, A5, A6, A7, red
+- 66db2a233 docs(admin-ui): the same-plan refusal offers Continue it here
+- 4f7d281e5 refactor(indusk-admin): the continuable refusal is one helper, refuseRunning, beside refuse — two routes produce it and the page reads it
+- f313b56b3 docs: a build holds its place under the cap from its first step to its last
+- 28a747e6e context(indusk-admin): an answer goes to the session that asked, found by its request
+- 961862019 refactor(indusk-admin): sessionThatAsked names the lookup of the question's session
+- 481b1a8ec fix(indusk-admin): startBuild checks the machine's cap once, before the build starts
+- 7c5007de3 fix(indusk-admin): an answer goes to the session that asked it, found by its request; words go to the planning session
+- e1dea8c5f feat(indusk-mcp): a build's step sessions are not refused by the cap; capRefusal names the machine's cap
+- 3343d1779 test(indusk-admin): A13 and A14 RED — an answer reaches the asking session; a build at the cap is refused before it starts
+- e9fe6d589 test(indusk-mcp): A14 RED — a build's next step is not refused by the cap, a plain start is, the same-plan rule holds
+- c0ae46b56 fix(indusk-admin): a draft's second conversation uses the same plain refusal and hands back the running id
+- 6fc17ab02 refactor(indusk-mcp): the same-plan refusal's wording is defined once, alreadyRunningOnThisPlan
+- 9aab50694 chore(indusk): lesson — a-missing-page-is-a-fact-about-the-project-not-a-check-failure
+- b2837f903 chore(indusk): lesson — a-text-guard-must-treat-shell-substitution-as-already-executed-not-text-to-read
+- 1ddb9db47 merge main into plan/cockpit-redraw before landing
+- d6eb5a420 Merge main into plan/component-content before landing
+- c3c524b0b plan(component-content): retrospective, archive, promises confirmed
+- c3513fc94 chore(indusk): lesson — a-self-closing-custom-element-in-html-is-not-self-closing-readers-must-end-it-at-its-start-tag
+- 4eb7fbb15 chore(indusk): lesson — a-path-recorded-from-a-live-render-is-invalid-against-a-serialized-snapshot-record-node-counts-and-neighbour-words
+- 610df9a19 chore(indusk): lesson — a-promise-worded-as-a-refusal-is-enforced-where-a-person-acts-not-only-where-a-command-reports
+- acaabf76c merge main into plan/cockpit-redraw before landing
+- 3fd320229 chore(indusk): lesson — html-self-closing-custom-elements
+- a4617fc96 chore(indusk): lesson — paths-across-renders-need-the-same-tree
+- 004bab4f6 feat(indusk-admin): the same-plan refusal offers Continue it here, attaching to the running session
+- 3ccc1a8ad feat(indusk-mcp): a second session on the same plan says so plainly and carries the running one, so the page can offer to continue it
+- a88565482 chore(indusk): lesson — never-stop-a-process-you-did-not-start-stop-your-own-by-pid
+- e7f6510af chore(indusk): lesson — a-new-foundation-token-reopens-every-look-in-the-app-budget-a-full-reapproval-round
+- 7c47e29a6 chore(indusk): lesson — a-plan-that-changes-screens-json-runs-the-whole-look-check-against-the-real-project
+- dce4cf9ec context: watcher heartbeat moves from the root to lib/promises, where it applies (periodic pass at cockpit-redraw's close)
+- 4558e3495 docs(cockpit-redraw): plans.md names the guard's new refusals, the brief page's brief.empty, the decision page as built and archived
+- 6627dbcc1 chore(indusk): lesson — a-look-check-only-covers-the-states-its-probe-can-reach
+- 47e5c8ca8 chore(indusk): lesson — a-promise-held-only-by-a-prompt-instruction-is-not-held
+- 6430de955 docs: place shape, content-given-twice, and the two risks the falsification found
+- 0df69b95d looks: a place records the words around a property and the nodes it spans; self-closing and malformed content handled (A12-A17)
+- 24b3119d6 looks: the lint holds placed content to words and components; docs and the decision page
+- 27e6034d3 sessions-per-plan: document sessions per plan, the cap and the changelog entry
+- c5ef31c93 sessions-per-plan: admin rule - a route asks for its own plan's session
+- 24989d7aa looks: the render step records where each state's fillable properties land
+- a781a2b46 sessions-per-plan: the sessions route answers for one plan, and its clients name theirs
+- 1b07b659d docs(looks): a look whose page answers 404 is reported unchecked and the check goes on
+- 57fdc6d12 context(admin): the fixture-plan screens read unchecked 404 against the real project — folded into the existing entry, 73 bytes smaller
+- 16351e43c plan(cockpit-redraw): Build Phase 6 shape — A18 imports LookNotHere directly now that it exists; check.ts reviewed and left as-is with its reason
+- ace784c30 looks: compose fills a placed component's own words at the paths its state records
+- 9fe4a3aa0 sessions-per-plan: decisions read the plan's own session, and every session's question
+- 157eb8684 sessions-per-plan: a draft's routes ask for the draft's own session
+- b3eb76a10 sessions-per-plan: the build host asks for its own plan's build session
+- aa77c2861 sessions-per-plan: decision page and sidebar entry
+- a09f5cf99 sessions-per-plan: the session owner rule and cap where the manager is written
+- b5972558d sessions-per-plan: name the start refusals (Shape finding)
+- efb555f5a sessions-per-plan: export the cap reader through ./session
+- b7159a356 sessions-per-plan: a session is owned by its plan and kind, and capped per machine
+- 2a45c0633 look-row stories named mockup and story, matching their mockups
+- 7b204d847 sessions-per-plan: readSessionsMax, the machine's cap read from the InDusk home
+- 73ca1b5b8 plan(component-content): Test Phase 1 — A1-A11 authored, red on their own assertions
+- c1a9c43c3 test(sessions-per-plan): A4-A6 red against a real manager installed where the admin reads it
+- 74a52b240 test(sessions-per-plan): A1-A3, A8-A11 red against the real SessionManager
+- 91e06a2ca Merge branch 'main' into plan/new-project-flow
+- ba0688b62 docs(decisions): new-project-flow links point at the archive
+- 1e673d112 test(indusk-admin): promise tokens on the files new-project-flow's rows name
+- 1e069362a test(indusk-mcp): promise tokens on the files new-project-flow's rows name
+- b447fd08e chore(indusk): lesson — confine-an-agent-session-to-its-job-when-it-is-first-given-one
+- 4e4ea4517 context(indusk-mcp): the Shape-vs-cleanup split lives in the planning rules, with its decision pointer
+- f23e8e967 chore(indusk): lesson — a-promise-held-by-a-prompt-is-not-held
+- aefae2784 docs(new-project): a tool request outside the folder is refused, never asked — the guide said otherwise
+- 28c18b82a docs: the New Project Flow decision in the sidebar
+- de7795526 test(indusk-mcp): the creation-heavy new-project tests get 20s — each creation spawns indusk init
+- fb4a09d85 refactor(admin): the GitHub offer is its own component (Shape finding)
+- 5bcaeee2a test(admin): A38 expects the saved proposal's remote to carry visibility
+- 536bd8c18 docs: the GitHub offer - the account it uses, gh auth login, private or public
+- 5dbffc6d6 feat(looks): a page that answers 404 is unchecked, not the end of the run
+- 5da4299f9 plan(cockpit-redraw): Build Phase 6 — A18 written RED: a look whose page answers 404 is unchecked, a 500 or refused connection still ends the run
+- 49290a7c6 feat(mcp): new_project.create carries new_project.remote_visibility
+- 9a5e5fd8b fix(admin): LookRow wraps names with the wrap-anywhere utility, not an arbitrary class
+- eb7bc57b4 feat(admin): the proposal's GitHub offer names the account and offers private or public
+- 1fef1dfea feat(mcp): a proposal's remote carries visibility; gh repo create gets --private or --public
+- 5d797e441 feat(mcp): githubAccount reads the active gh account through an injected runner
+- c6ba741e6 test(admin): A43 - the GitHub offer names the account, authored red
+- 7879280b2 plan(new-project-flow): Build Phase 8 - A44 authored red, phase opened
+- 0b8ed24d8 plan(cockpit-redraw): Build Phase 5 closed — A17 passing, admin CLAUDE.md names the plan-groups seam and the one width clamp, document gate skipped with the person's answer; impl completed
+- 0a7bf7031 plan(cockpit-redraw): Build Phase 5 — one clampNavWidth bounds the nav's width so a drag, a key step and a kept width cannot drift
+- a3b55e81f plan(cockpit-redraw): Build Phase 5 — plan-tree derivation moves to lib/plan-groups so it has a seam and PlanList only renders
+- 73ebb0f48 feat(indusk-admin): the pages report the looks they draw; the parent field is its own component (Shape)
+- e2745ef7f docs(indusk-docs): the parent set from the start page, the confined agent, the unticked GitHub box, the kind label on look rows
+- d8dd85143 refactor(indusk-mcp): the confined pattern check states its rule once (Shape)
+- e0e351b25 docs(hooks): the guard's reader exemption never covers a substitution; reapprovePlan refused by name
+- fa55f67ca fix(plan-page): a plan waiting only on an amendment reports plan.needs-you
+- 2123623d5 fix(nav-handle): a cancelled or capture-lost drag ends like a pointerup
+- 285dfc7fb fix(looks-guard): a reader that substitutes runs it, and reapprovePlan is refused by name
+- 08ce1da76 test(indusk-admin): the accept route test sends the proposal Create now sends
+- a7805076c test(indusk-admin): the parent route is among the admin-only routes checked by host
+- 2dbe2e91d feat(indusk-mcp): new_project.create carries tools_refused and parent_set_in_admin
+- b3066149f test(cockpit-redraw): A13-A16 red - substituted reapprove, reapprovePlan by name, cancelled drag, amendment-only wait
+- 04d0f7e6f feat(indusk-admin): every look row says whether it is a mockup or a story (A42)
+- c060c0378 feat(indusk-mcp): an unticked GitHub repository is recorded as declined (A41)
+- 4a1fc74e3 feat(indusk-mcp): creation checks what init installed and fails the install step when it is missing (A40)
+- 61e715e28 feat(indusk-mcp): a project conversation's agent is confined to its draft (A39)
+- df957e52f feat(indusk-admin): Create sends the proposal as the person saved it; the accept route stops the agent, saves it, then creates (A38)
+- d1c74ca5f feat(indusk-admin): the GitHub box opens unticked whatever the agent proposed (A37)
+- e06080894 feat(indusk-mcp): the project conversation's agent is told where new projects go (A36)
+- dcabc69ae feat(indusk-admin): the start page asks where new projects go and saves it (A35)
+- b46f3be91 test(indusk-admin): new-project-flow Build Phase 7 — A35, A37, A38, A42 written RED
+- 115258414 test(indusk-mcp): new-project-flow Build Phase 7 — A36, A39, A40, A41 written RED
+- 62ad22f04 fix(admin): PlanSession offers no Start until the running session has been looked up
+- b413a17a4 fix(admin): starting a session that is already running for this plan attaches to it instead of refusing
+- 62c8c4455 fix(admin): a finished turn says Turn done alone when its text is the reply above it
+- a402ecffc plan(new-project-flow): Build Phase 6 complete, A34 passing
+- cf5902acb refactor(admin): draftSession and stopDraftSession find a draft's agent once
+- 820504935 refactor(admin): useSessionEvents - one subscription for a running agent's events
+- e767a47ea test(admin): A34 RED - one subscription for a running agent's events
+- ddac4553c docs: the parent directory's two refusals and that creating ends the conversation's agent
+- 629c968f5 fix(mcp): the parent guard compares real paths and refuses a location inside a repository; refusals set new_project.refused
+- e5b118e14 fix(mcp): a repository cannot be named worktrees
+- c86366219 fix(admin): accepting stops the draft's running session before creation
+- 3de2e31f9 test(mcp): A31-A33 - symlink out of parent, inside a repository, a repo named worktrees (RED)
+- c164529ca test(admin): A30 - accepting stops the draft's session (RED)
+- 758ec97d8 fix(admin): Enter sends in the project conversation; Stop no longer sends the half-typed reply
+- bc2fe7102 fix(admin): a message that restarts the project agent shows at once, not after the next one
+- 76a836018 docs: Start launches the agent; the working, done and stopped dots
+- 120eb6736 docs(admin): the project conversation's turns have a status
+- f34eada0b fix(admin): the working dot's halo is the foundation's ring (held in dark)
+- f8ed69cf9 plan(cockpit-redraw): Build Phase 3 re-verified and re-shaped after brief.empty
+- 3d169a979 plan(cockpit-redraw): A10 names brief.empty and serves a plan with no brief
+- 87d40cf5a feat(admin): the brief page reports brief.empty for a plan with no brief file
+- 130935361 feat(admin): a plan with no brief shows the parts of its brief at 0 as plain rows, and an empty part is never a disclosure
+- 2e97ab41e fix(admin): NewProjectCreating's disabled action uses Button
+- 495258517 feat(plans): PlanParts says whether the plan has a brief file, apart from whether it is in the contract shape
+- 30eced7af chore(indusk): looks — paths and a seed that reach message.agent-working and agent-stopped
+- a7d937989 feat(admin): every agent bubble carries a status dot — working, done, stopped
+- 107c2e80d build(cockpit-redraw): an empty PartSection is a plain row with no arrow, and the three zero stories show it
+- c02cbea9e feat(admin): a new project's conversation opens on the thread with the agent running
+- 4d3fabd2a test(new-project-flow): A28 and A29 written red — Start launches the agent; every agent turn has a status
+- 0a72f97da build(cockpit-redraw): brief.empty drawn — a plan with no brief shows the parts of its brief at 0 — proposed, awaiting approval
+- be7e318d3 docs(new-project-flow): decision 9 published with what differs as built; changelog entry
+- 2c2a0bdb0 docs(new-project-flow): the conversation as a thread, what See more holds, the transcript kept in the draft; indusk new-project transcript
+- 3227929b6 docs(new-project-flow): admin CLAUDE.md — the project conversation renders a thread from turnsOf
+- e89b54354 refactor(new-project-flow): Shape — the page names the reply look state it draws
+- e5915cbc4 fix(new-project-flow): Message drops an arbitrary overflow-wrap class the looks lint refuses
+- 945960f63 feat(new-project-flow): createProject emits new_project.create from the draft's start, with the conversation figures read from the transcript
+- 79848a797 feat(new-project-flow): the project conversation prompt asks for a few sentences of Markdown and at most three questions at a time
+- 382371445 feat(new-project-flow): the admin appends a project session's events to the draft's transcript and the page reads it back when no agent runs; See more records a fold-opened line
+- 2101c0181 feat(new-project-flow): a project draft keeps transcript.jsonl; indusk new-project transcript prints it
+- 322e268f3 feat(new-project-flow): the project conversation renders as a thread of Message bubbles; questions and permissions answered in place, replies sent through say
+- 834564347 plan(cockpit-redraw): Build Phase 3 documented — the decision page, the brief page as drawn, the changelog; Forward Intelligence
+- 917b6f3b6 plan(cockpit-redraw): admin CLAUDE.md — the brief and plan pages are held to their looks and say which they draw
+- 04669671f plan(cockpit-redraw): Build Phase 3 Shape reviewed — the nav's look state is a named, tested rule
+- 170919547 fix(admin): a test's next dev builds into its own directory, so it runs beside a person's admin
+- d18c53ab3 feat(new-project-flow): Message gains agent-folded and agent-open, with stories and snapshots
+- 852346918 feat(new-project-flow): turnsOf reads a session's events as you/agent turns; the tool-input wording is shared with the session panel
+- 845291da2 test(new-project-flow): A23 turns from events, A24 folded reply, A25 waiting never folded, RED against stubs
+- 0ecb55994 test(new-project-flow): A26 transcript kept and discarded, A27 prompt asks for a short reply, RED
+- f17080c6a refactor(new-project-flow): createProject's documents step is three named functions (Shape finding)
+- 558765918 docs(new-project-flow): creation, the parent directory and the remote confirm; accept in the CLI reference; the admin as the first way to make a workbench; the ADR published; changelog
+- 0d42e6335 plan(cockpit-redraw): A10 serves a fixture plan in each condition; the per-state-path items checked
+- d0b114aaf fix(looks): the check gives a page up to 3s to go network-quiet, so a state set after hydration is read
+- 57b09589d fix(admin): LiveRefresh's hidden status line no longer carries a -1px margin the foundation does not hold
+- 8fca9d0c2 feat(new-project-flow): /api/new-projects/[id]/accept streams the steps; NewProjectCreating draws them and ends with the way in
+- 74dee32bd feat(new-project-flow): readCreation gives a page the steps a creation recorded in its draft
+- 4170b5725 feat(new-project-flow): indusk new-project accept makes the project, printing each step
+- bb935134e feat(new-project-flow): createProject makes the workbench, repository, worktrees folder, InDusk, founding brief and master plan
+- ea0947322 feat(admin): the plan and brief pages report the state they draw, from the plan's own facts, for the look check
+- 698f37577 feat(admin): the nav says which look it draws and takes its width from ?nav=, so a check that opens a fresh browser can reach nav.wide
+- 6e4dc6eed test(new-project-flow): A5 the creation shows each step and ends with a way in, RED against a stub
+- ded52046f plan(cockpit-redraw): A10 authored in the system tier, red on its own assertion — the nav, brief and plan pages report no look state
+- a0b5451c1 docs(new-project-flow): the proposal page, what can be turned off, declining a recommendation
+- 5871b279a context(new-project-flow): planning.documents_off in the planning rules; Shape reviewed for Build Phase 2
+- 8ded7ded4 feat(new-project-flow): /new/[id] shows the agent's proposal, every field changeable before Create
+- e337175d8 feat(new-project-flow): layout-tree, workflow-strip and recommendation, one implementation and a story per state
+- da2b6ee62 feat(new-project-flow): a proposal's recommendations carry the words the page shows
+- c19dc4de4 feat(new-project-flow): the admin's plan detail carries the turned-off documents the cockpit steps read
+- 4c97cd1cc feat(new-project-flow): a plan in a project with a document turned off reads it skipped, and the planner does not write it
+- 81b14a885 feat(new-project-flow): a config records declined recommendations and turned-off documents, and refuses a turn-off of the core
+- 92f1bf684 feat(new-project-flow): a project proposal is read and checked once, and accept refuses one that turns off the core
+- e3a60e0bc feat(looks): a screen can seed what its states need - paths per state, seed and unseed
+- 00a586ceb docs(new-project-flow): reference page for indusk new-project
+- 6c9264a5a context(new-project-flow): the admin writes a project only through indusk new-project
+- 60553e6ac refactor(new-project-flow): the add route sends the package's documentNotice; a guard that the admin writes a project conversation only through the package
+- ddfb638bf refactor(new-project-flow): the notice sent when a document arrives is the package's documentNotice (shape finding)
+- 9f3b4e5cf feat(new-project-flow): pages report the component states they draw (project-card, prompt-box, message, file-chip, knowledge-list)
+- 8fc39c40a style(new-project-flow): message and prompt-box measures as named classes, not arbitrary values
+- 93ba124df feat(new-project-flow): /new and /new/[id] pages, the five components, New project on the home grid
+- 2d1e7305e feat(new-project-flow): what the agent knows so far, read from the draft
+- 53c345c4c feat(new-project-flow): /api/new-projects create, talk, add and discard routes
+- e27ef2102 feat(new-project-flow): indusk new-project start, add, discard, parent; ./new-project export
+- b5858f75e style(new-project-flow): drop an unused import from parent.ts
+- 49cdbad74 feat(new-project-flow): the parent directory, in its own settings file
+- 9d126cc65 feat(new-project-flow): the new-project conversation prompt
+- b5b779e10 docs(admin-ui): the nav redrawn, its plan tree as drawn, and dragging its width
+- 49dd84106 feat(new-project-flow): add a document to a draft, reporting what changed
+- 1a7f0f4d4 docs(admin): the nav's width is the person's, per browser; its plan tree is drawn by nav.expanded
+- 6f808bf42 refactor(cockpit-redraw): NavHandle's key handler is a named function, its keyboard steps tested
+- 8000d7f76 feat(new-project-flow): project draft store under the InDusk home
+- 037273870 test(new-project-flow): A1 and A2 written, red
+- 40d6cc30f build(cockpit-redraw): the nav redrawn from the original cockpit — Paths folded and numbered, every plan with its stage
+- beec95bc5 test(new-project-flow): A20 holds a session whose plan is new-project:<id>
+- d0142506e build(cockpit-redraw): NavHandle stories default and dragging, rendered and proposed
+- f5ce503a3 build(cockpit-redraw): the nav's width is dragged, kept per browser and clamped to the foundation's two sizes
+- 920837698 test(new-project-flow): A12 a turned-off ADR reads skipped, red (reads missing)
+- df183d743 test(new-project-flow): A4, A6-A11, A13-A18, A21, A22 through the built CLI, red
+- f0bc94ead build(cockpit-redraw): --size-nav-max, the widest the nav drags
+- 5ae84ec24 docs(cli): plans reapprove is a person's; an agent's call is refused
+- f5a852df3 docs(hooks): the looks guard holds every person-only act, re-approval included
+- e5010a290 refactor(hooks): looks guard names its two refusal messages instead of branching on the reason
+- c551b1a48 feat(hooks): the looks guard refuses an agent's plans reapprove
+- c4971eb41 docs(cockpit-redraw): the brief page's look is being drawn
+- e4332d5d2 test(cockpit-redraw): Test Phase 1 shape review, biome format on CockpitFrame.test
+- d16203403 test(cockpit-redraw): promise tokens for A7 and A12 (A8, A9 already carry theirs)
+- 18456197a test(cockpit-redraw): A5-A6 an agent's plans reapprove and its route are refused, red today
+- 0aa42eaba test(cockpit-redraw): A1-A4 the nav's drag edge, red on the missing separator
+- e9939743f chore(indusk): lesson — a-session-must-not-touch-another-plans-branch-without-asking
+- d19f9ef87 chore(skills): resync the installed planner skill — the description: rule was added to the package's copy only
+- 4cdb4a990 fix(admin): the followed part's outline uses the foundation's border token, not a raw 2px
+- 34ce1c602 Merge branch 'main' into plan/brief-as-the-contract
+- 5dbe4a263 chore(indusk): lesson — anchor-a-document-insert-on-a-whole-line-never-the-first-match-of-a-heading-string
+- 8f1250417 chore(indusk): lesson — put-the-page-live-in-front-of-the-person-before-the-second-mockup-round
+- 9efca524f chore(indusk): lesson — ask-what-about-workbench-mode-of-every-gate-at-adr-time
+- f276c38e8 chore(indusk): lesson — a-cache-keyed-on-a-folders-mtime-serves-stale-text-after-an-in-place-edit
+- 5d36458c6 chore(indusk): lesson — measure-the-rendered-page-in-headless-chromium-before-restyling-a-layout
+- 9464a8bbf chore(indusk): lesson — a-planning-session-is-bounded-by-its-folder-through-path-decisions-not-a-prompt-per-write
+- 385da0fe0 chore(context): brief-as-the-contract closes in current.md; the root's workbench-sync gotcha moves to apps/indusk-mcp/CLAUDE.md
+- ddf107ad7 chore(indusk-mcp): promise tokens where brief-as-the-contract's rows and sites say they are
+- 9a9787b19 fix(indusk-mcp): the Looks rule is held at approval — the sweep over every plan no longer refuses one already approved (A37)
+- 8e3b9b1ca chore(indusk): lesson — a-gate-must-not-be-switched-off-by-a-file-its-subject-can-edit
+- 3d817773d docs: brief-as-the-contract as built — the brief page, the session's folder boundary, drafts; a brief's description
+- f683b8fb3 docs: workbench plans meet the looks checks, a Files Affected cell may hold several paths, an aged draft is archived; Build Phase 8 closed
+- e396b18ee context(hooks): the amendment refusal runs before any skip marker, and approved_brief changes only by reapprove
+- b4c4b2e38 plan(brief-as-the-contract): accept's looks checks name their parameter for what it is now
+- 548c3a924 plan(brief-as-the-contract): a draft that ages out is archived, and one with research keeps it
+- 7cf5a8480 plan(brief-as-the-contract): the amendment gate cannot be switched off from the impl
+- f19469916 plan(brief-as-the-contract): a Files Affected cell is read path by path
+- dd0ac2944 plan(brief-as-the-contract): workbench plans run the looks checks a normal plan does
+- 41f48a4ac plan(brief-as-the-contract): Build Phase 8 — A33–A36 written red; the phase block moved out of A34's row back into the checklist
+- bfb539514 context(admin): a plan route finds its plan through readPlanPage
+- 750398db0 docs: the admin overview describes the plan page as it is, not the sections it stopped drawing
+- 3f8338ff9 admin: the plan page's header comment names readPlanPage, not the lookup it moved
+- 3e2d811c1 indusk-mcp: remove newPlanPrompt, whose only caller went with the name-first route
+- 4b103f2d9 admin: the three plan routes find their plan through readPlanPage
+- afcafa75f admin: remove the plan-page tree no route renders since the page moved to its mockups
+- 488366d33 plan(brief-as-the-contract): A32 written — readPlanPage's test, red on its own assertion, before the extraction
+- 99cd8f4a7 docs: the brief page, the plan page's description and what a planning session asks
+- e179f7c0d context(admin): a plan's document is finished by documentFinished, never a compared status
+- 11ac0e4b3 style(admin): biome format for the Build Phase 6 tests; Shape reviewed
+- 2fad4959f fix(admin): the agent column is window-fitted only beside the brief
+- 3eaac8b57 fix(admin): a spike accepted from a draft lands on its plan page
+- f720156c6 fix(admin): an archived plan edited in place is read afresh
+- cf9bf8127 fix(admin): the plan page's incomplete-brief step follows the rail's finished rule
+- d85fa8c45 fix(indusk-mcp): a brief's description is read as YAML
+- 793be5f76 style(indusk-mcp): biome format for the session permission change
+- e232641a2 fix(indusk-mcp): planning sessions accept edits and are asked only outside their folder
+- cf4e904b5 test(indusk-admin): A28-A31 written red — incomplete-brief card, archive cache, spike landing, phone column
+- 18c20761b test(indusk-mcp): A26 and A27 written red — a planning session's folder boundary, a brief's YAML description
+- d67acec45 fix(admin): the brief page's agent column has room at its bottom
+- 6c90d69a5 chore(admin): WindowColumn's fit renamed fitToWindow — biome read it as a focused test
+- 38208e271 fix(admin): the brief page's agent column runs from the page's top to the window's bottom edge, and its conversation fills it
+- 4ce1b84c2 fix(admin): the brief page's agent column is 30% wide and the window's full height, ruled off from the brief
+- 11c8933c7 feat(indusk-mcp): a planning session asks nothing — bypassPermissions; a build is still judged in code
+- a39d4f98f fix(admin): the brief page's agent column is a fifth of the width; its controls wrap under the button in it
+- bbd22d89b fix(admin): the brief page's agent is a narrower column on the right (3 of 10), still fixed while the brief scrolls
+- b78f822df feat(admin): the brief page follows the agent — a look, promise or brief it writes is opened, centred and marked; the agent is a left column that stays while the brief scrolls
+- 8906853ae perf(admin): live refresh no longer renders each page twice or queues behind a slow one; archived plans read once per archive change
+- ead5a4308 feat(admin): an incomplete brief is the plan's current step — a halo card with Work on the brief, not a small link
+- 7165424b4 feat(admin): the Planning rail's steps link to their documents — Brief to the brief's own page
+- 4f0ecc0b5 feat(admin): the brief page's agent writes or tightens the plan's description
+- f367cb2d0 feat(indusk-mcp): a plan's description is the brief's description: field, one to three sentences the agent writes — never cut from the brief's prose
+- e7f76b6f8 fix(admin): the brief page always has its agent column — an approved plan's brief can be talked over too; a change waits as an amendment
+- eadd7d83f feat(admin): the brief is where a plan is written, the plan page where it is followed — agent in a column beside the brief's parts, the plan's description and brief state on its page, agents that wait to be asked
+- dea597e8b feat(indusk-mcp): plan parts carry the brief's opening and status — a first cut of the plan's description
+- 9620ee1df docs: a plan starts as a conversation — the decision, the briefs guide, plans start --from-draft, the changelog
+- 6b1890127 refactor(indusk-mcp): drafts' age rule and wording leave the store; the removed route's promise links follow it
+- 72e1424b3 test(admin): the landing page's way in is a New plan button that asks for nothing
+- 03a8d0112 refactor(admin): remove the name-first start route — a plan's name is asked where the conversation ends
+- d53a89c8f feat(admin): New opens a conversation, not a form — the draft page, its proposal to accept or edit, and the drafts list
+- 847b8ae03 feat(indusk-mcp): a draft's page reads the conversation so far from the package
+- e2ab18adc feat(indusk-mcp): a draft's conversation runs in the draft's own folder under the planner's rules
+- 954674cdf feat(indusk-mcp): plans start --from-draft makes the plan from a conversation and spends it
+- f32ac8894 feat(indusk-mcp): drafts — a conversation not yet kept is held in the project's home, aged out by archive-dead
+- b1e29bb1c test(brief-as-the-contract): A19, A20 and A21 authored and red — a draft is a plan's start, kept nowhere in the repository until accepted
+- ee0142ecd refactor(admin): Shape for Build Phase 4 — one tally for items done; the live-refresh comment beside what it explains
+- 9ff26af3c feat(admin): Documents rows open in place to the document rendered, not as links
+- e2ce31695 chore(indusk): lesson — in-the-cockpit-click-to-see-opens-in-place-not-a-new-page
+- e7856105a feat(admin): the plan page is status first, every other part collapsed — Promises, Expectations, Looks, Phases, Documents, History
+- 04de334b5 feat(admin): the plan page draws the approved History panel, a closed-by-default disclosure of the plan's recorded events
+- a41cfe06f context: the plan page draws only what its approved mockups draw
+- 63ebb482f chore(indusk): lesson — a-page-draws-what-its-approved-mockup-draws-and-nothing-else
+- 27c46af68 fix(looks): a story's frame draws in the app's type — the stories step writes the app's body rules as _base.css and the frame loads them
+- 77deb0746 context: the admin overview documents the plan page's parts, the amendment Approve and the review's evidence
+- eb152b68d context: the admin's rules say a plan's page shows its brief's parts from plans/parts and computes none, guarded by the single-definition test and plan-parts.test.tsx
+- 469277e5e context: Verification — A5, A10, A15 and A16 pass; the page tests that render the plan page mock the package's brief reader the browser cannot import, and the single-definition test names plans/parts
+- 22e2074ec context: prove in Chromium that a look the agent draws appears on the open plan page without a reload and is framed at each reference device
+- 76c71064d context: the review shows the test plan, the ADR and the impl as evidence beside the brief the person approved, with no control to sign them off
+- b5d14b0e1 context: the plan page draws its brief's promises, expectations and looks (a look in the Looks page's frame, proposed until approved there), shows a waiting amendment with Approve, and links the brief, so a person works the plan from one page
+- 7b0d53941 context: plans/parts reads a plan's promises, expectations, looks and waiting amendments in one place, so the plan page draws the brief's parts and computes none
+- 22639fa2f context: docs say what an amendment is, how plans amendments and plans reapprove work, and that accept waits on a new component's story
+- ba1451508 context: the lesson check-gates names now covers a waiting amendment — show it to the person, never reapprove on your own; Build Phase 3 Context checked
+- 6808a0624 context: hooks rules say an amendment, not an impl edit, is what stops a build, guarded by amendments.test.ts
+- fd2193738 context: amendments reads owned statements through one statementsFrom handed where each file comes from, so the approval-commit read and the disk read cannot drift (Shape)
+- 4c0e201cd context: plans accept holds a plan until each new component its brief names has an approved story and its screens compose it by name, so a component drawn as a mockup ends its plan held by its story (A25, ADR 4a)
+- 04ffd275f context: the cockpit's reapprove route answers only the person's browser on the admin's own page and calls the package's reapprovePlan, so an agent cannot approve its own amendment
+- caf53f432 context: indusk plans reapprove records the amended brief as approved and writes each amendment to the plan's history, and the review shows both versions — the person's way to let the build go on
+- 2d2e6a6bf context: check-gates refuses a build checkoff while an amendment waits on the person, asking indusk plans amendments; an impl with no approved_brief runs nothing, so plans approved before the field build as before
+- 871329fb3 context: amendmentsOf reads what the person approved from the approval commit and lists each change to the brief's three parts or an owned promise's statement — the fact the build stops on
+- 4f36a1e73 context: author A13 RED — an amendment's reapproval route answers only the person's browser; the route is a 501 stub so the red is the assertion, not a load error
+- 59f93c02f context: author A25 RED — plans accept must hold a plan until its new component's story is approved and its screens compose it by name (ADR 4a)
+- 309f1c043 context: A24 green; installed planner skill and planning rules resynced, and the plans reference no longer calls a story exempt
+- 15d44d720 context: the planner and the planning rules say a story is never named without a mockup — a new component is drawn as its own mockup, approved before the plan
+- 2ff2c7fc7 context: plans approve refuses a look its brief names that no one has drawn, so a placeholder name cannot carry a plan past approval (A24, ADR 4a)
+- 4f1f15d8e context: author A24 RED — approval must refuse a look its brief names that no one has drawn; the fixture draws badge.ok as its own mockup, the new-component form
+- 5600792ac context: docs for approve recording the brief and waiting on its mockups, and a look belonging to its plan
+- a6f2e9de2 context: lib/looks rule that an approval records its plan and the record stays append-only, guarded by A4 and A7
+- 680ee045b context: Shape review of Build Phase 2; name the unapproved-looks refusal so approvePlan reads as steps
+- 181cc4822 context: plans approve records the brief's hash and waits on the mockups the brief names; a brief edited since reads as changed (A8, A9)
+- 706cec11d context: the looks overview returns each approval's plan, so a plan's looks can be read by owner
+- ef5853622 context: an approval records the plan whose checkout made it, so a look is owned without a second registry (A4, A7)
+- 7af9ac7a4 context: author A7 RED at Build Phase 2 start, so the record's two-versions-and-plan claim fails on its assertion before the field exists
+- fcd82fff6 context: document the Looks section, the question and the two checks in the briefs guide so a person knows when a brief is refused
+- 9e051e913 context: the planning rules name the test that guards the looks rule, so the rule reaches the planner with its enforcer
+- 8e95cd271 context: Shape review of Build Phase 1; name lookGap instead of a nested ternary so the refusal reads as a sentence
+- ee038ae4c context: the planner, the brief template and the planning rules carry the Looks section and the question 'does this change how anything looks?', so a UI plan is asked before approval
+- 891fec797 context: plans accept refuses a brief saying None whose branch changed the interface, so the plan that changed more than it said is caught
+- f07829219 context: refuse at approval a plan that changes an app's interface with no look listed and no reason, so a UI change cannot reach review unlisted
+- d015211f5 context: parseBriefContract reads the Looks section so the check and the plan page see what the brief lists
+- beb792c05 test(brief-as-the-contract): author the regression guards A2, A6, A14, A22 and A23; trajectory states set
+- 257bc4321 test(brief-as-the-contract): author the red rows A1, A3, A4, A8, A9, A11, A12 and A18
+- 50fb15986 test(brief-as-the-contract): the brief-app fixture and its project helper
+- 514caf6d4 admin changes
+- 1b2436d0d Merge branch 'main' into plan/storybook-components
+- ee9c8c9ff chore(indusk): lesson — a-comparison-row-is-not-proven-until-a-case-makes-its-expected-side-non-empty
+- 6d950b74d looks: approvalOf carries the a-changed-component-reopens-its-mockups token — it is the code that keeps the promise
+- cc8b46822 chore(indusk): lesson — compare-the-first-rebuilt-screen-with-its-mockup-before-rebuilding-the-rest-and-give-contract-tests-their-own-server
+- 2560c47fa chore(indusk): lesson — what-a-person-approves-is-what-its-hash-binds-every-input-in-the-hash-and-the-frame-drawn-from-the-hashed-source
+- b1b7b5036 chore(indusk): lesson — restart-the-server-behind-an-endpoint-whose-writes-a-phase-changed-before-a-person-uses-it
+- c6f53d72d chore(indusk): lesson — two-subjects-sharing-one-telemetry-key-set-collide-silently-tag-the-kind
+- 46e5146d7 fix(promises): the-nav-fits-a-phone's site follows the drawer into CockpitFrame; a test comment no longer reads as a promise token
+- c632ff448 chore(indusk): lesson — comparison-test-needs-non-empty-companion
+- a38a593d7 docs(decisions): storybook-components as built — stylesheet binding, a story's Unapprove reopening its mockups, the story frame from the checkout's snapshot
+- aefa9e980 docs(looks): unimplemented component line and the look mark's kind attribute
+- 9ac30db4c context(looks): a story's check span carries kind, and a look's standing counts only its own kind
+- 95b6c17c0 admin: format the Uncovered list
+- a5d6e36ce looks: a story's check span carries indusk.look.kind, and a look's standing counts only runs of its own kind
+- a99d2363e admin: the Looks page's Uncovered list shows unimplemented components
+- 053f065c1 looks: coverage reports a component a mockup names that no file implements
+- 700f61705 plan(storybook-components): Build Phase 11 — A40 and A41 written, red on their own assertions
+- 2059f93c8 docs(looks): the admin calls approve and withdraw from looks/approve
+- 2a43aa5f6 context(looks): approve.ts is the write side; every looks hash is computed in mockups.ts
+- abdc29ca3 refactor(admin): name the unapprove subject type
+- 35ccb2632 refactor(admin): one SelectBox for the Looks page's list rows and cascade; LookDecision not extracted (the copies differ beyond props)
+- 60396a297 refactor(admin): one POST hook and one shown-body builder for the Looks page's buttons
+- 46b33e08a refactor(admin): one request reader for the approve and unapprove routes
+- cefd371b3 refactor(looks): storybookIds beside readCatalog replaces two identical loops
+- 1426720bd refactor(looks): one reader of data-component in markup.ts
+- 81027305a refactor(looks): one parse-and-throw for the package's JSON files — readJson and readJsonSync in mockups.ts
+- c1f531119 refactor(admin): the looks routes and tests import the write side from ./looks/approve
+- 2d8a1c10d refactor(looks): approvals.ts is the record and its reading; approve.ts the write side, behind ./looks/approve
+- 298354977 refactor(looks): one function per looks hash — sha256, snapshotHash, stylesheetHash in mockups.ts
+- 6e3511f97 test(admin): A39 written red — both looks routes read a request through one reader
+- 43d34438e test(looks): A37, A38 written red — one hash function, the write side its own subpath
+- 1f5c3ee03 chore(indusk): lesson — restart-the-cockpit-after-the-package-it-imports-is-rebuilt-a-stale-server-writes-records-the-new-rules-never-count
+- 35d5750db docs: what a story's approval binds, a story's Unapprove reopening its mockups, group Approve's order, the story frame drawn from the checkout's snapshot
+- 374f6cb4b context(indusk-mcp): looks — a story's approval binds its stylesheet; a mockup needs every story it composes approved
+- 6212a0e43 fix(indusk-admin): every story row opens, id or not
+- 818a4845b refactor(indusk-admin): the route asks the package's componentsHashesMissing
+- a29cadd10 refactor(indusk-mcp): componentsHashesMissing — one Approve's pre-check in the package
+- a7d81e5bc style(indusk-admin): biome format on Build Phase 9's tests
+- 69719f745 style(indusk-mcp): biome format on Build Phase 9's tests
+- b9fb9c670 fix(indusk-mcp): a stylesheet newer than the Storybook build rebuilds it
+- 64d1511e0 fix(indusk-admin): the story frame is the selected checkout's snapshot, not the admin's /storybook build
+- 5a27285fa feat(indusk-mcp): a story's view carries its snapshot as a framable document
+- 54249fd3b fix(indusk-admin): the route refuses a composed mockup sent without its componentsHash, 400, before approving anything
+- e9cfa70c4 fix(indusk-mcp): a composed mockup is approved only with the componentsHash it was shown at
+- 2148d156a fix(indusk-admin): a group Approve records the stories before the mockups that compose them
+- 9e5704167 fix(indusk-mcp): a mockup reads proposed while a story it composes is not approved
+- 85f8c6116 fix(indusk-admin): the route passes a story's stylesheet hash to the package
+- 9ce96ff70 fix(indusk-admin): a story's Approve sends its component's stylesheet hash
+- 837304db0 fix(indusk-mcp): a story's approval binds its component's stylesheet
+- 375618b2a test(indusk-admin): A33, A34, A35 red — group Approve order, componentsHash required by the route, the story frame drawn from the checkout's snapshot
+- f841328b3 test(indusk-mcp): A31, A32, A34, A36 red — a story's approval binds its stylesheet, an Unapproved story reopens its mockups, componentsHash required, CSS refreshes the Storybook build
+- 1f05fe7b6 chore(indusk): lesson — a-marker-count-reports-a-screen-covered-while-its-content-sits-unmarked-inside-a-frame-component
+- a3e536718 build(storybook-components): Build Phase 8 Shape — the promise page's tiles are three; one test change for Sandy
+- f20619029 fix(looks): the lint refuses a shadow assembled from other tokens
+- 641812df4 build(storybook-components): the needs-you ring is a foundation token, --shadow-ring
+- 7ecf87c3e fix(looks): check opens stories eight at a time, waits for a story to draw, and names a look that times out
+- 509f92188 docs(storybook-components): the decision published, components before matching in the guide, the rebuilt pages, the changelog
+- 95b0c23e6 build(storybook-components): the plan page is RailGroup and Step beside a DecisionCard, with its status card
+- d52b4010b build(storybook-components): the promise page is Badge, DecisionCard, Stat, Timeline and Box
+- 4ebfd5c08 build(storybook-components): showOf names how the Looks page reads ?show=, beside the Show type
+- 6ce06c38f docs(admin): the nav, the dashboard and the Looks page are drawn from components
+- 3067d3f43 build(storybook-components): looksListed names what the list draws, sort and filter together
+- 2ff0ba2ca build(storybook-components): the Looks page is LookRow, DeviceChoice and DeviceFrame, with an Unapproved filter and the checkout it reads
+- 108dc5488 looks: proposedCount and countedCheckouts say how many looks wait in each checkout
+- 27ca6ebd2 build(storybook-components): the promises dashboard is SummaryBar and PromiseRow, with the empty state
+- b82f90216 build(storybook-components): the cockpit nav is Shell, Nav, NavGroup, PlanRow and ViewLink
+- 62c12e5bf docs(guide): components and stories - snapshots, stylesheets, composed mockups, approval and Unapprove
+- 2f4e0892e docs(admin): a composed component must draw as its story does, styles generated and unlayered
+- 8450b3823 refactor(looks): the render step's per-component stylesheet block is writeStylesheets
+- 6e5f21342 fix(looks): the Looks mockups' nav has Looks as the current view, not Promises
+- a6db60b1b fix(looks): a look's name is painted whole beside its chip, in LookRow and the Looks page's list column
+- 4a000bc5c fix(looks): a component whose every story is approved is covered though no mockup names it
+- 37c631aeb test(looks): A2 reads the mockups composed, not a count of nineteen
+- e0e5fa6b7 fix(looks): composed components draw as their stories do — sheets unlayered, marker rules kept
+- 43f3d404e test(looks): A30 compares each composed component's computed styles with its story's
+- e1da7add2 feat(looks): the cockpit's Unapprove — route, buttons, and the guard that keeps it a person's
+- d610005df feat(looks): withdraw — a person's Unapprove ends an approval, append-only
+- 6e6994e22 test(storybook-components): A27-A29 — an approval a person made can be taken back
+- d1f65631a build(storybook-components): the value check reads each component's stylesheet by the rule a mockup's own styles are read by
+- b45ed5924 build(storybook-components): the composed document inlines each component's stylesheet and the approval binds it
+- 31ce9003a build(storybook-components): the render step writes each component's stylesheet, compiled rules resolved to foundation tokens
+- 7ea97b777 test(storybook-components): A25 and A26 authored red — a composed mockup carries each component's own stylesheet, a changed one reopens its mockups
+- 85b6b3179 build(storybook-components): Looks toolbar, uncovered list and frame fitting each in their own unit; component conventions and the admin rule
+- 1ceea6d05 build(storybook-components): Storybook follows the admin's colour scheme with Light and Dark on request; select all and approve a group of stories
+- 50a3666a3 build(storybook-components): Show mockups, components or all; the checkout read is labelled as a source, and every choice survives the others
+- 49d1c101e build(storybook-components): a story is framed at its component's size, a device on request; a cascade view beside the list
+- 9cd839c31 build(storybook-components): Looks page lists left and scrolls alone, the open look stays in a stable stage, a bottom sheet on a phone
+- 0e8a99db8 build(storybook-components): components use named grid and nav classes, not bracket values
+- d1711691d build(storybook-components): the ten unmarked components built from their mockup markup, a story per state
+- 77a1a3e6c build(storybook-components): the nine marked components each in one file with a story per state
+- 762292911 docs(storybook-components): components on the Looks page, story approval, stories in looks check
+- e19cde482 context(storybook-components): stories are shown from the served /storybook and approved by snapshot hash
+- c8f136042 build(storybook-components): Shape — what the page showed is read by requestsOf, not inline in POST
+- 254304fee build(storybook-components): Shape — the story half of checkApp is checkStories
+- db5bc7207 build(storybook-components): Build Phase 4 verification green — A7, A18, A19 pass in the system tier
+- f5d465d8b feat(admin): components and stories on the Looks page, story Approve by snapshot hash
+- 0a017c763 feat(looks): indusk looks check opens each approved story in the served Storybook
+- 5d0315617 test(storybook-components): A7, A18, A19 authored for Build Phase 4 — components in the cockpit
+- decf4e014 context(storybook-components): a mockup is read composed — rule in a nested looks/CLAUDE.md, the mcp one being over budget
+- f81d292e1 docs(storybook-components): composed mockups, indusk-new-components, story approvals and a changed component reopening its mockups
+- c795f7967 build(storybook-components): Shape — appendEntry is told held or add, not an entry it must recognise by identity
+- 4b6573ec4 build(storybook-components): coverage reports each story no person has approved as uncovered
+- 268ec7d29 build(storybook-components): approvals bind componentsHash and approve stories; a changed component reopens its mockups by name
+- 11b6b0eaa build(storybook-components): the lint refuses a component drawn in a mockup unless declared new, and lists it as needing a story
+- 55033c736 build(storybook-components): looks/compose — a mockup is read composed of its components' snapshots, and its hash binds what is shown
+- 60fc5d32a test(storybook-components): A12 authored red — a reopened mockup approved again with its new componentsHash reads approved
+- c49c148d0 docs(storybook-components): indusk looks stories, snapshots, the catalog and the scan's two findings
+- fd38c89fe context(storybook-components): the admin's rule — one marked file per component, the catalog to read first
+- 5e5ddb959 build(storybook-components): Shape — the catalog decision is its own tested module, the runner config a named step
+- 849e6424e build(storybook-components): the lint names a component the catalog omits and a state no story covers
+- b99e0768c build(storybook-components): indusk looks stories — each story rendered once to a snapshot, the catalog beside the mockups
+- b86840e8e build(storybook-components): looks/components — one file per marked component, the scan the lint and the audit share
+- 2ad2fa98d docs(storybook-components): Storybook in the admin — /storybook and how to run it locally
+- 7c9e267ce context(storybook-components): root Key Decision and the admin's Storybook rule
+- 637010261 build(storybook-components): Shape — name the shared @ alias once in the admin's vitest config
+- df6c0e4ee build(storybook-components): A5 and A21 pass; the system config unsets pnpm's nested verify-deps flag
+- b7285e925 build(storybook-components): Badge stories, one per variant; note the badge/chip mismatch
+- e21036dcd build(storybook-components): build:storybook runs before next build, output git-ignored
+- c94dcea84 build(storybook-components): the storybook vitest project, defined only for a system-tier run
+- 936ca85be build(storybook-components): .storybook config — nextjs-vite, components manifest, themes on data-theme
+- 3dbdbe38b build(storybook-components): Storybook 10.6.0 dependencies in the admin, pinned exact
+- 2225f508f test(storybook-components): A21 — story tests are the system tier's, never the everyday suite
+- 4ada54e44 test(storybook-components): A5, A13 — Storybook stories and the catalog, in the admin's system tier
+- 466845b0d test(storybook-components): A2 — the admin implements all nineteen components its mockups name
+- 8bc43e77d test(storybook-components): A1, A3, A4, A8-A11, A14-A17 through indusk looks, red on their own assertions
+- 6a44bd440 test(storybook-components): components-app fixture — two implementations of badge, a raw card, composed and drawn mockups, a catalog and a record
+- f0887abef chore(indusk): lesson — a-promises-premise-is-believed-because-the-pieces-exist-verify-what-they-actually-do
+- 07deb84d1 chore(indusk): lesson — measure-a-promises-premise-before-approving-not-after
+- 8f6d8f1f3 Merge branch 'main' into plan/untrack-mcp-json
+- 98cb67cce chore(indusk): lesson — run-the-commands-a-promise-names-against-a-bare-clone-before-accepting-the-brief
+- a530958ad chore(indusk): lesson — untracking-a-file-moves-its-provisioning-onto-every-path-that-makes-a-checkout
+- 267d587d0 plan(untrack-mcp-json): retrospective, promises confirmed
+- 6ce30c10f fix(mcp-config): a file the daemon creates names indusk; a new plan worktree gets the trunk's .mcp.json
+- 3b8e51a83 test(mcp-config): T7, T8 authored red — daemon-created file, new worktrees
+- af433b0bb Merge branch 'main' into plan/ui-promises
+- 4dd7abc12 test(indusk-admin): looks page test helpers live in __tests__/helpers
+- b446c16b6 fix(update): .mcp.json is untracked; update writes one naming the indusk server when a checkout has none
+- e68a1aa10 chore(indusk): lesson — a-published-decision-page-says-what-was-built-and-marks-the-rest-planned
+- 7ae9661de chore(indusk): lesson — a-live-check-row-that-names-a-surface-is-read-on-that-surface
+- 20cb8af32 chore(indusk): lesson — plan-how-a-page-reports-its-state-before-declaring-states-and-drawing-mockups
+- e46abb5d9 chore(indusk): lesson — a-failing-check-named-outside-this-phase-is-fixed-in-the-phase-that-caused-it
+- 748e011f7 Merge main into plan/ui-promises
+- c95755459 plan(ui-promises): retrospective, promises confirmed enforced, archived
+- 6d96bb994 docs(ui-promises): sidebar entries for the guide, the looks reference and the decision; the decision page says the check runs on demand only and coverage reads declared screens only
+- 5ab01c963 context: move the display-names rule from the root to indusk-mcp's CLAUDE.md
+- 72e35cf68 chore(indusk): lesson — an-agent-never-clicks-approve-through-a-browser-tool-either
+- c0e5691d4 docs(ui-promises): where each lint rule lives, under the looks lint section
+- ba451c8aa context(ui-promises): the lint is three modules and a new rule gets its own
+- d33074e0d plan(ui-promises): Build Phase 7 — verification run, Shape reviewed, A38 and A39 passing
+- 0e4d32958 admin looks tests: the approve route's A29 and A30 in their own file, the fixture helpers shared
+- 6af1d4b0e test(update): T1–T3, T5 authored; T4 blocked (no built-in extension declares a server to add), T6 deferred
+- 10c9d995a looks tests: the lint-rule describes in their own file, the shared helpers in one
+- baa361ab8 promises: a look's standing in its own module beside promise standing
+- 93aae0de8 looks: the raw-value rule and the lint's shared types in their own modules
+- 95794b3aa looks: the Tailwind class rule in its own module
+- a6c2a7432 docs(ui-promises): the widened rule, what an approval binds, unchecked and the dark scheme; the ADR's approval guarantee restated to what is enforced; Build Phase 6 Forward Intelligence
+- dbea76bfc context(ui-promises): the approval guard is a tripwire over Write, Edit and Bash; the approve route takes the hashes shown and a browser-set header
+- 9b2b8fd13 looks: Shape — the guard's redirect pattern, the lint's cssFindings and findingOf, and the dashboard's look state named
+- 6354d973e looks: a shadow written short reads as the browser computes it, and the check's summary counts unchecked — both found opening the admin's dark scheme
+- d1feca320 looks: the Looks page reads a project that is not a git checkout as its own checkout, not a 500 — readRecord refuses outside git (found rerunning A15/A16)
+- e7049b701 looks: the dark scheme is opened — a foundation that names dark values is checked in both schemes, a look names its scheme (phone/dark), and a scheme the page did not draw is unchecked
+- 6229ae19e looks: a screen state is held only when the page says it drew it — data-look-state, judged in judgeLook; unchecked names why; the admin reports its Looks and dashboard states
+- 0ad896bd6 looks: an approval binds the declarations the check trusts — devices, ignore and sources; an entry without them reads proposed, so the admin's eleven need a person's re-approval
+- 249a2bab8 looks: coverage reads a mockup's components off its elements, and lists a source's run-time data-component as unresolved at its file and line — never ignored
+- 444ade331 looks: a mockup is self-contained — external-reference for a <link>, an @import, an <img> or a url() that is not its own; mockups read by parse5 (looks/markup)
+- 70901069d looks: the lint reaches a raw value behind a function, in a fallback, in a box size or border, and in a custom property — indusk/no-literal-value over postcss-value-parser; min-/max- sizes left out and named
+- f0774940a looks: the lint refuses a foundation token redefined in a mockup or an app stylesheet — redefined-token, outside the generated file alone
+- bfe03774a looks: an approval binds the mockup the person was shown — approve refuses a changed mockup naming both hashes, and the Looks page sends each mockup's hash, one per mockup in a group
+- 1102dc56f admin: the approve route answers only a browser on the admin's page — Sec-Fetch-Site: same-origin on top of adminOnly, which a local process passes by setting Host and Origin
+- 205841218 hooks: looks-approval-guard also refuses a Bash write to approved.json and a call to the approve route — a tripwire, registered under Bash as trunk-guard is
+- a9520a455 test(ui-promises): Build Phase 6 red — A28–A37 authored, each failing on its own assertion
+- 8e2f32421 chore(indusk): lesson — a-value-check-that-says-held-has-not-seen-the-layout
+- 5aa33c458 plan(ui-promises): Build Phase 5 closed — A9 and A21 passing; the cockpit held to its approved mockups
+- c671da0c8 admin: restyled onto the cockpit foundation; Typography plugin replaced by a token .prose
+- af8f8075d looks: tokens command, and a check that reads what the browser means
+- ab2b93d3b looks: group approval — select proposed mockups and approve them as the person who clicked
+- 290f15996 chore(indusk): lesson — a-mockup-is-approved-in-the-checkout-it-is-worked-in
+- 982f0c139 looks: a mockup is approved in the checkout it is worked in, not on main
+- eaa4db043 looks: a token names its dark value beside the light one; generateCss emits the dark scheme
+- d15ee8140 docs(admin-ui): the Looks page, devices, Approve and the foundation it binds, uncovered, looks on the dashboard and in the nav's count
+- 2306fc242 context(indusk-admin): a look's state is read from promises/standing and looks/*, never computed in the admin — guarded by cockpit-single-definition.test.ts gaining approvalOf, coverageOf, verdict, lookStandingOf
+- 01a8ba21b looks: Shape — looksSection names the editor panel's Looks list beside card and row
+- 39b72cf68 looks: Shape — OpenMockupView names the open mockup (its size, Approve and the frame) apart from the list
+- 98e9726da looks: Shape — newestRunSince and lookStandingFor name the look rule in promises/standing, with a test on the rule
+- 8e30a1909 looks: biome format on the phase's files; an unused order map removed from promises/standing
+- dc4e856ef looks: the nav gains Looks under Promises
+- da9c35dca looks: each screen x state x device a row in promises/standing — the dashboard lists broken looks first, the nav counts them, the editor's health line carries them
+- f41f04625 looks: Approve — POST /api/looks/[app]/approve records the person and commits on main; an approval of a foundation the person was not shown is refused
+- cc1a452d4 looks: the cockpit's Looks page — each app's mockups by approval, a link per reference device, the open mockup in a frame at that device's size, the uncovered parts
+- cf844718f plan(ui-promises): Build Phase 4 tests authored RED — A1 cockpit half, A2, A13, A14 (looks.test.tsx), A15, A16 (admin system tier), A23, A26 (dashboard-looks), A24 (editor)
+- 6b07a1bf6 Merge branch 'main' into plan/browser-template-claims
+- a52f63507 chore(indusk): lesson — an-audit-finding-is-a-lead-evaluate-the-shipped-code-before-acting-on-it
+- c2982167e chore(indusk): lesson — a-guard-test-over-prose-must-be-run-against-a-reworded-violation
+- 2afdf61a1 chore(indusk): lesson — a-same-way-clause-in-a-promise-is-a-conjunction-over-every-input-class-give-each-class-a-row
+- 5f5c1852d fix(templates): a query or fragment on an entry is ignored for pattern entries too; header comment matches the rules
+- 09a0d7b49 test(templates): T8 authored red — a query on a pattern entry
+- 90431aebf docs(looks): indusk looks check — the two checks and what a broken line names
+- 0d0508fe9 context(indusk-mcp): a look's verdict is decided in looks/verdict; the browser only measures — guarded by verdict.test.ts
+- d72f96b2d looks: Shape — lookLines names the check's output grammar, LookTarget names the screen state to open
+- 9b8ea7c25 looks: the browser contract test joins the system tier
+- ec1710473 looks: indusk looks check <app> [--url] — held or broken per screen state and device, each look a span
+- 30f1056b3 looks: check — playwright-core opens each approved screen at each device, measures :root tokens and element properties, verdict decides
+- c1d6a7b8a looks: report — one span per screen x state x device through the promise mark's attributes
+- fe9671d4b looks: verdict — a pure function of approved, runtime and measured values, held or broken naming token or element
+- 936807be4 plan(ui-promises): Build Phase 3 tests authored RED — A17 verdict, A22 report, A18–A20 browser contract
+- 45114773d fix(templates): an entry's path is compared as written; docs guard flags a reworded claim; promise code site
+- d7018d63d test(templates): T6, T7 authored red — path case, reworded docs claim
+- 70a9b052c chore(indusk): lesson — a-mockup-is-approved-only-through-the-cockpit
+- 8ef8eec76 docs(looks): status, coverage, approval bound to hashes, why approve is the cockpit's, the guard hook
+- 2f90c6129 context(hooks): looks-approval-guard — a mockup is approved only through the cockpit; guarded by looks-approval-guard.test.ts
+- a90c7ec87 looks: Shape — coverageOf composes uncoveredScreens and uncoveredComponents; the status grammar named statusLine
+- 0502c753e hooks: looks-approval-guard refuses an agent's Write or Edit to an app's approved.json, naming the cockpit's Approve; registered with the PreToolUse Edit|Write hooks, installed here, recorded in the guide's hook table and the Dawn keep/shed record
+- de7f2005b looks: indusk looks status and coverage; indusk looks approve refuses with exit 2, naming the cockpit's Approve
+- 9d2c3b3be looks: coverage — declared screens and states without an approved mockup, and rendered data-component names none shows; the source walk moves to mockups.ts for lint and coverage both
+- cceb491b3 looks: approvals bound to the mockup's and the foundation's content hashes; approve commits the record on main through the notes writer
+- 7a336230d plan(ui-promises): Build Phase 2 opened — A3's hook half authored RED (looks-approval-guard.test.ts), the phase-start boundary recorded
+- 833c68997 looks: lintApp split into mockup and source units; root Key Decision and the lint reference page
+- 389999e40 looks: foundation reader, mockup reader, no-raw-value lint and `indusk looks lint` — the rule that holds every visual value to the foundation
+- e8ac6422c plan(ui-promises): Test Phase 1 closed — register reviewed (hook test moved off the shipped hooks/ dir), Shape finding worked, forward intelligence
+- baac7010c plan(ui-promises): Test Phase 1 — the looks CLI rows RED on the fixture, A25 guard, A27 confirmed
+- 64a1e1f0c plan(ui-promises): Test Phase 1 fixture app — a demo foundation, four mockups, a record with one true and one stale hash, an app with raw values
+- 107c1f971 fix(templates): a propagation entry covers what it names; the docs say only what the template does
+- ce9138ff6 Merge main into plan/fix-opens-claude-tab
+- a892ec301 test(templates): T1–T5 authored — entry path, default port, async limit, docs claim
+- a9cd9b639 feat(vscode-extension): Fix with Claude logs what the editor reported and the route it took (InDusk output channel)
+- 25e4069ac merge main into plan/plan-cockpit
+- be3b6c9ec plans/steps and promises/fix use the one document-label and Jaeger-url definitions (plan-cockpit, caught by the landing run)
+- d745858f8 chore(indusk): lesson — phase-verification-runs-the-budget-test-and-a-replaced-view-is-deleted-in-the-same-phase
+- 33cbdf9f9 chore(indusk): lesson — promise-token-one-name-per-line-and-a-state-promise-needs-a-code-site
+- 05fbbfc20 chore(indusk): lesson — one-fact-feeding-several-surfaces-is-tested-across-them-not-per-fixture
+- 2f9355595 plan(plan-cockpit): retrospective, promises confirmed, archived
+- ce0109e1a promises: tokens one per line; the nav's sites carry theirs (plan-cockpit confirm)
+- 4f95942da admin: remove the heard reader nothing calls; the holding-badge pin follows the header (plan-cockpit Build Phase 8)
+- 6520119d5 plans/history: the commit subject uses the notes writer's one-line helper (plan-cockpit Build Phase 8)
+- 24c1a2826 admin: the plan page's header is its own component (plan-cockpit Build Phase 8)
+- dfed542ad admin: drop a stray import from the retargeted heard test (plan-cockpit)
+- 031cc0742 admin: one stamp for a time, replacing seven copies (plan-cockpit A43)
+- 5b6d64283 chore(indusk): lesson — a-scaffold-template-nobody-loads-in-ci-rots-silently
+- d5846f86a admin: remove the dashboard table nothing renders; its tests retargeted to the dashboard (plan-cockpit Build Phase 8)
+- 293ab5af6 Merge branch 'main' into plan/browser-telemetry-leftovers
+- 518b14e88 feat(browser-telemetry-leftovers): act on the audit — XHR propagation, Node/Python scaffold lines, promise wording, backlog
+- 3e9768729 docs: promise page and decisions after falsification (plan-cockpit)
+- 7546af981 admin: a review is accepted once, and an answer sent but unrecorded reads as sent (plan-cockpit A37, A38)
+- 5801f5b7b promises: a break held open by an incident has its fix; thirty days count days and earlier names; a change line is a change (plan-cockpit A39-A42)
+- dfde1f16c chore(indusk): lesson — a-shipped-template-needs-a-test-that-loads-it-in-its-target-environment
+- 6b1902664 chore(indusk): lesson — write-a-promise-sentence-from-what-its-rows-can-prove
+- ab438a1dd plan(browser-telemetry-leftovers): retrospective, promises confirmed, archived
+- 648faa5de chore(indusk): lesson — browser-trace-context-needs-then-chains-not-native-await
+- 1c3757ed9 plan(browser-telemetry-leftovers): A11 deferred by decision — native await is outside the click's trace, documented; zone deps removed
+- 2f8f5052e docs: Fix with Claude opens a Claude Code tab in VS Code
+- 6dc9d2358 docs(vscode-extension): context for the Claude Code tab fix
+- 1eb6fa4e6 feat(templates): entries normalized and scheme-checked, grafana out of audit; A11 blocked — zone.js cannot follow native await
+- 597e39581 feat(vscode-extension): detect host and Claude Code, open the tab link
+- 07025920e feat(vscode-extension): fixAction returns a claudeTab link in VS Code with Claude Code
+- 676e1a1f4 test(fix-opens-claude-tab): A1, A2 written; A1 red on its assertion
+- 8ec662862 test(templates): A9–A12 authored red — entry spelling, bare *, async handler, grafana keyword
+- 85f6c8fce docs(otel): propagation setting, CORS requirement, A4 recorded; Build Phase 1 closed
+- 09d1b5ff0 feat(init): say what was written and how to propagate across origins; audit drops the vendor keyword
+- ce90c7223 feat(templates): browser template propagates a click's trace to named origins and loads on sdk-trace-web 2.x
+- 94df3f12e test(templates): drop an unused fetch passthrough; Shape result recorded for Test Phase 1
+- 404121360 test(audit): A8, a vendor's name is not a telemetry alert
+- e60421317 test(init): A5-A7, what init writes and says about the OpenTelemetry scaffold
+- 3c9958c6d test(templates): A1-A3, a click's requests and the traceparent they carry, red for the propagation setting
+- e8e4808b7 test(indusk-mcp): browser test project for the templates, node suite excludes templates/
+- 81eb73d7e chore(indusk): lesson — tree-scanning-rule-tests-need-explicit-per-phase-inclusion
+- 841de6d7e Merge branch 'main' into plan/evaluator-waits-out-limits
+- 53d113fbd test(indusk-mcp): evaluator-limits.test.ts joins the system tier, as monitor-mark does — it reads marks from an OTLP capture server (everyday-tests-never-wait A14 was red)
+- b64cc04c8 docs: waiting evaluations and the one retry for a reply with no scorecard
+- 19bcdc1a0 docs(indusk-mcp): eval agent entry — a limit refusal is waiting, not failed
+- 9c7723e07 fix(indusk-mcp): each commit's trigger retries the waiting commits first
+- 1b478d6c1 fix(indusk-mcp): a limit refusal waits and a reply with no scorecard is asked once more
+- 8bdefb8fe docs: the plan-cockpit decision published, and its changelog entry (plan-cockpit)
+- e3875d4dd docs: decisions wait in one place — Needs you, the card, where a reply goes, the history (plan-cockpit)
+- c15e191ca context(planning): plan-history is the record of a plan's decisions, never hand-edited (plan-cockpit)
+- f664e88bf chore(indusk-mcp): lastBroke carries the a-broken-promise-says-when-it-last-broke token — promises confirm refused without it
+- f508d99e7 test(indusk-mcp): evaluator-waits-out-limits rows A1-A5, A1-A4 red on their assertions
+- f82b230c9 shape: Needs you named as its own component (plan-cockpit)
+- 4d01620ce docs(panel-last-broke-time): vscode-extension rule on lastBroke and local time
+- 88fa0ec76 docs(panel-last-broke-time): last broke is the newest violation, in your time zone
+- b56191efa fix(panel-last-broke-time): panel and hover say last broke at the newest violation, in local time
+- 6d95afad6 plan(plan-cockpit): Build Phase 6 verified — A13-A17, A34, A35 passing
+- f30c59e9f fix(panel-last-broke-time): health line rows carry lastBroke
+- 7c480c78a admin: Needs you, the decision card and What happened (plan-cockpit)
+- c18c300ab test(panel-last-broke-time): A3 red on the health line
+- b2d5583ea test(panel-last-broke-time): A1, A2 red in the extension core
+- a309cbd99 admin: a plan's decision answered through one route, then recorded (plan-cockpit)
+- 728798e8a session manager: pendingQuestion, the question a session still waits on (plan-cockpit)
+- 93749bb4c plans/history: a plan's decisions as dated lines on main, through the notes writer (plan-cockpit)
+- 9081f3e4f plans/waiting: what a plan waits on the person for, one decision per plan (plan-cockpit)
+- 0977f06fe test(plan-cockpit): Build Phase 6 rows A13-A17, A35 authored red on stubs
+- e5af8078d plan(plan-cockpit): Build Phase 5 closed — A9-A12 passing, A32 recorded
+- 17ed4fe10 shape: PlanDetail's header derives the promises href itself (plan-cockpit)
+- e4532f99a docs: the plan page as Planning and Release (plan-cockpit)
+- e51b3102c plan page: header carries title, dates, Path and the promises the plan owns (plan-cockpit)
+- 4585a70b7 plan page: Planning and Release lists, today's documents under Details (plan-cockpit)
+- 0a3902fe7 plans/steps: a plan's Planning and Release steps, read from its type and position (plan-cockpit)
+- 70d5c706b docs: the nav — Paths nested as declared, released counts, the phone drawer (plan-cockpit)
+- 55c48f7c0 shape: PlanList's dates prop takes the package's PlanDates (plan-cockpit)
+- 3dea2aa03 nav: a drawer below 760 px, a collapsible strip above (plan-cockpit)
+- dbd9e3e5c nav: Paths nest to any depth, numbered, with released counts (plan-cockpit)
+- 84614978f docs: the promise page, its sections and the package module each reads (plan-cockpit)
+- d84cea45f fix(indusk-admin): comments no longer read as promise tokens (plan-cockpit)
+- 1baddb013 feat(indusk-admin): Start a fix plan starts the developer's claude with the package's fix prompt (plan-cockpit)
+- 57261aa9a feat(indusk-admin): a page per promise with its proof and banner; the dashboard links to it and reads its thirty days from the package (plan-cockpit)
+- 01056c7ef feat(indusk-mcp): standing carries the thirty days and the last break; proof carries the standing and the break a fix starts from (plan-cockpit)
+- 75c375115 docs: the promises dashboard in the admin UI overview (plan-cockpit)
+- ada55047a fix(indusk-admin): the dashboard's rows take their sentence from the page so the client component loads without the file readers (plan-cockpit)
+- 1d8a84dec feat(indusk-admin): the nav's Promises entry counts broken promises on every page (plan-cockpit)
+- 09a876f4a feat(indusk-admin): the promises dashboard on readStanding - standings bar, group, sort, filter, broken first (plan-cockpit)
+- c7adf4760 docs: reference the four cockpit subpaths - promises/rows, standing, proof, fix Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+- 3d7c5a495 docs(indusk-admin): a fact the cockpit shows is read from a package module Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+- 36a8de9f1 refactor(vscode-extension): fixAction builds its command from the package's fix prompt (plan-cockpit)
+- 3529f7e40 feat(indusk-mcp): promises/fix - the fix prompt, moved in from the editor (plan-cockpit)
+- 3093d1007 feat(indusk-mcp): promises/proof - rows, marks, thirty days, history and the missed-case banner (plan-cockpit)
+- eec171d3f feat(indusk-mcp): promises/standing - one standing per promise from the package's health rule (plan-cockpit)
+- f6cfd4b83 test(vscode-extension): the editor's fix command carries the package's prompt (plan-cockpit A31)
+- aac3cdb52 test(plan-cockpit): Build Phase 1 package rows A21, A25-A31, A33 red on their own assertions
+- 774242f1b feat(indusk-mcp): export promises/rows so the cockpit reads the rows that name a promise
+- 8e1b6e6b1 test(plan-cockpit): format and typecheck the Test Phase 1 files
+- 84b3447d2 test(plan-cockpit): single-definition row A34 red on its own assertions
+- 7359ed09a test(plan-cockpit): dashboard rows A18-A20, A23 red on their own assertions
+- aa7034cbd test(plan-cockpit): plan page rows A9-A12 red on their own assertions
+- 468101b8f test(plan-cockpit): phone rows A6-A8 red on their own assertions
+- 90581f5ff test(plan-cockpit): nav rows A1-A5, A22, A36 red on their own assertions
+- 69e91eab4 test(plan-cockpit): cockpit fixture project for the admin's browser tests
+- 13c6f211e chore(indusk): lesson — whole-tree-scan-pins-are-invisible-to-vitest-related
+- 8d0e1701a Merge branch 'main' into plan/display-names
+- b60cf2637 fix(indusk-mcp): display's ADR spelling reads DOCUMENT_LABELS — lifecycle-single-definition A26 was red
+- 9c5c9aab9 chore(indusk): lesson — a-source-covering-only-recent-history-needs-a-rule-for-what-predates-it
+- eb68d2f73 chore(indusk): lesson — fixture-matching-code-assumptions-masks-real-data-bugs
+- 637b8d8a6 chore(indusk-mcp): display.ts carries the tokens of the three promises its functions keep — promises confirm refused without them
+- e07b84d47 docs(decisions): display-names; plan retrospective
+- 1a62806cb fix(indusk-mcp): a plan landed before the trunk's first release commit reads its release from the changelog's history, never that first commit
+- bfced78c1 plan(display-names): Build Phase 5 — A16/A17 green, context and docs, impl completed
+- b6d48f46b feat(display-names): the shipping release from the trunk's release commits; one landing date
+- 818652575 test(display-names): A16 and A17 red — the shipping release, one landing date
+- ff62df21d docs(display-names): promises context — display.ts reads frontmatter through gray-matter
+- 90111ba34 refactor(display-names): display.ts reads plan frontmatter through gray-matter, not its own pattern
+- c14448029 docs(display-names): planDates fallbacks in the promises reference
+- d8199af45 docs(display-names): promises context — dates fall back for older plans
+- 3813bd8bd chore(display-names): Build Phase 3 verified — A14, A15 passing; plan completed
+- 477ada8e0 feat(display-names): a plan with no brief starts with its first lifecycle document (A15)
+- 8a2f27f45 feat(display-names): an archived plan with no landing line reads as landed (A14)
+- 16bf05729 test(display-names): A14 archived plans landed without a landing line, A15 plans with no brief — red
+- fafe998fc docs(display-names): guide panel section and changelog — promises in words, plans by title and dates
+- 5abcad24c docs(display-names): vscode-extension context — names and dates come from the line
+- f781d6869 feat(display-names): the panel, activity and hover read promises in words and plans by title and dates; A10 live probe
+- 6b36da9a9 docs(display-names): promises health — title, planTitle, planDates and display.words
+- aaabfb730 docs(display-names): context — pin folded into the mcp entry; root Key Decisions line, incident-recording rule moves to lib/promises
+- e6fc6d8be feat(display-names): promises/display names promises and plans; the health line carries them
+- 6228adc78 test(display-names): A8 single-definition pin, red
+
+## Proven by
+
+- `demo-app-template` row A3 — passing (apps/indusk-mcp/src/__tests__/demo-example.test.ts)
+- `demo-app-template` row A4 — passing (apps/indusk-mcp/src/__tests__/demo-command.test.ts)
+
+## Root cause
+
+The promise held; the test was stale. one-promise-language (closed 2026-10-16) changed `indusk promises status` to print "last seen holding" and "N breaks" (`apps/indusk-mcp/src/lib/promises/status.ts`), but `demo-command.test.ts` A4 and A7 still matched "last seen upheld" and "N violations". The file is in the system tier, which one-promise-language's phases did not run, so the first run to see it was the 1.71.0 release's slow tests. Re-run on 2026-10-17, the demo's output read `no breaks` / `last seen holding`: the behaviour was upheld throughout.
+
+## Fix
+
+2026-10-17 — `demo-command.test.ts` A4 and A7 match the words `status` prints today ("last seen holding", "N break(s)"); both pass against a fresh `indusk demo`. No code change.

@@ -1,4 +1,16 @@
-import { auditInputs } from "../../lib/audit/inputs.js";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+	AUDIT_QUESTIONS,
+	describeAnswers,
+	PLAN_REVIEW_QUESTIONS,
+	readAuditAnswers,
+} from "../../lib/audit/answers.js";
+import { markAuditAnswers } from "../../lib/audit/answers-signal.js";
+import { registryClauses } from "../../lib/audit/clauses.js";
+import { auditInputs, planReviewInputs } from "../../lib/audit/inputs.js";
+import { markPlanReview, markReviewInputs } from "../../lib/audit/review-signal.js";
+import { markAmendmentStop } from "../../lib/build/amendment-signal.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
@@ -17,7 +29,9 @@ import { phaseModel } from "../../lib/models/phase-model.js";
 import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import { type Amendment, AmendmentsUnreadable, amendmentsOf } from "../../lib/plans/amendments.js";
+import { askAdminToPlan } from "../../lib/plans/ask-admin.js";
 import {
+	acceptBrief,
 	acceptPlan,
 	approvePlan,
 	landPlan,
@@ -25,7 +39,9 @@ import {
 	reapprovePlan,
 	startPlan,
 } from "../../lib/plans/index.js";
-import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
+import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
+import { planTimeText } from "../../lib/timing/view.js";
+import { livePlanCopy, resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
 /** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
 async function planVerb(run: () => Promise<string>): Promise<void> {
@@ -136,6 +152,62 @@ export function plansAuditInputs(cwd: string, name: string, approved?: string): 
 	return planVerb(async () => JSON.stringify(await auditInputs(cwd, name, approved), null, 2));
 }
 
+/** `indusk plans review-inputs <name>` — what the plan review's reader is handed before approval, as JSON. */
+export function plansReviewInputs(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const inputs = await planReviewInputs(cwd, name);
+		await markReviewInputs(cwd, name, inputs);
+		return JSON.stringify(inputs, null, 2);
+	});
+}
+
+/**
+ * `indusk plans audit-answers <name> [--plan-review]` — every dismissal and amendment answer
+ * in `audit.md` (or `plan-review.md`), for the person; exit 2 naming each finding or question
+ * the plan's agent has still to answer.
+ */
+export async function plansAuditAnswers(
+	cwd: string,
+	name: string,
+	planReview: boolean,
+): Promise<void> {
+	const file = planReview ? "plan-review.md" : "audit.md";
+	const live = await livePlanCopy(cwd, name);
+	if (!live.ok) {
+		console.error(`Refused: the worktree record ${live.file} cannot be read: ${live.problem}`);
+		process.exit(1);
+	}
+	const path = join(live.copy.dir, file);
+	if (!existsSync(path)) {
+		console.error(`Refused: ${name} has no ${file} in ${live.copy.dir}`);
+		process.exit(1);
+	}
+	let clauses: Set<string> | undefined;
+	if (!planReview) {
+		const held = registryClauses(live.copy.root);
+		if (!held.ok) {
+			console.error(`Refused: the promises registry cannot be read to check clauses: ${held.why}`);
+			process.exit(1);
+		}
+		clauses = held.clauses;
+	}
+	const read = readAuditAnswers(readFileSync(path, "utf-8"), {
+		questions: planReview ? PLAN_REVIEW_QUESTIONS : AUDIT_QUESTIONS,
+		causes: !planReview,
+		clauses,
+	});
+	const { open, shown } = describeAnswers(read, file);
+	if (planReview) await markPlanReview(cwd, name, read);
+	else await markAuditAnswers(cwd, name, read, open.length === 0);
+	if (open.length > 0) {
+		console.error(`${file} is not answered:\n${open.map((l) => `  ${l}`).join("\n")}`);
+		process.exit(2);
+	}
+	console.info(
+		shown.length > 0 ? shown.join("\n") : `${file}: nothing dismissed, nothing amended.`,
+	);
+}
+
 /** `indusk plans next-session <name>` — the command to run in a new session, from the plan as it stands. */
 export function plansNextSession(cwd: string, name: string): Promise<void> {
 	return planVerb(() => nextSessionForPlan(cwd, name));
@@ -149,10 +221,20 @@ export function plansAccept(cwd: string, name: string, auto: boolean): Promise<v
 	});
 }
 
+/** `indusk plans accept-brief <name>` — the brief is settled and the plan can be written from it. */
+export function plansAcceptBrief(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const a = await acceptBrief(cwd, name);
+		return `Accepted the brief of ${a.plan}.\n${await askAdminToPlan(cwd, a.plan)}`;
+	});
+}
+
 /** `indusk plans next <name>` — what an unattended build does next, from the plan as it stands. */
 export async function plansNext(cwd: string, name: string, json: boolean): Promise<void> {
 	try {
-		const step = nextBuildStep(await readBuildPlan(cwd, name));
+		const plan = await readBuildPlan(cwd, name);
+		const step = nextBuildStep(plan);
+		await markAmendmentStop(cwd, name, plan.amendments, step.step);
 		console.info(json ? JSON.stringify(step) : describeStep(step));
 	} catch (err) {
 		if (err instanceof BuildPlanUnreadable) {
@@ -172,9 +254,11 @@ function describeStep(s: BuildStep): string {
 		case "cleanup":
 			return "cleanup: falsification is closed and the cleanup has not run";
 		case "audit":
-			return "audit: the cleanup is closed and no audit.md has been written (or the audit skipped with a reason)";
+			return "audit: every phase is closed and no audit.md has been written (or the audit skipped with a reason)";
 		case "shorten-reason":
 			return `shorten-reason: the ${s.ritual} was skipped with a reason of ${s.length} characters (${s.sentences} sentence${s.sentences === 1 ? "" : "s"}) — one sentence, at most 120; rewrite that line, do not run the ritual`;
+		case "amendment":
+			return `amendment: the brief says more than was approved (${s.amendments.join(", ")}) — it waits for the person to re-approve`;
 		case "judgement":
 			return `judgement: ${s.phase} waits on a person — ${s.item}`;
 		case "review":
@@ -344,4 +428,55 @@ export function plansArchiveDead(projectRoot: string, opts: PlansArchiveDeadOpti
 			console.info(`  - ${s.name}: ${s.reason}`);
 		}
 	}
+}
+
+/**
+ * `indusk plans time <name>` — a plan's phases, unattended steps and test runs
+ * with their durations, and its total from the brief's acceptance to landing.
+ *
+ * promise: a-plan-says-how-long-it-took
+ */
+export function plansTime(root: string, name: string): Promise<void> {
+	return planVerb(() => planTimeText(root, name));
+}
+
+/**
+ * `indusk plans tests <name> --phase <ref> | --landing [--list]` — run the plan's
+ * test set: its rows' tests, the tests its changes reach and, at landing, the
+ * tests of the promises its brief lists as Must not break. Exit 1 when any fails.
+ *
+ * promise: a-plan-runs-its-tests-and-what-must-not-break
+ */
+export function plansTests(
+	root: string,
+	name: string,
+	opts: { phase?: string; landing?: boolean; list?: boolean },
+): Promise<void> {
+	return planVerb(async () => {
+		if (opts.landing === true && opts.phase !== undefined) {
+			throw new PlanCommandRefusal("--phase and --landing are alternatives; give one");
+		}
+		let scope: Parameters<typeof plansTestsOutcome>[1]["scope"];
+		if (opts.landing === true) {
+			scope = { landing: true };
+		} else if (opts.phase !== undefined) {
+			const ref = parsePhaseRef(
+				/^\d+$/.test(opts.phase.trim()) ? `Phase ${opts.phase.trim()}` : opts.phase,
+			);
+			if (!ref) {
+				throw new PlanCommandRefusal(
+					`--phase must name a phase, like "Build Phase 1", "Test Phase 1" or "1"; got "${opts.phase}"`,
+				);
+			}
+			scope = { phase: ref };
+		} else {
+			throw new PlanCommandRefusal("name what to run: --phase <ref> or --landing");
+		}
+		const outcome = await plansTestsOutcome(root, { plan: name, scope, list: opts.list === true });
+		if (outcome.exitCode !== 0) {
+			console.info(outcome.text);
+			process.exit(outcome.exitCode);
+		}
+		return outcome.text;
+	});
 }
