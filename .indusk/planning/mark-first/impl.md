@@ -636,6 +636,12 @@ signals. It closes the plan: nothing after it changes behaviour.
 
   </details>
   Done: `guide/signals.md` (signal attributes, derived-from-the-clause, kinds, how a clause reads, fire rate, how a break names its clause with the Mermaid flow), `guide/briefs.md` and `guide/test-trajectory.md` updated, `decisions/mark-first.md` from the ADR with title/date/status frontmatter, changelog entry under Unreleased Added. **Decision D-27:** the docs sidebar (`.vitepress/config.ts`) lists only Getting Started and Architecture, every other page is reached by links, so no sidebar entry was added; the new pages are linked from the briefs and test-trajectory guides, the changelog and each other. `reference/cli/promises.md` already described closing (Build Phase 4), so it only lost the old word.
+- [x] Remove the unused `healthWindowMs` import from `src/lib/promises/store.ts` that Biome flags.
+  <details><summary>Technical</summary>
+
+  Discovered work: left by Build Phase 3 (`store.ts` reads its window through `sources.ts` now). `pnpm exec biome check` on the files this phase touched is clean for it; two findings remain in files this plan did not change (`src/lib/promises/health.ts` formatting, `src/lib/eval/otel.ts:153` optional chain), left alone.
+
+  </details>
 - [ ] Review the cleanup against the extensions' rules.
   <details><summary>Technical</summary>
 

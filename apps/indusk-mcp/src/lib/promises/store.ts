@@ -1,6 +1,6 @@
 import { readsSignal } from "./clause-standing.js";
 import type { Registry } from "./registry.js";
-import { healthWindowMs, resolveMarkSources, type SourceName } from "./sources.js";
+import { resolveMarkSources, type SourceName } from "./sources.js";
 import type { MarkedSpan, MarkedSpansResult, PromiseMarks } from "./telemetry.js";
 import { type FullSlice, readTimeline, type TimelineMark } from "./timeline.js";
 
