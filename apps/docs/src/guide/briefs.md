@@ -148,7 +148,7 @@ plan closes with a passing test that names it.
 With the admin running (`indusk ui start`), accepting a brief starts an unattended
 session that writes the plan's test plan, its ADR when the workflow has one, and its
 impl, each checked before the next. It waits while a look the brief names is not
-approved, and starts when the last one is. It stops at your approval and never
+approved, and starts when the last one is. A brief is usually accepted from inside the planning conversation, so the run holds back while that conversation is open: the agent tells you the brief is accepted and ends the conversation, and the run starts as the conversation ends (you can still ask it to plan by hand). It stops at your approval and never
 approves for you. Approving the plan, in the admin, starts the build, which runs to
 review as it always has. See `/decisions/a-brief-is-planned-unasked`.
 
