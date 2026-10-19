@@ -169,7 +169,7 @@ export async function startBuild(
     .finally(() => {
       state.running = false;
       state.step = null;
-      free();
+      releasePlace();
     });
   return state;
 }
@@ -295,24 +295,8 @@ export async function startPlanning(
   const root = getProjectPath(project);
   if (!root) throw new Error(`no project named ${project}`);
 
-  const read = await readPlanningState(root, plan);
-  if (read.briefStatus !== "accepted") {
-    return declined({
-      step: "cannot-continue",
-      why: `the brief is ${read.briefStatus ?? "without a status"}, not accepted`,
-    });
-  }
-  const next = nextPlanningStep(read);
-  if (
-    next.step === "wait-for-looks" ||
-    next.step === "ready-for-approval" ||
-    next.step === "cannot-continue"
-  ) {
-    return declined(next);
-  }
-
-  // Held before the first await below, so two asks at once cannot both start.
-  const free = sessionManager().admitBuild(project, plan);
+  // Taken before the first await, so two asks at once cannot both start: the
+  // second meets a run in progress, as it would after the first had begun.
   const state: PlanningRunState = {
     started: true,
     running: true,
@@ -320,15 +304,40 @@ export async function startPlanning(
     stop: null,
   };
   plannings().set(key(project, plan), state);
+  const release = () => {
+    if (plannings().get(key(project, plan)) === state)
+      plannings().delete(key(project, plan));
+  };
+
+  let free: (() => void) | null = null;
   let where: Awaited<ReturnType<typeof planLocation>>;
   try {
+    const read = await readPlanningState(root, plan);
+    if (read.briefStatus !== "accepted") {
+      release();
+      return declined({
+        step: "cannot-continue",
+        why: `the brief is ${read.briefStatus ?? "without a status"}, not accepted`,
+      });
+    }
+    const next = nextPlanningStep(read);
+    if (
+      next.step === "wait-for-looks" ||
+      next.step === "ready-for-approval" ||
+      next.step === "cannot-continue"
+    ) {
+      release();
+      return declined(next);
+    }
+    free = sessionManager().admitBuild(project, plan);
     where = await planLocation(project, plan);
     if ("error" in where) throw new Error(where.error);
   } catch (err) {
-    plannings().delete(key(project, plan));
-    free();
+    release();
+    free?.();
     throw err;
   }
+  const releasePlace = free;
   const location = where;
   void runPlanning({
     read: () => readPlanningState(root, plan),
@@ -358,7 +367,7 @@ export async function startPlanning(
     .finally(() => {
       state.running = false;
       state.step = null;
-      free();
+      releasePlace();
     });
   return state;
 }
