@@ -150,6 +150,48 @@ describe.skipIf(SHOULD_SKIP)("A25 — a changed promise keeps its name and its h
 	});
 });
 
+/**
+ * a-plan-runs-what-must-not-break T5 — the means of that plan: `promises
+ * change` rewrote a sentence and left the clauses, so a promise changed in
+ * what it says kept clauses that no longer describe it.
+ */
+describe.skipIf(SHOULD_SKIP)("T5 — a changed promise can carry new clauses", () => {
+	const OLD_CLAUSE = "held-once (limit). A seat is held by one player.";
+	const NEW_CLAUSES = [
+		"held-once (split). A seat is held by one player.",
+		"timed (limit). A hold lasts at most two minutes.",
+	];
+
+	it("replaces the clauses with the given ones, and the registry holds no old clause", () => {
+		const p = project({ changes: [{ name: NAME, sentence: NEW_SENTENCE }] }, `promise: ${NAME}`);
+		const path = join(p.planRoot, ".indusk", "promises", `${NAME}.md`);
+		const before = matter(readFileSync(path, "utf-8"));
+		before.data.clauses = [{ name: "old-one", kind: "limit", statement: OLD_CLAUSE }];
+		writeFileSync(path, matter.stringify(before.content, before.data));
+
+		const r = runCli(p.root, [
+			"promises",
+			"change",
+			NAME,
+			"--plan",
+			PLAN,
+			"--statement",
+			NEW_SENTENCE,
+			"--reason",
+			REASON,
+			...NEW_CLAUSES.flatMap((c) => ["--clause", c]),
+		]);
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+		const clauses = read(p, NAME).data.clauses as Array<Record<string, unknown>>;
+		expect(clauses.map((c) => c.name)).toEqual(["held-once", "timed"]);
+		expect(clauses.map((c) => c.kind)).toEqual(["split", "limit"]);
+		expect(clauses.map((c) => c.statement)).toEqual([
+			"A seat is held by one player.",
+			"A hold lasts at most two minutes.",
+		]);
+	});
+});
+
 describe.skipIf(SHOULD_SKIP)("A26 — a replaced promise is retired when the new plan closes", () => {
 	const replacing = () =>
 		project(
