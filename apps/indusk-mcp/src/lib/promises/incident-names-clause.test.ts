@@ -133,6 +133,54 @@ describe("A17 — the incident names the promise and the clause, the plan and ph
 	});
 });
 
+describe("A33 — a break written by an app's own helper names the plan and phase that added it", () => {
+	/**
+	 * The app helper (`templates/signal.ts`, `signal.py`) writes
+	 * `indusk.signal.plan`/`phase` on the span and only the symptom on the
+	 * break event; `markPromise` puts them on the event. Both reach the incident.
+	 */
+	const helperSpan: JaegerSpan = {
+		traceID: "1af7651916cd43dd8448eb211c80319c",
+		spanID: "bbbbbbbbbbbbbbbb",
+		operationName: "hold-seat",
+		startTime: 1_000_000,
+		duration: 10,
+		processID: "p1",
+		tags: [
+			{ key: "indusk.promise", value: PROMISE },
+			{ key: "indusk.promise.outcome", value: "broken" },
+			{ key: "indusk.clause", value: CLAUSE },
+			{ key: "indusk.signal.plan", value: PLAN },
+			{ key: "indusk.signal.phase", value: "Build Phase 3" },
+		],
+		logs: [
+			{
+				timestamp: 1_000_000,
+				fields: [
+					{ key: "event", value: "indusk.promise.violated" },
+					{ key: "indusk.promise.symptom", value: "slow" },
+				],
+			},
+		],
+	};
+
+	it("the pointer on the span is read when the break event carries none", () => {
+		expect(parseMarkedSpan(helperSpan, "api")?.signal).toEqual({
+			plan: PLAN,
+			phase: "Build Phase 3",
+		});
+	});
+
+	it("the incident it opens carries that plan and phase on its Signal line", () => {
+		const marked = parseMarkedSpan(helperSpan, "api");
+		if (!marked) throw new Error("the helper's span was not read as a signal");
+		const text = openedIncident(marked);
+		expect(text).toMatch(
+			new RegExp(`^Signal: \`${PROMISE}/${CLAUSE}\` — added by plan \`${PLAN}\`, Build Phase 3$`, "m"),
+		);
+	});
+});
+
 describe("A18 — from the incident a person reaches the clause's tests and its signal", () => {
 	it("lists the clause's test file and the file that emits its signal under Proven by", () => {
 		const text = openedIncident();
