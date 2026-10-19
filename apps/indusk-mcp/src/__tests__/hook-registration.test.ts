@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
 	ensureHookRegistered,
+	HOOK_REGISTRATIONS,
 	type HookSettings,
 	hookCommand,
 	hookFileOf,
@@ -132,4 +133,31 @@ describe("A24 — init and update register hooks from one table", () => {
 			expect(named, `${rel} names hooks outside the table`).toEqual([]);
 		}
 	});
+});
+
+/**
+ * a-run-can-be-trusted A63 — a regression guard: a hook that is not registered refuses
+ * nothing, and no clause test would see it. The shell guard (PreToolUse on Bash) and the
+ * witness that records what the plan folders hold afterwards (PostToolUse on Bash) are
+ * registered, and each exists in the package and in the project's own installed hooks.
+ */
+describe("A63 — the shell guard and its witness are registered and installed", () => {
+	const PACKAGE_HOOKS = new URL("../../hooks/", import.meta.url).pathname;
+	const PROJECT_HOOKS = new URL("../../../../.claude/hooks/", import.meta.url).pathname;
+	const table = HOOK_REGISTRATIONS as ReadonlyArray<readonly [string, string, string]>;
+
+	it.each([
+		["PreToolUse", "Bash", "plan-write-guard.js"],
+		["PostToolUse", "Bash", "plan-write-witness.js"],
+	])("%s under %s names %s", (event, matcher, file) => {
+		expect(table.some(([e, m, f]) => e === event && m === matcher && f === file)).toBe(true);
+	});
+
+	it.each(["plan-write-guard.js", "plan-write-witness.js"])(
+		"%s exists in the package's hooks and the project's installed hooks",
+		(file) => {
+			expect(existsSync(join(PACKAGE_HOOKS, file)), `${file} in the package`).toBe(true);
+			expect(existsSync(join(PROJECT_HOOKS, file)), `${file} installed in .claude/hooks`).toBe(true);
+		},
+	);
 });
