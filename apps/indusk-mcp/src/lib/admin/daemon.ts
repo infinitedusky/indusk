@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } 
 import { createConnection, createServer } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { PACKAGE_ROOT_ENV } from "../package-root.js";
 import { isOwnProcess, type ProcessDeps, realProcessReads } from "../process-identity.js";
 
 /**
@@ -59,6 +60,24 @@ export interface DaemonStartOptions {
 	adminDir: string;
 	nextBin: string;
 	projectRoot?: string;
+	/** The package root the `indusk` command resolved; handed down so bundled admin code can find shipped files. */
+	packageRoot?: string;
+}
+
+/**
+ * The daemon's environment: the starting shell's, minus any stale package
+ * root, plus the project and package roots when passed.
+ */
+export function daemonEnv(
+	opts: DaemonStartOptions,
+	base: NodeJS.ProcessEnv = process.env,
+): NodeJS.ProcessEnv {
+	const { [PACKAGE_ROOT_ENV]: _stale, ...inherited } = base;
+	return {
+		...inherited,
+		...(opts.projectRoot ? { INDUSK_PROJECT_ROOT: opts.projectRoot } : {}),
+		...(opts.packageRoot ? { [PACKAGE_ROOT_ENV]: opts.packageRoot } : {}),
+	};
 }
 
 /**
@@ -80,10 +99,7 @@ export async function daemonStart(opts: DaemonStartOptions): Promise<DaemonMeta>
 			cwd: opts.adminDir,
 			detached: true,
 			stdio: ["ignore", logFd, logFd],
-			env: {
-				...process.env,
-				...(opts.projectRoot ? { INDUSK_PROJECT_ROOT: opts.projectRoot } : {}),
-			},
+			env: daemonEnv(opts),
 		},
 	);
 	child.unref();

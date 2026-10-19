@@ -348,6 +348,10 @@ const config = defineConfig({
 						{ text: "Writing Skill — Lessons", link: "/lessons/writing-skill" },
 						{ text: "Phase Summaries — Lessons", link: "/lessons/phase-summaries" },
 						{ text: "Main Suite Green — Lessons", link: "/lessons/main-suite-green" },
+						{
+							text: "The Admin Knows the Package Root — Lessons",
+							link: "/lessons/the-admin-knows-the-package-root",
+						},
 					],
 				},
 			],

@@ -17,6 +17,7 @@ import {
 	registerAdminRoute,
 } from "../../lib/admin/proxy-route.js";
 import { pruneRegistry, readRegistry } from "../../lib/admin/registry.js";
+import { induskMcpPackageRoot } from "../../lib/package-root.js";
 import { SessionManager } from "../../lib/session/manager.js";
 
 /**
@@ -122,7 +123,7 @@ export async function uiStart(opts: UiStartOptions): Promise<void> {
 	console.info(`Starting admin UI on ${baseUrl}`);
 
 	await endRecordedSessions("left by a previous admin");
-	const meta = await daemonStart({ port, adminDir, nextBin });
+	const meta = await daemonStart({ port, adminDir, nextBin, packageRoot: induskMcpPackageRoot() });
 	console.info(`  PID: ${meta.pid}`);
 	console.info(`  Logs: ~/.indusk/admin-ui.log`);
 
