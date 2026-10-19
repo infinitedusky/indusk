@@ -147,9 +147,9 @@ describe("A9 — Planning and Release are two lists, each with its own count of 
     ]);
     expect(stepsOf(root, "release").map((s) => s.name)).toEqual([
       "Build",
+      "Audit",
       "Falsify",
       "Cleanup",
-      "Audit",
       "Review",
       "Release",
     ]);

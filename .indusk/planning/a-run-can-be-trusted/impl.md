@@ -1163,7 +1163,7 @@ This phase tests the finished plan against the cases where what it shows or repo
   Hypothesis A103. `markRecorderClause` (`src/lib/plans/land-recorder-signal.ts:41`) takes any result whose file carries the clause token; `wait-for-incident.test.ts` and `recorder-loop.scan.test.ts` carry it too, so a landing that ran only those reports `recorder-waits-for-its-break` upheld although the test that waits under load never ran. Fix: count only the result for `src/__tests__/admin-recorder.test.ts` (the file `vitest.tiers.ts` `SYSTEM` lists for this clause; one exported constant beside the clause name); with no such result, report nothing. Raised by the audit (`land-recorder-signal.ts:41`), left for cleanup there; it is a false upheld signal, so it is fixed here.
 
   </details>
-- [ ] Show the release steps in the order they run: build, audit, falsify, cleanup, review, release.
+- [x] Show the release steps in the order they run: build, audit, falsify, cleanup, review, release.
   <details><summary>Technical</summary>
 
   Added by hand 2026-10-19 (Sandy; `says-what-is-true`): since `audit-concerns-are-answered` the build runs the audit when the build phases close, before falsification, but the plan page lists the old order. `RELEASE_STEPS` in `apps/indusk-mcp/src/lib/plans/steps.ts` becomes Build, Audit, Falsify, Cleanup, Review, Release; `workflows.test.tsx` A9 expects that order. No mockup draws the release list's order.
