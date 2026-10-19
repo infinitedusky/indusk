@@ -479,3 +479,5 @@ describe("A96 — a just-pressed build is running from the moment it is pressed"
     });
   });
 });
+
+// promise: a-run-is-read-from-its-record

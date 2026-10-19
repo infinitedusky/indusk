@@ -409,3 +409,5 @@ describe("A98 — reads an inline interpreter or a dry run makes are allowed", (
 		expect(refused("git clean -fd", `${ROOT}/${PLAN}`)).not.toBeNull();
 	});
 });
+
+// promise: a-plan-document-is-written-through-its-checks

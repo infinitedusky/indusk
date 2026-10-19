@@ -60,3 +60,5 @@ describe("A41 — a refused impl reaches the person as the save check's message"
 		expect(readFileSync(implPath, "utf8")).toBe(before);
 	});
 });
+
+// promise: a-plan-with-clauses-carries-its-signals

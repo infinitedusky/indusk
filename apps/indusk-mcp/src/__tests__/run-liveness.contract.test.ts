@@ -41,3 +41,5 @@ describe("A73 — a real child recorded as a run's process", () => {
 		expect(runStatus(record, realProcessReads, false).state).toBe("stopped");
 	});
 });
+
+// promise: a-run-is-read-from-its-record

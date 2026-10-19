@@ -115,3 +115,5 @@ describe("A64 — a record is machine state, outside the repository", () => {
 		}
 	});
 });
+
+// promise: a-run-is-read-from-its-record

@@ -46,3 +46,5 @@ describe("A85 — this plan's own documents pass its own rules", () => {
 		expect(afterLandingClauseRows(levelledRows(impl.trajectory))).toEqual([]);
 	});
 });
+
+// promise: a-plan-with-clauses-carries-its-signals

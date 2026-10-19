@@ -292,6 +292,7 @@ const config = defineConfig({
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
 						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },
 						{ text: "Writing Skill", link: "/decisions/writing-skill" },
+						{ text: "A run can be trusted", link: "/decisions/a-run-can-be-trusted" },
 					],
 				},
 			],
@@ -348,6 +349,7 @@ const config = defineConfig({
 						{ text: "Incident Recording — Lessons", link: "/lessons/incident-recording" },
 						{ text: "Worktree Visibility — Lessons", link: "/lessons/worktree-visibility" },
 						{ text: "Writing Skill — Lessons", link: "/lessons/writing-skill" },
+						{ text: "A run can be trusted — Lessons", link: "/lessons/a-run-can-be-trusted" },
 						{ text: "Phase Summaries — Lessons", link: "/lessons/phase-summaries" },
 						{ text: "Main Suite Green — Lessons", link: "/lessons/main-suite-green" },
 						{

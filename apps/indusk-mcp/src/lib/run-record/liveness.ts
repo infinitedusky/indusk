@@ -8,6 +8,7 @@ import type { RunRecord } from "./record.js";
  * program, with the start time recorded just after it was spawned
  * (`isOwnProcess`, so a pid the OS recycled to a stranger reads as gone).
  *
+ * promise: a-run-is-read-from-its-record
  * clause: a-run-is-read-from-its-record/dead-reads-stopped
  */
 

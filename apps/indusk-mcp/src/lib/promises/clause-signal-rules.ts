@@ -6,6 +6,7 @@ import type { BriefContract } from "./brief-contract.js";
 /**
  * The two rules a plan written as clauses holds its impl to
  * (a-plan-with-clauses-carries-its-signals):
+ * promise: a-plan-with-clauses-carries-its-signals
  *
  * - every split and limit clause has a task that reports its signal
  *   (`missingSignalTasks`), so a plan cannot be built whose clauses can never

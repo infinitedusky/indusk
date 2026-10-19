@@ -57,3 +57,5 @@ describe("A57 — a plan not yet accepted never restarts into the release", () =
 		expect(restartStep("release", reads({ accepted: true }))).toEqual({ run: "release" });
 	});
 });
+
+// promise: a-run-is-read-from-its-record

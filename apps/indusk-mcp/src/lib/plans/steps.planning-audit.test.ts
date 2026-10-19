@@ -203,3 +203,5 @@ describe("A81 — a planning step reads in progress only while a process runs fo
 		expect(Object.values(states(idle.planning))).not.toContain("current");
 	});
 });
+
+// promise: a-run-is-read-from-its-record

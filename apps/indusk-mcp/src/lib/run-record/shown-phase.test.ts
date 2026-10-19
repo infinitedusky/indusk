@@ -98,3 +98,5 @@ describe("A17 — the stop sentence keeps the plan's real phase", () => {
 		expect(stopSentence({ step: "cannot-continue", why: PROCESS_GONE }, null)).not.toMatch(/ at /);
 	});
 });
+
+// promise: a-run-is-read-from-its-record

@@ -95,3 +95,5 @@ describe("A5 — a record that could not be read is unknown, never running", () 
 		expect(runStatus(null, deps(), false).state).toBe("unknown");
 	});
 });
+
+// promise: a-run-is-read-from-its-record

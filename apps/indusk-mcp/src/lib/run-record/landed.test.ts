@@ -228,3 +228,5 @@ describe("A95 — a workbench plan reads complete from its code repository's lan
 		expect(planLandedOnMain(root, "wb-plan")).toBe(true);
 	});
 });
+
+// promise: a-run-is-read-from-its-record

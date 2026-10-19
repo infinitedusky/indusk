@@ -238,3 +238,5 @@ describe("A99 — a cd into another checkout of the same project that only reads
 		}
 	});
 });
+
+// promise: a-plan-document-is-written-through-its-checks

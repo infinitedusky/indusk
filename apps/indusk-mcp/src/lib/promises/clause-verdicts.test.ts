@@ -296,3 +296,5 @@ describe("rewriting the decision file keeps what a hook appended while the drain
 		expect(existsSync(path)).toBe(false);
 	});
 });
+
+// promise: a-plan-document-is-written-through-its-checks

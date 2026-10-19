@@ -88,3 +88,5 @@ describe("waitForIncident", () => {
 		expect(INCIDENT_WAIT_UPPER_BOUND_MS).toBe(240_000);
 	});
 });
+
+// promise: landing-tests-hold-under-load

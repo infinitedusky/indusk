@@ -207,3 +207,5 @@ describe("A101 — the contract check's refusal reports nothing of its own rules
 		expect(own).toEqual([]);
 	});
 });
+
+// promise: a-plan-with-clauses-carries-its-signals

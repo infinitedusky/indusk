@@ -134,3 +134,5 @@ describe("A71 — no open plan in this repo's planning folder reads without a ne
 		}
 	});
 });
+
+// promise: a-run-is-read-from-its-record

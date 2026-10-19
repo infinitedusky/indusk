@@ -307,3 +307,5 @@ describe("A65 — a closed plan", () => {
 		expect(situation(input({ archived: true })).kind).toBe("closed");
 	});
 });
+
+// promise: a-run-is-read-from-its-record

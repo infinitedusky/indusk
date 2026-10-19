@@ -131,3 +131,5 @@ recorderSuite(
 	"A59 — the admin's scan delayed past the old minute still records the break",
 	PAUSE_PAST_THE_OLD_MINUTE,
 );
+
+// promise: landing-tests-hold-under-load

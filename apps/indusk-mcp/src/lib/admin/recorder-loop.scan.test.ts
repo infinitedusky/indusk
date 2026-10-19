@@ -143,3 +143,5 @@ describe("A89 — the loop writes down each scan", () => {
 		}
 	});
 });
+
+// promise: landing-tests-hold-under-load

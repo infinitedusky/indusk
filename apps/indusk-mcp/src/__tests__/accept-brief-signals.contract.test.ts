@@ -72,3 +72,5 @@ describe.skipIf(SHOULD_SKIP)("A86 — accepting a brief from the command line de
 		expect(found, `no span carrying indusk.clause=${CLAUSE} reached Jaeger`).toBeGreaterThan(0);
 	}, 90_000);
 });
+
+// promise: a-plan-with-clauses-carries-its-signals

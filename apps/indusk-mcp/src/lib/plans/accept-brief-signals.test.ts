@@ -153,3 +153,5 @@ describe("a report that cannot be sent never fails the acceptance", () => {
 		await expect(acceptBrief(p.trunk, PLAN, { tracer })).resolves.toEqual({ plan: PLAN });
 	});
 });
+
+// promise: a-plan-with-clauses-carries-its-signals

@@ -197,3 +197,5 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 		expect(ok.spans.map((s) => s.attrs["indusk.promise.outcome"])).toEqual(["upheld"]);
 	});
 });
+
+// promise: landing-tests-hold-under-load

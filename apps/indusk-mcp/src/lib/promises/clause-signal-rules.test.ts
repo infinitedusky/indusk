@@ -274,3 +274,5 @@ describe("A40 — which impls are judged for signals", () => {
 		expect(messages(r).every((m) => /signal|runs only after landing/.test(m))).toBe(true);
 	});
 });
+
+// promise: a-plan-with-clauses-carries-its-signals

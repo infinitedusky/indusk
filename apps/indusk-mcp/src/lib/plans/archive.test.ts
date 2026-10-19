@@ -84,3 +84,5 @@ describe("A80 — indusk plans archive moves a plan into the archive through git
 		expect(step9).not.toMatch(/\bmv \.indusk\/planning/);
 	});
 });
+
+// promise: a-plan-document-is-written-through-its-checks
