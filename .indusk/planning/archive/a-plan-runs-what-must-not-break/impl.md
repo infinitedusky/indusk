@@ -16,6 +16,8 @@ cleanup_reason: "the phase deleted the reached-search code; nothing new to decom
 approved_brief: "bdabc55af072efde905b71c9db4f9b33dd390994ccf3d85e704befb7e9962151"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T00:18:59.490Z"
+accepted: 2026-10-19T00:19:05.750Z
+accepted_by: person
 ---
 
 # A plan runs what must not break
