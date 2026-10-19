@@ -293,6 +293,10 @@ The `check-gates` hook blocks phase advancement when any trajectory row with `Pa
 
 This is the structural guarantee that deferral is impossible by construction. The implementer cannot close Phase 3 and start Phase 4 while Phase-3-committed tests are still unwritten or failing.
 
+### Closing a plan written as clauses
+
+A `passing` cell is a claim about a run, not a run. For a plan whose brief says `clauses: required`, closing runs the tests the rows prove each clause with, now, and refuses a clause whose test fails whatever its row says, naming the clause and the file; landing runs the same tests. Closing also asks the local daemon whether each clause's signal has reported upheld, which is the second proof. See [Signals](/guide/signals).
+
 ## State lifecycle
 
 The work skill maintains the `State` column as the implementation progresses.
