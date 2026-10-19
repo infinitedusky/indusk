@@ -13,10 +13,20 @@ const SOURCE = join(induskMcpPackageRoot(), "src", "lib", "build", "read-plannin
 
 it("T1 the reader builds no hook path from its own location when it loads", () => {
 	const text = readFileSync(SOURCE, "utf-8");
-	expect(text).not.toMatch(/const IMPL_HOOK = join\(\s*dirname\(fileURLToPath\(import\.meta\.url\)\)/);
-	expect(text).toMatch(/induskMcpPackageRoot\(\)[\s\S]{0,40}"hooks"[\s\S]{0,40}"validate-impl-structure\.js"/);
+	expect(text).not.toMatch(
+		/const IMPL_HOOK = join\(\s*dirname\(fileURLToPath\(import\.meta\.url\)\)/,
+	);
+	expect(text).toMatch(
+		/induskMcpPackageRoot\(\)[\s\S]{0,40}"hooks"[\s\S]{0,40}"validate-impl-structure\.js"/,
+	);
+	// Turbopack reads `spawnSync("node", [path])` as loading a script and resolves the
+	// path at build time; the running Node binary is not read that way.
+	expect(text).not.toMatch(/spawnSync\("node",/);
+	expect(text).toMatch(/spawnSync\(process\.execPath,/);
 });
 
 it("T1 the shipped impl hook is where the package root says", () => {
-	expect(existsSync(join(induskMcpPackageRoot(), "hooks", "validate-impl-structure.js"))).toBe(true);
+	expect(existsSync(join(induskMcpPackageRoot(), "hooks", "validate-impl-structure.js"))).toBe(
+		true,
+	);
 });
