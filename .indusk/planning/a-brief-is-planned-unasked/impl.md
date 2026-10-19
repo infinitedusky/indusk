@@ -234,7 +234,7 @@ This phase gives accepting a brief a command, so it has a moment the planning ru
 
 This phase builds the loop that writes the plan: a decision that names the next document to write or says the plan is ready, a prompt for each document, and a runner that runs one unattended step per document until the impl passes its check, a blocker is written, or nothing progresses.
 
-- [ ] Add the decision that names the next document a plan needs, or says it is waiting or ready.
+- [x] Add the decision that names the next document a plan needs, or says it is waiting or ready.
   <details><summary>Technical</summary>
 
   `lib/build/next-planning-step.ts` `nextPlanningStep(state)` (ADR decision 2), pure. T3, T4.
