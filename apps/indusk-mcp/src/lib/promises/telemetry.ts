@@ -59,7 +59,7 @@ export interface MarkedSpan {
 	look?: LookKey;
 	/** The clause of the promise this signal concerns (`indusk.clause`); absent when the span names none. */
 	clause?: string;
-	/** The plan and phase that added the signal, read from a break's event; absent when it named none. */
+	/** The plan and phase that added the signal, read from a break's event or else its span; absent when it named none. */
 	signal?: { plan: string; phase: string };
 }
 
@@ -265,6 +265,14 @@ export function parseMarkedSpan(
 		if (typeof s === "string") symptom = s;
 		const plan = tag(log.fields, APP_SIGNAL_KEYS.plan);
 		const phase = tag(log.fields, APP_SIGNAL_KEYS.phase);
+		if (typeof plan === "string" && typeof phase === "string") signal = { plan, phase };
+	}
+	// An app's own helper puts the pointer on the span, not on the break event
+	// (`templates/signal.ts`); `markPromise` puts it on the event. Both count,
+	// the event first (mark-first decision D-32).
+	if (!signal && outcome === "broken") {
+		const plan = tag(span.tags, APP_SIGNAL_KEYS.plan);
+		const phase = tag(span.tags, APP_SIGNAL_KEYS.phase);
 		if (typeof plan === "string" && typeof phase === "string") signal = { plan, phase };
 	}
 	const look = lookOf(span.tags);

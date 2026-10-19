@@ -708,12 +708,13 @@ This phase tests the finished plan against signals and breaks shaped differently
 
   </details>
   Done as written. `recordViolations` now returns one change per clause group (an array, empty when nothing was new), and each change, `IncidentChange` and `WatchChange`, carries its `clause`, which `markClauseIncidents` reads instead of searching the pass's spans. **Decision D-34:** `ensurePromiseCarries` reads the promise's `incidents` list from its file, not from the entry read before the pass — with two incidents opened in one pass the second write would otherwise drop the first id. A clause-less break matches only a clause-less open incident (strict match, D-31). Six test callers that took the single change now destructure the first.
-- [ ] Read the plan and phase that added a signal from the span when the break event does not carry them.
+- [x] Read the plan and phase that added a signal from the span when the break event does not carry them.
   <details><summary>Technical</summary>
 
   Hypothesis (A33): the app helper (`templates/signal.ts`, `signal.py`, the seat-holds copy) writes `indusk.signal.plan`/`phase` as span attributes and puts only the symptom on the `indusk.promise.violated` event; `parseMarkedSpan` in `telemetry.ts` reads the pointer only from the event's log fields, so every incident opened by an application's own signal has no pointer — A17 only held for `markPromise`, which puts them on the event. Fix (decision D-32): read the event first, then the span tags, both through `APP_SIGNAL_KEYS`; no writer changes.
 
   </details>
+  Done as written. The span's tags are read only for a broken span, as the event is only on a break: the pointer is what an incident carries, and an upheld span opens none.
 - [ ] Carry a signal's measured value and bound through the readers, so a measurement over its bound breaks a limit clause.
   <details><summary>Technical</summary>
 
