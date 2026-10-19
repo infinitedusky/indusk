@@ -8,10 +8,14 @@ test_levels: required
 test_purpose: required
 rationale: required
 phase_summary: required
+cleanup: skipped
+cleanup_reason: "Reviewed the 12 changed files: none over the 400-line cap, no cross-file duplication, boundaries settled."
 gate_policy: ask
 approved_brief: "f41cf42fe6354357005776aa2dc08b4dc0ea34cc9fb81788b02bd9f37b609b28"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T03:08:06.933Z"
+accepted: 2026-10-19T03:28:01.780Z
+accepted_by: person
 ---
 
 # A plan says how long it took
@@ -518,6 +522,10 @@ Decisions (unattended): the reads seam gained `liveRoot` (the plan's worktree) a
 #### Build Phase 5 Falsification Summary
 
 Looked at and held: `recordSafely` (catches sync and async throws, resolves); `timedStep`'s pass-through of a result and a throw, and its end write in `finally`; the path built at wrap time (`bookkeepingRoots` swallows a missing config and a missing path, so it does not throw in practice); `recordTestRun`'s counts against `planTestSet`'s reason strings (`row …`, `must not break: …`); the `--list` path, which returns before any timing; `recordPhaseClose`'s refusals; the landing merge's subject, which matches `land.ts` in both modes and is always a real merge (`--no-ff`); the trimmed `git` output parsed by `Date.parse`; the brief's quoted `accepted_at`. Not hunted: the admin's `classifierFor` mapping a failed step to blocked when a blocker exists (no runner starts a step on a plan already blocked, so a blocker after the step is the step's own), concurrent appends (single short lines under `O_APPEND`), and a plan name reused after archiving (no plan reuses a name today).
+
+#### Cleanup review (unattended)
+
+No file is over the 400-line cap (`listOversizedChangedFiles` returned none). Looked at `lib/timing/view.ts` (387 lines, the largest): it holds gathering, pure formatting and the landing git read, but Shape reviewed it in Build Phase 4 and found it well-formed, the pieces share one reason to change (the view), and splitting would add files with a single caller each, so left as-is. Date validation appears in `log.ts` and `view.ts` only twice (the rule of three is not met). The six other `timing/` modules each have one job and one caller. `build-host.ts` and `plans.ts` edits are small wiring. Not examined: tests beyond their size.
 
 ## Files Affected
 
