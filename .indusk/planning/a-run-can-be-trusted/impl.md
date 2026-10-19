@@ -397,12 +397,23 @@ This phase writes the tests the plan commits to before anything changes, so each
 
 #### Test Phase 1 Document
 
-- [ ] Write the three after-landing checks, with the commands that run them, into this impl's Notes so the retrospective runs them.
+- [x] Write the three after-landing checks, with the commands that run them, into this impl's Notes so the retrospective runs them.
   <details><summary>Technical</summary>
 
   Notes section: L1, L2, L3 as numbered steps copied from their `manual:` cells, each with a blank "date / result" line; the retrospective reads this list.
 
   </details>
+
+#### Test Phase 1 Forward Intelligence
+
+- **Trajectory**: A29, A30, A41, A46, A47, A48, A50, A54, A59, A63, A86 are `written` (red on assertions); A49, A51, A53, A55, A61 are `passing`. A52 is `written` but passes today: a plan with no review is already listed as needing its plan review, so its red window is empty until Build Phase 5 changes the reader; do not read its green as the build's doing.
+- **Decision**: `acceptBrief(anyCheckout, plan, { tracer })` is the seam A46–A49 assume (third argument, optional). Build Phase 4 must create exactly that, then drop the loosely typed alias in `accept-brief-signals.test.ts`. A47's second half (a stub that lets a half-merge through reports `broken`) and the admin's planning-start lane (`build-host.trunk.test.ts` reading the captured span) need that seam and a git seam, so Build Phase 4 writes them; no tracer seam existed in the admin's lane to inject today.
+- **Decision**: A41's contract test judges a `draft` impl (Decision 9's rule) over the clause-plan fixture; the impl save check skips the contract for drafts today, which is the red.
+- **Decision**: A59's pause uses a `setTimeout` resume plus a `finally` resume so a failing run never leaves the admin stopped; both admin-recorder suites start their own two sources and admin.
+- **Watch out**: the work session's `INDUSK_BUILD_STEP=work` is in the environment; any test that runs `plans accept-brief` as a process must unset it (A86 does), and the unit tests delete it in `beforeEach`.
+- **Watch out**: the admin tests need `apps/indusk-mcp/dist/` (`pnpm build` there), and the recorder test needs the bundled admin (`pnpm --filter indusk-admin build`, then `node scripts/bundle-admin.js` in `apps/indusk-mcp`); both are untracked build output. `everyday-tests-never-wait` already fails on files from earlier plans (accept-brief-conflict, accept-brief-main, accept-brief-verb, test-run, build-host.trunk) and none of this phase's.
+- **Watch out**: the plan's own Test Phase 1 first item was ticked by a shell `sed -i` before the shell guard exists (nothing refuses it yet); later items went through the Edit tool.
+- **Assumption**: the system-tier files added to `vitest.tiers.ts` are `plan-write-guard.contract`, `impl-clause-signals.contract`, `accept-brief-signals.contract` and `accept-brief-signals`; Build Phase 1 adds `run-liveness.contract`.
 
 ### Build Phase 1: Keep every run on disk, read it back, and let Build start a dead run again
 
@@ -895,4 +906,7 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
 
 - Before approval (Decision 20): the person approves redrawn mockups of `plan.working` and `plan.released`; drawing them is outside this impl.
 - Decided (Sandy, 2026-10-19): the git commands that move between committed states (`merge`, `pull`, `checkout <branch>`, `switch`, `reset --hard`, `stash pop`) are allowed by the shell guard — landing, accepting a brief and worktrees use them, and what they bring in was checked when it was first written. The rest of the refused-forms list is the author's.
-- After landing, run and record: **L1** (kill a scratch build's step session, read "stopped", press Build), **L2** (one real conflicting acceptance on a scratch plan, then `indusk promises confirm a-brief-is-accepted-on-current-main`), **L3** (try to tick a box with `sed -i`; read the refusal). Date / result: ______
+- After landing, run and record these three live checks (each proves no clause; the retrospective reads this list):
+  1. **L1** — after landing run `pnpm install:local` and `indusk ui restart`; start a build on a scratch plan, `kill` its step session's `claude` process by hand, reload the plan page and read the stop sentence, press Build and read the phase it names. Date / result: ______
+  2. **L2** — after landing, make a scratch plan whose brief conflicts with main and run `indusk plans accept-brief <scratch>` (expect the refusal, the brief still a draft), accept one scratch brief behind main with no conflict, then run `indusk promises confirm a-brief-is-accepted-on-current-main` and its retrospective close; delete the scratch plans. Date / result: ______
+  3. **L3** — after landing, in a new session run `sed -i 's/- \[ \]/- [x]/' .indusk/planning/<scratch>/impl.md` and read the refusal (it names the file and the Edit tool). Date / result: ______
