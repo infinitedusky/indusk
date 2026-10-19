@@ -31,7 +31,7 @@ live state.
 2. **`audit-concerns-are-answered`**: the plan reviewer runs in the foreground,
    so unattended planning runs stop failing at the review. Closes itself once a
    planning run passes its review and a real amendment stop reports.
-3. **`a-brief-is-accepted-on-current-main`** — approved 2026-10-19 after its plan review (16 of 19 findings fixed in the plan, one brief clause narrowed): accepting a brief, or starting its planning, first merges main into its branch. Next: Build.
+3. **`a-brief-is-accepted-on-current-main`** — landed 2026-10-19 (`eca91fd2`): accepting a brief, or starting its planning, first merges main into its branch. Open until its three clauses report signals (with 4).
 4. **`a-run-can-be-trusted`** (not started): the impl check refuses a plan with
    clauses and no signals phase; shell writes to plan documents are refused; a
    run's state is kept on disk, a dead run shows dead with Restart; the landing
