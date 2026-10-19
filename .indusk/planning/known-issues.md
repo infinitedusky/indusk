@@ -9,6 +9,22 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 ## Plans
 
+- **Two telemetry gaps in `new-project-flow` wait for a signal.** Seen 2026-10-14 in
+  its audit, moved to `mark-first` by Sandy and not taken by it. The
+  `new_project.create` span goes nowhere: neither the admin nor the CLI registers a
+  tracer provider, so it reaches the local daemon only by accident. And three
+  promises hold only because the prompt says so
+  (`an-unkept-project-conversation-leaves-nothing-on-disk`,
+  `a-new-project-publishes-nothing-unasked`,
+  `a-new-project-is-written-only-under-its-parent`): each wants a policy signal in
+  use. Best taken by a plan written as clauses after `mark-first` lands.
+- **`change` and `replace` cannot carry clauses.** Seen 2026-10-16 closing
+  `plans-are-promises`: a clause cannot be edited after declaration, so `mark-first`
+  withdrew and re-declared its promise. The MCP `declare_promise` `clauses` argument
+  and the build review's use of the registry also have no test row.
+- **`indusk plans start` fails under `indusk init --local`.** Seen 2026-10-16: local
+  init git-ignores `.indusk/`, so `plans start` fails at `git add` on the brief.
+
 - **An existing project keeps the browser template it was scaffolded with.**
   Seen 2026-10-11 in the cold audit of browser-telemetry-leftovers: `init`
   skips a file that exists and `update` has no instrumentation reference, so
