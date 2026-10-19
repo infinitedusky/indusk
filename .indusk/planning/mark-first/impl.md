@@ -480,12 +480,13 @@ written before clauses on the old rule.
 
   </details>
 **Decision D-20:** the check ships. The D-3 scan (a scratchpad script over every impl, active and archived) read 159 rows naming a clause and 71 distinct test files: none that exists lacks an `expect(` or `assert` (the files that do not exist are later phases' and other plans' unwritten rows). `assertsSomething` runs in `clauseTokenRefusals` only on a file that already carries the clause's token. Two test fixtures whose clause test was a bare token with an empty `it` (`promises-confirm.test.ts`'s `provingClauses`, `promise-clauses-close.test.ts`) now assert one line: fixtures, not plans, so D-3's rule does not apply to them.
-- [ ] Make the new sentence of the closed-plan promise true.
+- [x] Make the new sentence of the closed-plan promise true.
   <details><summary>Technical</summary>
 
   `indusk promises change a-closed-plan-kept-its-promises --plan mark-first --statement "A plan cannot close while a clause of a promise it holds has a failing test or no signal that has reported it upheld; a plan written before clause plans closes, as before, on passing tests that name its promises. When it closes, its promise is enforced." --reason "closing now runs the tests and reads the signal"`.
 
   </details>
+Ran verbatim: the registry entry now reads the new sentence, owned by mark-first, with the old one kept in its History. `promises check` then refused a Build Phase 3 comment in `clause-standing.ts` ("…read for a promise: a behaviour promise…" parsed as a token for a promise named `a`); reworded with a dash, and the check passes (165 promises).
 - [ ] Review the closing and landing changes against the TypeScript extension's rules.
   <details><summary>Technical</summary>
 

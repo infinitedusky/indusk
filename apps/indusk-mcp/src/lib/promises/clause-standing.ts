@@ -85,7 +85,7 @@ export function restsOnly(entry: Pick<PromiseEntry, "clauses">): boolean {
 }
 
 /**
- * Whether telemetry is read for a promise: a behaviour promise, or any other
+ * Whether telemetry is read for a promise — a behaviour promise, or any other
  * with clauses a signal can report (a clause is read whatever its promise's
  * kind). A retired promise is not.
  */
