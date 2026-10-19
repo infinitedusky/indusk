@@ -4,6 +4,7 @@ import {
 	clausePlanProject,
 	clauseTestFile,
 	PLAN,
+	PROMISE,
 	passingRun,
 	upheldSignals,
 } from "../../__tests__/helpers/clause-plan-fixture.js";
@@ -53,8 +54,8 @@ describe("A29 — a clause test that asserts nothing is refused at close", () =>
 		[
 			"an imported assert and an empty test",
 			[
-				"// promise: a-promise",
-				"// clause: a-promise/a-clause",
+				`// promise: ${PROMISE}`,
+				`// clause: ${PROMISE}/a-clause`,
 				'import { assert, it } from "vitest";',
 				'it("holds", () => {});',
 				"",
@@ -63,8 +64,8 @@ describe("A29 — a clause test that asserts nothing is refused at close", () =>
 		[
 			"the word in a comment and an empty test",
 			[
-				"// promise: a-promise",
-				"// clause: a-promise/a-clause",
+				`// promise: ${PROMISE}`,
+				`// clause: ${PROMISE}/a-clause`,
 				'import { it } from "vitest";',
 				"// we assert nothing yet; expect(this) to be written",
 				'it("holds", () => {});',
@@ -74,8 +75,8 @@ describe("A29 — a clause test that asserts nothing is refused at close", () =>
 		[
 			"the word in a block comment",
 			[
-				"// promise: a-promise",
-				"// clause: a-promise/a-clause",
+				`// promise: ${PROMISE}`,
+				`// clause: ${PROMISE}/a-clause`,
 				'import { it } from "vitest";',
 				"/* assert(later) */",
 				'it("holds", () => {});',
