@@ -17,10 +17,11 @@ clauses:
     statement: "A merge that conflicts is undone and the acceptance refused, naming each conflicting file, with the brief still a draft."
   - name: the-person-never-merges
     kind: limit
-    statement: "Accepting never asks the person to merge main by hand; only a conflict asks anything of them."
+    statement: "Accepting never asks the person to merge main by hand."
 ---
 
 Accepting a brief first brings main into its plan's branch, so the plan is written against current code; when that merge conflicts, the acceptance is refused, naming the conflicting files, and nothing is changed.
 
 ## History
 - 2026-10-19 — declared (a-brief-is-accepted-on-current-main), from its planning conversation.
+- 2026-10-19 — changed by a-brief-is-accepted-on-current-main: the limit clause narrowed: other honest refusals may ask the person to act (Sandy, 2026-10-19). It read: "Accepting a brief first brings main into its plan's branch, so the plan is written against current code; when that merge conflicts, the acceptance is refused, naming the conflicting files, and nothing is changed." with the clauses main-is-merged-first (split), a-conflict-refuses (split), the-person-never-merges (limit).

@@ -33,7 +33,7 @@ None — a bugfix; every brief accepted from now on is accepted on a branch hold
 1. **`a-brief-is-accepted-on-current-main`** (state). Accepting a brief first brings main into its plan's branch, so the plan is written against current code; when that merge conflicts, the acceptance is refused, naming the conflicting files, and nothing is changed.
    - **`main-is-merged-first`** (split). Accepting a brief merges main into the plan's branch before the brief is marked accepted, in the admin and from the command line alike.
    - **`a-conflict-refuses`** (split). A merge that conflicts is undone and the acceptance refused, naming each conflicting file, with the brief still a draft.
-   - **`the-person-never-merges`** (limit). Accepting never asks the person to merge main by hand; only a conflict asks anything of them.
+   - **`the-person-never-merges`** (limit). Accepting never asks the person to merge main by hand.
 
 ### Existing promises
 
