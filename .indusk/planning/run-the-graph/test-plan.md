@@ -81,7 +81,7 @@ Every phase whose dependencies are done and whose files no running phase touches
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A19 | A Falsification Phase, a Cleanup Phase and an Audit Phase in an impl are listed in the graph with the dependencies they name, and start when those finish. | unit |
+| A19 | A Falsification Phase and a Cleanup Phase in an impl (the audit step writes `audit.md` and is not a phase) are listed in the graph with the dependencies they name, and start when those finish. | unit |
 | A20 | A review phase that touches a file a running build phase touches waits for it, as a build phase would. | unit |
 | A21 | The step that writes a Falsification Phase is not a node in the graph and takes no session slot. | unit |
 | A22 | A Maintenance phase for an incident is a phase of the graph and obeys `a-broken-promise-jumps-the-line` for order. | unit |
@@ -100,7 +100,7 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 | A23 | Two phases of one plan running together are in two different worktrees on two different branches, both cut from the plan's branch. | unit |
 | A24 | A phase's branch name says its plan and its phase, and two phases never get the same name. | unit |
 | A25 | Work done by one running phase is not visible in another running phase's worktree. | unit |
-| A26 | When a phase finishes and merges, its worktree and branch are removed; one that fails to merge is kept and listed. | unit |
+| A26 | When a phase finishes and merges, its worktree is removed and its branch kept until its plan lands (another plan may pull that finished branch); one that fails to merge is kept and listed. | unit |
 
 ### `starts-from-its-dependencies` — a phase starts with every finished phase it depends on merged into its worktree
 
