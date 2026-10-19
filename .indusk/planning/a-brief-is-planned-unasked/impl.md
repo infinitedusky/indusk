@@ -1,7 +1,7 @@
 ---
 title: "A brief is planned unasked"
 date: 2026-10-18
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "53b690d8bf5e5c2a13414285dc38539bd29046a1c0676437c9baf58707902e1b"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T00:31:06.047Z"
 ---
 
 # A brief is planned unasked
