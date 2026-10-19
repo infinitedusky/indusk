@@ -1,7 +1,7 @@
 ---
 title: "A brief is planned unasked"
 date: 2026-10-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -405,28 +405,23 @@ This phase tests the finished planning run against the ways it could start twice
   `blockerIn` (`read-planning.ts:92–94`) matches `^blocker:` anywhere with the `m` flag; an ADR that quotes the blocker protocol in a fence (as `archive/gsd-inspired-improvements/adr.md` does) ends the run as blocked. Mask fenced lines before matching (the hooks' `fencedLineMask` shape). T18.
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
-  <details><summary>Technical</summary>
-
-  `build-host.ts`, `read-planning.ts`, `build-session.ts`, the approve route.
-
-  </details>
+- [x] Shape — reviewed the files this phase changes against the enabled extensions' craft rules; nothing to change: `judgeImpl` and `blockerIn` each do one job with the hook and the fence mask handed in, and `startPlanning` claims, declines or runs in that order with one release path.
 
 #### Build Phase 5 Verification
 
-- [ ] One planning run starts per plan however many asks arrive, and none starts while a person is planning the plan.
+- [x] One planning run starts per plan however many asks arrive, and none starts while a person is planning the plan.
   <details><summary>Technical</summary>
 
   T11, T12.
 
   </details>
-- [ ] Each document is judged by the same check the session wrote it under, a test plan the contract refuses is written again, and a check that cannot run says so.
+- [x] Each document is judged by the same check the session wrote it under, a test plan the contract refuses is written again, and a check that cannot run says so.
   <details><summary>Technical</summary>
 
   T13, T14, T15, T18; `indusk plans tests a-brief-is-planned-unasked --phase "Build Phase 5"`.
 
   </details>
-- [ ] A plan is not approved while it is being planned, and the impl step does not stop on an earlier document's status.
+- [x] A plan is not approved while it is being planned, and the impl step does not stop on an earlier document's status.
   <details><summary>Technical</summary>
 
   T16, T17.
@@ -435,7 +430,7 @@ This phase tests the finished planning run against the ways it could start twice
 
 #### Build Phase 5 Context
 
-- [ ] Add to the package's context file that the planning reader runs the impl check under the build's gate policy and tells a check that cannot run from one that refused.
+- [x] Add to the package's context file that the planning reader runs the impl check under the build's gate policy and tells a check that cannot run from one that refused.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, Run, verify, Shape, cleanup (`lib/build/`): one line, T14 and T15 as its guards.
@@ -444,7 +439,7 @@ This phase tests the finished planning run against the ways it could start twice
 
 #### Build Phase 5 Document
 
-- [ ] Say on the plans reference page that a planning run does not start while a person's planning conversation is open, and that approval waits for the run to end.
+- [x] Say on the plans reference page that a planning run does not start while a person's planning conversation is open, and that approval waits for the run to end.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md` (the `accept-brief` section); changelog.
