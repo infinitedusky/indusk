@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest";
  * clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person — A11
  * clause: a-plan-is-read-cold-before-approval/the-reader-checks-the-plan — A16
  * clause: a-plan-is-read-cold-before-approval/the-plan-is-answered-before-approval — A19
+ * clause: a-plan-is-read-cold-before-approval/the-planning-run-reads-it-cold — A43
  */
 
 const PKG = resolve(__dirname, "../..");
@@ -109,5 +110,17 @@ describe("A19 — the plan review is answered before approval and the planner ru
 	});
 	it("the planner runs the plan review before presenting a plan written by hand", () => {
 		expect(planner).toContain("/audit {plan} --before-approval");
+	});
+});
+
+describe("A43 — the reader runs in the foreground and the turn waits for it", () => {
+	const afterApproval = audit.slice(audit.indexOf("3. **Spawn the reader.**"), audit.search(/Before approval/));
+	const beforeApproval = audit.slice(audit.search(/## Before approval/));
+	it.each([
+		["the post-build audit", afterApproval],
+		["the plan review", beforeApproval],
+	])("%s says run_in_background: false and never to end the turn while the reader runs", (_n, text) => {
+		expect(text).toContain("run_in_background: false");
+		expect(text).toMatch(/never end (your|the) turn while the reader runs/i);
 	});
 });

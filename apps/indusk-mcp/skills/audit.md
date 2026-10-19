@@ -26,7 +26,7 @@ The audit is **advisory**. `audit.md` must exist (or the impl must say why the a
 
    It prints JSON: `documents` (brief, test plan, ADR), `implAsApproved`, `trajectoryNow`, `diff`, `stat` (the files the plan changed), `tree` (every tracked file), `approvedAt`. If it refuses because no approval merge is found, history was rewritten: ask the person for the merge sha and rerun with `--approved <sha>`. Do not audit from the working copy's impl instead — it holds what was added since approval, which the reader must not see.
 
-3. **Spawn the reader.** Call the Agent tool with `model` set to the model step 1 named (omit `model` when it printed `session`). The prompt is the inputs plus the questions below, and nothing else: do not paste your conversation, your own notes, `research.md`, `current.md`, or your own notes on the build. The point of a second reader is that it has not read the first reader's notes.
+3. **Spawn the reader.** Call the Agent tool with `run_in_background: false` and `model` set to the model step 1 named (omit `model` when it printed `session`). Wait for its report in the foreground and never end your turn while the reader runs: in an unattended run an ended turn ends the step, and the audit is never written. The prompt is the inputs plus the questions below, and nothing else: do not paste your conversation, your own notes, `research.md`, `current.md`, or your own notes on the build. The point of a second reader is that it has not read the first reader's notes.
 
    Tell the reader to read the documents at their paths rather than relying on your summary, and to read the approved impl from `implAsApproved.text`, or with `git show <implAsApproved.path>` in the trunk (the path is `<sha>:<file>`, a committed version) — never from the working `impl.md`, which holds what was added since approval; `trajectoryNow` is the only field that names the working file. Tell it to write `.indusk/planning/{plan}/audit.md` (in the plan's worktree) in the shape below.
 
@@ -119,7 +119,7 @@ The heading is the question's text, unnumbered. Under each heading: findings as 
 The same reader, shape and answers, but run on a plan nobody has approved: the plan is read cold before the person is asked to sign it. The planner runs it before presenting a plan written by hand, and an unattended planning run does it as its last step (`plan-review`).
 
 1. **Get the inputs.** `indusk plans review-inputs {plan}` prints JSON: `documents` (`brief`, `testPlan`, `adr`, `impl`, as they stand) `tree` (every tracked file) and `read` (a hash of the four documents as printed). Never `research.md` and never the conversation — they hold the decisions the reader must not inherit. The model is the same `audit` tier.
-2. **Spawn the reader** with the inputs and these four questions, verbatim, each one `##` heading in `.indusk/planning/{plan}/plan-review.md` (they are `PLAN_REVIEW_QUESTIONS` in `lib/audit/answers.ts`):
+2. **Spawn the reader** in the foreground (`run_in_background: false`) and wait for its report; never end your turn while the reader runs, because in an unattended run an ended turn ends the step. Give it the inputs and these four questions, verbatim, each one `##` heading in `.indusk/planning/{plan}/plan-review.md` (they are `PLAN_REVIEW_QUESTIONS` in `lib/audit/answers.ts`):
 
    1. **Do the planned tests prove each promise's sentence, or something narrower?**
    2. **Does the impl build what each promise claims, and nothing it does not?**

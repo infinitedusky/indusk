@@ -20,7 +20,7 @@ Nothing from the session's conversation, `research.md` or `current.md`, and none
 
 ## The Model
 
-`indusk plans model <plan> --step audit` answers the step's tier and model; the skill spawns an Agent with that `model`. With no tier configured it answers `session` and the skill spawns with no model, so the reader runs on the session's. The skill prints the model the Agent reports.
+`indusk plans model <plan> --step audit` answers the step's tier and model; the skill spawns an Agent with that `model`. With no tier configured it answers `session` and the skill spawns with no model, so the reader runs on the session's. The skill prints the model the Agent reports. The reader runs in the foreground: the skill waits for its report and never ends its turn while the reader runs, because in an unattended run an ended turn ends the step.
 
 ## The Questions
 
