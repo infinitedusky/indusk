@@ -79,4 +79,4 @@ Shape reviewed each build phase (Build Phases 1, 2, 3, 4, 5, 7, 8) and recorded 
 
 ## Landing
 
-Not yet landed on this branch's final commits. Step 10 (merge trunk in, land, verify on trunk) and Step 11 (no release) follow this retrospective's commit.
+Landed on main at 461bab6a, 2026-10-19. Plan folder left in `.indusk/planning/` (not archived): `promises confirm` refuses four clauses until real runs report their signals (A32). Installed with `pnpm install:local` from trunk; `indusk --version` reports 1.71.0, unchanged. Nothing published; no release bump, since the project installs its own build and publishing is deliberate. Deviation from Step 9/10: archive was skipped, by the plan's own rule above.
