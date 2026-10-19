@@ -1,4 +1,5 @@
 // promise: a-plan-reads-by-its-title
+// promise: a-clause-is-proved-twice
 // clause: a-clause-is-proved-twice/no-signal-is-not-holding
 import type { StandingRow } from "@infinitedusky/indusk-mcp/promises/standing";
 import { describe, expect, it } from "vitest";
