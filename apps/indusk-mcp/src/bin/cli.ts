@@ -1509,6 +1509,10 @@ promisesCmd
 	)
 	.option("--all", "every plan folder, active and archived")
 	.option("--impl-stdin", "judge the impl given on stdin in place of the one on disk")
+	.option(
+		"--clause-signals-only",
+		"ask only whether the impl names each clause's signal and no live check proves a clause (what the impl hook asks of a draft)",
+	)
 	.action(async function (this: Command, plan: string | undefined) {
 		const { promisesContract } = await import("./commands/promises.js");
 		await promisesContract(rootOrExit(), plan, this.opts());

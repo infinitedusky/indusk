@@ -2,10 +2,15 @@ import { resolve } from "node:path";
 import { text } from "node:stream/consumers";
 import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
+import { writeClauseSignals } from "../../lib/promises/clause-signal.js";
 import { clauseTestRunner, localSignalReader } from "../../lib/promises/closing-inputs.js";
 import { markClosing } from "../../lib/promises/closing-signal.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
-import { confirmPlan } from "../../lib/promises/confirm.js";
+import {
+	confirmPlan,
+	reportSignalRules,
+	SIGNAL_RULES_PROMISE,
+} from "../../lib/promises/confirm.js";
 import {
 	type ContractRefusal,
 	checkAllContracts,
@@ -218,6 +223,27 @@ export async function promisesWatch(
 }
 
 /**
+ * The contract check just refused an impl on the two clause-signal rules: each rule that
+ * refused is the signal that the rule holds, so it reports upheld (the refusal is the rule
+ * working). Best-effort and silent, like every signal.
+ */
+async function reportRefusedSignalRules(
+	projectRoot: string,
+	plan: string,
+	refusals: readonly ContractRefusal[],
+): Promise<void> {
+	const rules = [...new Set(refusals.flatMap((r) => (r.rule ? [r.rule] : [])))];
+	if (rules.length === 0) return;
+	await writeClauseSignals(
+		projectRoot,
+		"promises.contract",
+		plan,
+		{ plan: "a-run-can-be-trusted", phase: "Build Phase 4" },
+		rules.map((clause) => ({ promise: SIGNAL_RULES_PROMISE, clause })),
+	);
+}
+
+/**
  * `indusk promises contract <plan> | --all [--impl-stdin]` (planner-promises
  * ADR D2). Read-only: does the plan's brief, its test rows and the registry
  * agree? Exit 2 with every refusal on stderr, each naming the promise, the
@@ -230,7 +256,7 @@ export async function promisesWatch(
 export async function promisesContract(
 	projectRoot: string,
 	plan: string | undefined,
-	opts: { all?: boolean; implStdin?: boolean } = {},
+	opts: { all?: boolean; implStdin?: boolean; clauseSignalsOnly?: boolean } = {},
 ): Promise<void> {
 	const refuse = (refusals: ContractRefusal[]) => {
 		for (const r of refusals) console.error(`${r.file}: ${r.message}`);
@@ -269,8 +295,12 @@ export async function promisesContract(
 	// has not finished (an impl over the ~64 KB pipe buffer arrives in parts),
 	// so a large impl was refused at random.
 	const implText = opts.implStdin ? await text(process.stdin) : undefined;
-	const result = checkPlanContract(projectRoot, plan, implText === undefined ? {} : { implText });
+	const result = checkPlanContract(projectRoot, plan, {
+		...(implText === undefined ? {} : { implText }),
+		...(opts.clauseSignalsOnly ? { clauseSignalsOnly: true } : {}),
+	});
 	if (!result.ok) {
+		if (opts.implStdin) await reportRefusedSignalRules(projectRoot, plan, result.refusals);
 		refuse(result.refusals);
 		return;
 	}
@@ -311,6 +341,7 @@ export async function promisesConfirm(
 		readSignals: localSignalReader(projectRoot),
 	});
 	await markClosing(projectRoot, plan, result);
+	await reportSignalRules(projectRoot, plan, result);
 	if (!result.ok) {
 		for (const r of result.refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(
