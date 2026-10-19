@@ -181,7 +181,7 @@ This phase narrows what counts as the admin's interface to the files that draw â
 
 This phase gives accepting a brief a command, so it has a moment the planning run can start from, and makes approving a plan or a look refuse inside a planning step. The planner skill calls the command instead of editing the status by hand.
 
-- [ ] Add the command that accepts a brief once its contract check passes.
+- [x] Add the command that accepts a brief once its contract check passes.
   <details><summary>Technical</summary>
 
   `lib/plans/accept-brief.ts` `acceptBrief(anyCheckout, plan)` (ADR decision 1): refuse a brief not in `draft`, run the plan's contract check and refuse with its message, set `status: accepted` and commit on the plan's branch (reuse how `accept.ts` and `setImplKeys` find the plan and commit); refused inside any build step. CLI `indusk plans accept-brief <plan>` in `bin/commands/plans.ts`. T1.
