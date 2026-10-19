@@ -193,7 +193,8 @@ export function WhereItIsWatched({ proof }: { proof: Proof }) {
     <Section id="marks" title="Where it is watched">
       {proof.marks.length === 0 ? (
         <p className="text-sm text-ink-soft">
-          There is no signal yet: no signal has reported a run of it in any source.
+          There is no signal yet: no signal has reported a run of it in any
+          source.
         </p>
       ) : (
         <ul className="flex flex-col divide-y divide-line rounded-md border border-line">

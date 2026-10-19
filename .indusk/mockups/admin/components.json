@@ -1,5 +1,5 @@
 {
-	"renderedFrom": "5b8e27b018bd8e731f7b874a80c69c1029fb232db7dc4824868f4a1cdcedc40a",
+	"renderedFrom": "3156c0729acdb0085a1be408a16103caffd8c70f86a408faa867c35eea034c05",
 	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
@@ -2982,6 +2982,208 @@
 			],
 			"stylesheet": "components/prompt-box.css",
 			"stylesheetHash": "4249c5ad5e660284ea71b763803b4c44493d8e62a7280f392c7c79b0d3209912"
+		},
+		{
+			"name": "question-row",
+			"file": "apps/indusk-admin/src/components/ui/QuestionRow.tsx",
+			"properties": [
+				{
+					"name": "cost",
+					"type": "\"cheap\" | \"moderate\" | \"expensive\"",
+					"required": true,
+					"description": "The cost as stored, never worked out here."
+				},
+				{
+					"name": "wentAhead",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "The question went ahead before anyone answered; `done` says what was done."
+				},
+				{
+					"name": "where",
+					"type": "string",
+					"required": true,
+					"description": "Where it was asked, in words: the question's number and plan step."
+				},
+				{
+					"name": "when",
+					"type": "string",
+					"required": true,
+					"description": "The time left, or that the build is stopped, or when it went ahead."
+				},
+				{
+					"name": "text",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "reason",
+					"type": "string",
+					"required": false,
+					"description": "The recommendation's reason, for a question still waiting."
+				},
+				{
+					"name": "options",
+					"type": "QuestionRowOption[]",
+					"required": true
+				},
+				{
+					"name": "done",
+					"type": "string",
+					"required": false,
+					"description": "What was done when it went ahead."
+				},
+				{
+					"name": "followOn",
+					"type": "ReactNode",
+					"required": false,
+					"description": "The follow-on plan a late disagreeing answer opened."
+				},
+				{
+					"name": "onChoose",
+					"type": "(label: string) => void",
+					"required": false,
+					"description": "Answer with an option; when absent the options are only shown."
+				},
+				{
+					"name": "onReply",
+					"type": "() => void",
+					"required": false,
+					"description": "The \"Reply in words\" control."
+				},
+				{
+					"name": "disabled",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false"
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": false,
+					"description": "The reply box, when the person is writing one."
+				}
+			],
+			"states": [
+				{
+					"name": "cheap",
+					"id": "ui-questionrow--cheap",
+					"snapshotHash": "1d3192ad3c19949161472a76d3d13456dd87adec3e17736fe256db2d08165de8",
+					"content": {
+						"where": [
+							[
+								0,
+								0,
+								2
+							]
+						],
+						"when": [
+							[
+								0,
+								0,
+								3,
+								0
+							]
+						],
+						"text": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"reason": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "Recommended: plan-review.md. "
+							}
+						]
+					}
+				},
+				{
+					"name": "expensive",
+					"id": "ui-questionrow--expensive",
+					"snapshotHash": "f523633e7657566517be8ac36536a9d7fa0f8986d54cdaaa5afb5aecb03f3d32",
+					"content": {
+						"where": [
+							[
+								0,
+								0,
+								2
+							]
+						],
+						"when": [
+							[
+								0,
+								0,
+								3,
+								0
+							]
+						],
+						"text": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"reason": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "Recommended: Keep the promise. "
+							}
+						]
+					}
+				},
+				{
+					"name": "went-ahead",
+					"id": "ui-questionrow--went-ahead",
+					"snapshotHash": "1f11ffb6591d85d90e9e8bc87db434455b0e9695a5c7b151e55ef9b2e4942b77",
+					"content": {
+						"where": [
+							[
+								0,
+								0,
+								2
+							]
+						],
+						"when": [
+							[
+								0,
+								0,
+								3,
+								0
+							]
+						],
+						"text": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"done": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/question-row.css",
+			"stylesheetHash": "c61ef0c236fd84a85d36b0f41b90bae7509afc42395175f625f042cd799f2a14"
 		},
 		{
 			"name": "rail-group",

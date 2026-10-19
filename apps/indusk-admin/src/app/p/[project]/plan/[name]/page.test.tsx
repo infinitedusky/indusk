@@ -92,6 +92,7 @@ vi.mock("@/lib/decisions-reader", () => ({
   __esModule: true,
   readWaiting: async () => [],
   readPlanHistory: () => [],
+  readPlanQuestions: () => [],
   withSituations: async (_project: string, _path: string, plans: unknown[]) =>
     plans,
 }));
