@@ -1,6 +1,6 @@
 # `indusk plans`
 
-A plan's lifecycle from start to landing — `start`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
+A plan's lifecycle from start to landing — `start`, `accept-brief`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
 
 ## A plan's lifecycle
 
@@ -8,6 +8,7 @@ A plan is written on its own branch, in its own worktree. Its documents and decl
 
 ```bash
 indusk plans start <type> <name>    # its branch, its worktree, its first document
+indusk plans accept-brief <name>    # a draft brief is accepted once its contract check passes
 indusk plans approve <name>         # the brief check, then its documents merge to the trunk
 indusk plans reapprove <name>       # a person approves an amendment; an agent's call is refused
 indusk plans accept <name> [--auto] # the build may ship
@@ -76,6 +77,12 @@ While an amendment waits, `check-gates` refuses to check off any build item, nam
 ### `plans amendments <name> [--dir <folder>] [--json]`
 
 Lists the amendments waiting, each as `part name: was "…" — now "…"`, or says nothing waits. `--json` prints the list (`[{part, name, was, now}]`) — what `check-gates` reads; `--dir` names the plan folder the caller means, otherwise the plan's live copy is read. Refused, exit 1, when what was approved cannot be told: no approval commit on the branch, or one whose brief is not the `approved_brief` recorded — never read as "nothing changed".
+
+### `plans accept-brief <name>`
+
+The person says the brief is settled. Refused, with nothing written, when the brief is not a `draft`, or when the plan's contract check (`indusk promises contract`) refuses, with the check's own messages. Otherwise sets the brief's `status: accepted` and commits it on the plan's branch as `plan(<name>): brief accepted`; in a workbench, at the workbench root. The planner skill runs it after declaring the promises instead of editing the status by hand, so acceptance has a moment later steps can start from.
+
+Refused inside a build step, naming the step: a session that plans or builds does not decide the brief is settled. Approving a plan or a look is refused inside a planning step (`plan-test-plan`, `plan-adr`, `plan-impl`) the same way.
 
 ### `plans reapprove <name>`
 
