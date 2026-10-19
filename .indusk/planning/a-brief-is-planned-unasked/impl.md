@@ -54,6 +54,14 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T8 | Approving a plan from the admin starts its build, and an approval refused for any reason starts nothing | Build Phase 4 | Build Phase 4 | passing | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
 | T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | skipped | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
 | T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
+| T11 | Two asks to plan the same plan at once start one planning run, not two: the second is refused or told one is running | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
+| T12 | A planning run does not start while a person's planning conversation is open on the plan, and the planner skill tells that conversation to stop writing documents once the brief is accepted with the admin planning it | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance | apps/indusk-admin/src/lib/build-host.test.ts |
+| T13 | A test plan the contract check refuses (a promise clause with no clause plan) is the test-plan step again, not passed on to the ADR and impl steps | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
+| T14 | The reader judges the impl under the same gate policy the planning session wrote it under, so an impl whose gate is skipped with a reason the session's check allowed is not read as failing | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
+| T15 | An impl check that cannot run (the hook file missing, node not starting) ends the run saying the check could not run, never reads as an impl that failed, and a check that refuses keeps its message for the run's stop reason | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
+| T16 | Approving a plan from the admin while its planning run is still running is refused and approves nothing | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
+| T17 | The impl step's prompt says an ADR or test plan left proposed or draft by the earlier steps is no reason to stop, and that it changes no other document's status | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/build-session.test.ts |
+| T18 | A `blocker:` line inside a fenced code block of a plan document does not end the planning run | Build Phase 5 | Build Phase 5 | planned | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/read-planning.test.ts |
 
 ## Checklist
 
@@ -340,6 +348,106 @@ This phase connects the loop to the moments that start it: accepting a brief, ap
   <details><summary>Technical</summary>
 
   `apps/docs/src/decisions/a-brief-is-planned-unasked.md` with its sidebar entry; the planning guide; changelog.
+
+  </details>
+
+### Build Phase 5: Falsification — double starts, checks the reader misjudges, approval mid-run
+
+**Tier**: med — the work step's default
+
+This phase tests the finished planning run against the ways it could start twice, judge a document differently from the session that wrote it, or be approved while it is still writing. Each hypothesis below is a test that should fail on today's code; each task is the fix if it does. Once it closes, a brief starts one planning run, each document is held to the same check the run reads, a check that cannot run says so, and nothing approves a plan that is still being written.
+
+- [ ] Make starting a planning run take its place before it reads the plan, so two asks at once start one run.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/lib/build-host.ts` `startPlanning` (lines 286–322): the `planningState(...)?.running` check is followed by `await readPlanningState(...)` before `admitBuild` and `plannings().set`, so the comment "held before the first await below" is not true; two POSTs to `/api/plans/plan` (accept-brief and a look approval, or a double click) both pass the check and both start `runPlanning`. Hold a placeholder state (or a pending set) before the read and release it when the run declines. Also `admitBuild` is a `Set`: the first run's `free()` releases the second's place. T11.
+
+  </details>
+- [ ] Refuse to start a planning run while a person's planning conversation holds the plan, and tell that conversation to stop once the admin is writing the plan.
+  <details><summary>Technical</summary>
+
+  `build-host.ts:290` asks `forPlan(project, plan, "build")` only; the conversation that just ran `indusk plans accept-brief` is a `"planning"` kind session on the same worktree, and the planner skill's step 5 (`apps/indusk-mcp/skills/planner.md`, after line 104) goes straight on to write the test plan — two writers on `test-plan.md`. Decline with the reason while a planning-kind session is open, or have `accept-brief` say the admin is writing it and the skill end the conversation there; resync `.claude/skills/planner/SKILL.md`. T12.
+
+  </details>
+- [ ] Hold the test plan to the contract check's test-plan refusals before the ADR is written.
+  <details><summary>Technical</summary>
+
+  `lib/build/read-planning.ts:116–118` passes a test plan "by standing" (non-empty); `checkPlanContract` refuses a test plan through `clausePlanRefusals` (`lib/promises/contract.ts:434–438`), but that refusal only shows as `contractOk: false`, which `nextPlanningStep` (`next-planning-step.ts:70`) answers with `plan-impl` — a step told to write only `impl.md`, which cannot fix the test plan; the run then ends "two steps in a row made no progress". Mark `test-plan` not ok when a contract refusal names `test-plan.md`. T13.
+
+  </details>
+- [ ] Run the impl check in the reader under the gate policy the planning session writes under.
+  <details><summary>Technical</summary>
+
+  `read-planning.ts:71–77` spawns the hook with the admin's environment (no `INDUSK_GATE_POLICY`), so the hook reads the impl's `gate_policy: ask` (the planner template's default); the session wrote under `INDUSK_GATE_POLICY=auto` (`stepEnv`), where `validate-impl-structure.js:425` skips the write-time opt-out rule. A gate written as `skip-reason: <why>` or `(not applicable)` passes in the session and is refused by the reader, so the impl step repeats until two steps make no progress. Pass `GATE_POLICY_FOR_BUILDS` in the hook's env. T14.
+
+  </details>
+- [ ] Tell an impl check that could not run apart from one that refused, and keep the refusal's words for the run's stop.
+  <details><summary>Technical</summary>
+
+  `realPlanningReads.runHook` returns only `r.status`; a missing `hooks/validate-impl-structure.js` (the three-`..` path at `read-planning.ts:51–58`), a spawn error or a timeout gives a non-zero or null status read as `ok: false`, and the hook's stderr is dropped, so the run's stop says "two steps in a row made no progress" and the next impl step is not told what failed. Throw `PlanningUnreadable` when the hook cannot run (`r.error`, `r.signal`, status other than 0 or 2); carry the stderr of an exit 2 into `PlanningDocument` and into the stop reason. Lesson `detectors-must-distinguish-could-not-check-from-checked-and-failed`. T15.
+
+  </details>
+- [ ] Refuse approving a plan from the admin while its planning run is running.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/app/api/plans/approve/route.ts:52` calls `approvePlan` with no look at `planningState`; once an impl passes the contract mid-run the person can approve and merge documents a planning session is still writing, and the following `startBuild` is then refused ("is being planned") with nothing to start the build when the run ends. Refuse with 409 naming the running step before `approvePlan`. T16.
+
+  </details>
+- [ ] Tell the impl and ADR steps that an earlier document left draft or proposed is not a reason to stop.
+  <details><summary>Technical</summary>
+
+  The planner skill's step 7 reads "If ADR is accepted … write the impl", and `advance_plan` refuses `adr → impl` while the ADR is `proposed`; `planningPrompt` in `lib/build/build-session.ts` says neither, so a `plan-impl` session following the skill may write a blocker, or set the ADR accepted itself. Add to the planning prompt that the earlier documents stay as the earlier steps left them for the person's one approval, and that the step changes no other document. T17.
+
+  </details>
+- [ ] Ignore a blocker line that sits inside a code block of a plan document.
+  <details><summary>Technical</summary>
+
+  `blockerIn` (`read-planning.ts:92–94`) matches `^blocker:` anywhere with the `m` flag; an ADR that quotes the blocker protocol in a fence (as `archive/gsd-inspired-improvements/adr.md` does) ends the run as blocked. Mask fenced lines before matching (the hooks' `fencedLineMask` shape). T18.
+
+  </details>
+- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+  <details><summary>Technical</summary>
+
+  `build-host.ts`, `read-planning.ts`, `build-session.ts`, the approve route.
+
+  </details>
+
+#### Build Phase 5 Verification
+
+- [ ] One planning run starts per plan however many asks arrive, and none starts while a person is planning the plan.
+  <details><summary>Technical</summary>
+
+  T11, T12.
+
+  </details>
+- [ ] Each document is judged by the same check the session wrote it under, a test plan the contract refuses is written again, and a check that cannot run says so.
+  <details><summary>Technical</summary>
+
+  T13, T14, T15, T18; `indusk plans tests a-brief-is-planned-unasked --phase "Build Phase 5"`.
+
+  </details>
+- [ ] A plan is not approved while it is being planned, and the impl step does not stop on an earlier document's status.
+  <details><summary>Technical</summary>
+
+  T16, T17.
+
+  </details>
+
+#### Build Phase 5 Context
+
+- [ ] Add to the package's context file that the planning reader runs the impl check under the build's gate policy and tells a check that cannot run from one that refused.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, Run, verify, Shape, cleanup (`lib/build/`): one line, T14 and T15 as its guards.
+
+  </details>
+
+#### Build Phase 5 Document
+
+- [ ] Say on the plans reference page that a planning run does not start while a person's planning conversation is open, and that approval waits for the run to end.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/cli/plans.md` (the `accept-brief` section); changelog.
 
   </details>
 
