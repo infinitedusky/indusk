@@ -514,12 +514,13 @@ Run with this worktree's build: the contract agrees (1 made, 3 kept, 2 changed, 
 
 #### Build Phase 4 Context
 
-- [ ] Record what closing and landing read in the promises area's rules.
+- [x] Record what closing and landing read in the promises area's rules.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: closing runs the clause's tests and asks the daemon; both are inputs; a stopped daemon refuses, never passes; guard: `clause-tests-run.test.ts`, `confirm-signal.test.ts`. Also `templates/planning/CLAUDE.md` (package-owned, shipped): a plan with clauses closes only when its tests pass and its signals reported.
 
   </details>
+Area: one entry in `src/lib/promises/CLAUDE.md` (the two inputs, the stopped daemon, landing's tests half, the old rule kept, the empty-test and resting-only rules; guards named). Planning: the close-out entry of `templates/planning/CLAUDE.md` gains the sentence, copied to `.indusk/planning/CLAUDE.md` byte for byte (`skill-sync-parity.test.ts`, `promise-words.test.ts`, `context-tiers-ship.test.ts` green).
 
 #### Build Phase 4 Document
 

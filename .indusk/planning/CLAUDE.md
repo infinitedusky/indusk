@@ -198,9 +198,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   has a passing row, each such row's test file carries `clause: <promise>/<clause>`,
   and each promise it rests on is in force. A clause may
   rest on a promise the same plan makes; it counts once that promise is proved
-  in the same close, and a cycle between them is refused. — see
+  in the same close, and a cycle between them is refused. A plan with
+  `clauses: required` closes only when each clause's tests pass when run at
+  close and its signal has reported it upheld in a real run (a stopped daemon
+  refuses); landing runs the same tests. — see
   `/decisions/falsification-ritual`, `/reference/skills/retrospective`,
-  `/decisions/plans-are-promises`
+  `/decisions/plans-are-promises`, `/decisions/mark-first`
 - **The retrospective's compaction step**: plan close demotes the plan's
   narrative to one line + archive link, compresses any context entries it
   authored to rule + pointer, and collapses one old root entry per close. — see
