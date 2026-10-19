@@ -1,3 +1,4 @@
+// promise: a-brief-is-accepted-on-current-main
 // clause: a-brief-is-accepted-on-current-main/main-is-merged-first
 // clause: a-brief-is-accepted-on-current-main/the-person-never-merges
 // promise: a-plan-is-written-on-its-own-branch

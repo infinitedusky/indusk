@@ -1,3 +1,4 @@
+// promise: a-brief-is-accepted-on-current-main
 // clause: a-brief-is-accepted-on-current-main/main-is-merged-first
 import { existsSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";

@@ -1,3 +1,5 @@
+// clause: a-brief-is-accepted-on-current-main/a-conflict-refuses
+// promise: a-brief-is-accepted-on-current-main
 // clause: a-brief-is-accepted-on-current-main/main-is-merged-first
 import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";

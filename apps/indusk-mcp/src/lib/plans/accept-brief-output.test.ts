@@ -1,3 +1,4 @@
+// promise: a-brief-is-accepted-on-current-main
 // clause: a-brief-is-accepted-on-current-main/the-person-never-merges
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
