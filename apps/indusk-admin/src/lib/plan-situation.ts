@@ -16,6 +16,7 @@ import {
   type NextStep,
   nextStepFor,
   psAll,
+  readDocumentsHash,
   readReviewText,
   realGitReads,
   reportNextStep,
@@ -207,17 +208,22 @@ function reportSituation(
       ? plan.impl.frontmatter.status
       : null;
   if (implStatus !== null)
-    throttled(`${id}/audit`, () =>
-      reportPlanningAudit(root, {
+    throttled(`${id}/audit`, () => {
+      const planDir = join(
+        plan.worktree?.path ?? root,
+        ".indusk",
+        "planning",
+        plan.name,
+      );
+      return reportPlanningAudit(root, {
         plan: plan.name,
         shown:
           planSteps(snapshotOf(plan)).planning.find(
             (s) => s.name === "Planning audit",
           )?.state ?? null,
         implStatus,
-        reviewText: readReviewText(
-          join(plan.worktree?.path ?? root, ".indusk", "planning", plan.name),
-        ),
-      }),
-    );
+        reviewText: readReviewText(planDir),
+        documentsHash: readDocumentsHash(planDir),
+      });
+    });
 }
