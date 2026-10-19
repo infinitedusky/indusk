@@ -1216,7 +1216,7 @@ This phase tests the finished plan against the cases where what it shows or repo
   Destination: `apps/indusk-mcp/hooks/CLAUDE.md`, the `plan-write-guard.js` entry — "the witness snapshots the root the guard recorded, never one read from the after payload's `cwd`; it also records Edit and Write tool writes under plan folders, and the drain leaves those out of a shell command's changes". Guard: `plan-write-guard.contract.test.ts` (A99) and `clause-verdicts.test.ts` (A100).
 
   </details>
-- [ ] Add to the package's rules that a recorder pass counts as finished only when its read succeeded.
+- [x] Add to the package's rules that a recorder pass counts as finished only when its read succeeded.
   <details><summary>Technical</summary>
 
   Destination: `apps/indusk-mcp/CLAUDE.md`, Tests section, beside the `waitForIncident` line — "a scan is finished only when its pass read production: `recordBreaks` resolves with `error` on a failed read, so the loop's `outcomeOf` reads it". Guard: `recorder-loop.scan.test.ts` (A102).

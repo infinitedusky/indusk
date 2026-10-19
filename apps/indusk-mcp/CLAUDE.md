@@ -325,12 +325,12 @@ pointer; the pointer holds the story.
 
 ## Tests
 
-- commander@13 drops duplicate parent+subcommand options — declare on the
-  parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
-  Node but returns `data: {}` under vitest — detect malformed structurally.
-- The root run builds this package first (`turbo.json`); a `SHOULD_SKIP` test skips silently without `dist/`.
-- A landing test waits for what it expects (`waitForIncident`), never a fixed minute — `wait-for-incident.test.ts`, `lesson: everyday-tests-never-wait`.
-- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes every caller a system test: list the file in `vitest.tiers.ts` `SYSTEM`, or `everyday-tests-never-wait` fails it.
+- commander@13 drops duplicate parent+subcommand options: declare on the
+  parent, read `optsWithGlobals()`. gray-matter throws on malformed YAML in
+  Node, returns `data: {}` under vitest: check structure.
+- The root run builds this package first (`turbo.json`); without `dist/` a `SHOULD_SKIP` test skips.
+- A landing test waits for what it expects (`waitForIncident`), never a fixed minute; a scan whose production read failed is unfinished (`outcomeOf`) — `wait-for-incident.test.ts`, `recorder-loop.scan.test.ts`, `lesson: everyday-tests-never-wait`.
+- A helper that starts a process (`runHook`, `validateWrite`, `git`, `runCli`) makes callers system tests (`vitest.tiers.ts` `SYSTEM`).
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`); a
   promise-bearing project — `helpers/promises-fixture.ts`; a plan in a worktree —
