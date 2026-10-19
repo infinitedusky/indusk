@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { releaseBranchBookkeeping } from "../bookkeeping/migrate.js";
 import { readConfig } from "../config.js";
 import { git, headSha } from "../git.js";
+import type { ClauseTestRunner } from "../promises/clause-proof.js";
 import { releasePlan } from "../worktree/plan-worktree-commands.js";
 import { uncommittedWork } from "./bookkeeping.js";
 import {
@@ -195,6 +196,14 @@ function refuseRemovingOwnBuild(
 		`the indusk running this is installed from ${plan}'s worktree (${worktree}), which landing removes. Install from the trunk first — in ${trunk}: pnpm install:local (or npm install -g ./apps/indusk-mcp) — then land again`,
 	);
 }
+
+/** Refuse to land while a clause's test fails now (mark-first A2). Not yet built: Build Phase 4. */
+export async function refuseFailingClauseTests(
+	_planRoot: string,
+	_codeRoot: string,
+	_plan: string,
+	_runTests: ClauseTestRunner,
+): Promise<void> {}
 
 function landChecks(trunk: string): string[] {
 	const config = readConfig(trunk) as { plans?: { land_checks?: unknown } } | null;

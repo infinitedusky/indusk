@@ -5,6 +5,7 @@ import { clauseTokenPattern } from "../tokens.js";
 import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
+import type { ClauseTestRunner, SignalReader } from "./clause-proof.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import { type PlanFolder, planFileRel, planFolderPath, planFolderStatus } from "./plan-folder.js";
 import {
@@ -63,6 +64,10 @@ export interface ConfirmInput {
 	codeRoot: string;
 	plan: string;
 	now?: Date;
+	/** Runs the tests a clause's rows name, now (mark-first ADR D2). */
+	runTests?: ClauseTestRunner;
+	/** Asks the local daemon what each clause's signal reported (mark-first ADR D2). */
+	readSignals?: SignalReader;
 }
 
 export interface Confirmed {
