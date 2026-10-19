@@ -32,16 +32,20 @@ live state.
    so unattended planning runs stop failing at the review. Closes itself once a
    planning run passes its review and a real amendment stop reports.
 3. **`a-brief-is-accepted-on-current-main`** — landed 2026-10-19 (`eca91fd2`): accepting a brief, or starting its planning, first merges main into its branch. Open until its three clauses report signals (with 4).
-4. **`a-run-can-be-trusted`** (not started): the impl check refuses a plan with
+4. **`a-run-can-be-trusted`** — approved 2026-10-19, ready to Build: the impl check refuses a plan with
    clauses and no signals phase; shell writes to plan documents are refused; a
    run's state is kept on disk, a dead run shows dead with Restart; the landing
    test that fails under load is fixed; a release that does not land is not shown as
    released; the offer of approval also checks the plan review's `read:` hash.
 5. **`decisions-as-questions`**: approved; main merged into its branch 2026-10-19; builds after 3 lands (both touch the admin's build host).
 
+## Next after this list
+
+`run-the-graph` — brief accepted 2026-10-19 (stories gone through with Sandy); planning now, builds right after `decisions-as-questions`.
+
 ## Parked until done
 
-`run-the-graph`, `activity-and-graph` (including an Up next view),
+`activity-and-graph` (including an Up next view),
 `the-sampler`, `a-promise-can-be-retired` and the tier retire,
 `a-promise-claims-what-the-plan-builds`, the `fix-http-*` drafts, and the
 hardening list in `.indusk/current.md`.
