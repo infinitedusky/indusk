@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="question-row" />
+		<title>question-row — expensive</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h1, h2, h3, p, dl, dd, ol, ul { margin: 0; padding: 0; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.qr { display: grid; gap: var(--space-3); padding: var(--space-4) var(--space-5); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); }
+			.qr.expensive { background: var(--color-bad-wash); border-color: var(--color-bad); }
+			.qr.went { background: var(--color-ground); }
+			.qr .head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.qr .dot { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); background: var(--color-dusk); }
+			.qr.moderate .dot { background: var(--color-warn); }
+			.qr.expensive .dot { background: var(--color-bad); }
+			.qr.went .dot { background: var(--color-idle); }
+			.qr .cost { font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-dusk); background: var(--color-dusk-wash); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-tight); }
+			.qr.moderate .cost { color: var(--color-ink); background: var(--color-warn-wash); }
+			.qr.expensive .cost { color: var(--color-bad); background: var(--color-surface); }
+			.qr.went .cost { color: var(--color-ink-faint); background: var(--color-idle-wash); }
+			.qr .when { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.qr.expensive .when { color: var(--color-bad); font-weight: var(--font-weight-semibold); }
+			.qr h3 { font-size: var(--text-md); line-height: var(--leading-4); font-weight: var(--font-weight-semibold); }
+			.qr .why { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); max-width: 64ch; }
+			.qr .opts { display: flex; flex-wrap: wrap; gap: var(--space-snug); }
+			.qr .opt { display: inline-flex; align-items: center; gap: var(--space-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); background: var(--color-surface); color: var(--color-ink); border-radius: var(--radius-lg); padding: var(--space-snug) var(--space-4); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-semibold); }
+			.qr .opt.rec { border-color: var(--color-ink); background: var(--color-ink); color: var(--color-surface); }
+			.qr .opt .tagrec { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-medium); color: var(--color-ink-faint); }
+			.qr .opt.rec .tagrec { color: var(--color-surface); }
+			.qr .reply { font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); color: var(--color-dusk); }
+			.qr .done { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.qr .done b { color: var(--color-ink); font-weight: var(--font-weight-semibold); }
+			.qr .late { font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+		</style>
+	</head>
+	<body>
+<div style="padding:var(--space-6)"><section data-component="question-row" data-cost="expensive" class="qr expensive"><div class="head"><span class="dot"></span><span class="cost">Expensive</span>Build Phase 3 · The release step<span class="when">the build is stopped until you answer</span></div><h3>Drop the promise that landing never waits for a follow-on?</h3><p class="why">Recommended: keep it. Dropping it changes a promise you approved, so this waits for you whatever it costs. The build's session has ended and its slot is free; it resumes when you answer.</p><div class="opts"><button class="opt rec" type="button">Keep the promise <span class="tagrec">recommended</span></button><button class="opt" type="button">Drop it</button><button class="reply" type="button">Reply in words</button></div></section></div>
+	</body>
+</html>

@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="question-row,decision-card" />
 		<title>Plan — needs you</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -94,6 +95,36 @@
 			@media (max-width: 759px) {
 			  .shell, .shell.wide { grid-template-columns: minmax(0, 1fr); }
 			}
+			.questions { display: grid; gap: var(--space-3); padding: var(--space-5); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-dusk); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); }
+			.questions .qhead { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.questions .qhead .dot { width: var(--size-dot-lg); height: var(--size-dot-lg); border-radius: var(--radius-pill); background: var(--color-bad); }
+			.questions h2 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: var(--leading-6); font-weight: var(--font-weight-bold); }
+			.questions .qlist { display: grid; gap: var(--space-3); }
+			.qr { display: grid; gap: var(--space-3); padding: var(--space-4) var(--space-5); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); }
+			.qr.expensive { background: var(--color-bad-wash); border-color: var(--color-bad); }
+			.qr.went { background: var(--color-ground); }
+			.qr .head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.qr .dot { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); background: var(--color-dusk); }
+			.qr.moderate .dot { background: var(--color-warn); }
+			.qr.expensive .dot { background: var(--color-bad); }
+			.qr.went .dot { background: var(--color-idle); }
+			.qr .cost { font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-dusk); background: var(--color-dusk-wash); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-tight); }
+			.qr.moderate .cost { color: var(--color-ink); background: var(--color-warn-wash); }
+			.qr.expensive .cost { color: var(--color-bad); background: var(--color-surface); }
+			.qr.went .cost { color: var(--color-ink-faint); background: var(--color-idle-wash); }
+			.qr .when { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.qr.expensive .when { color: var(--color-bad); font-weight: var(--font-weight-semibold); }
+			.qr h3 { font-size: var(--text-md); line-height: var(--leading-4); font-weight: var(--font-weight-semibold); }
+			.qr .why { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); max-width: 64ch; }
+			.qr .opts { display: flex; flex-wrap: wrap; gap: var(--space-snug); }
+			.qr .opt { display: inline-flex; align-items: center; gap: var(--space-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); background: var(--color-surface); color: var(--color-ink); border-radius: var(--radius-lg); padding: var(--space-snug) var(--space-4); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-semibold); }
+			.qr .opt.rec { border-color: var(--color-ink); background: var(--color-ink); color: var(--color-surface); }
+			.qr .opt .tagrec { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-medium); color: var(--color-ink-faint); }
+			.qr .opt.rec .tagrec { color: var(--color-surface); }
+			.qr .reply { font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); color: var(--color-dusk); }
+			.qr .done { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.qr .done b { color: var(--color-ink); font-weight: var(--font-weight-semibold); }
+			.qr .late { font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
 		</style>
 	</head>
 	<body>
@@ -101,7 +132,7 @@
 <indusk-component name="nav" state="plan-current"></indusk-component>
 <main class="content"><div class="wrap">
 <header class="top"><div><div class="crumb"><b>dusk</b> / Plans / Cockpit redraw</div><h1 class="title">Cockpit redraw</h1></div><button class="menubtn" type="button">Menu <span class="vcount">1</span></button><div class="meta"><indusk-component name="tag" state="default"></indusk-component></div></header>
-<section class="status"><div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component><indusk-component name="rail-group" state="current"></indusk-component></aside><div class="main"><div class="summary"><p class="desc">The cockpit's nav, plan page and brief page are redrawn to look as Sandy meant them — the nav from the original cockpit mockup, with every plan, Scorecards and a width you can drag — and each look is approved once. Re-approving a changed brief becomes something only a person can do.</p><a class="brieflink" href="/p/dusk/plan/cockpit-redraw/brief">Brief: accepted — open it</a></div><indusk-component name="amendment-card" state="waiting"></indusk-component><indusk-component name="decision-card" state="ask"></indusk-component></div></div></section>
+<section class="status"><div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component><indusk-component name="rail-group" state="current"></indusk-component></aside><div class="main"><div class="summary"><p class="desc">The cockpit's nav, plan page and brief page are redrawn to look as Sandy meant them — the nav from the original cockpit mockup, with every plan, Scorecards and a width you can drag — and each look is approved once. Re-approving a changed brief becomes something only a person can do.</p><a class="brieflink" href="/p/dusk/plan/cockpit-redraw/brief">Brief: accepted — open it</a></div><indusk-component name="amendment-card" state="waiting"></indusk-component><section data-component="decision-card" data-tone="ask" class="questions"><div class="qhead"><span class="dot"></span>Waiting for you: 3 questions</div><h2>One question is holding the build</h2><div class="qlist"><section data-component="question-row" data-cost="expensive" class="qr expensive"><div class="head"><span class="dot"></span><span class="cost">Expensive</span>Build Phase 3 · The release step<span class="when">the build is stopped until you answer</span></div><h3>Drop the promise that landing never waits for a follow-on?</h3><p class="why">Recommended: keep it. Dropping it changes a promise you approved, so this waits for you whatever it costs. The build's session has ended and its slot is free; it resumes when you answer.</p><div class="opts"><button class="opt rec" type="button">Keep the promise <span class="tagrec">recommended</span></button><button class="opt" type="button">Drop it</button><button class="reply" type="button">Reply in words</button></div></section><section data-component="question-row" data-cost="moderate" class="qr moderate"><div class="head"><span class="dot"></span><span class="cost">Moderate</span>Build Phase 2 · Read the plan cold<span class="when">goes ahead in 52 min</span></div><h3>Name the plan review's file plan-review.md or review.md?</h3><p class="why">Recommended: plan-review.md. A file called review.md would read as the build's review step, which is a different thing.</p><div class="opts"><button class="opt rec" type="button">plan-review.md <span class="tagrec">recommended</span></button><button class="opt" type="button">review.md</button><button class="reply" type="button">Reply in words</button></div></section><section data-component="question-row" data-cost="cheap" class="qr cheap"><div class="head"><span class="dot"></span><span class="cost">Cheap</span>Build Phase 2 · Read the plan cold<span class="when">goes ahead in 4 min</span></div><h3>Order the plan review's questions as the brief lists them?</h3><p class="why">Recommended: yes. The reader then answers in the order a person reads the brief.</p><div class="opts"><button class="opt rec" type="button">Yes <span class="tagrec">recommended</span></button><button class="opt" type="button">Keep the current order</button><button class="reply" type="button">Reply in words</button></div></section></div></section></div></div></section>
 <div class="collapsed"><indusk-component name="part-section" state="closed"></indusk-component><indusk-component name="part-section" state="expectations"></indusk-component><indusk-component name="part-section" state="looks-two-of-three"></indusk-component><indusk-component name="part-section" state="phases-in-review"></indusk-component><indusk-component name="part-section" state="documents"></indusk-component><indusk-component name="history-panel" state="closed"></indusk-component></div>
 </div></main>
 </div>
