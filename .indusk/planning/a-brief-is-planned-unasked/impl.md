@@ -52,7 +52,7 @@ Accepting a brief whose looks are approved starts an unattended run that writes 
 | T6 | Approving a plan, approving a look and starting a build are refused from inside a planning step, naming the step | Test Phase 1 | Build Phase 2 | passing | unit | clause: an-accepted-brief-is-planned-unasked/never-approves | apps/indusk-mcp/src/lib/plans/planning-step-refusals.test.ts |
 | T7 | A planning run ends when the impl passes its check, waiting for approval; a step that writes a blocker, or two steps without progress, end it with that reason | Build Phase 3 | Build Phase 3 | passing | unit | clause: an-accepted-brief-is-planned-unasked/decides-and-records | apps/indusk-mcp/src/lib/build/planning-runner.test.ts |
 | T8 | Approving a plan from the admin starts its build, and an approval refused for any reason starts nothing | Build Phase 4 | Build Phase 4 | written | unit | clause: an-accepted-brief-is-planned-unasked/approval-starts-the-build | apps/indusk-admin/src/app/api/plans/approve/route.test.ts |
-| T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | planned | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
+| T9 | An accepted brief is planned end to end once on a real plan: the three documents written, each check passing, the run stopped for approval | Build Phase 4 | Build Phase 4 | written | live check | a rehearsal of the brief's expectation on a real plan, recorded once | manual: accept a small plan's brief from the CLI with the admin running; watch the planning run write its documents and stop for approval |
 | T10 | A change to the admin's server code (its `lib` and API routes) is not an interface change, a change to a page or component still is, and narrowing the admin's sources leaves every look's closure readable | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard: the admin's interface is what draws, so this plan's server changes can be accepted with no look | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
 
 ## Checklist
@@ -288,6 +288,12 @@ This phase builds the loop that writes the plan: a decision that names the next 
 
 This phase connects the loop to the moments that start it: accepting a brief, approving its last look, and approving the plan. Once it closes, a person accepts a brief and approves the plan, and everything between and after runs by itself to review.
 
+- [x] Read a real plan into the state the planning run decides from, which nothing did yet.
+  <details><summary>Technical</summary>
+
+  Found at the start of this phase: Build Phase 3's `nextPlanningStep` and `runPlanning` take a `PlanningState`, and no code builds one from a plan on disk. `lib/build/read-planning.ts` `readPlanningState(anyCheckout, plan, deps?)`: the documents the plan's workflow needs (`parsePlan` for `workflow` and `documentsOff`, `requiredDocuments`) and which exist (`findPlanFolder`); the contract check (`checkPlanContract`); the impl's structure check, by running the shipped `hooks/validate-impl-structure.js` on the impl's content (stdin `{tool_name:"Write",tool_input:{file_path,content},cwd}`, exit 0 is ok) through an injectable runner; `unapprovedMockups(root, briefText)`; the impl's status; a `blocker:` line in any of the three documents; and the brief's status, for the host. Unit-tested with fakes.
+
+  </details>
 - [ ] Let the admin start a planning run when a brief is ready, and have accepting a brief and approving a look ask it to.
   <details><summary>Technical</summary>
 
