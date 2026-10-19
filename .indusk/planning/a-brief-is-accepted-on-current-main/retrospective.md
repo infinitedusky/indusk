@@ -44,3 +44,5 @@ answered.
 ## Quality Ratchet
 
 Nothing recurring for Biome. Shape: nothing raised that a person judged wrong.
+
+Landed on main at eca91fd2, 2026-10-19, by hand (one merge conflict in apps/indusk-mcp/CLAUDE.md, both entries kept). Installed and the admin restarted; nothing published. Open until its clauses report signals (with `a-run-can-be-trusted`).
