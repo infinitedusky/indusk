@@ -41,9 +41,9 @@ describe("A6 — a test run's span is not a signal", () => {
 	// as a resource attribute, so a run marked through OTEL_RESOURCE_ATTRIBUTES
 	// carries it only in Jaeger's process tags.
 	it("A35 — the reader ignores a span whose resource carries indusk.run=test", () => {
-		expect(
-			parseMarkedSpan(span(signalTags), "svc", [{ key: "indusk.run", value: "test" }]),
-		).toBe(null);
+		expect(parseMarkedSpan(span(signalTags), "svc", [{ key: "indusk.run", value: "test" }])).toBe(
+			null,
+		);
 	});
 
 	describe("the writer marks a span made under a test runner", () => {

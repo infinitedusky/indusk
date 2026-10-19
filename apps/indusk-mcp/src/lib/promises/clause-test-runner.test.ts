@@ -105,7 +105,9 @@ describe("A36 — a clause test whose every test was skipped is not passing", ()
 		});
 		expect(r.ok, "a clause whose only test was skipped closed").toBe(false);
 		const text = r.ok ? "" : r.refusals.map((x) => x.message).join("\n");
-		expect(text).toMatch(/a-promise\/a-clause: tests — src\/a-clause\.test\.ts ran no test \(skipped\)/);
+		expect(text).toMatch(
+			/a-promise\/a-clause: tests — src\/a-clause\.test\.ts ran no test \(skipped\)/,
+		);
 		expect(text).not.toMatch(/b-clause/);
 	});
 });

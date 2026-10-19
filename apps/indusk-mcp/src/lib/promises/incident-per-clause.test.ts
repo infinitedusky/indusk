@@ -5,8 +5,8 @@ import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
 import { promiseProject } from "../../__tests__/helpers/promises-fixture.js";
 import { incidentsIn, JAEGER, OWNER, OWNER_IMPL } from "../../__tests__/helpers/record-fixture.js";
-import { recordViolations } from "./incidents.js";
 import type { IncidentVerdict } from "./incident-signal.js";
+import { recordViolations } from "./incidents.js";
 import { recordBreaks } from "./record.js";
 import { readPromises } from "./registry.js";
 import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
@@ -146,12 +146,11 @@ describe("A32 — each clause's break is recorded in an incident naming its own 
 		const fx = project();
 		const home = mkdtempSync(join(tmpdir(), "incident-per-clause-home-"));
 		cleanups.push(() => rmSync(home, { recursive: true, force: true }));
-		const reads =
-			(spans: MarkedSpan[]) => async (): Promise<MarkedSpansResult> => ({
-				queryUrl: JAEGER.url,
-				since: new Date("2026-10-01T00:00:00Z"),
-				byPromise: new Map([[NAME, { violations: spans, truncated: false, lastUpheld: null }]]),
-			});
+		const reads = (spans: MarkedSpan[]) => async (): Promise<MarkedSpansResult> => ({
+			queryUrl: JAEGER.url,
+			since: new Date("2026-10-01T00:00:00Z"),
+			byPromise: new Map([[NAME, { violations: spans, truncated: false, lastUpheld: null }]]),
+		});
 		const verdicts: IncidentVerdict[] = [];
 		const deps = {
 			mark: () => {},
@@ -160,7 +159,11 @@ describe("A32 — each clause's break is recorded in an incident naming its own 
 				verdicts.push(v);
 			},
 		};
-		await recordBreaks(fx.root, { by: "admin", source: "deployed" }, { ...deps, reads: reads([A]) });
+		await recordBreaks(
+			fx.root,
+			{ by: "admin", source: "deployed" },
+			{ ...deps, reads: reads([A]) },
+		);
 		await recordBreaks(
 			fx.root,
 			{ by: "admin", source: "deployed" },
@@ -170,9 +173,10 @@ describe("A32 — each clause's break is recorded in an incident naming its own 
 			{ outcome: "upheld" },
 			{ outcome: "upheld" },
 		]);
-		expect(incidents(fx.root).map((i) => i.clause).sort()).toEqual([
-			"never-twice",
-			"released-in-time",
-		]);
+		expect(
+			incidents(fx.root)
+				.map((i) => i.clause)
+				.sort(),
+		).toEqual(["never-twice", "released-in-time"]);
 	});
 });

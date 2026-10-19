@@ -92,7 +92,9 @@ describe("A29 — a clause test that asserts nothing is refused at close", () =>
 		});
 		expect(r.ok).toBe(false);
 		const message = r.ok ? "" : r.refusals.map((x) => x.message).join("\n");
-		expect(message).toMatch(/src\/a-clause\.test\.ts carries the clause's token and asserts nothing/);
+		expect(message).toMatch(
+			/src\/a-clause\.test\.ts carries the clause's token and asserts nothing/,
+		);
 	});
 
 	it("A37 — still accepts expect( and assert.<name>( and assert( calls", async () => {

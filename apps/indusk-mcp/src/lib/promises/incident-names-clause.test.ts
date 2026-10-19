@@ -176,7 +176,10 @@ describe("A33 — a break written by an app's own helper names the plan and phas
 		if (!marked) throw new Error("the helper's span was not read as a signal");
 		const text = openedIncident(marked);
 		expect(text).toMatch(
-			new RegExp(`^Signal: \`${PROMISE}/${CLAUSE}\` — added by plan \`${PLAN}\`, Build Phase 3$`, "m"),
+			new RegExp(
+				`^Signal: \`${PROMISE}/${CLAUSE}\` — added by plan \`${PLAN}\`, Build Phase 3$`,
+				"m",
+			),
 		);
 	});
 });
