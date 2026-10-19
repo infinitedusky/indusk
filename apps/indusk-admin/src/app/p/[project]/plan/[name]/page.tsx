@@ -55,6 +55,13 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // The dates the released card reads come from the package.
   const dates = (await readHealthNames(projectPath)).planDates[name];
 
+  // The one decision the plan waits on, and what it was answered before
+  // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
+  // the card while it waits on them, so neither is offered twice.
+  const waiting = plan.archived
+    ? undefined
+    : (await readWaiting(project, projectPath, [plan]))[0];
+
   // What the page offers, one rule for a normal-mode plan (its worktree) and
   // a workbench plan (its code file) — workbench-plan-authoring A10.
   const actions = planActions({
@@ -62,14 +69,8 @@ export default async function PlanPage({ params }: PlanPageProps) {
     code: plan.code,
     implStatus: plan.impl?.frontmatter.status as string | undefined,
     position: plan.position?.position,
+    waitingOn: waiting?.on,
   });
-
-  // The one decision the plan waits on, and what it was answered before
-  // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
-  // the card while it waits on them, so neither is offered twice.
-  const waiting = plan.archived
-    ? undefined
-    : (await readWaiting(project, projectPath, [plan]))[0];
 
   // The brief's three parts, read by the package from the checkout the plan is
   // worked in (its worktree, else the project's own), on every request, so a

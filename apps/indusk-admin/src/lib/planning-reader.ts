@@ -23,6 +23,10 @@ import {
   parsePlan,
   readPlanDeclarations,
 } from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import {
+  type PlanReviewState,
+  readPlanReview,
+} from "@infinitedusky/indusk-mcp/plans/plan-review";
 import { afterClose } from "@infinitedusky/indusk-mcp/promises/after-close";
 import {
   displayWords,
@@ -143,6 +147,8 @@ export interface Plan {
   }>;
   /** Rituals finished from their own files: a closed phase, or `audit.md` written. */
   finishedRituals?: Array<"falsification" | "cleanup" | "audit">;
+  /** Its plan-review.md as the package reads it: missing, unanswered or answered. */
+  planReview?: PlanReviewState;
   retrospective?: RetroData;
   /** `audit.md`, when the audit step wrote one. */
   audit?: RetroData;
@@ -425,6 +431,7 @@ async function readPlanFolder(
     falsification: falsificationData,
     ...(skippedRituals.length > 0 ? { skippedRituals } : {}),
     ...(finishedRituals.length > 0 ? { finishedRituals } : {}),
+    planReview: readPlanReview(planDir),
     retrospective:
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective

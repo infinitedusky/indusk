@@ -68,8 +68,11 @@ A plan that waits on you waits in one place. Introduced by plan-cockpit; the dec
 | Waiting on | When | Accept does | The alternative |
 |---|---|---|---|
 | a **question** | a session the admin runs for the plan asked (`AskUserQuestion`) and nobody answered (`SessionManager.pendingQuestion`) | answers with the first option, as the panel does; an ask of several questions shows each with its two answers and a box for your own words (words replace the chosen option for that question) and sends them together, an answer under each question's text — never the first alone | answers with the second option |
-| **approval** | the impl is a `draft`, every document before it that the plan's type requires is accepted, and no session the admin runs for the plan is still writing it (its turn open, nothing asked) — once its turn ends, the plan appears here, even while the session stays alive waiting for you | `indusk plans approve` | *Not yet — keep planning*, sent to the agent as words |
+| **approval** | the impl is a `draft`, every document before it that the plan's type requires is accepted, no session the admin runs for the plan is still writing it (its turn open, nothing asked), and its plan review (`plan-review.md`) is written with every finding answered — once its turn ends, the plan appears here, even while the session stays alive waiting for you | `indusk plans approve` | *Not yet — keep planning*, sent to the agent as words |
+| **plan review** | the impl is a `draft`, every document before it is accepted, no session is still writing it and no planning run for it is still going, and `plan-review.md` is missing or leaves a finding unanswered; when the admin's planning run for it stopped, the decision says why, and after an admin restart it says only that the plan needs its plan review | asks the plan's agent, in words, to write it | *Not yet*, sent to the agent as words |
 | **review** | the build stopped at review, or the plan stands at review (so it is still listed after the admin restarts) | accepts the plan and starts the release, as the build's Accept does | *Not yet — send it back*, sent to the agent as words |
+
+Every Approve button — the decision card, the plan page and the brief page — asks this answer; while a planning run is going, nothing is listed.
 
 A question outranks the rest: an agent blocked on an answer is the most urgent thing a plan can wait on. A question asked in a terminal session is not seen here; the cockpit shows what the admin runs.
 

@@ -16,6 +16,8 @@ import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
  *     under each question's text, or it is refused.
  *   - **approval**: accept is `plans approve`; **review**: accept is
  *     `acceptPlan` and the release, as BuildControls' Accept does.
+ *   - **plan-review**: the plan needs its plan review; both answers are words
+ *     to the plan's agent, never an approval or a release.
  *   - an **amendment** is never answered here: it is approved or sent back on
  *     the plan's amendment card, and an accept here would run a release
  *     (plan-stories, ADR decision 5), so it is refused before anything is
@@ -148,8 +150,10 @@ async function deliver(
       await deps.approve();
       return { via: "approve" };
     }
-    await deps.release();
-    return { via: "release" };
+    if (waiting.on === "review") {
+      await deps.release();
+      return { via: "release" };
+    }
   }
   // Words go to the plan's agent in conversation: its planning session, else
   // whichever session the plan has.

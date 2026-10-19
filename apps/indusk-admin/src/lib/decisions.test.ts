@@ -386,14 +386,14 @@ describe("A16 (plan-stories) — an amendment is answered on its own card", () =
 
 // promise: decisions-wait-in-one-place
 describe("approval-waits-for-the-planning-run A19 — a plan-review answer is words to the agent", () => {
-  const planReviewWaiting = {
+  const planReviewWaiting: Waiting = {
     plan: PLAN,
     on: "plan-review",
     step: "Impl",
     decision: "The plan needs its plan review: plan-review.md, answered.",
     accept: "Ask the agent to write it",
     alternative: "Not yet",
-  } as unknown as Waiting;
+  };
 
   it("A19 accepting it neither approves nor releases; the words go to the plan's agent", async () => {
     const d = deps();

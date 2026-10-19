@@ -44,8 +44,7 @@ const review = (answered: boolean) =>
 async function planReviewOf(): Promise<string | undefined> {
   const plan = (await readActivePlans(project)).find((p) => p.name === "p");
   expect(plan, "the reader did not return the plan").toBeDefined();
-  return (snapshotOf(plan as NonNullable<typeof plan>) as { planReview?: string })
-    .planReview;
+  return snapshotOf(plan as NonNullable<typeof plan>).planReview;
 }
 
 beforeEach(() => {

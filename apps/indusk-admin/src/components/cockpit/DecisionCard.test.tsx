@@ -269,15 +269,14 @@ describe("cockpit-audit-fixes A14 — a several-question ask takes the person's 
 });
 
 describe("approval-waits-for-the-planning-run A20 — a plan-review wait is drawn in the ask state", () => {
-  // Cast: the kind exists once the package's rule lists it.
-  const needsReview = {
+  const needsReview: Waiting = {
     plan: "written",
     on: "plan-review",
     step: "Impl",
     decision: "The plan needs its plan review: plan-review.md, answered.",
     accept: "Ask the agent to write it",
     alternative: "Not yet",
-  } as unknown as Waiting;
+  };
 
   it("A20 headed as needing its plan review at the step, with the decision's words", async () => {
     const screen = await render(

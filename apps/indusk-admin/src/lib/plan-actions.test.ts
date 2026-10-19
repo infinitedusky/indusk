@@ -12,9 +12,7 @@ import { type PlanActionInput, planActions } from "./plan-actions";
  */
 
 // promise: approval-waits-for-a-finished-plan
-// Compiles before `waitingOn` exists on the input.
-const offered = (input: PlanActionInput & { waitingOn?: string }) =>
-  planActions(input);
+const offered = (input: PlanActionInput) => planActions(input);
 
 const worktree = { path: "/p-worktrees/seats", branch: "plan/seats" };
 const code = { repo: "web", branch: "plan/seats", worktree: "/wb/seats" };
