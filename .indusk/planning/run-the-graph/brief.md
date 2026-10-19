@@ -16,9 +16,10 @@ run one after another in one worktree, one session at a time, and the person
 starts each with the command the last one named.
 
 Written in the shape `plans-are-promises` defines (Sandy, 2026-10-16): each
-promise stated as clauses. It stays a draft until that plan is built, since its
-promises are declared with their clauses (`indusk promises declare --clause`),
-which does not exist before then.
+promise stated as clauses. Gone through again with Sandy on 2026-10-19, story by
+story; the impl cuts phases small around what other phases need (a shared type,
+a schema), so what depends on them starts sooner — an instruction to the
+planner, not a promise.
 
 ## The end state, in stories
 
@@ -87,6 +88,7 @@ that touches its files, and carries on from where it stopped.
 ### This plan makes
 
 1. **`the-work-runs-as-a-graph`** (behaviour). Every phase whose dependencies are done and whose files no running phase touches is running, up to the session cap, and no phase waits on one it does not depend on.
+   - **`a-phase-names-what-it-needs`** (split). Each phase in a plan names the phases it depends on; one that names none depends on the phase before it, so a plan written before this runs as it does today. (Stories 1, 2.)
    - **`ready-phases-start`** (split). A phase becomes ready when the last phase it depends on finishes, and its session is launched within one minute while the session cap has room; setting up its worktree is the phase's own time.
    - **`no-needless-wait`** (limit). No phase is held back by a phase it neither depends on nor shares a file with.
    - **`graph-is-current`** (limit). When a phase ends, a plan is approved or a plan lands, the graph is read again before any next phase starts.
@@ -96,19 +98,24 @@ that touches its files, and carries on from where it stopped.
    - **`own-worktree`** (limit). Every running phase has its own worktree and branch, cut from its plan's branch.
    - **`starts-from-its-dependencies`** (limit). A phase starts with every finished phase it depends on merged into its worktree.
    - **`starts-from-the-work-it-waited-for`** (limit). A phase that waited on another plan's phase for a file starts with that phase's finished work merged into its worktree, landed or not.
-   - **`green-before-merging`** (limit). A phase merges into its plan's branch only when the check it ends with is green.
+   - **`green-before-merging`** (limit). A phase merges into its plan's branch only when, with the merge made, its own tests and the tests of every clause the plan's branch has touched pass, so two phases that break something only together are caught at the merge that joins them. (Stories 1, 2.)
+   - **`every-phase-is-checked`** (limit). A phase that runs no test never merges, and a phase that touches a clause carries that clause's signal.
    - **`only-the-plan-lands`** (limit). Nothing reaches the trunk from a phase's branch; only a plan's branch, once its promises are verified.
 3. **`earlier-plans-go-first`** (state). When phases of different plans are ready and want the same file, the phase of the plan that comes first runs next: earlier in the plan tree, read top-down from the root master through each parent's ordered children; a plan with no place in the tree comes after every plan that has one, and among those the one approved earlier — to go ahead, a plan is given a place (Sandy, 2026-10-16).
    - **`earliest-next`** (limit). Of ready phases that want a file a running phase holds, the earliest plan's runs next when that file is free.
-   - **`a-broken-promise-jumps-the-line`** (limit). A phase that fixes a broken promise — a Maintenance phase for an open incident — runs before every other ready phase that wants its files, whatever its plan's place (Sandy, 2026-10-16).
-   - **`never-interrupted`** (limit). A running phase is never stopped to let an earlier plan's phase in; the earlier one goes next.
+   - **`a-broken-promise-jumps-the-line`** (limit). A phase that fixes a broken promise — a Maintenance phase for an open incident — gets the next free session ahead of every phase that is not a fix, whatever its plan's place; every phase not yet started that touches its files depends on it, and a running phase that touches them merges the fix before it merges into its plan (Sandy, 2026-10-16 and 2026-10-19; story 3).
+   - **`never-interrupted`** (rests on `a-hold-is-cheap`).
 4. **`trunk-cascades`** (behaviour). When anything lands on the trunk (the branch the project's main checkout is on: `main` here, each repo's own in a workbench), every open plan's branch merges it, and a running phase's worktree merges it when that phase ends; a conflict is resolved by an agent with the plan's tests as the check, or becomes a question when it cannot be.
    - **`branches-follow-the-trunk`** (split). Within five minutes of a landing, every open plan's branch with no running phase has merged it.
    - **`phase-merges-at-its-end`** (limit). A running phase merges the trunk when it ends, before it merges into its plan.
-   - **`agent-resolves-first`** (limit). A conflicting merge is resolved by an agent and kept only with the plan's tests passing; otherwise it becomes a question naming the files.
+   - **`agent-resolves-first`** (limit). A conflicting merge is resolved by an agent and kept only with the plan's tests passing; otherwise it becomes a question naming the files, and only that plan's affected phases go on hold. (Story 4.)
 5. **`landing-follows-what-it-pulled`** (state). A plan whose phase pulled another plan's unlanded work cannot land before that plan, and merges that work again before it lands.
    - **`lands-after`** (limit). A plan holding another plan's unlanded work is refused landing, naming that plan, until it has landed.
    - **`merges-again-before-landing`** (limit). Before it lands, such a plan merges the trunk with the other plan's landed work in it.
+6. **`a-hold-is-cheap`** (state). Nothing stops: a running phase always finishes, and a phase put on hold (a question that holds, an amendment, a conflict it cannot resolve) is set aside so the rest of the graph goes on without it; it does its own catching up when it is ready again. (Stories 3, 4, 5.)
+   - **`running-phases-finish`** (limit). A running phase is never stopped to let another in.
+   - **`a-hold-frees-its-files`** (split). A phase put on hold gives up its turn on its files at once, so phases waiting only for those files go ahead; phases that need its output still wait for it.
+   - **`the-held-phase-catches-up`** (split). When a held phase is ready again it waits for any active phase it now depends on, merges what finished meanwhile that touches its files, and carries on from where it stopped.
 
 ### Existing promises
 
