@@ -16,3 +16,10 @@ export {
 	writeRunRecord,
 } from "./record.js";
 export { type Restart, type RestartReads, restartStep } from "./restart.js";
+export {
+	type DeadReadsInput,
+	type IdleInput,
+	reportDeadReadsStopped,
+	reportKeptOnDisk,
+	reportNotInProgressWhenIdle,
+} from "./signals.js";

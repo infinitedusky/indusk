@@ -451,19 +451,19 @@ This phase makes the admin's builds, planning runs and releases leave a record o
   `startBuild`'s `existing?.running` and `planningState(...).running` checks, and `startRelease`'s, read `runStatus(...).state === "running"`, not the flag. A still-live run of the same plan and kind is still refused ("already building"); a dead one starts again from `restartStep`. When the plan's dead run is a planning run, or its impl is not yet approved, `startBuild` calls `startPlanning(project, plan)` instead of `runBuild`, since the admin's Build route (`apps/indusk-admin/src/app/api/plans/build/route.ts`) calls only `startBuild` (A74 in `build-host.record.test.ts`). `decisions-reader.ts`' `stoppedAt` reads the merged state.
 
   </details>
-- [ ] Report the signal for the clause that a run is kept on disk.
+- [x] Report the signal for the clause that a run is kept on disk.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/kept-on-disk` — read in the run record and what the admin shows after a restart. Reported from `apps/indusk-mcp/src/lib/run-record/signals.ts`. After each start/advance/stop write, read the file back with a plain `JSON.parse(readFileSync(...))` (not `readRunRecord`) and compare with the in-memory run that was written, and call `writeClauseSignals(root, "run.record", plan, { plan: "a-run-can-be-trusted", phase: "Build Phase 1" }, [{ promise: "a-run-is-read-from-its-record", clause: "kept-on-disk", ...(same ? {} : { broken: "<plan> <kind> record differs from the run" }) }])` in `lib/run-record/signals.ts`; best-effort, never failing the run.
 
   </details>
-- [ ] Report the signal for the clause that a dead run reads stopped.
+- [x] Report the signal for the clause that a dead run reads stopped.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/dead-reads-stopped` — read in the stop sentence and Build's answer. Reported from `apps/indusk-mcp/src/lib/run-record/signals.ts`, judged against the process table, not `runStatus`: when Build is pressed, read `psAll()` for the record's step-session pid and start time; if no such process lives and Build was refused as "already running", report `broken` naming the plan; if none lives and the state shown was `stopped` and Build started a new run, report upheld; a process that lives while the state shown is `stopped` is `broken` too (a live run called dead).
 
   </details>
-- [ ] Report the signal for the limit that nothing reads in progress while idle.
+- [x] Report the signal for the limit that nothing reads in progress while idle.
   <details><summary>Technical</summary>
 
   signal: `a-run-is-read-from-its-record/never-in-progress-when-idle` — read wherever the admin shows a plan as in progress, reported from `apps/indusk-mcp/src/lib/run-record/signals.ts`. Judged against raw sources with no call to `runStatus` or the run record (Decision 17): each plan shown in progress needs a process in `psAll()` whose pid and start time equal a session the session manager holds for that plan and kind (its own sessions file), or this daemon's in-memory running entry; with neither, `broken` naming the plan and what was shown; upheld otherwise, at most once per plan per tick.

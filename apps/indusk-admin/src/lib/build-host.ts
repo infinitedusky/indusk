@@ -24,10 +24,14 @@ import {
   bringTrunkIntoPlan,
 } from "@infinitedusky/indusk-mcp/plans";
 import {
+  psAll,
   type RunKind,
   type RunRecord,
   readRunRecord,
   realProcessReads,
+  reportDeadReadsStopped,
+  reportKeptOnDisk,
+  reportNotInProgressWhenIdle,
   restartStep,
   runStatus,
   startRunRecord,
@@ -87,6 +91,7 @@ function homeOf(project: string): string | null {
 function openRecord(project: string, plan: string, kind: RunKind): RunHandle {
   const home = homeOf(project);
   let current = startRunRecord(plan, kind, new Date().toISOString());
+  const root = getProjectPath(project);
   const write = () => {
     if (home === null) return;
     try {
@@ -94,6 +99,8 @@ function openRecord(project: string, plan: string, kind: RunKind): RunHandle {
     } catch {
       // the record is a cache of the run for the page; the run goes on without it
     }
+    // signal: a-run-is-read-from-its-record/kept-on-disk, read back from the file
+    if (root !== null) void reportKeptOnDisk(root, home, current);
   };
   write();
   return {
@@ -185,6 +192,33 @@ function deadRun(project: string, plan: string): RunKind | null {
 }
 
 /**
+ * signal: a-run-is-read-from-its-record/dead-reads-stopped — when Build is pressed, the run's
+ * recorded step session is looked for in the process table, apart from the rule that decided
+ * what the page showed.
+ */
+function reportBuildPressed(project: string, plan: string): void {
+  const root = getProjectPath(project);
+  if (!root) return;
+  try {
+    const record = newest(
+      recordsOf(project, plan, ["planning", "release", "build"]),
+    );
+    if (!record?.process || record.stop) return;
+    const heldHere =
+      builds().get(key(project, plan))?.running === true ||
+      plannings().get(key(project, plan))?.running === true;
+    void reportDeadReadsStopped(root, {
+      record,
+      shown: heldHere ? "running" : statusOfRecord(record).state,
+      heldHere,
+      table: psAll(),
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+/**
  * What Build starts for a run that died, asked of the plan's own documents:
  * the impl's status and acceptance, then the package's decisions.
  */
@@ -216,9 +250,46 @@ async function restartFor(root: string, plan: string, dead: RunKind) {
  */
 export function buildState(project: string, plan: string): BuildState | null {
   const held = builds().get(key(project, plan));
-  if (held) return held;
-  const record = newest(recordsOf(project, plan, ["build", "release"]));
-  return record ? buildStateFromRecord(record) : null;
+  const shown =
+    held ??
+    (() => {
+      const record = newest(recordsOf(project, plan, ["build", "release"]));
+      return record ? buildStateFromRecord(record) : null;
+    })();
+  if (shown?.running)
+    checkInProgress(project, plan, "build", held?.running === true);
+  return shown;
+}
+
+/** Once per plan in a while: a plan shown in progress has a process running for it (a signal, Decision 17). */
+const IDLE_CHECK_EVERY_MS = 15_000;
+const idleCheckedAt = new Map<string, number>();
+function checkInProgress(
+  project: string,
+  plan: string,
+  kind: RunKind,
+  heldHere: boolean,
+): void {
+  const k = `${key(project, plan)}/${kind}`;
+  const now = Date.now();
+  if (now - (idleCheckedAt.get(k) ?? 0) < IDLE_CHECK_EVERY_MS) return;
+  idleCheckedAt.set(k, now);
+  const root = getProjectPath(project);
+  if (!root) return;
+  try {
+    // signal: a-run-is-read-from-its-record/never-in-progress-when-idle, read from the process table
+    void reportNotInProgressWhenIdle(root, {
+      plan,
+      kind,
+      heldHere,
+      sessions: sessionManager()
+        .running()
+        .filter((r) => r.project === project && r.plan === plan),
+      table: psAll(),
+    });
+  } catch {
+    // best-effort
+  }
 }
 
 /**
@@ -353,6 +424,7 @@ export async function startBuild(
   if (planningState(project, plan)?.running)
     throw new Error(`${plan} is being planned: its planning run has not ended`);
   assertNoBuildSession(project, plan);
+  reportBuildPressed(project, plan);
   const dead = deadRun(project, plan);
   if (dead !== null) {
     const root = getProjectPath(project);
@@ -518,11 +590,15 @@ export function planningState(
   plan: string,
 ): PlanningRunState | null {
   const held = plannings().get(key(project, plan));
-  if (held) return held;
+  if (held) {
+    if (held.running) checkInProgress(project, plan, "planning", true);
+    return held;
+  }
   const record = recordsOf(project, plan, ["planning"])[0];
   if (!record) return null;
   const status = statusOfRecord(record);
   if (status.state === "running") {
+    checkInProgress(project, plan, "planning", false);
     return {
       started: true,
       running: true,
