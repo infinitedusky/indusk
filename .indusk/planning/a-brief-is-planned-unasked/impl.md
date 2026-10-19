@@ -407,7 +407,7 @@ This phase tests the finished planning run against the ways it could start twice
   `blockerIn` (`read-planning.ts:92–94`) matches `^blocker:` anywhere with the `m` flag; an ADR that quotes the blocker protocol in a fence (as `archive/gsd-inspired-improvements/adr.md` does) ends the run as blocked. Mask fenced lines before matching (the hooks' `fencedLineMask` shape). T18.
 
   </details>
-- [x] Shape — reviewed the files this phase changes against the enabled extensions' craft rules; nothing to change: `judgeImpl` and `blockerIn` each do one job with the hook and the fence mask handed in, and `startPlanning` claims, declines or runs in that order with one release path.
+- [x] Shape — reviewed the files this phase changes against the enabled extensions' craft rules; nothing to change: the impl judge and the blocker finder each do one job with their inputs handed in, and the planning start claims, declines or runs in that order with one release path.
 
 #### Build Phase 5 Verification
 
