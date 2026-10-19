@@ -54,7 +54,6 @@ background, the merge with `promise-first-build`, and the later cut are in
 - **`a-production-break-is-recorded-unasked`**. A broken clause becomes an incident the same way a broken promise does today.
 - **`a-plan-holds-the-promises-it-lands`**. A plan still holds one or more promises, each stated as clauses with a clause plan before the ADR, and still closes per clause: this plan adds the signal to what proves a clause and takes none of that away.
 - **`a-break-reaches-the-working-agent`**. A broken clause reaches the agent the same way.
-- **`everyday-suite-stays-fast`**. Signals add no waiting to the everyday suite.
 
 **Changes**
 
