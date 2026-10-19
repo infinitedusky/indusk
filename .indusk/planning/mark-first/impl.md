@@ -12,6 +12,8 @@ gate_policy: auto
 approved_brief: "2cef362ed74711e41413405858e878f313adcd9144ab093bd377fcb9ffc0cb8c"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T03:13:49.883Z"
+accepted: 2026-10-19T13:13:51.643Z
+accepted_by: person
 ---
 
 # Tests and telemetry linked to clauses
