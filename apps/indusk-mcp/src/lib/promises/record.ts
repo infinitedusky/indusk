@@ -80,7 +80,7 @@ export interface RecordResult {
 	/** Every change, as `watch` reports them, and which Jaeger answered. */
 	changes: WatchChange[];
 	source: string;
-	/** The pass's own mark; absent when nothing was attempted (a refusal). */
+	/** The pass's own signal; absent when nothing was attempted (a refusal). */
 	mark?: PassMark;
 	/** Set when the pass was refused before it read anything, naming why. */
 	refused?: string;
@@ -290,8 +290,8 @@ export function recorderMark(span: Parameters<typeof markPromise>[0], m: PassMar
 }
 
 /**
- * The pass's mark as a span, through the exporter InDusk's own marks use
- * (the evaluator's and the own-branch mark's). Never throws: a recorder whose
+ * The pass's signal as a span, through the exporter InDusk's own signals use
+ * (the evaluator's and the own-branch signal's). Never throws: a recorder whose
  * telemetry is down still records.
  */
 function realMark(planRoot: string): (m: PassMark) => void {

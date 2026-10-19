@@ -13,12 +13,12 @@ import {
 } from "./vocabulary.js";
 
 /**
- * The one query for promise marks (day-monitor, ADR D4).
+ * The one query for promise signals (day-monitor, ADR D4).
  *
  * Reads the local telemetry daemon's Jaeger — the one backend the loop has —
  * through its HTTP query API: list the services, then for each promise ask
  * each service for traces tagged `indusk.promise=<name>` in the window. What
- * comes back is every marked span, per promise, split into violations and
+ * comes back is every signalling span, per promise, split into violations and
  * upholds.
  *
  * When Jaeger cannot be reached this throws `JaegerUnreachable`, naming where
@@ -144,7 +144,7 @@ export interface PromiseMarks {
 	byClause?: Record<string, { violations: MarkedSpan[]; lastUpheld: MarkedSpan | null }>;
 }
 
-/** The marked spans (newest first) split by the clause they name. */
+/** The signalling spans (newest first) split by the clause they name. */
 function byClause(all: MarkedSpan[]): NonNullable<PromiseMarks["byClause"]> {
 	const out: NonNullable<PromiseMarks["byClause"]> = {};
 	for (const s of all) {

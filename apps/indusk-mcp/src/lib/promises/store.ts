@@ -9,7 +9,7 @@ import { type FullSlice, readTimeline, type TimelineMark } from "./timeline.js";
  * into the package by vscode-extension, so every window reads through one
  * store). Originally: what the admin has read, kept.
  *
- * A week of one promise's marks is megabytes, because Jaeger returns whole
+ * A week of one promise's signals is megabytes, because Jaeger returns whole
  * traces (research.md). The page refreshes every few seconds, and its chips
  * and its timeline both need the window. So the admin holds, per project and
  * source, every mark it has read and the range those marks cover, and a

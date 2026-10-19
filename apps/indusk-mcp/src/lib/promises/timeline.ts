@@ -30,7 +30,7 @@ import type { PromiseOutcome } from "./vocabulary.js";
  */
 
 export interface TimelineMark {
-	/** When the marked span ended (ISO). */
+	/** When the signalling span ended (ISO). */
 	at: string;
 	outcome: PromiseOutcome;
 	traceId: string;
@@ -47,7 +47,7 @@ export interface FullSlice {
 }
 
 export interface PromiseTimeline {
-	/** Oldest first, one per marked span. */
+	/** Oldest first, one per signalling span. */
 	marks: TimelineMark[];
 	atLeast: FullSlice[];
 }
@@ -124,7 +124,7 @@ export async function readTimeline(
 	);
 }
 
-/** One source's window: every behaviour promise's marks across every service and alias. */
+/** One source's window: every behaviour promise's signals across every service and alias. */
 async function readSourceWindow(
 	endpoint: JaegerEndpoint,
 	promises: PromiseEntry[],
