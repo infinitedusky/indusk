@@ -113,7 +113,12 @@ export async function readPlanningState(
 	const adr = textOf(dir, "adr.md");
 	const impl = textOf(dir, "impl.md");
 
-	// A test plan and an ADR pass by standing: their contract is the plan's, checked below.
+	// An ADR passes by standing; a test plan passes by standing unless the plan's
+	// contract check refuses it (a promise clause with no clause plan), which is
+	// the test-plan step again — the impl step cannot fix it.
+	const contract = deps.contract(root, plan);
+	const testPlanRefused =
+		!contract.ok && contract.refusals.some((r) => /(^|\/)test-plan\.md$/.test(r.file));
 	const standing = (text: string | null): PlanningDocument =>
 		text === null ? ABSENT : { exists: true, ok: text.trim() !== "" };
 	const implDocument: PlanningDocument =
@@ -133,9 +138,13 @@ export async function readPlanningState(
 	const briefStatus = brief === null ? undefined : matter(brief).data.status;
 	return {
 		required,
-		documents: { "test-plan": standing(testPlan), adr: standing(adr), impl: implDocument },
+		documents: {
+			"test-plan": testPlanRefused ? { exists: testPlan !== null, ok: false } : standing(testPlan),
+			adr: standing(adr),
+			impl: implDocument,
+		},
 		implStatus: typeof status === "string" ? status : null,
-		contractOk: deps.contract(root, plan).ok,
+		contractOk: contract.ok,
 		unapprovedLooks: brief === null ? [] : await deps.unapprovedLooks(root, brief),
 		blocker: blockerIn(testPlan) ?? blockerIn(adr) ?? blockerIn(impl),
 		briefStatus: typeof briefStatus === "string" ? briefStatus : null,
