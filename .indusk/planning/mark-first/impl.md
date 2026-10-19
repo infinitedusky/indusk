@@ -1,7 +1,7 @@
 ---
 title: "Tests and telemetry linked to clauses"
 date: 2026-10-18
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: auto
+approved_brief: "2cef362ed74711e41413405858e878f313adcd9144ab093bd377fcb9ffc0cb8c"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-19T03:13:49.883Z"
 ---
 
 # Tests and telemetry linked to clauses
