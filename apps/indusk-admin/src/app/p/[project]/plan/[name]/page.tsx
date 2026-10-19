@@ -20,7 +20,11 @@ import { PlanSession, planOpening } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
-import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
+import {
+  readPlanHistory,
+  readWaiting,
+  withSituations,
+} from "@/lib/decisions-reader";
 import { planLookState } from "@/lib/look-state";
 import { masterStory } from "@/lib/master-story";
 import { extractPhases } from "@/lib/phases";
@@ -29,7 +33,6 @@ import { buildGroups, groupOf } from "@/lib/plan-groups";
 import { readPlanHealth } from "@/lib/plan-health";
 import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
-import { withSituations } from "@/lib/plan-situation";
 import {
   readActivePlans,
   readArchivedPlans,

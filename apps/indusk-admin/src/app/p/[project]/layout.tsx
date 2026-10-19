@@ -18,9 +18,8 @@ import {
   UnassignedWorktrees,
   WorktreeRecordError,
 } from "@/components/Worktrees";
-import { readWaiting } from "@/lib/decisions-reader";
+import { readWaiting, withSituations } from "@/lib/decisions-reader";
 import { worktreePromises } from "@/lib/plan-health";
-import { withSituations } from "@/lib/plan-situation";
 import {
   readActivePlans,
   readArchivedPlans,
