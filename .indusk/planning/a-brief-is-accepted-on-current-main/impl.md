@@ -97,13 +97,13 @@ The first version was written unattended (`INDUSK_GATE_POLICY=auto`); after its 
 | A27 | The merge commit's message names the plan and main: `plan(<name>): main merged before its brief was accepted` | Test Phase 1 | Build Phase 1 | passing | unit | a history that explains itself when read without opening it; no promise says so | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
 | A28 | When main holds a non-conflicting change to this plan's own `brief.md`, accepting is refused naming it; the brief still reads draft, the tree is clean and the branch's head is the commit it was at | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-brief-is-accepted-on-current-main | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
 | A29 | A workbench plan's planning start brings the repo's trunk into its code branch, through the same package function the admin's start calls | Build Phase 1 | Build Phase 1 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/bring-trunk.test.ts |
-| A30 | A plan with no worktree of its own (its folder on the trunk, no worktree record) still starts its planning run from the admin: no refusal, the run is called once | Build Phase 3 | Build Phase 3 | planned | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
-| A31 | A person's own unfinished merge in the plan's worktree (an unresolved file, `MERGE_HEAD` present) survives an acceptance: the refusal names the unresolved file without saying the trunk conflicts, `MERGE_HEAD` is still the person's commit and the file still holds its conflict state | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A32 | A staged file main does not touch, which makes git refuse the merge, is named in the uncommitted-files refusal; the message holds none of git's sentence ("would be overwritten by merge") and no word merge, commit or stash, the file is still staged and the head unchanged | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A33 | An uncommitted edit to a file main renamed is named in the uncommitted-files refusal by its path in the worktree, not passed through as git's "commit your changes or stash them" | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
-| A34 | When the admin cannot take a place for the run (`admitBuild` throws, as at `sessions.max`) on a branch behind main, no merge commit is left: the branch's head is the commit it was at | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
-| A35 | When the acceptance commit itself is rejected after a clean merge (a `commit-msg` hook refusing `brief accepted`), the merge is undone, `brief.md` reads draft on disk and at `HEAD` with nothing staged, and accepting again once the hook is gone succeeds; the same for a workbench plan's commit at the root | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts, apps/indusk-mcp/src/lib/plans/accept-brief-workbench.test.ts |
-| A36 | A repository configured `merge.ff=only` still accepts a branch both ahead of and behind main: main is brought in and the brief accepted, not refused with git's "Not possible to fast-forward" | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
+| A30 | A plan with no worktree of its own (its folder on the trunk, no worktree record) still starts its planning run from the admin: no refusal, the run is called once | Build Phase 3 | Build Phase 3 | passing | unit | promise: an-accepted-brief-is-planned-unasked | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
+| A31 | A person's own unfinished merge in the plan's worktree (an unresolved file, `MERGE_HEAD` present) survives an acceptance: the refusal names the unresolved file without saying the trunk conflicts, `MERGE_HEAD` is still the person's commit and the file still holds its conflict state | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A32 | A staged file main does not touch, which makes git refuse the merge, is named in the uncommitted-files refusal; the message holds none of git's sentence ("would be overwritten by merge") and no word merge, commit or stash, the file is still staged and the head unchanged | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A33 | An uncommitted edit to a file main renamed is named in the uncommitted-files refusal by its path in the worktree, not passed through as git's "commit your changes or stash them" | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-brief-is-accepted-on-current-main/the-person-never-merges | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts |
+| A34 | When the admin cannot take a place for the run (`admitBuild` throws, as at `sessions.max`) on a branch behind main, no merge commit is left: the branch's head is the commit it was at | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-admin/src/lib/build-host.trunk.test.ts |
+| A35 | When the acceptance commit itself is rejected after a clean merge (a `commit-msg` hook refusing `brief accepted`), the merge is undone, `brief.md` reads draft on disk and at `HEAD` with nothing staged, and accepting again once the hook is gone succeeds; the same for a workbench plan's commit at the root | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-brief-is-accepted-on-current-main/a-conflict-refuses | apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts, apps/indusk-mcp/src/lib/plans/accept-brief-workbench.test.ts |
+| A36 | A repository configured `merge.ff=only` still accepts a branch both ahead of and behind main: main is brought in and the brief accepted, not refused with git's "Not possible to fast-forward" | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-brief-is-accepted-on-current-main/main-is-merged-first | apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts |
 
 ### Deferred Verification
 
@@ -430,59 +430,59 @@ Not authored, with reasons (decision, unattended): the refusal swallowed by `pla
 
 </details>
 
-- [ ] Refuse to bring main in while the plan's worktree is already partway through combining other changes, and leave that work exactly as it was.
+- [x] Refuse to bring main in while the plan's worktree is already partway through combining other changes, and leave that work exactly as it was.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/bring-trunk.ts`: before the merge, look for `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD` and the `rebase-merge`/`rebase-apply` directories (`git rev-parse --git-path <name>` in the checkout, since a worktree's git dir is not `.git`). Any present → a `PlanCommandRefusal` starting with `head(plan, how)`, saying the worktree is partway through bringing other changes in, naming the unresolved files (`git diff --name-only --diff-filter=U`) and that this belongs to whoever started it — no word merge, rebase, commit or stash. Nothing is aborted. With the pre-check in place, the `merge --abort` in `whyNotBrought` only ever undoes the merge this call started. Hypothesis A31.
 
   </details>
-- [ ] Name the files git stops on whenever no conflict and no clear overlap explains it, so git's own sentences never reach the person.
+- [x] Name the files git stops on whenever no conflict and no clear overlap explains it, so git's own sentences never reach the person.
   <details><summary>Technical</summary>
 
   `whyNotBrought` in `bring-trunk.ts`: list the trunk's changes with `git diff --name-only --no-renames HEAD...<trunk>`, so a renamed file's old path is in the set (A33). Read staged paths too (`git diff --name-only --cached`) beside `git diff --name-only HEAD` and the untracked list. When the merge stopped with no unmerged paths and the overlap is empty but the worktree has any staged or changed file, name every such file in the uncommitted-files message (A32: ort refuses on a staged file the trunk does not touch). Only when the worktree is clean does git's reason reach the fallback.
 
   </details>
-- [ ] Bring main in the same way whatever the repository's own setting for fast-forwards says.
+- [x] Bring main in the same way whatever the repository's own setting for fast-forwards says.
   <details><summary>Technical</summary>
 
   `bringTrunkIntoPlan`: add `--ff` to the merge arguments, which overrides `merge.ff=only` and `merge.ff=false` from config (verified: plain `git merge` exits 128 under `merge.ff=only` on a diverged branch, `--ff` succeeds). A branch already holding main still gains no commit (A3). Hypothesis A36.
 
   </details>
-- [ ] Make the acceptance commit part of what is undone when anything after the merge fails, restoring the brief to its draft.
+- [x] Make the acceptance commit part of what is undone when anything after the merge fails, restoring the brief to its draft.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/accept-brief.ts`: move `setImplKeys(pb, brief.path, acceptedKeys(), message)` into the `after` callback, and on any throw inside it write the brief's original bytes back and unstage it (`git reset -q -- <brief>`) before rethrowing, so `bringTrunkIntoPlan`'s `reset --merge` then undoes the merge on a clean tree. Today a rejected commit leaves `brief.md` written as accepted and staged, and the next attempt is refused by `readDraftBrief` as "accepted, not a draft". The workbench path: pass the `writeFileSync` and `commitAtRoot` as its `after`, restoring the root's `brief.md` (and its index entry at the root) on a throw. Hypothesis A35.
 
   </details>
-- [ ] Make the admin take its place for the run before it brings main in, so a run that cannot start leaves the branch as it was.
+- [x] Make the admin take its place for the run before it brings main in, so a run that cannot start leaves the branch as it was.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/build-host.ts` `startPlanning`: move the `bringTrunkIntoPlan` call after `sessionManager().admitBuild(project, plan)` and `planLocation(project, plan)` (both throw today after the merge has committed), still inside the `try` whose `catch` releases the run state and frees the place. Hypothesis A34.
 
   </details>
-- [ ] Let a plan that has no branch of its own start its planning run as it did before this plan, with nothing to bring in.
+- [x] Let a plan that has no branch of its own start its planning run as it did before this plan, with nothing to bring in.
   <details><summary>Technical</summary>
 
   `bringTrunkIntoPlan`'s `placeOf` calls `planBranch`, which refuses a plan whose copy is not a worktree; `planLocation` (`session-host.ts`) plans such a plan on the trunk through `livePlanCopy`'s `trunkCopy`. In `bringTrunkIntoPlan`, read the copy with `livePlanCopy` first: a copy whose source is the trunk is already on current main, so run `after` and return without merging. `acceptBrief`'s own-branch path still calls `planBranch` first, so the command line's refusal of such a plan is unchanged. Hypothesis A30.
 
   </details>
-- [ ] Review the changed files' shape against the enabled extensions' craft rules and record what was changed or that nothing was.
+- [x] Review the changed files' shape against the enabled extensions' craft rules and record what was changed or that nothing was. Reviewed against the extensions' craft rules: nothing to change. `refuseUnfinishedWork` is one named unit with a test seam; the two acceptance-undo blocks differ in where the brief lives and are left for `/cleanup`.
 
 #### Build Phase 3 Verification
 
-- [ ] Work already in the plan's worktree — a person's unfinished merge, a staged file, an edit to a file main renamed — is named in plain words and left as it was, and a repository that allows only fast-forwards still has main brought in.
+- [x] Work already in the plan's worktree — a person's unfinished merge, a staged file, an edit to a file main renamed — is named in plain words and left as it was, and a repository that allows only fast-forwards still has main brought in.
   <details><summary>Technical</summary>
 
   A31, A32, A33, A36 go from red to green: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm exec vitest run apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts apps/indusk-mcp/src/lib/plans/accept-brief-main.test.ts`. Each is written red at phase start on its own assertion (A31 on `MERGE_HEAD` gone after the call; A32 and A33 on git's sentence in the message; A36 on the refusal).
 
   </details>
-- [ ] A step that refuses after main is in — the acceptance commit, or the admin's place for the run — leaves no merge behind and the brief still a draft, and a plan with no branch of its own still starts its planning run.
+- [x] A step that refuses after main is in — the acceptance commit, or the admin's place for the run — leaves no merge behind and the brief still a draft, and a plan with no branch of its own still starts its planning run.
   <details><summary>Technical</summary>
 
   A30, A34, A35 go from red to green: `pnpm exec vitest run apps/indusk-mcp/src/lib/plans/accept-brief-conflict.test.ts apps/indusk-mcp/src/lib/plans/accept-brief-workbench.test.ts apps/indusk-admin/src/lib/build-host.trunk.test.ts apps/indusk-admin/src/lib/build-host.test.ts`. A35 installs the hook in the temporary repository's common `hooks/` (a worktree shares it); A34 mocks `sessionManager().admitBuild` to throw; A30 puts the plan's folder on the trunk with no worktree record and `planLocation` answering `{ root: trunk, cwd: trunk }`.
 
   </details>
-- [ ] Every earlier test still passes, and the changed files type-check and lint clean.
+- [x] Every earlier test still passes, and the changed files type-check and lint clean.
   <details><summary>Technical</summary>
 
   A1–A11, A13–A29 stay green in the runs above plus `pnpm exec vitest run apps/indusk-mcp/src/lib/plans/accept-brief-output.test.ts apps/indusk-mcp/src/lib/plans/accept-brief-verb.test.ts apps/indusk-mcp/src/lib/plans/bring-trunk.test.ts` and `pnpm exec vitest run --config vitest.system.config.ts apps/indusk-mcp/src/lib/plans/accept-brief.test.ts`; `pnpm exec tsc --noEmit -p apps/indusk-mcp`, `pnpm exec tsc --noEmit -p apps/indusk-admin`, and Biome on the touched files.
@@ -491,7 +491,7 @@ Not authored, with reasons (decision, unattended): the refusal swallowed by `pla
 
 #### Build Phase 3 Context
 
-- [ ] Add to the package's area rule that bringing main in never undoes or rewrites work it did not start, and that every step after the merge sits inside its undo.
+- [x] Add to the package's area rule that bringing main in never undoes or rewrites work it did not start, and that every step after the merge sits inside its undo.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, tier: directory, the line Build Phase 1 added: append "It refuses, touching nothing, a worktree already partway through a merge, rebase, cherry-pick or revert; it merges with `--ff` whatever `merge.ff` says; every write and commit after the merge (the acceptance commit included) runs inside its `after`, so a refusal there leaves no merge behind."
@@ -500,7 +500,7 @@ Not authored, with reasons (decision, unattended): the refusal swallowed by `pla
 
 #### Build Phase 3 Document
 
-- [ ] Add the refusal of a worktree that is partway through other changes to the command's reference page.
+- [x] Add the refusal of a worktree that is partway through other changes to the command's reference page.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/plans.md`, the `accept-brief` section's list of refusals: one line for a worktree partway through bringing other changes in (named files, nothing touched), and that staged files are named with the uncommitted ones.
