@@ -3,7 +3,7 @@ import {
   PlanCommandRefusal,
 } from "@infinitedusky/indusk-mcp/plans";
 import type { NextRequest } from "next/server";
-import { startBuild } from "@/lib/build-host";
+import { planningState, startBuild } from "@/lib/build-host";
 import { getProjectPath } from "@/lib/registry-client";
 import { adminOnly, refuse } from "@/lib/session-host";
 
@@ -48,6 +48,15 @@ export async function POST(request: NextRequest): Promise<Response> {
     return refuse(400, "approval needs project and plan");
   const root = getProjectPath(body.project);
   if (!root) return refuse(404, `no project named ${body.project}`);
+  // The documents are still being written: approving would merge them under the
+  // session, and the build it starts would be refused as "being planned".
+  const planning = planningState(body.project, body.plan);
+  if (planning?.running) {
+    return refuse(
+      409,
+      `${body.plan} is still being planned${planning.step ? ` (${planning.step})` : ""}: approve it when the run stops for approval`,
+    );
+  }
   try {
     const approved = await approvePlan(root, body.plan);
     // Only an approval that returned starts the build; a refusal above started nothing.
