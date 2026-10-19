@@ -1169,6 +1169,12 @@ This phase tests the finished plan against the cases where what it shows or repo
   Added by hand 2026-10-19 (Sandy; `says-what-is-true`): since `audit-concerns-are-answered` the build runs the audit when the build phases close, before falsification, but the plan page lists the old order. `RELEASE_STEPS` in `apps/indusk-mcp/src/lib/plans/steps.ts` becomes Build, Audit, Falsify, Cleanup, Review, Release; `workflows.test.tsx` A9 expects that order. No mockup draws the release list's order.
 
   </details>
+- [ ] Make the plan reader end a phase's notes section where the next phase begins, so every phase's to-do list is read.
+  <details><summary>Technical</summary>
+
+  Found by hand 2026-10-19 (Sandy): in `parseImplString` (`apps/indusk-mcp/src/lib/impl-parser-core.ts`), a `#### … Forward Intelligence` heading sets `inForwardIntelligence`, and the phase-header branch never resets it, so every line of the next phase until its first gate heading — its whole task list — is read as forward intelligence. This impl parses with 0 implementation items in every build phase; the admin shows only the gate items, and `nextBuildStep`/`check-gates` cannot see the tasks. In the phase-header branch, save the open forward intelligence to the previous phase and set `inForwardIntelligence = false` before starting the new phase. Test (unit, beside the parser's tests): an impl whose phases each end with a Forward Intelligence section parses every phase's tasks, and each phase keeps its own forward intelligence. Present since `18a2a2bba` (2026-03-21).
+
+  </details>
 
 #### Build Phase 7 Verification
 
