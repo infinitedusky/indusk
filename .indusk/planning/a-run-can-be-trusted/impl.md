@@ -1,7 +1,7 @@
 ---
 title: "A run can be trusted — Impl"
 date: 2026-10-19
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -1249,6 +1249,7 @@ This phase tests the finished plan against the cases where what it shows or repo
 - **Watch out**: the installed guard now reads a here-document as an interpreter's script: a `python3 - <<'PY'` that edits a test file and merely mentions a plan path with a write call is refused, by design (A97). Edit such files with the Edit tool, or run a script file from the scratchpad.
 - **Watch out**: `pnpm exec biome check --write` run from `apps/indusk-mcp` reformatted `apps/indusk-admin/src/instrumentation.ts` to the package's style (and touched an unrelated test); run biome from the repository root. `pnpm check` at the root fails on files this plan did not touch (`.claude/hooks/eval-trigger.js`, `.indusk/mockups/admin/components/*`, `.indusk/config.json`).
 - **Watch out**: the admin's page-level browser tests (`workflows.test.tsx`, the plan page's T11, the project page's T13) fail on this phase's starting sources too: the page renders after the assertion reads the container (A9 passes with a 500 ms wait, in the new step order). Found after Build Phase 2's browser run passed; for `/cleanup` or the retrospective.
+- **Decision**: the plan-reader item (added by hand while this phase ran) was done after Verification was checked, so it was verified after: its unit test in `impl-parser.test.ts` red, then green; the package's everyday suite 2799 passed with only the four known reds; `plans tests --phase 7` once 29 of 30 (the failing file not printed, likely the `admin-recorder.test.ts` flake Build Phase 6 recorded) and 30 of 30 on the next run. The hooks' port `_impl-phases.js` already ends notes at a phase heading, so `check-gates.js` was never blind to the tasks.
 - **Assumption**: the witness finds the guard's pending file under the home of the checkout the command ends in, so a command that ends outside every checkout of the project leaves its decision unpaired (dropped after ten minutes, reporting nothing).
 
 ## Files Affected
