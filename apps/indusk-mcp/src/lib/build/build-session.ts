@@ -51,6 +51,10 @@ export function stepPrompt(step: BuildStepName, plan: string, reason?: ShortenRe
 				: "too long";
 			return `The ritual skip in plan \`${plan}\` has a reason that is too long: \`${field}\` in the frontmatter of .indusk/planning/${plan}/impl.md is ${was}. A skip reason is one sentence of at most 120 characters (rituals/reason.ts); the detail belongs in the impl body or the retrospective.\n\nRewrite that one line as one sentence of at most 120 characters that keeps the reason; change nothing else in the plan, commit with a message naming \`${field}\`, and end. ${UNATTENDED} Do not run /falsify, /cleanup or /audit.`;
 		}
+		case "plan-test-plan":
+		case "plan-adr":
+		case "plan-impl":
+			return "";
 		case "retrospective":
 			return `/retrospective ${plan}\n\nThe plan has been accepted. Run the retrospective to the end; it lands the plan with \`indusk plans land ${plan}\`. ${UNATTENDED}`;
 	}

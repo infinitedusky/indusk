@@ -249,3 +249,54 @@ describe("A16 — the shortening session is told which reason to rewrite", () =>
 		expect(prompt).toContain("INDUSK_GATE_POLICY=auto");
 	});
 });
+
+/**
+ * promise: an-accepted-brief-is-planned-unasked — a-brief-is-planned-unasked A5.
+ *
+ * Each planning step is one unattended session told to write one document of
+ * the plan, from its brief and research, to the planner skill's rules.
+ */
+describe("A5 — a planning step writes only its document, unattended", () => {
+	const DOCUMENT = {
+		"plan-test-plan": "test-plan.md",
+		"plan-adr": "adr.md",
+		"plan-impl": "impl.md",
+	} as const;
+	const steps = Object.keys(DOCUMENT) as Array<keyof typeof DOCUMENT>;
+
+	it.each(steps)(
+		"%s names its document, its inputs, the planner and the unattended policy",
+		(step) => {
+			const prompt = stepPrompt(step, "seats");
+			expect(prompt).toContain(`.indusk/planning/seats/${DOCUMENT[step]}`);
+			expect(prompt).toContain("brief.md");
+			expect(prompt).toContain("research.md");
+			expect(prompt).toContain("planner skill");
+			expect(prompt).toContain("INDUSK_GATE_POLICY=auto");
+			expect(prompt).toContain("blocker:");
+			expect(prompt).toMatch(/only/i);
+		},
+	);
+
+	it.each(steps)("%s never approves, builds or writes another document", (step) => {
+		const prompt = stepPrompt(step, "seats");
+		expect(prompt).toContain("indusk plans approve");
+		expect(prompt).toMatch(/never approve/i);
+		for (const other of Object.values(DOCUMENT).filter((d) => d !== DOCUMENT[step])) {
+			expect(prompt).not.toContain(`.indusk/planning/seats/${other}`);
+		}
+	});
+
+	it("the impl prompt asks for real gate items and a draft status", () => {
+		const prompt = stepPrompt("plan-impl", "seats");
+		expect(prompt).toContain("status: draft");
+		expect(prompt).toMatch(/real items/i);
+	});
+
+	it("a planning step's session is marked with its step name", () => {
+		expect(stepEnv("plan-adr")).toMatchObject({
+			INDUSK_GATE_POLICY: "auto",
+			INDUSK_BUILD_STEP: "plan-adr",
+		});
+	});
+});
