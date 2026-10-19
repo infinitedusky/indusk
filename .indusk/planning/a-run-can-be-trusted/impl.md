@@ -949,7 +949,7 @@ This phase makes the admin's offer of approval and the approve command ask one r
 - [x] Record that the plan review has one reader.
   <details><summary>Technical</summary>
 
-  Done 2026-10-19: the `lib/audit/` entry of `apps/indusk-mcp/CLAUDE.md` now names the four states, every asker (`plans approve` among them, refusing anything but answered), the guard `decisions-reader.approval.test.ts` with its promise, and the fixture a CLI approval in a test uses.
+  Done 2026-10-19: the `lib/audit/` entry of `apps/indusk-mcp/CLAUDE.md` now names the four states (stale defined there), every asker (`plans approve` among them) and the guard `decisions-reader.approval.test.ts`. The file is already past its nested budget (about 29.6 KB of 16 KB), so the budget hook allows only a shrinking edit: the entry's earlier "goes stale when its `read:` hash…" clause was folded into this sentence and the pointer to `cockpit-single-definition.test.ts` dropped (that test still guards the export), leaving the file 39 bytes smaller. The fixture for CLI approvals in tests is named in this phase's Forward Intelligence instead.
 
   `apps/indusk-mcp/CLAUDE.md` (its `lib/audit/` entry already says `planReviewState` is the one reading; add that `plans approve` calls it too): "guarded by `decisions-reader.approval.test.ts` (`promise: approval-waits-for-a-finished-plan`)" — destination: the package's area file.
 
