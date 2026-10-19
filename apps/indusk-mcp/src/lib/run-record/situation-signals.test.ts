@@ -96,6 +96,31 @@ describe("says-what-is-true", () => {
 		).toMatch(/landing is in/);
 	});
 
+	// A105 — every step the page drew is checked, not only the headline
+	it("is broken, naming the step, when Build shows not yet while a build runs", () => {
+		const v = judgeSaysWhatIsTrue({
+			...base,
+			steps: [
+				{ name: "Build", state: "not-yet" },
+				{ name: "Release", state: "not-yet" },
+			],
+		});
+		expect(v?.broken).toMatch(/step Build showed not-yet but a build runs for it/);
+		expect(
+			judgeSaysWhatIsTrue({ ...base, steps: [{ name: "Build", state: "current" }] })?.broken,
+		).toBeUndefined();
+	});
+
+	it("is broken when Build shows current with no build, or Release done without a landing", () => {
+		const idle = { ...base, kind: "stopped" as const, sessions: [], table: [] };
+		expect(
+			judgeSaysWhatIsTrue({ ...idle, steps: [{ name: "Build", state: "current" }] })?.broken,
+		).toMatch(/step Build showed current but no build runs/);
+		expect(
+			judgeSaysWhatIsTrue({ ...idle, steps: [{ name: "Release", state: "done" }] })?.broken,
+		).toMatch(/step Release showed done but its landing is not in the trunk's log/);
+	});
+
 	it("a plan waiting or idle claims nothing to check", () => {
 		expect(judgeSaysWhatIsTrue({ ...base, kind: "waiting" })).toBeNull();
 		expect(judgeSaysWhatIsTrue({ ...base, kind: "idle" })).toBeNull();

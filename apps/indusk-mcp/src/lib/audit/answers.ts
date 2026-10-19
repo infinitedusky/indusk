@@ -26,6 +26,7 @@ export const PLAN_REVIEW_QUESTIONS = [
 	"Does the impl build what each promise claims, and nothing it does not?",
 	"Which skip reason would you not accept?",
 	"What else would have to change for each promise to hold?",
+	"Which way could a clause fail that no signal would see?",
 ] as const;
 
 /** The heading of the agent's closing section; not a question, never a finding's. */

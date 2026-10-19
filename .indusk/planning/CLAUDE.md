@@ -146,6 +146,11 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   that pass at close, so a row that can only run after landing proves none.
   A draft impl is refused on save (`--clause-signals-only`); an approved one is
   never newly refused. — guarded by `clause-signal-rules.test.ts`
+- **A clause lists how it could fail, and its signal covers each**: the test
+  plan gives each clause a `- Fails when:` list — every way it could fail to
+  hold, each place its promise is shown included — and the `- Signal:` line
+  reports each or says why one needs none; the plan review's fifth question asks
+  which failure no signal would see. — guarded by `planner-signal-failures.test.ts`
 - Verification items are runnable commands with expected output, never "verify
   it works". Checking off a Verification item does not update a row's `State`
   column — do both in one edit.
