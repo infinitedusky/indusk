@@ -1,7 +1,7 @@
 ---
 title: "Tests and telemetry linked to clauses"
 date: 2026-10-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
