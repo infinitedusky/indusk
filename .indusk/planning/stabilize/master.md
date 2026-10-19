@@ -26,7 +26,7 @@ live state.
 
 ## In order
 
-1. **`approval-waits-for-the-planning-run`**: Approve is offered only once the
+1. **`approval-waits-for-the-planning-run`** — landed 2026-10-19 (`6b9e5cf0`): Approve is offered only once the
    plan review is written and answered.
 2. **`audit-concerns-are-answered`**: the plan reviewer runs in the foreground,
    so unattended planning runs stop failing at the review. Closes itself once a
@@ -36,7 +36,8 @@ live state.
 4. **`a-run-can-be-trusted`** (not started): the impl check refuses a plan with
    clauses and no signals phase; shell writes to plan documents are refused; a
    run's state is kept on disk, a dead run shows dead with Restart; the landing
-   test that fails under load is fixed.
+   test that fails under load is fixed; a release that does not land is not shown as
+   released; the offer of approval also checks the plan review's `read:` hash.
 5. **`decisions-as-questions`**: approved; builds after 1 lands (both change
    `plans/waiting`).
 

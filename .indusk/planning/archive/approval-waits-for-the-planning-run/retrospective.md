@@ -74,3 +74,5 @@ Each decision and its reason, as this run made them without a person answering.
 ## Correction (2026-10-19, by hand)
 
 Decision 1 above was wrong, and `plans land` refused it: the two files were not red on `main` (26 of 26 pass there on a quiet machine). `cockpit-nav.test.tsx` passes on the branch too; its earlier red was load. `DecisionCard.test.tsx` failed three older cases for a real reason: this plan's falsification fix made every answer name the decision it answers (`on`), and three cases still expected the old body. They now expect `on: "question"`; 9 of 9 pass. The run then reported "released" although nothing landed: a release that does not land is shown as released (Stabilize, `a-run-can-be-trusted`).
+
+Landed on main at 6b9e5cf0, 2026-10-19, by hand after the release session reported "released" without landing (see Correction). Installed (`pnpm install:local`) and the admin restarted; nothing published. Open: the offer of approval reads `planReviewState`, which does not yet check the review's `read:` hash (the planning run's stop does) — carried to `a-run-can-be-trusted`.
