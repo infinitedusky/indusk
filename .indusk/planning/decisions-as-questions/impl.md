@@ -76,6 +76,15 @@ An unattended session asks each choice the plan does not settle as a question th
 | T22 | The three question rows and the changed decision card render as the approved looks, held by value in Chromium: cheap with time left and a reply, expensive in red with no timer, went-ahead with a late-answer offer; a plan waiting on an expensive question sits under Needs you as any wait | Build Phase 5 | Build Phase 5 | planned | live check | look: question-row.cheap, look: question-row.expensive, look: question-row.went-ahead, look: plan.needs-you, look: nav.expanded | apps/indusk-admin/src/__tests__/question-looks.test.ts |
 | T23 | The sweep sends a due cheap or moderate question's session on with its recommendation and marks it went-ahead with the time and what was done; it leaves an expensive question, and a cheap one raised to expensive, waiting however long they are left | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-cost-sets-the-wait/cheap-and-moderate-go-ahead, clause: what-was-agreed-is-never-cheap/never-timed-out | apps/indusk-mcp/src/lib/questions/sweep.test.ts |
 | T24 | A plan carrying `follow_on_of` is never moved to the archive by the dead-draft sweep however old and untouched, so the release keeps refusing until a person closes it | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/lib/planning/archive-dead-follow-on.test.ts |
+| T25 | Each place that decides a clause reports it: upheld when what it decided holds, broken naming what did not, and a failed report never fails what reported it | Build Phase 7 | Build Phase 7 | planned | unit | the signal writers for this plan's clauses; each clause's upheld signal is read from a real run at close | apps/indusk-mcp/src/lib/questions/signals.test.ts |
+| T26 | Closing the plan reads every one of its clauses upheld by a signal from a real run | Build Phase 7 | Build Phase 7 | planned | live check | the close itself: `indusk promises confirm` refuses a clause no real run reported | manual: with the local daemon up and this build installed, ask one cheap and one expensive question in an unattended run, let the cheap one go ahead, answer one late against its recommendation, and try a release with the follow-on open; then `indusk promises confirm decisions-as-questions` |
+
+### Deferred Verification
+
+- **T26, every clause upheld by a real run**
+  - reason: a signal from a real run is what closing reads; no test stands in for it.
+  - would require: the installed build, the local daemon and the real runs named in the row.
+  - mitigation: `indusk promises confirm decisions-as-questions` refuses, naming each clause no real run reported; the plan stays open until it passes.
 
 ## Checklist
 
