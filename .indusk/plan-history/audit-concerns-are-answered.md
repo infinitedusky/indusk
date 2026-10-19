@@ -10,3 +10,4 @@ Each decision the plan waited on, the answer and who gave it, as the admin recor
 - 2026-10-19T13:23:23.241Z — amendment to the promise the-auditor-sees-the-plan-not-the-session: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
 - 2026-10-19T13:23:23.241Z — amendment to the promise an-accepted-brief-is-planned-unasked: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
 - 2026-10-19T13:23:23.241Z — amendment to the promise a-build-runs-to-review-unasked: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
+- 2026-10-19T13:23:23.241Z — amendment to the look (none): was "None — a dismissal reaches the person in `audit.md` and in the audit step's report in the session; no screen changes.", now "None — a dismissal reaches the person in `audit.md`, in the cold read's notes beside the plan and in the step's report in the session; no screen changes." — answered "Approve" by Sandy-Corsillo
