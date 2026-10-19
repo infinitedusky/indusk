@@ -340,6 +340,15 @@ The contract check refuses a missing promise or clause section and a clause with
 no `- Signal:` line, and, once the impl exists, a split or limit clause no test
 row names (`clause: <promise>/<clause>` in the row's `For` cell).
 
+**A signal task per clause, and no live check as a clause's proof.** An impl being
+written for a brief with `clauses: required` has, for each `split` and `limit` clause,
+a task whose line or folded detail says `signal`, names the clause, and names the repo
+source file that reports it, outside a code fence. A row at level `live check`,
+`smoke` or `promise` never names a clause in its `For` cell: such a row runs only after
+landing, so it can never pass before the plan closes. Both are refused when a draft
+impl is saved, naming each clause as `promise/clause` and each row; an approved impl is
+never newly refused, and `indusk promises confirm` reports each rule's own signal.
+
 **Closing per clause.** A promise stated as clauses is confirmed
 (`indusk promises confirm <plan>`, and the retrospective's readiness check)
 only when every `split` and `limit` clause has a passing row with a test file,

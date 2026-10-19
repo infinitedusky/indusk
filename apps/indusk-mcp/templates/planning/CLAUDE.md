@@ -139,6 +139,13 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   document with the Edit tool or the `indusk` command for it (archive a plan
   with `indusk plans archive <plan>`); reading one from the shell is fine.
   — guarded by `plan-write-guard.test.ts`
+- **An impl written for a brief with clauses names each split and limit
+  clause's signal in a task, and no `live check`, `smoke` or `promise` row
+  names a clause**: the task says `signal`, the clause and the repo source
+  file that reports it (outside a code fence); a clause is proved by tests
+  that pass at close, so a row that can only run after landing proves none.
+  A draft impl is refused on save (`--clause-signals-only`); an approved one is
+  never newly refused. — guarded by `clause-signal-rules.test.ts`
 - Verification items are runnable commands with expected output, never "verify
   it works". Checking off a Verification item does not update a row's `State`
   column — do both in one edit.
