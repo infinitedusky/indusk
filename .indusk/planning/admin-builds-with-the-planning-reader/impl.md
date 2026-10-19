@@ -50,7 +50,7 @@ This phase writes the test that the planning reader asks the package root for th
 - [ ] The test exists and fails on its own assertion.
   <details><summary>Technical</summary>
 
-  `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/build/read-planning-hook-path.test.ts`.
+  T1 red: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/build/read-planning-hook-path.test.ts`.
 
   </details>
 
