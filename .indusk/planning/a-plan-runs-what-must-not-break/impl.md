@@ -106,13 +106,13 @@ This phase writes the tests that show what changes: a phase's set that should ho
 
 This phase changes what a plan runs: the Must-not-break promises' tests move from landing-only into every phase, the search for tests a change imports is removed, the skills say so, and the promise is rewritten with its new clauses through a promise change that can now carry them. Once it closes, a phase's set is small and certain, and the precise choice of tests waits for the sampler.
 
-- [ ] Make a phase's set include the Must-not-break promises' tests, and drop reached tests from both scopes.
+- [x] Make a phase's set include the Must-not-break promises' tests, and drop reached tests from both scopes.
   <details><summary>Technical</summary>
 
   `lib/plans/test-set.ts` `planTestSet`: the Must-not-break loop runs for both scopes; the `reached` input and its reason go. T1, T2.
 
   </details>
-- [ ] Remove the search for tests a change reaches from the plan tests command.
+- [x] Remove the search for tests a change reaches from the plan tests command.
   <details><summary>Technical</summary>
 
   `lib/plans/plan-tests.ts`: drop `findReached`, the changed-files computation it needed and `collectResults`' reached half; keep `runFiles` from `lib/tests/run-files.ts`. Delete `findReached` and its now-unused helpers from `lib/plans/test-set-run.ts` (grep callers first; `describeTestSet` stays). T3.
