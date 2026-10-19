@@ -190,6 +190,7 @@ export const SYSTEM = [
 	"src/__tests__/worktree-wt-resolve.test.ts",
 	"src/__tests__/wt-declared-layout.test.ts",
 	"src/lib/bookkeeping/home.test.ts",
+	"src/lib/plans/accept-brief.test.ts",
 	"src/lib/plans/amendments.test.ts",
 	"src/lib/plans/land-own-worktree.test.ts",
 	"src/lib/plans/planning-step-refusals.test.ts",
