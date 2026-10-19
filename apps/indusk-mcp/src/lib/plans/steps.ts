@@ -6,6 +6,7 @@ import type {
 	SegmentState,
 } from "../lifecycle.js";
 import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "../workflow-types.js";
+import type { PlanReviewState } from "./plan-review.js";
 
 /**
  * A plan's two workflows as lists of steps (plan-cockpit, ADR decision 3):
@@ -66,6 +67,8 @@ export interface PlanSnapshot {
 	skippedRituals?: ReadonlyArray<{ ritual: SkippedRitual; reason?: string }>;
 	/** Falsification, cleanup or audit finished: its phase closed or its report written. */
 	finishedRituals?: ReadonlyArray<SkippedRitual>;
+	/** Its plan-review.md as `plans/plan-review` read it; absent reads as missing. */
+	planReview?: PlanReviewState;
 }
 
 export interface PlanWorkflows {

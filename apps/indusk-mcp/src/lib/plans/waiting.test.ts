@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { derivePlanPosition, type PlanPositionState } from "../lifecycle.js";
 import type { PlanSummary } from "../plan-parser.js";
 import type { PlanSnapshot } from "./steps.js";
-import { planWaiting, type WaitingSession } from "./waiting.js";
+import { planWaiting, type WaitingPlanning, type WaitingSession } from "./waiting.js";
 
 // promise: decisions-wait-in-one-place
 
@@ -30,10 +30,7 @@ function positionOf(stage: PlanSummary["stage"], stageStatus: string): PlanPosit
 	});
 }
 
-type Plan = PlanSnapshot & {
-	name: string;
-	planReview?: "missing" | "unanswered" | "answered";
-};
+type Plan = PlanSnapshot & { name: string };
 
 const accepted = { status: "accepted" };
 
@@ -223,8 +220,7 @@ describe("A14 — an amendment waits on the person, at the Brief", () => {
 /**
  * approval-waits-for-the-planning-run: a draft impl is offered for approval only
  * once its plan review is answered; otherwise it is listed as needing the
- * review, and nothing is listed while a planning run for it is going. The new
- * input is passed through a cast, so the file compiles before the input exists.
+ * review, and nothing is listed while a planning run for it is going.
  *
  * promise: approval-waits-for-a-finished-plan
  */
@@ -232,7 +228,7 @@ describe("approval-waits-for-the-planning-run — a plan waits on its plan revie
 	const wait = (input: {
 		plans: Plan[];
 		sessions?: WaitingSession[];
-		plannings?: { plan: string; running: boolean; stop?: unknown }[];
+		plannings?: WaitingPlanning[];
 		amendments?: { plan: string; count: number }[];
 		builds?: { plan: string; stoppedAt: string | null }[];
 	}) =>
@@ -242,12 +238,12 @@ describe("approval-waits-for-the-planning-run — a plan waits on its plan revie
 			builds: input.builds ?? [],
 			plannings: input.plannings,
 			amendments: input.amendments,
-		} as Parameters<typeof planWaiting>[0]);
+		});
 
 	const unread: Plan = { ...approval, planReview: "missing" };
 	const unanswered: Plan = { ...approval, planReview: "unanswered" };
-	const running = { plan: approval.name, running: true, stop: null };
-	const failed = {
+	const running: WaitingPlanning = { plan: approval.name, running: true, stop: null };
+	const failed: WaitingPlanning = {
 		plan: approval.name,
 		running: false,
 		stop: { step: "cannot-continue", why: "the last step's session failed: exit 1" },
@@ -306,7 +302,7 @@ describe("approval-waits-for-the-planning-run — a plan waits on its plan revie
 	});
 
 	it("A8 a planning run going for another plan does not affect this plan's listing", () => {
-		const other = { plan: "someone-else", running: true, stop: null };
+		const other: WaitingPlanning = { plan: "someone-else", running: true, stop: null };
 		expect(wait({ plans: [approval], plannings: [other] })[0]?.on).toBe("approval");
 	});
 

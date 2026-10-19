@@ -2,11 +2,11 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
-import { isAnswered, PLAN_REVIEW_QUESTIONS, readAuditAnswers } from "../audit/answers.js";
 import { fencedLineMask } from "../impl-headings.js";
 import { induskMcpPackageRoot } from "../package-root.js";
 import { parsePlan } from "../plan-parser.js";
 import { unapprovedMockups } from "../plans/approved-brief.js";
+import { planReviewAnswers, planReviewState } from "../plans/plan-review.js";
 import { type ContractResult, checkPlanContract } from "../promises/contract.js";
 import { findPlanFolder } from "../promises/plan-folder.js";
 import { requiredDocuments } from "../workflow-types.js";
@@ -148,10 +148,10 @@ function judgeImpl(
 /** The plan review as the run reads it: absent is not complete, and neither is a file with an open finding. */
 function readReview(text: string | null): PlanningReview {
 	if (text === null) return { exists: false, complete: false, dismissals: [], amendments: [] };
-	const read = readAuditAnswers(text, { questions: PLAN_REVIEW_QUESTIONS, causes: false });
+	const read = planReviewAnswers(text);
 	return {
 		exists: true,
-		complete: isAnswered(read),
+		complete: planReviewState(text) === "answered",
 		dismissals: read.dismissals,
 		amendments: read.amendments,
 	};
