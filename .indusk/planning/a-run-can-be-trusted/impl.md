@@ -869,5 +869,5 @@ This phase replaces the recorder landing test's fixed one-minute wait with a rul
 ## Notes
 
 - Before approval (Decision 20): the person approves redrawn mockups of `plan.working` and `plan.released`; drawing them is outside this impl.
-- Open decision: the test plan's list of refused shell forms (its Decision 8, now with this impl's Decision 8 additions) is the author's; in particular the git commands that move between committed states (`merge`, `pull`, `checkout <branch>`, `switch`, `reset --hard`, `stash pop`) are allowed. A form the person wants added or allowed changes the guard's list before Build Phase 3.
+- Decided (Sandy, 2026-10-19): the git commands that move between committed states (`merge`, `pull`, `checkout <branch>`, `switch`, `reset --hard`, `stash pop`) are allowed by the shell guard — landing, accepting a brief and worktrees use them, and what they bring in was checked when it was first written. The rest of the refused-forms list is the author's.
 - After landing, run and record: **L1** (kill a scratch build's step session, read "stopped", press Build), **L2** (one real conflicting acceptance on a scratch plan, then `indusk promises confirm a-brief-is-accepted-on-current-main`), **L3** (try to tick a box with `sed -i`; read the refusal). Date / result: ______
