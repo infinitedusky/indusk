@@ -9,6 +9,7 @@ import { type ContractResult, checkPlanContract } from "../promises/contract.js"
 import { findPlanFolder } from "../promises/plan-folder.js";
 import { requiredDocuments } from "../workflow-types.js";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
+import { GATE_POLICY_FOR_BUILDS } from "./build-session.js";
 import type { PlanningDocument, PlanningState } from "./next-planning-step.js";
 
 /**
@@ -73,7 +74,8 @@ export const realPlanningReads: PlanningReadDeps = {
 			cwd: input.cwd,
 			encoding: "utf-8",
 			timeout: 30_000,
-			env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
+			// The policy the planning session wrote the impl under, or its skips read as failures.
+			env: { ...process.env, ...GATE_POLICY_FOR_BUILDS, INDUSK_SKIP_UPDATE_CHECK: "1" },
 		});
 		return { status: r.status };
 	},
