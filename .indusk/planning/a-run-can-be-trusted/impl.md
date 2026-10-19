@@ -619,6 +619,8 @@ This phase makes the admin say true things from the record the last phase keeps.
 
 #### Build Phase 2 Verification
 
+blocker: the look check (`plan.working`, `plan.released` by value in Chromium) cannot run: the admin's browser tier fails 90 of 99 tests in every file, the same way at the commit before Build Phase 2, so it proves nothing about these looks. A person must run the look checks or look at the page; Build Phase 3 onward waits on this item.
+
 - [x] The shown phase, the landed check, the situation sentence, the next step, the confirmation list and the Planning audit step are proved, and the existing release and steps tests still pass.
   <details><summary>Technical</summary>
 
