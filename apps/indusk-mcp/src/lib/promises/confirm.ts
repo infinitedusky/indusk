@@ -68,15 +68,35 @@ function namesClause(codeRoot: string, rel: string, p: PromiseEntry, clause: str
 }
 
 /**
- * Whether a test file asserts anything: at least one `expect(` or `assert`
- * call (mark-first A29, decision D-3 — the narrowest rule, shipped because a
- * scan of every plan in dusk found no clause test it would refuse). A file
- * that cannot be read is the token check's refusal, not this one's.
+ * Whether a test file asserts anything: at least one assertion call —
+ * `expect(`, `assert(`, or a member of either called (`expect.soft(`,
+ * `assert.equal(`) — once comments and import statements are set aside, so
+ * the name `assert` in an import or the word in a comment is not one
+ * (mark-first A29 and A37, decision D-3 — each form shipped because a scan of
+ * every plan's clause tests in dusk found none it would refuse). A file that
+ * cannot be read is the token check's refusal, not this one's.
  */
 function assertsSomething(codeRoot: string, rel: string): boolean {
 	const abs = join(codeRoot, rel);
 	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return true;
-	return /\bexpect\s*\(|\bassert\b/.test(readFileSync(abs, "utf-8"));
+	return ASSERTION_CALL.test(withoutCommentsOrImports(readFileSync(abs, "utf-8")));
+}
+
+/** An assertion call: `expect` or `assert`, through any members, then `(`. */
+const ASSERTION_CALL = /\b(?:expect|assert)(?:\s*\.\s*\w+)*\s*\(/;
+
+/**
+ * Source text without block comments, line comments or import statements.
+ * Coarse on purpose: a `//` inside a string on the same line as the file's only
+ * assertion would hide it, which only refuses more, never accepts a file that
+ * asserts nothing; `://` (a URL) is left alone.
+ */
+function withoutCommentsOrImports(text: string): string {
+	return text
+		.replace(/\/\*[\s\S]*?\*\//g, "")
+		.replace(/(^|[^:])\/\/[^\n]*/g, "$1")
+		.replace(/^\s*import\b[\s\S]*?\bfrom\s*["'][^"']+["'];?/gm, "")
+		.replace(/^\s*import\s*["'][^"']+["'];?/gm, "");
 }
 
 export interface ConfirmInput {
@@ -189,7 +209,7 @@ function clauseTokenRefusals(
 				);
 			} else if (!assertsSomething(codeRoot, rel)) {
 				out.push(
-					`${promise.name}: clause ${clause.name}: the test ${rel} carries the clause's token and asserts nothing (no \`expect(\` or \`assert\` call) — a test that proves a clause checks it`,
+					`${promise.name}: clause ${clause.name}: the test ${rel} carries the clause's token and asserts nothing (no \`expect(\` or \`assert(\` call outside comments and imports) — a test that proves a clause checks it`,
 				);
 			}
 		}

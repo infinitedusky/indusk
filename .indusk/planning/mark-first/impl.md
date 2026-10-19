@@ -735,12 +735,13 @@ This phase tests the finished plan against signals and breaks shaped differently
 
   </details>
   Done, with one correction to the hypothesis: Vitest 4's JSON report gives a file only `passed` or `failed` — a file whose tests were all skipped is `passed` — so a file's own status cannot tell it. **Decision D-36:** `runFiles` reads each file's tests (`assertionResults`) and adds `ranNoTest` when none of them passed or failed (all skipped, todo or pending, or none at all); `passed` is unchanged for the plan's test set and phase verification. `clauseTestRunner` turns a passed file that ran no test into `passed: false` with the reason "ran no test (skipped)", which `clauseTestsHalf` prints in place of "fails when run now" (a new optional `reason` on `TestFileResult`).
-- [ ] Count only a real assertion call, not an imported name or a word in a comment, when checking that a clause test asserts something.
+- [x] Count only a real assertion call, not an imported name or a word in a comment, when checking that a clause test asserts something.
   <details><summary>Technical</summary>
 
   Hypothesis (A37): `assertsSomething` in `confirm.ts` matches `/\bexpect\s*\(|\bassert\b/`, so `import { assert, it } from "vitest"` with `it("holds", () => {})`, or a comment saying "we assert nothing yet", passes. Fix: strip line and block comments and import statements before matching, and require `assert(`, `assert.<name>(` or `expect(`. A29's fixtures (an `expect(` call, an `assert.equal` call) stay accepted; rerun the D-3 scan over every impl's clause rows before shipping, and drop the tightening if it refuses any (D-3's rule).
 
   </details>
+  Shipped. The D-3 scan was rerun first (a scratchpad script, not committed) over every impl, active and archived, in this worktree (137 impls, 166 rows naming a clause, 76 test files) and in the main checkout (138 impls, 180 rows, 76 files): no existing file that carries a clause token is refused by the tightened rule, and none changes verdict between the old and new rule; the files that do not exist are other plans' unwritten rows (`audit-skill-answers.test.ts`, `vitest-related-report.contract.test.ts`, `lib/audit/answers.test.ts`). The rule counts `expect(`/`assert(` through any members (`expect.soft(`, `assert.equal(`), after removing block and line comments (a `://` is left alone) and import statements; the refusal text now says "no `expect(` or `assert(` call outside comments and imports".
 - [ ] Draw an enforced promise with a clause that has no signal as no signal in the admin's promise list, not as enforced.
   <details><summary>Technical</summary>
 
