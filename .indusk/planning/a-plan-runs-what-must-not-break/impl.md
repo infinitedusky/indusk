@@ -130,7 +130,7 @@ This phase changes what a plan runs: the Must-not-break promises' tests move fro
   `indusk promises change` gains a repeatable `--clause` (the same spec `declare` takes; read `bin/commands/promises.ts` and `lib/promises/write.ts` `changePromise`); given clauses replace the entry's list, and the change's History records the old clauses; without `--clause` the clauses stay. The MCP `change_promise` tool takes the same. T5.
 
   </details>
-- [ ] Rewrite the promise with its new sentence and clauses.
+- [x] Rewrite the promise with its new sentence and clauses.
   <details><summary>Technical</summary>
 
   From the worktree: `indusk promises change a-plan-runs-its-tests-and-what-must-not-break --plan a-plan-runs-what-must-not-break --statement "<the sentence under Changes in the brief, up to the first full stop after 'no other test runs'>" --reason "phases ran about 100 reached tests that overloaded the machine; the Must-not-break tests are the certain set (Sandy, 2026-10-18)" --clause "its-own-tests (split). Each phase runs the tests of the rows it writes or makes pass." --clause "what-must-not-break (split). Each phase and the landing run the tests of the promises the brief lists as Must not break." --clause "nothing-else-runs (limit). No other test runs while a plan is built or landed."`; then `indusk promises contract a-plan-runs-what-must-not-break` and `indusk promises check`.
