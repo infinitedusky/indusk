@@ -245,7 +245,7 @@ This phase writes the tests the plan commits to before anything changes, so each
   Extend `apps/indusk-mcp/src/__tests__/hook-registration.test.ts` so `HOOK_REGISTRATIONS` must contain `["PreToolUse", "Bash", "plan-write-guard.js"]` and `["PostToolUse", "Bash", "plan-write-witness.js"]`, and both hook files must exist in both `hooks/` and the project's `.claude/hooks/` (A63; `skill-sync-parity.test.ts` already pins byte equality of installed copies). Red today: the registration is absent.
 
   </details>
-- [ ] Make sure no test fails only because a file it loads is missing.
+- [x] Make sure no test fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   Every test written here imports only symbols that exist today (`acceptBrief`, `planLifecycleProject`, the offer in `lib/decisions.ts`, `readPlanning`, the hook paths as strings given to `spawnSync`). Run each new file once: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run <the new files>` and `pnpm --filter @infinitedusky/indusk-admin exec vitest run <the new admin file>`; the red ones must fail on an assertion, never on an import or fixture error. A missing hook file is the spawned process's non-zero exit, which the assertion reads.
