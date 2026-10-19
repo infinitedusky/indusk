@@ -97,6 +97,8 @@ Read ${dir}/brief.md and ${dir}/research.md, and follow the planner skill's sect
 
 ${UNATTENDED} Record each open decision, with its reason, in the document. When you cannot decide, write a \`blocker: <what you could not decide>\` line in the document and end.
 
+The earlier documents stay exactly as the earlier steps left them: an ADR or test plan still \`proposed\` or \`draft\` is not a reason to stop (the person approves them all once, after the impl), and you change no other document's status, only the status your own document needs.
+
 Never approve anything: do not run \`indusk plans approve\`, approve a look, or build. Commit ${file} on the plan's branch and end.`;
 }
 
