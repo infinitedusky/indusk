@@ -246,7 +246,7 @@ This phase builds the loop that writes the plan: a decision that names the next 
   `lib/build/build-session.ts` `stepPrompt` gains `plan-test-plan`, `plan-adr`, `plan-impl` (ADR decision 3); `stepEnv` sets the step name. T5.
 
   </details>
-- [ ] Add the runner that runs planning steps until the plan is ready for approval or cannot continue.
+- [x] Add the runner that runs planning steps until the plan is ready for approval or cannot continue.
   <details><summary>Technical</summary>
 
   `lib/build/planning-runner.ts` `runPlanning(deps)` (ADR decision 4), mirroring `runBuild`'s reads, progress fingerprint and two-without-progress rule. T7.
