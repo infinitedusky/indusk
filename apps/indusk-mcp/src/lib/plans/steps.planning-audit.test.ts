@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { PLAN_REVIEW_QUESTIONS } from "../audit/answers.js";
+import { planReviewHash } from "../audit/review-hash.js";
 import { derivePlanPosition, type PlanPositionState } from "../lifecycle.js";
+import { readPlanReview } from "./plan-review.js";
 import { type PlanSnapshot, planSteps, stepAt } from "./steps.js";
 
 // clause: a-run-is-read-from-its-record/the-planning-audit-is-a-step
@@ -111,6 +117,53 @@ describe("A72 — the planning steps end with the Planning audit", () => {
 			documents: { research: { status: "accepted" } },
 		});
 		expect(planning.map((s) => s.name)).not.toContain("Planning audit");
+	});
+});
+
+describe("A88 — a review written for other documents leaves the audit open", () => {
+	// A real plan folder read through the one reader of the plan review, so the stale state
+	// comes from the hash the review records, not from a value the test hands the steps.
+	let dir: string;
+	beforeEach(() => {
+		dir = mkdtempSync(join(tmpdir(), "audit-stale-"));
+		writeFileSync(join(dir, "brief.md"), "---\nstatus: accepted\n---\n# Brief\n");
+		writeFileSync(join(dir, "test-plan.md"), "---\nstatus: accepted\n---\n# Test plan\n");
+		writeFileSync(join(dir, "impl.md"), "---\nstatus: draft\n---\n# Impl\n");
+	});
+	afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+	const answeredReview = (read: string) =>
+		[
+			"---",
+			`read: ${read}`,
+			"---",
+			"",
+			"# Plan review",
+			"",
+			...PLAN_REVIEW_QUESTIONS.flatMap((q) => [`## ${q}`, "", "- Nothing.", ""]),
+		].join("\n");
+
+	it("A88 a stale review shows the Planning audit to do and the Impl step not asking for approval", () => {
+		writeFileSync(join(dir, "plan-review.md"), answeredReview("a".repeat(64)));
+		const { planning } = planSteps(draft({ planReview: readPlanReview(dir), live: {} }));
+		expect(states(planning)["Planning audit"]).toBe("not-yet");
+		expect(states(planning).Impl).not.toBe("needs-you");
+		expect(stepAt(draft({ planReview: readPlanReview(dir), live: {} }))?.name).toBe(
+			"Planning audit",
+		);
+	});
+
+	it("A88 the same review written for the documents as they stand closes the audit", () => {
+		const read = planReviewHash({
+			brief: readFileSync(join(dir, "brief.md"), "utf-8"),
+			testPlan: readFileSync(join(dir, "test-plan.md"), "utf-8"),
+			adr: null,
+			impl: readFileSync(join(dir, "impl.md"), "utf-8"),
+		});
+		writeFileSync(join(dir, "plan-review.md"), answeredReview(read));
+		const { planning } = planSteps(draft({ planReview: readPlanReview(dir), live: {} }));
+		expect(states(planning)["Planning audit"]).toBe("done");
+		expect(states(planning).Impl).toBe("needs-you");
 	});
 });
 
