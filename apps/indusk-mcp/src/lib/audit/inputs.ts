@@ -3,6 +3,7 @@ import { join, relative } from "node:path";
 import { git } from "../git.js";
 import { branchFileChanges, PlanCommandRefusal, planBranch } from "../plans/plan-branch.js";
 import { workbenchPlan } from "../plans/workbench-plan.js";
+import { planReviewHash } from "./review-hash.js";
 
 /**
  * What the auditor is handed (plan-review-subagent, ADR D2): the plan's
@@ -222,6 +223,8 @@ export async function auditInputs(
 export interface PlanReviewInputs {
 	plan: string;
 	documents: Record<"brief" | "testPlan" | "adr" | "impl", AuditText | null>;
+	/** Hash of the four documents as printed; the review records it as `read:` and goes out of date with them. */
+	read: string;
 	/** `git ls-tree -r --name-only <branch>` less `.indusk/`: every tracked file. */
 	tree: string;
 }
@@ -231,14 +234,21 @@ export async function planReviewInputs(checkout: string, plan: string): Promise<
 	const { docsRoot, planDir } = src;
 	const doc = (file: string): AuditText | null =>
 		existsSync(join(docsRoot, planDir, file)) ? readText(docsRoot, `${planDir}/${file}`) : null;
+	const documents = {
+		brief: doc("brief.md"),
+		testPlan: doc("test-plan.md"),
+		adr: doc("adr.md"),
+		impl: doc("impl.md"),
+	};
 	return {
 		plan,
-		documents: {
-			brief: doc("brief.md"),
-			testPlan: doc("test-plan.md"),
-			adr: doc("adr.md"),
-			impl: doc("impl.md"),
-		},
+		documents,
+		read: planReviewHash({
+			brief: documents.brief?.text ?? null,
+			testPlan: documents.testPlan?.text ?? null,
+			adr: documents.adr?.text ?? null,
+			impl: documents.impl?.text ?? null,
+		}),
 		tree: await trackedTree(src.code),
 	};
 }

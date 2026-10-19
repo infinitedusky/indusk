@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { writePromise } from "../../__tests__/helpers/promises-fixture.js";
-import { amendmentsOf, amendmentsWaiting } from "./amendments.js";
+import { amendmentsBetween, amendmentsOf, amendmentsWaiting } from "./amendments.js";
 import { approvalFrontmatter } from "./approved-brief.js";
 
 /**
@@ -112,5 +112,30 @@ describe("an archived plan's amendments are read against the registry at the pro
 		promise("A seat is held for ten minutes.");
 		const found = await amendmentsOf(join(wt, ".indusk", "planning", "archive", "p"));
 		expect(found.map((a) => `${a.part} ${a.name}`)).toContain("promise held-seat");
+	});
+});
+
+describe("Build Phase 8 — the scope is part of what was approved", () => {
+	// promise: a-change-to-what-was-agreed-needs-the-person
+	// promise: an-audit-concern-gets-a-solution
+	// clause: an-audit-concern-gets-a-solution/a-significant-concern-goes-to-the-person — A36
+	const brief = (notPromised: string[]) =>
+		`# Brief\n\n## Promises\n\n### This plan makes\n\nNone — nothing new.\n\n### Not promised\n\n${notPromised.map((n) => `- ${n}`).join("\n")}\n`;
+
+	it("A36 — an edit to the Not promised list after approval is an amendment", () => {
+		const approved = { brief: brief(["a hosted service"]), statements: new Map<string, string>() };
+		const same = amendmentsBetween(approved, approved);
+		expect(same).toEqual([]);
+		const moved = amendmentsBetween(approved, { ...approved, brief: brief([]) });
+		expect(moved).toEqual([
+			expect.objectContaining({ part: "scope", was: "a hosted service", now: null }),
+		]);
+		const added = amendmentsBetween(approved, {
+			...approved,
+			brief: brief(["a hosted service", "a second daemon"]),
+		});
+		expect(added).toEqual([
+			expect.objectContaining({ part: "scope", was: null, now: "a second daemon" }),
+		]);
 	});
 });

@@ -6,7 +6,11 @@ import {
 	PLAN_REVIEW_QUESTIONS,
 	readAuditAnswers,
 } from "../../lib/audit/answers.js";
+import { markAuditAnswers } from "../../lib/audit/answers-signal.js";
+import { registryClauses } from "../../lib/audit/clauses.js";
 import { auditInputs, planReviewInputs } from "../../lib/audit/inputs.js";
+import { markPlanReview, markReviewInputs } from "../../lib/audit/review-signal.js";
+import { markAmendmentStop } from "../../lib/build/amendment-signal.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
@@ -36,7 +40,6 @@ import {
 	startPlan,
 } from "../../lib/plans/index.js";
 import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
-import { readPromises } from "../../lib/promises/registry.js";
 import { planTimeText } from "../../lib/timing/view.js";
 import { livePlanCopy, resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
@@ -151,7 +154,11 @@ export function plansAuditInputs(cwd: string, name: string, approved?: string): 
 
 /** `indusk plans review-inputs <name>` — what the plan review's reader is handed before approval, as JSON. */
 export function plansReviewInputs(cwd: string, name: string): Promise<void> {
-	return planVerb(async () => JSON.stringify(await planReviewInputs(cwd, name), null, 2));
+	return planVerb(async () => {
+		const inputs = await planReviewInputs(cwd, name);
+		await markReviewInputs(cwd, name, inputs);
+		return JSON.stringify(inputs, null, 2);
+	});
 }
 
 /**
@@ -177,18 +184,12 @@ export async function plansAuditAnswers(
 	}
 	let clauses: Set<string> | undefined;
 	if (!planReview) {
-		const registry = readPromises(cwd);
-		if (!registry.ok) {
-			const why =
-				"missing" in registry ? `${registry.missing} is missing` : "an entry is malformed";
-			console.error(`Refused: the promises registry cannot be read to check clauses: ${why}`);
+		const held = registryClauses(live.copy.root);
+		if (!held.ok) {
+			console.error(`Refused: the promises registry cannot be read to check clauses: ${held.why}`);
 			process.exit(1);
 		}
-		clauses = new Set(
-			registry.registry.promises.flatMap((p) =>
-				(p.clauses ?? []).map((c) => `${p.name}/${c.name}`),
-			),
-		);
+		clauses = held.clauses;
 	}
 	const read = readAuditAnswers(readFileSync(path, "utf-8"), {
 		questions: planReview ? PLAN_REVIEW_QUESTIONS : AUDIT_QUESTIONS,
@@ -196,6 +197,8 @@ export async function plansAuditAnswers(
 		clauses,
 	});
 	const { open, shown } = describeAnswers(read, file);
+	if (planReview) await markPlanReview(cwd, name, read);
+	else await markAuditAnswers(cwd, name, read, open.length === 0);
 	if (open.length > 0) {
 		console.error(`${file} is not answered:\n${open.map((l) => `  ${l}`).join("\n")}`);
 		process.exit(2);
@@ -229,7 +232,9 @@ export function plansAcceptBrief(cwd: string, name: string): Promise<void> {
 /** `indusk plans next <name>` — what an unattended build does next, from the plan as it stands. */
 export async function plansNext(cwd: string, name: string, json: boolean): Promise<void> {
 	try {
-		const step = nextBuildStep(await readBuildPlan(cwd, name));
+		const plan = await readBuildPlan(cwd, name);
+		const step = nextBuildStep(plan);
+		await markAmendmentStop(cwd, name, plan.amendments, step.step);
 		console.info(json ? JSON.stringify(step) : describeStep(step));
 	} catch (err) {
 		if (err instanceof BuildPlanUnreadable) {

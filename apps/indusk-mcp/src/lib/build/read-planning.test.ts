@@ -1,11 +1,12 @@
 // clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check
 // clause: an-accepted-brief-is-planned-unasked/decides-and-records
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PLAN_REVIEW_QUESTIONS } from "../audit/answers.js";
+import { planReviewHash } from "../audit/review-hash.js";
 import { nextPlanningStep } from "./next-planning-step.js";
 import {
 	type PlanningReadDeps,
@@ -81,6 +82,34 @@ describe("readPlanningState", () => {
 		const review = (await readPlanningState(root, PLAN, fakes())).review;
 		expect(review.complete).toBe(true);
 		expect(review.dismissals).toEqual([expect.objectContaining({ reason: "unlikely" })]);
+	});
+
+	it("A37 — a review is stale when its recorded hash is not the documents' hash now", async () => {
+		const body = PLAN_REVIEW_QUESTIONS.map((q) => `## ${q}\n- nothing\n`).join("\n");
+		const hash = () =>
+			planReviewHash({
+				brief: readFileSync(join(dir, "brief.md"), "utf-8"),
+				testPlan: null,
+				adr: null,
+				impl: null,
+			});
+		write("plan-review.md", `---\nread: ${hash()}\n---\n${body}`);
+		expect((await readPlanningState(root, PLAN, fakes())).review.stale).toBe(false);
+		write("brief.md", doc("accepted").replace("body", "body changed"));
+		expect((await readPlanningState(root, PLAN, fakes())).review.stale).toBe(true);
+		write("plan-review.md", body);
+		expect((await readPlanningState(root, PLAN, fakes())).review.stale).toBe(true);
+	});
+
+	it("A42 — the brief's changes since acceptance reach the review the stop is built from", async () => {
+		const changed = [{ part: "promise", name: "a-x", was: "old", now: "new" }] as const;
+		write("plan-review.md", PLAN_REVIEW_QUESTIONS.map((q) => `## ${q}\n- nothing\n`).join("\n"));
+		const s = await readPlanningState(
+			root,
+			PLAN,
+			fakes({ briefChanges: async () => [...changed] }),
+		);
+		expect(s.review.briefChanges).toEqual(changed);
 	});
 
 	it("reads which documents exist and the impl's status", async () => {

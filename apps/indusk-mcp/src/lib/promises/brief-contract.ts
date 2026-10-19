@@ -143,6 +143,8 @@ export interface BriefContract {
 	mustNotBreak: string[];
 	changes: Array<{ name: string; sentence: string }>;
 	replaces: Array<{ old: string; by: string }>;
+	/** The `### Not promised` list under `## Promises`: what was chosen not to promise, one entry each. */
+	notPromised: string[];
 	/** The `## Looks` section; null when the brief has none. */
 	looks: BriefLooks | null;
 	/** Lines in the contract's sections that are not in its shape. */
@@ -487,6 +489,7 @@ export function parseBriefContract(text: string): ParsedBrief {
 			mustNotBreak: [],
 			changes: [],
 			replaces: [],
+			notPromised: [],
 			looks: null,
 			problems: [
 				`line ${newParts[0].n}: the brief is written in the parts of a contract but has no "## Promises" heading above them, so none of its promises is read — add "## Promises" above "### This plan makes"`,
@@ -512,6 +515,9 @@ export function parseBriefContract(text: string): ParsedBrief {
 		makes: made,
 		clausesRequired,
 		...existing,
+		notPromised: items(section(promises, 3, "Not promised") ?? [], /^\s{0,3}(?:[-*]|\d+\.)\s+/).map(
+			(i) => i.text,
+		),
 		looks,
 		problems,
 	};
