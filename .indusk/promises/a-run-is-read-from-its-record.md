@@ -24,6 +24,9 @@ clauses:
   - name: says-what-is-true
     kind: split
     statement: "The plan page and its nav row state the plan's situation in words, read from its record and its files: planning and the step, building and the phase, waiting on the person and for what, landed and what it still waits on to close, or stopped and why."
+  - name: always-a-next-step
+    kind: split
+    statement: "Every plan that is not closed shows its next step and who takes it: what the system is doing now, or what it waits on and whether the person or an event completes it, so no open plan reads as stuck."
   - name: never-in-progress-when-idle
     kind: limit
     statement: "Nothing reads as in progress while no process is running for it."
@@ -34,3 +37,4 @@ Every build, planning run and release the admin starts keeps a record on disk of
 ## History
 - 2026-10-19 — declared (a-run-can-be-trusted), from its planning conversation.
 - 2026-10-19 — changed by a-run-can-be-trusted: the page says what is true of the plan (Sandy, 2026-10-19). It read: "Every build, planning run and release the admin starts keeps a record on disk of its step, its phase and whether its process is alive, and the admin shows that record, so a run that died reads as stopped with its reason, an admin restart loses nothing, and Build starts it again." with the clauses kept-on-disk (split), dead-reads-stopped (split), shows-where-it-is (split), released-only-when-landed (split).
+- 2026-10-19 — changed by a-run-can-be-trusted: every open plan shows its next step and who takes it (Sandy, 2026-10-19). It read: "Every build, planning run and release the admin starts keeps a record on disk of its step, its phase and whether its process is alive, and the admin shows that record, so a run that died reads as stopped with its reason, an admin restart loses nothing, and Build starts it again." with the clauses kept-on-disk (split), dead-reads-stopped (split), shows-where-it-is (split), released-only-when-landed (split), says-what-is-true (split), never-in-progress-when-idle (limit).

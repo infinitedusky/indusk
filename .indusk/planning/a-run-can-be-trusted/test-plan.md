@@ -101,6 +101,17 @@ Added 2026-10-19 (Sandy): `a-brief-is-accepted-on-current-main` read "release in
 | A67 | A plan that has landed on main but is not archived reads "landed" with what it still waits on to close (each clause with no signal), never "releasing". | unit |
 | A68 | A plan whose run stopped reads "stopped" with the reason and what starts it again. | unit |
 
+### `always-a-next-step` — every plan that is not closed shows its next step and who takes it
+
+Added 2026-10-19 (Sandy): "there has to be an understood state and next step if it is not closed, or it looks stuck."
+
+- Signal: the same read. Upheld when every open plan shown has a next step naming who takes it (the system now, the person, or an event); broken reports the plan shown with none.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-----------|
+| A70 | For every situation a plan can be in short of closed (planning, waiting for looks, waiting for approval, building, at review, releasing, landed waiting on signals, stopped), the page and the nav row show a next step and who takes it: "the system is writing the impl", "you approve it", "closes when its clauses report from a real run". | unit |
+| A71 | No open plan in the project's real planning folder reads without a next step (a check over every plan the admin lists). | unit |
+
 ### `never-in-progress-when-idle` — nothing reads as in progress while no process is running for it
 
 - Signal: the same read. Upheld when every plan shown as planning, building or releasing has a live process in its record; broken reports the plan shown as in progress with none.
