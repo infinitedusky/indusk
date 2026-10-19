@@ -128,7 +128,8 @@ function project(): PromiseProject {
 				[siteOf(name), siteFile(name)],
 				[
 					testOf(name),
-					`${testFile(name)}// ${clauses.map((c) => `clause: ${name}/${c.name}`).join("\n// ")}\n`,
+					// A clause test asserts something (mark-first A29).
+					`${testFile(name)}// ${clauses.map((c) => `clause: ${name}/${c.name}`).join("\n// ")}\nit("checks it", () => expect(1).toBe(1));\n`,
 				],
 			]),
 		),

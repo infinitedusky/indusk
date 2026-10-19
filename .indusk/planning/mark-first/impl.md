@@ -473,12 +473,13 @@ written before clauses on the old rule.
 
   </details>
 `refuseFailingClauseTests` (exported from `land.ts`, the seam A2 tests) finds the plan's promises with split or limit clauses through `clauseTestPlan` and runs `clauseTestsHalf`, the function closing uses; `landPlan` calls it after the trunk is merged into the branch and before the configured land checks, in both the normal and the workbench path, with `LandOptions.runTests` or the project's own runner (`clauseTestRunner`). `writtenAsClauses` moved beside it into `clause-proof.ts` so closing and landing read the opt-in one way.
-- [ ] Refuse a clause test file that carries the token and asserts nothing, if it makes no false refusals.
+- [x] Refuse a clause test file that carries the token and asserts nothing, if it makes no false refusals.
   <details><summary>Technical</summary>
 
   A29 in `lib/promises/confirm.ts` beside `clauseTokenRefusals`: a file carrying `clause: <promise>/<clause>` must contain at least one `expect(` or `assert` call. Decision D-3: run the check over every existing plan's rows in dusk first (a script in the scratchpad, not committed); if it refuses any plan that closed legitimately, drop the check and its row (`State: skipped`, reason recorded in Notes).
 
   </details>
+**Decision D-20:** the check ships. The D-3 scan (a scratchpad script over every impl, active and archived) read 159 rows naming a clause and 71 distinct test files: none that exists lacks an `expect(` or `assert` (the files that do not exist are later phases' and other plans' unwritten rows). `assertsSomething` runs in `clauseTokenRefusals` only on a file that already carries the clause's token. Two test fixtures whose clause test was a bare token with an empty `it` (`promises-confirm.test.ts`'s `provingClauses`, `promise-clauses-close.test.ts`) now assert one line: fixtures, not plans, so D-3's rule does not apply to them.
 - [ ] Make the new sentence of the closed-plan promise true.
   <details><summary>Technical</summary>
 

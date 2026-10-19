@@ -67,6 +67,18 @@ function namesClause(codeRoot: string, rel: string, p: PromiseEntry, clause: str
 	return [p.name, ...p.aliases].some((n) => clauseTokenPattern(n, clause).test(text));
 }
 
+/**
+ * Whether a test file asserts anything: at least one `expect(` or `assert`
+ * call (mark-first A29, decision D-3 — the narrowest rule, shipped because a
+ * scan of every plan in dusk found no clause test it would refuse). A file
+ * that cannot be read is the token check's refusal, not this one's.
+ */
+function assertsSomething(codeRoot: string, rel: string): boolean {
+	const abs = join(codeRoot, rel);
+	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return true;
+	return /\bexpect\s*\(|\bassert\b/.test(readFileSync(abs, "utf-8"));
+}
+
 export interface ConfirmInput {
 	planRoot: string;
 	/** Where the plan's code and tests are. In a workbench before landing: the plan's own worktree. */
@@ -174,6 +186,10 @@ function clauseTokenRefusals(
 			if (!namesClause(codeRoot, rel, promise, clause.name)) {
 				out.push(
 					`${promise.name}: clause ${clause.name}: its row names the test ${rel}, which does not carry "clause: ${promise.name}/${clause.name}" — a test that proves a clause names it`,
+				);
+			} else if (!assertsSomething(codeRoot, rel)) {
+				out.push(
+					`${promise.name}: clause ${clause.name}: the test ${rel} carries the clause's token and asserts nothing (no \`expect(\` or \`assert\` call) — a test that proves a clause checks it`,
 				);
 			}
 		}
