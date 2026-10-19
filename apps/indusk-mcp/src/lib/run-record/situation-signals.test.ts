@@ -1,3 +1,4 @@
+// promise: a-run-is-read-from-its-record
 // clause: a-run-is-read-from-its-record/shows-where-it-is
 // clause: a-run-is-read-from-its-record/released-only-when-landed
 // clause: a-run-is-read-from-its-record/says-what-is-true

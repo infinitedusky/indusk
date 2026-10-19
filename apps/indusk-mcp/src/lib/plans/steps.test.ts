@@ -1,3 +1,4 @@
+// promise: a-run-is-read-from-its-record
 import { describe, expect, it } from "vitest";
 import { derivePlanPosition, type PlanPositionState } from "../lifecycle.js";
 import type { PlanSummary } from "../plan-parser.js";
