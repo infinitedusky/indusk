@@ -10,7 +10,7 @@ import type { IncidentSource } from "./vocabulary.js";
 
 /**
  * One monitor pass (day-monitor, ADR D5): read what Jaeger saw over the quiet
- * window, record each behaviour promise's new breaks as an incident, and
+ * window, record the new breaks of each promise whose telemetry is read (`readsSignal`) as an incident, and
  * send each promise's owner back to work with a Maintenance phase. Writes plan
  * documents and commits nothing — the person commits them. Throws
  * `JaegerUnreachable` rather than reporting a quiet window it never read.
@@ -107,7 +107,7 @@ export async function watchPromises(
 	}
 	// A promise of any kind with a clause a signal can report is read, as a
 	// behaviour promise is (mark-first, Build Phase 5).
-	const behaviour = read.registry.promises.filter(readsSignal);
+	const signalled = read.registry.promises.filter(readsSignal);
 	// `--source` chooses what is read, not only what is written on the incident
 	// (promise-sources, ADR D6): `deployed` reads production, and is refused
 	// when the project names none; `local`, `smoke` and `desk` read the laptop.
@@ -120,7 +120,7 @@ export async function watchPromises(
 	// or at the laptop they are sitting in front of.
 	const source = marks.queryUrl;
 	const changes: WatchResult["changes"] = [];
-	for (const promise of behaviour) {
+	for (const promise of signalled) {
 		const violations = marks.byPromise.get(promise.name)?.violations ?? [];
 		const open = read.registry.incidents.filter(
 			(i) => i.promise === promise.name && i.status === "open",

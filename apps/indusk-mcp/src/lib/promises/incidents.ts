@@ -98,6 +98,10 @@ export function oneLine(value: string): string {
  * whether it passes. A fix starts from the tests that were vouching: a
  * passing row here is a test that did not catch this break.
  *
+
+ * With a clause (a break that named one), only the rows that name that clause
+ * are listed, with the files that emit its signal (A18).
+ *
  * Written once, when the incident opens. It is a record of what was vouching
  * at the time, not a live view; the rows themselves move on.
  *
