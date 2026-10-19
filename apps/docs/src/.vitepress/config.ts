@@ -224,6 +224,7 @@ const config = defineConfig({
 						{ text: "The Daemon Is Found, Not Guessed — one address, one daemon, a record that is rebuilt", link: "/decisions/daemon-found-not-guessed" },
 						{ text: "Display Names — promises in words, plans by title, with their dates", link: "/decisions/display-names" },
 						{ text: "Plan Cockpit — the admin as the promise dashboard, the promise page and the plan page", link: "/decisions/plan-cockpit" },
+						{ text: "Approval Waits for the Planning Run — offered for approval only once its plan review is answered", link: "/decisions/approval-waits-for-the-planning-run" },
 						{ text: "UI Promises — mockups a person approves, held by value", link: "/decisions/ui-promises" },
 						{ text: "Brief as the Contract — looks in the brief, a plan that starts as a conversation", link: "/decisions/brief-as-the-contract" },
 						{ text: "Cockpit Redraw — the nav from the original cockpit, a width you can drag, re-approval a person's", link: "/decisions/cockpit-redraw" },
