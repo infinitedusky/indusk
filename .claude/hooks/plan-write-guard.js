@@ -982,6 +982,8 @@ function recordDecision(event, command, cwd, judged) {
 		at: new Date().toISOString(),
 		command,
 		cwd,
+		// The checkout whose plan folders `before` is: the witness reads the same one after (A99).
+		root,
 		decision: judged.refusal ? "refused" : "allowed",
 		files: judged.files.map((f) => relative(root, f)),
 		before: planFolderSnapshot(root, archived),

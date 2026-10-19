@@ -55,6 +55,8 @@ export type DecisionLine = {
 	at: string;
 	command: string;
 	cwd: string;
+	/** The checkout whose plan folders `before` (and the witness's `after`) read; absent on older lines. */
+	root?: string;
 	decision: "refused" | "allowed";
 	/** The plan paths the guard read in the command, root-relative. */
 	files: string[];

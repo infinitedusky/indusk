@@ -137,7 +137,6 @@ const homeOf = () => {
 };
 
 describe("the guard and its witness record each decision for the package to judge", () => {
-
 	it("a refused write is one decision line with the state before and no after", async () => {
 		const event = {
 			...payload("echo x >> .indusk/planning/demo/impl.md"),
@@ -215,17 +214,25 @@ describe("A99 — a cd into another checkout of the same project that only reads
 		try {
 			// The other checkout's plan files are its own: written later, different times on disk.
 			writeFileSync(join(other, ".indusk", "planning", "demo", "notes.md"), "other\n");
-			const command = `cd ${other} && find .indusk/planning -name '*.md'`;
-			const event = { ...payload(command), tool_use_id: "toolu_cd_other" };
-			expect((await runHook("plan-write-guard.js", event, { cwd: root, env })).exitCode).toBe(0);
-			const post = { ...event, cwd: other, hook_event_name: "PostToolUse", tool_response: {} };
-			expect((await runHook("plan-write-witness.js", post, { cwd: other, env })).exitCode).toBe(0);
+			const run = async (command: string, id: string) => {
+				const event = { ...payload(command), tool_use_id: id };
+				expect((await runHook("plan-write-guard.js", event, { cwd: root, env })).exitCode).toBe(0);
+				const post = { ...event, cwd: other, hook_event_name: "PostToolUse", tool_response: {} };
+				expect((await runHook("plan-write-witness.js", post, { cwd: other, env })).exitCode).toBe(
+					0,
+				);
+			};
+			// The command seen on 2026-10-19: it names no plan, so with nothing changed it leaves no line.
+			await run(`cd ${other} && find .indusk/planning -name '*.md'`, "toolu_cd_find");
+			expect(decisionsIn(homeOf())).toEqual([]);
+			// One that names a plan document is recorded, and both halves read the same checkout.
+			await run(`cd ${other} && cat .indusk/planning/demo/impl.md`, "toolu_cd_cat");
 			const lines = decisionsIn(homeOf());
 			expect(lines.map((l) => l.kind)).toEqual(["decision", "after"]);
 			expect(changedFiles(lines[0].before, lines[1].after)).toEqual([]);
 			const verdict = judgeDecision(lines[0], lines[1].after);
 			expect(verdict?.broken).toBeUndefined();
-			expect(verdict?.clause ?? "reads-pass").toBe("reads-pass");
+			expect(verdict?.clause).toBe("reads-pass");
 		} finally {
 			rmSync(other, { recursive: true, force: true });
 		}

@@ -1133,7 +1133,7 @@ This phase tests the finished plan against the cases where what it shows or repo
   Hypothesis A98, each refused by `judgeCommand` on 2026-10-19. `WRITE_CALL` (`plan-write-guard.js:63`) counts any `.write(`, so `process.stdout.write(`, `process.stderr.write(`, `sys.stdout.write(` and `sys.stderr.write(` refuse a read; and `git clean` in a plan folder is refused whatever its flags. Fix: strip standard-stream writes from the text before `WRITE_CALL` is tested; allow `git clean` with `-n` or `--dry-run`. Keep the drain's `parserReadsWrite` reading the same, so these allowed reads report `reads-pass` upheld. Raised by the audit (`plan-write-guard.js:68`).
 
   </details>
-- [ ] Make the witness compare the plan folders of the checkout the guard looked at, not of wherever the command left the shell.
+- [x] Make the witness compare the plan folders of the checkout the guard looked at, not of wherever the command left the shell.
   <details><summary>Technical</summary>
 
   Hypothesis A99, observed: on 2026-10-19T21:44:02Z the decision file paired a read-only `cd /Users/the_dusky/code/sandbox/dusk && find .indusk/planning …` run from this worktree with an after snapshot of the main checkout, so all 55 active plan files read changed; the drain will report `shell-write-refused` broken for a `find`. `plan-write-witness.js` takes `planRootOf(event.cwd)`, and a PostToolUse payload's `cwd` is the shell's working directory after the command. Fix: the guard's pending file records `root`; the witness snapshots that root (and the home it was found under), never one derived from the after payload. Not raised by the audit.

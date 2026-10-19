@@ -7,7 +7,9 @@
  * clause: a-plan-document-is-written-through-its-checks/reads-pass
  *
  * The guard left the plan folders' state before the command in the project's
- * home (`plan-write-pending/<tool use>.json`). This reads the same state now
+ * home (`plan-write-pending/<tool use>.json`), with the checkout it read. This
+ * reads the same checkout's state now (never the payload's `cwd`, which is
+ * where the command left the shell)
  * and appends `{ kind: "after", toolUseId, after }` to the decision file for a
  * command the guard recorded; for one it did not (it named no plan path), it
  * records the command only when a plan document changed under it, which is how
@@ -44,7 +46,10 @@ function witness(event) {
 		return; // nothing recorded before this command
 	}
 	rmSync(path, { force: true });
-	const after = planFolderSnapshot(root, pending.archived ?? []);
+	// The checkout the guard looked at, never the one the command left the shell in: a command
+	// that starts with `cd` into another checkout of the project ends there (A99).
+	const looked = typeof pending.root === "string" && pending.root !== "" ? pending.root : root;
+	const after = planFolderSnapshot(looked, pending.archived ?? []);
 	const { named, archived: _archived, ...decision } = pending;
 	if (named) {
 		appendDecision(home, { kind: "after", toolUseId: key, after });
