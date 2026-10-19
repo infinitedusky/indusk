@@ -114,7 +114,9 @@ pointer; the pointer holds the story.
   (`session/rate-limit.ts`), one trunk reader (`trunk-branch.ts`). Every
   request a session makes is recorded by the manager with a `decided` event,
   by rule or by person; a decision is never made off the log. Guarded by
-  `manager.test.ts`. — see `/reference/cli/plans`
+  `manager.test.ts`. The planning loop sits beside it: `nextPlanningStep` (pure),
+  `runPlanning`, and the `plan-*` step prompts in `build-session.ts`; a planning
+  step approves nothing. Guarded by `next-planning-step.test.ts`. — see `/reference/cli/plans`
 - **`lib/audit/`**: the auditor's inputs. The approved impl is found by the
   approval merge's subject (`plan(<plan>): approved`), never by a line in the
   plan; a rewritten history is named by the refusal and answered with
