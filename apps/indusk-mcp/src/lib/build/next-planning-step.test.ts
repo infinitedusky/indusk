@@ -1,3 +1,5 @@
+// clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance
+// clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check
 import { describe, expect, it } from "vitest";
 import {
 	nextPlanningStep,

@@ -1,3 +1,4 @@
+// clause: an-accepted-brief-is-planned-unasked/starts-on-acceptance
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";

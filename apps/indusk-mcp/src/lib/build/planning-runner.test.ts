@@ -1,3 +1,4 @@
+// clause: an-accepted-brief-is-planned-unasked/decides-and-records
 import { describe, expect, it } from "vitest";
 import type { PlanningDocument, PlanningState } from "./next-planning-step.js";
 import { runPlanning } from "./planning-runner.js";

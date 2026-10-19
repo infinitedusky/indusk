@@ -1,3 +1,5 @@
+// clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check
+// clause: an-accepted-brief-is-planned-unasked/decides-and-records
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
