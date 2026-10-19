@@ -274,7 +274,11 @@ export function parseMarkedSpan(
 	processTags?: JaegerTag[],
 ): MarkedSpan | null {
 	// A span a test run produced is not a clause's signal (mark-first ADR D3).
-	if (tag(span.tags, APP_RESOURCE_KEYS.run) === TEST_RUN_VALUE) return null;
+	// The mark is a resource attribute (`telemetry-settings.ts`), so a run
+	// marked through OTEL_RESOURCE_ATTRIBUTES carries it only in the process
+	// tags; the environment is read the same way below.
+	const run = tag(span.tags, APP_RESOURCE_KEYS.run) ?? tag(processTags, APP_RESOURCE_KEYS.run);
+	if (run === TEST_RUN_VALUE) return null;
 	const promise = tag(span.tags, PROMISE_MARK.promise);
 	const outcome = readOutcome(tag(span.tags, PROMISE_MARK.outcome));
 	if (typeof promise !== "string") return null;
