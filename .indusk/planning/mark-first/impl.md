@@ -75,7 +75,7 @@ clause it broke.
 | A8 | A split is broken by missing its budget at its point; a limit by one report over its bound, however many were inside | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A9 | A plan written as clauses cannot close while a clause has a failing test or no signal that reported upheld; the refusal says which is missing | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
 | A10 | When such a plan closes, its promise is enforced | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/lib/promises/confirm-signal.test.ts |
-| A11 | A clause's signal run against the real system through the local daemon reports upheld and the clause then reads upheld end to end | Build Phase 6 | Build Phase 6 | written | live check | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/__tests__/clause-signal.live.test.ts |
+| A11 | A clause's signal run against the real system through the local daemon reports upheld and the clause then reads upheld end to end | Build Phase 6 | Build Phase 6 | passing | live check | clause: a-clause-is-proved-twice/upheld-by-its-signal | apps/indusk-mcp/src/__tests__/clause-signal.live.test.ts |
 | A12 | A clause whose signal never reported reads no signal on the promise page, in `promises status` and in the admin, never drawn as holding | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A13 | A clause that last reported upheld, whose watcher has gone silent past its heartbeat, reads no signal | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
 | A14 | A promise with one clause upheld and another reading no signal is not holding: the worst clause decides | Build Phase 3 | Build Phase 3 | passing | unit | clause: a-clause-is-proved-twice/no-signal-is-not-holding | apps/indusk-mcp/src/lib/promises/clause-standing.test.ts |
@@ -87,7 +87,7 @@ clause it broke.
 | A26 | `markPromise` writes `broken` where it wrote `violated`, and every reader still reads both | Test Phase 1 | Build Phase 1 | passing | unit | the switch carried from one-promise-language; a rename no promise of this plan states | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts |
 | A27 | A promise with no clauses still opens an incident that names the tests that proved it | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over an-incident-names-its-tests for every promise written before clauses | apps/indusk-mcp/src/lib/promises/incident-no-clause.test.ts |
 | A29 | A test file carrying a clause token is refused at close when it asserts nothing about the clause | Build Phase 4 | Build Phase 4 | passing | unit | tightens verified-before-release; droppable if it makes false refusals (decision D-3 below) | apps/indusk-mcp/src/lib/promises/clause-test-asserts.test.ts |
-| A30 | No skill, tool description or doc page calls a promise's telemetry a mark; each says signal (exempt: the Day 4b entry in the root `CLAUDE.md`, archived plans and decisions, this plan's name) | Test Phase 1 | Build Phase 6 | written | unit | the word cleanup carried from one-promise-language; no promise of this plan states it | apps/indusk-mcp/src/__tests__/signal-word.test.ts |
+| A30 | No skill, tool description or doc page calls a promise's telemetry a mark; each says signal (exempt: the Day 4b entry in the root `CLAUDE.md`, archived plans and decisions, this plan's name) | Test Phase 1 | Build Phase 6 | passing | unit | the word cleanup carried from one-promise-language; no promise of this plan states it | apps/indusk-mcp/src/__tests__/signal-word.test.ts |
 | A31 | The suite-speed script and the demo app write `broken` where they wrote `violated`, and every reader still reads both | Test Phase 1 | Build Phase 1 | passing | unit | the writers outside `markPromise`, carried from one-promise-language's falsification | apps/indusk-mcp/src/__tests__/suite-speed.test.ts, examples/seat-holds/src/telemetry.test.ts |
 
 ### Deferred Verification
@@ -652,18 +652,20 @@ signals. It closes the plan: nothing after it changes behaviour.
 
 #### Build Phase 6 Verification
 
-- [ ] The word check passes and the live check ran once and passed.
+- [x] The word check passes and the live check ran once and passed.
   <details><summary>Technical</summary>
 
   A30 passes: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/signal-word.test.ts src/__tests__/skill-sync-parity.test.ts`. A11 recorded under Notes with its result.
 
   </details>
-- [ ] The docs build and the plan's promise checks pass.
+  Ran 2026-10-18/19: `signal-word.test.ts` and `skill-sync-parity.test.ts` 27 passed (A30 passing; `promise-words.test.ts` also green); A11 passed against the local daemon, recorded under Notes. `indusk plans tests mark-first --phase "Build Phase 6"`: 10 of 11 files, the one red being `admin-recorder.test.ts` (no admin bundle, the known environmental red).
+- [x] The docs build and the plan's promise checks pass.
   <details><summary>Technical</summary>
 
   `pnpm --filter docs build` and `indusk promises contract mark-first` and `indusk promises check`. The retrospective then runs `indusk promises confirm mark-first`.
 
   </details>
+  `pnpm --filter docs build` complete (the Mermaid flow and every link resolved); `indusk promises contract mark-first`: brief, rows and registry agree (1 made, 3 kept, 2 changed); `indusk promises check`: 165 promises, 0 known-broken. `promises confirm` is the retrospective's.
 
 #### Build Phase 6 Context
 
