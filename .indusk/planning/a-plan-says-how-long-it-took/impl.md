@@ -308,7 +308,7 @@ This phase makes every unattended planning and build step leave a start, an end 
 
 This phase makes each run of a plan's tests leave one record: which plan, which phase or the landing, how many files ran for each reason, how long it took and whether it passed. These durations are the data the later decision about which tests run per phase depends on. It records beside the run and never changes which files run.
 
-- [ ] Write the tests for the test-run record, so they fail first.
+- [x] Write the tests for the test-run record, so they fail first.
   <details><summary>Technical</summary>
 
   A7, A8, A9, A16 in `lib/timing/test-run.test.ts`, per the deferral body above; commit red.
