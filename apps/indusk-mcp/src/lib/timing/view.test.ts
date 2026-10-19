@@ -1,9 +1,30 @@
 // clause: a-plan-says-how-long-it-took/one-view
 // clause: a-plan-says-how-long-it-took/steps-are-timed
-import { expect, it } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, expect, it } from "vitest";
+import { PlanCommandRefusal } from "../plans/plan-branch.js";
 import type { PhaseBoundaryRecord } from "../shape/boundary-record.js";
 import type { TimingRecord } from "./log.js";
-import { formatDuration, formatPlanTime, type PlanTimeReads, planTime } from "./view.js";
+import {
+	formatDuration,
+	formatPlanTime,
+	landingTime,
+	type PlanTimeReads,
+	planTime,
+	planTimeText,
+} from "./view.js";
+
+const dirs: string[] = [];
+afterEach(() => {
+	for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
+});
+const tmp = () => {
+	const d = mkdtempSync(join(tmpdir(), "timing-view-"));
+	dirs.push(d);
+	return d;
+};
 
 const P = "p";
 const iso = (min: number) =>
@@ -188,4 +209,92 @@ it("durations print like 1h 04m, 4m 12s and 9s", () => {
 	expect(formatDuration(64 * 60_000)).toBe("1h 04m");
 	expect(formatDuration(252_000)).toBe("4m 12s");
 	expect(formatDuration(9_000)).toBe("9s");
+});
+
+it("A20 an open last phase of a landed plan ends at the landing, so a week later its time has not grown", async () => {
+	const read = (nowMin: number) =>
+		planTime("/r", P, {
+			now: () => ms(nowMin),
+			reads: reads({
+				boundaries: async () => [opening(1, 10, "build"), opening(2, 30, "build")],
+				landedAt: async () => iso(90),
+			}),
+		});
+	const soon = await read(100);
+	const later = await read(100 + 7 * 24 * 60);
+	const last = later.phases.find((p) => p.label === "Build Phase 2");
+	expect(last).toMatchObject({ durationMs: 60 * 60_000, open: false, derived: true });
+	expect(later.phases.map((p) => p.durationMs)).toEqual(soon.phases.map((p) => p.durationMs));
+	// total 90 min, phases 20 + 60 min: between is the signed remainder, not clamped
+	expect(later.between).toBe(10 * 60_000);
+});
+
+it("A20 between is printed signed when the phases outrun the total", async () => {
+	const result = await planTime("/r", P, {
+		now: () => ms(200),
+		reads: reads({
+			boundaries: async () => [opening(1, 0, "build")],
+			timings: async () => [close(1, 90)],
+			landedAt: async () => iso(60),
+		}),
+	});
+	expect(result.between).toBe(-30 * 60_000);
+	expect(formatPlanTime(result)).toMatch(/between\s+-30m 00s/);
+});
+
+it("A22 a workbench plan's landing is searched in the code repo's trunk, not the workbench root", async () => {
+	const searched: string[] = [];
+	const landed = await landingTime("/workbench", "p", {
+		codeRootOf: () => "/code-repo",
+		trunkOf: (root) => root,
+		runGit: async (cwd) => {
+			searched.push(cwd);
+			return cwd === "/code-repo" ? "2026-06-01T10:00:00+00:00" : "";
+		},
+	});
+	expect(searched).toEqual(["/code-repo"]);
+	expect(landed).toBe("2026-06-01T10:00:00+00:00");
+});
+
+it("A22 a refused code root falls back to the plan root", async () => {
+	const searched: string[] = [];
+	await landingTime("/root", "p", {
+		codeRootOf: () => null,
+		trunkOf: (root) => root,
+		runGit: async (cwd) => {
+			searched.push(cwd);
+			return "";
+		},
+	});
+	expect(searched).toEqual(["/root"]);
+});
+
+it("A23 run from the trunk, the phase openings are read from the plan's worktree", async () => {
+	const trunk = tmp();
+	const worktree = tmp();
+	mkdirSync(join(worktree, ".indusk"), { recursive: true });
+	writeFileSync(
+		join(worktree, ".indusk", "phase-boundary.jsonl"),
+		`${JSON.stringify({ plan: P, phase: 1, kind: "build", sha: "s", timestamp: iso(5) })}\n`,
+	);
+	const result = await planTime(trunk, P, {
+		now: () => ms(30),
+		liveRoot: worktree,
+		home: tmp(),
+	});
+	expect(result.phases.map((p) => p.label)).toEqual(["Build Phase 1"]);
+	expect(result.missing).not.toContain("phase openings");
+});
+
+it("A24 a name that is no plan is refused, not printed as an empty view", async () => {
+	await expect(
+		planTimeText(tmp(), "no-such-plan", { liveRoot: async () => null }),
+	).rejects.toBeInstanceOf(PlanCommandRefusal);
+});
+
+it("A24 a plan folder with no records still prints what exists", async () => {
+	const root = tmp();
+	mkdirSync(join(root, ".indusk", "planning", "old-plan"), { recursive: true });
+	const text = await planTimeText(root, "old-plan", { liveRoot: async () => root, home: tmp() });
+	expect(text).toMatch(/no record of:/);
 });

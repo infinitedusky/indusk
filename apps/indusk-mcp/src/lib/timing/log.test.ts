@@ -59,3 +59,32 @@ it("the log lives under the project's home, named for the plan", () => {
 	const home = tmp();
 	expect(timingLogPath(home, "my-plan", home)).toMatch(/timing\/my-plan\.jsonl$/);
 });
+
+it("A21 a v1 record of a known kind with a missing or wrongly typed field is skipped", async () => {
+	const path = join(tmp(), "plan.jsonl");
+	const at = "2026-01-01T00:00:00.000Z";
+	const good = {
+		v: 1,
+		kind: "test-run",
+		plan: "p",
+		at,
+		scope: "landing",
+		files: { own: 1, reached: 0, mustNotBreak: 2 },
+		startedAt: at,
+		durationMs: 5,
+		passed: true,
+	};
+	const bad = [
+		{ v: 1, kind: "test-run", plan: "p", at }, // no scope, files
+		{ ...good, scope: { phase: 3 } },
+		{ ...good, files: { own: "1" } },
+		{ ...good, startedAt: "yesterday" },
+		{ v: 1, kind: "step-start", plan: "p", at }, // no id
+		{ v: 1, kind: "step-start", plan: "p", at: "yesterday", id: "a", step: "work" },
+		{ v: 1, kind: "step-end", plan: "p", at, id: "a", step: "work", outcome: "exploded" },
+		{ v: 1, kind: "phase-close", plan: "p", at, phase: "one" },
+		{ ...good, plan: undefined },
+	];
+	writeFileSync(path, [...bad, good].map((r) => JSON.stringify(r)).join("\n"));
+	expect(await readTimings(path)).toEqual([good]);
+});
