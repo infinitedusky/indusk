@@ -160,6 +160,17 @@ if (event.tool_name === "Edit" && toolInput.old_string) {
 	process.exit(0);
 }
 
+/** Whether the plan's brief opts in to clauses (`clauses: required`). */
+function briefStatesClauses(planDir) {
+	try {
+		const brief = readFileSync(`${planDir}/brief.md`, "utf-8");
+		const fm = brief.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+		return /^clauses:\s*["']?required/m.test(fm);
+	} catch {
+		return false;
+	}
+}
+
 /**
  * The plan's contract (planner-promises ADR D2): the brief, the test rows and
  * the registry agree before the plan builds. The rule lives in the package
@@ -169,7 +180,11 @@ if (event.tool_name === "Edit" && toolInput.old_string) {
  *
  * Runs for an impl that sets `test_purpose: required` and is past `draft`,
  * and on every such write: saving a draft as `approved` touches no phase
- * structure, and it is the write this exists for.
+ * structure, and it is the write this exists for. A draft is asked only the
+ * two clause-signal rules (`--clause-signals-only`: every split and limit
+ * clause has a task naming its signal, no after-landing row proves a clause),
+ * since the rest of the contract is not yet a draft's to hold; the rules
+ * themselves live in the package, not here.
  *
  * A check that cannot be run refuses, and says why. `INDUSK_BIN` names the
  * CLI (it may be a command line, `node /path/cli.js`, so it goes through the
@@ -181,15 +196,19 @@ function planContractRefusal(implPath, content, root) {
 	const fm = content.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? "";
 	if (!/^test_purpose:\s*required/m.test(fm)) return null;
 	const status = fm.match(/^status:\s*["']?([\w-]+)/m)?.[1];
-	if (!status || status === "draft") return null;
+	if (!status) return null;
+	const draft = status === "draft";
 	const plan = implPath.match(
 		/[\\/]\.indusk[\\/]planning[\\/](?:archive[\\/])?([^\\/]+)[\\/]impl\.md$/,
 	)?.[1];
 	if (!plan) return null;
+	// A draft is asked only where its brief states clauses: any other draft is left as it was.
+	if (draft && !briefStatesClauses(dirname(implPath))) return null;
 
 	const bin = process.env.INDUSK_BIN ?? "indusk";
-	const ran = `${bin} promises contract ${plan} --impl-stdin`;
-	const r = spawnSync(`${bin} promises contract "$INDUSK_CONTRACT_PLAN" --impl-stdin`, {
+	const flags = draft ? "--impl-stdin --clause-signals-only" : "--impl-stdin";
+	const ran = `${bin} promises contract ${plan} ${flags}`;
+	const r = spawnSync(`${bin} promises contract "$INDUSK_CONTRACT_PLAN" ${flags}`, {
 		shell: true,
 		cwd: root,
 		input: content,
