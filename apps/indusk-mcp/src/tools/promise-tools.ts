@@ -92,13 +92,19 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 				plan: z.string().describe("The plan changing it."),
 				statement: z.string().describe("The promise as it now reads, in one plain sentence."),
 				reason: z.string().describe("Why it changed, in a sentence."),
+				clauses: z
+					.array(z.string())
+					.optional()
+					.describe(
+						"The promise's clauses, one string each: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`. Given, they replace its clauses and the History keeps the old ones; omitted, the clauses stay.",
+					),
 			},
 		},
-		async ({ name, plan, statement, reason }) =>
+		async ({ name, plan, statement, reason, clauses }) =>
 			written(() => {
 				const before = readPromises(projectRoot);
 				const was = before.ok ? before.registry.promises.find((p) => p.name === name) : undefined;
-				changePromise(projectRoot, { name, plan, statement, reason });
+				changePromise(projectRoot, { name, plan, statement, reason, clauses });
 				return { changed: name, owner: plan, previousOwner: was?.owner ?? null };
 			}),
 	);

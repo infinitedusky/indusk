@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { readConfig, writeConfig } from "../config.js";
 import { isUsableSegment } from "../path-segment.js";
 import { parseClauseSpec } from "./brief-contract.js";
-import { setScalar } from "./frontmatter-edit.js";
+import { replaceKey, setScalar } from "./frontmatter-edit.js";
 import { planFolderStatus } from "./plan-folder.js";
 import {
 	contractDir,
@@ -217,6 +217,12 @@ export interface ChangeInput {
 	plan: string;
 	statement: string;
 	reason: string;
+	/**
+	 * The promise's clauses as `declare --clause` writes them. Given, they
+	 * replace the entry's list and the History keeps the old ones; absent, the
+	 * clauses stay.
+	 */
+	clauses?: string[];
 	now?: Date;
 }
 
@@ -243,22 +249,33 @@ export function changePromise(planRoot: string, input: ChangeInput): PromiseEntr
 	if (statement === "") refuse(`${name}: a change needs the new sentence (--statement)`);
 	if (reason === "") refuse(`${name}: a change needs its reason (--reason)`);
 	requireOpenPlan(planRoot, plan);
-	if (statement === promise.statement && promise.owner === plan) {
+	const clauseLines = input.clauses
+		? clauseFrontmatter(name, input.clauses, registry.promises)
+		: null;
+	if (statement === promise.statement && promise.owner === plan && clauseLines === null) {
 		refuse(`${name}: it already reads that way and ${plan} already owns it — nothing to change`);
 	}
 
 	const path = join(registry.dir, promise.file);
 	let text = setScalar(readFileSync(path, "utf-8"), "owner", plan);
 	text = replaceStatement(text, statement);
+	if (clauseLines) text = replaceKey(text, "clauses", clauseLines);
 	const from =
 		promise.owner === plan ? "" : ` Owned before by ${promise.owner}; ${plan} takes it over.`;
 	text = appendHistory(
 		text,
-		`- ${today(input.now ?? new Date())} — changed by ${plan}: ${reason}. It read: "${promise.statement}"${from}`,
+		`- ${today(input.now ?? new Date())} — changed by ${plan}: ${reason}. It read: "${promise.statement}"${from}${clauseLines ? `; its clauses were ${clausesRead(promise)}` : ""}`,
 	);
 	requireReadable(name, text);
 	writeFileSync(path, text);
 	return { ...promise, statement, owner: plan };
+}
+
+/** A promise's clauses on one line, for the History of the change that replaces them. */
+function clausesRead(promise: PromiseEntry): string {
+	const clauses = promise.clauses ?? [];
+	if (clauses.length === 0) return "none";
+	return clauses.map((c) => `${c.name} (${c.kind})`).join(", ");
 }
 
 export interface ReplaceInput extends Omit<DeclareInput, "supersedes"> {
