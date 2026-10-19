@@ -58,8 +58,8 @@ by discipline.
 
 ## 3. Hooks enforce what discipline won't
 
-Eleven hooks ship. Seven are PreToolUse gates that run before a write or a
-command and refuse; three are PostToolUse and act after the fact; one runs on
+Twelve hooks ship. Seven are PreToolUse gates that run before a write or a
+command and refuse; four are PostToolUse and act after the fact; one runs on
 every prompt:
 
 | Hook | Refuses |
@@ -72,6 +72,7 @@ every prompt:
 | `looks-approval-guard` | an agent's Write or Edit to an app's `.indusk/mockups/<app>/approved.json` — the record of which mockups a person approved — and, on Bash, a command that writes it (a redirect, `tee`, `cp`/`mv`, `sed -i`, an interpreter, `git checkout … --`) or calls the approve route. A mockup becomes the reference only through the cockpit's Approve; the refusal says so. A tripwire for an agent's ordinary attempt, not a boundary against a process running as the person. See [`indusk looks`](/reference/cli/looks) |
 | `plan-write-guard` | *(Bash only)* a shell command that writes, moves or deletes a file in a plan's folder (`.indusk/planning/<plan>/`, archived plans too): a redirect, `tee`, `sed -i`, `perl -i`, `mv`/`cp`/`rm`, `git mv`/`rm`/`restore`/`checkout --`/`apply`, `find … -delete`, an inline interpreter writing a plan path. Reads, a path named only as text, and `indusk` commands pass. A plan document changes through the Edit tool, where the gates above run, or its `indusk` command; a `mv` of a plan folder is told to use `indusk plans archive` |
 | `eval-trigger` | *(PostToolUse)* — nothing; on every `git commit` it spawns the evaluator that scores the diff, and in a multi-repo workbench it refuses to guess which repo the commit belongs to |
+| `plan-write-witness` | *(PostToolUse)* — nothing; after a shell command it records what the plan folders hold, beside `plan-write-guard`'s decision, so the package can judge that decision from the disk |
 | `workbench-sync` | *(PostToolUse)* — nothing; commits workbench context after edits |
 | `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
 | `break-inbox` | *(UserPromptSubmit)* — nothing; on every prompt it puts each production break the recorder wrote down since the last turn, and each daily reminder of an incident still open, in front of the agent, once. See [When a promise breaks](/guide/multi-agent#when-a-promise-breaks) |

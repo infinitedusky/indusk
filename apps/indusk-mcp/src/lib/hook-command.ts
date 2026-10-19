@@ -50,12 +50,20 @@ export const HOOK_REGISTRATIONS: readonly (readonly [
 	// Worktrees share one stash stack: an unnamed stash or a pop is refused
 	// where another session could be on the other end.
 	["PreToolUse", "Bash", "stash-guard.js"],
+	// A plan document is written through its checks (a-run-can-be-trusted): a
+	// shell command that writes one is refused. One matcher is the whole gate
+	// here, unlike trunk-guard's: an Edit or Write to a plan document already
+	// passes check-gates and the impl validator, so only the shell path goes
+	// around them. Its witness records what the plan folders hold after the
+	// command, so the package can judge the guard's decisions on its own.
+	["PreToolUse", "Bash", "plan-write-guard.js"],
 	["PostToolUse", "Edit|Write", "gate-reminder.js"],
 	// Inert unless worktree.shape is "workbench" — a normal-mode project keeps
 	// `.indusk/` inside its own product repo, where auto-committing every edit
 	// would commit half-finished source.
 	["PostToolUse", "Edit|Write", "workbench-sync.js"],
 	["PostToolUse", "Bash", "eval-trigger.js"],
+	["PostToolUse", "Bash", "plan-write-witness.js"],
 	// A break reaches the working agent (incident-recording): once per prompt,
 	// before the model reads it. The event takes no matcher; "" writes none.
 	["UserPromptSubmit", "", "break-inbox.js"],

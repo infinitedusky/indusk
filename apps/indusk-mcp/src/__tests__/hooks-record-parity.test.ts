@@ -30,6 +30,10 @@ const WORDS: Record<string, number> = {
 	eight: 8,
 	nine: 9,
 	ten: 10,
+	eleven: 11,
+	twelve: 12,
+	thirteen: 13,
+	fourteen: 14,
 };
 
 function hooksOnDisk(): string[] {
@@ -53,7 +57,7 @@ describe("A17 — hook record parity", () => {
 		const section = hooksSection(readFileSync(GUIDE, "utf-8"));
 		const rows = [...section.matchAll(/^\| `([\w-]+)`/gm)].map((m) => m[1]).sort();
 		const stated =
-			/\b(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b\s+(?:\w+\s+)?hooks?\b/i.exec(
+			/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|\d+)\b\s+(?:\w+\s+)?hooks?\b/i.exec(
 				section,
 			);
 		expect(stated, "no stated hook count in the section").not.toBeNull();
