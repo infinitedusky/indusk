@@ -34,11 +34,11 @@ Each phase runs its own rows' tests and the tests of the brief's Must-not-break 
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | A phase's tests are the files of the rows it writes or makes pass and the tests of the brief's Must-not-break promises, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T2 | A landing's tests are every row's files and the Must-not-break promises' tests, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
-| T3 | Running a plan's tests starts no search for the tests its changed files reach | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/plan-tests.test.ts |
-| T4 | The work, verify and retrospective skills say a phase runs its rows and its Must-not-break tests, and never mention tests a change reaches | Test Phase 1 | Build Phase 1 | written | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
-| T5 | Changing a promise can replace its clauses, and the registry then holds the new clauses and not the old | Test Phase 1 | Build Phase 1 | written | unit | the means of this change: `promises change` could rewrite only a sentence | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
+| T1 | A phase's tests are the files of the rows it writes or makes pass and the tests of the brief's Must-not-break promises, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/its-own-tests | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T2 | A landing's tests are every row's files and the Must-not-break promises' tests, and nothing a change merely imports | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/what-must-not-break | apps/indusk-mcp/src/lib/plans/test-set.test.ts |
+| T3 | Running a plan's tests starts no search for the tests its changed files reach | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/lib/plans/plan-tests.test.ts |
+| T4 | The work, verify and retrospective skills say a phase runs its rows and its Must-not-break tests, and never mention tests a change reaches | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-plan-runs-its-tests-and-what-must-not-break/nothing-else-runs | apps/indusk-mcp/src/__tests__/skills-run-the-plan-test-set.test.ts |
+| T5 | Changing a promise can replace its clauses, and the registry then holds the new clauses and not the old | Test Phase 1 | Build Phase 1 | passing | unit | the means of this change: `promises change` could rewrite only a sentence | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 
 ## Checklist
 
@@ -136,11 +136,11 @@ This phase changes what a plan runs: the Must-not-break promises' tests move fro
   From the worktree: `indusk promises change a-plan-runs-its-tests-and-what-must-not-break --plan a-plan-runs-what-must-not-break --statement "<the sentence under Changes in the brief, up to the first full stop after 'no other test runs'>" --reason "phases ran about 100 reached tests that overloaded the machine; the Must-not-break tests are the certain set (Sandy, 2026-10-18)" --clause "its-own-tests (split). Each phase runs the tests of the rows it writes or makes pass." --clause "what-must-not-break (split). Each phase and the landing run the tests of the promises the brief lists as Must not break." --clause "nothing-else-runs (limit). No other test runs while a plan is built or landed."`; then `indusk promises contract a-plan-runs-what-must-not-break` and `indusk promises check`.
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changes against the enabled extensions' craft rules.
 
 #### Build Phase 1 Verification
 
-- [ ] A phase and a landing run their rows and the Must-not-break tests, nothing reached, and the promise reads as changed.
+- [x] A phase and a landing run their rows and the Must-not-break tests, nothing reached, and the promise reads as changed.
   <details><summary>Technical</summary>
 
   T1–T4: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/plans/test-set.test.ts src/lib/plans/plan-tests.test.ts src/__tests__/skills-run-the-plan-test-set.test.ts src/__tests__/skill-sync-parity.test.ts`; T5 under the system config after a build; then `indusk plans tests a-plan-runs-what-must-not-break --phase "Build Phase 1"` with its seconds.
