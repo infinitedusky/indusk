@@ -96,7 +96,11 @@ Highlights are filed as the ritual asks (`retro-lesson`, `retro-hindsight`, `ret
 4. **No version bump and no publish (Step 11).** Reason: the project installs its own build (`land.install`, `pnpm install:local`) and publishes deliberately; the close does not carry the person's decision to publish. Stated, recorded, stopped. `done when: published` is not met by this close.
 5. **Audit findings recorded, not all verified.** Only the upheld-on-refusal finding was checked against the code. The others are carried as reported.
 
-## Landing (Step 10) — blocked, not landed
+## Landing (Step 10) — landed 2026-10-19 at ae84e545
+
+- 2026-10-19, after the block below: `indusk plans tests mark-first --landing` rerun with no other plan's tests running on the machine — 30 of 30 green, `admin-recorder.test.ts` included. Main merged in (one conflict, two Key Decisions lines in the root `CLAUDE.md`, both kept), then `indusk plans land mark-first` landed it. The earlier red is most likely load from the concurrent package-root build against the test's one-minute deadline; not proven, since the runner deleted its report (follow-up 9).
+
+### Before: blocked
 
 - `indusk plans tests mark-first --landing` was run three times after the admin bundle was built. Result each time: 29 of 30 files passed; `admin-recorder.test.ts` (must-not-break: `a-production-break-is-recorded-unasked`) failed.
 - The same file passed when run alone under the system config, twice, and inside its `src/__tests__/admin-` group once. Running the runner's full file set directly under the system config did not execute any tests (a file filter the runner builds did not match), so I could not reproduce the batch failure with the runner's own invocation.
