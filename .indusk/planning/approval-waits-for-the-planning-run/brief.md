@@ -1,9 +1,10 @@
 ---
 title: "Approval waits for the planning run"
 date: 2026-10-19
-status: draft
+status: accepted
 workflow: bugfix
 description: "A plan written by the unattended planning run is not offered for approval until the run has stopped at ready for approval, so Needs you and Approve never appear while the plan review is still reading or answering."
+accepted_at: "2026-10-19T15:42:34.359Z"
 ---
 
 # Approval waits for the planning run — Brief
