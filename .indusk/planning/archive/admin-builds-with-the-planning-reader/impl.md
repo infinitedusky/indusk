@@ -18,6 +18,8 @@ audit_reason: "a two-line build fix; the production build is the proof a reader 
 approved_brief: "b59a8408f7e95823da8a8e92e3bc48d8982a1a85278cbb610c5162fde35af88f"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T02:42:11.304Z"
+accepted: 2026-10-19T02:45:11.493Z
+accepted_by: person
 ---
 
 # The admin builds with the planning reader
