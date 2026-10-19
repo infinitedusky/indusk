@@ -562,12 +562,13 @@ Done in the same commit (one function, `provenBy`): with a clause it lists only 
 
   </details>
 Done at `watch.ts`, which `recordBreaks` runs: it read only `kind: behaviour` promises, so a clause on a `state` or `structure` promise was never recorded; it now reads `readsSignal` (the rule D-15 introduced for exactly this). The clause and pointer already travel on the `MarkedSpan` (`parseMarkedSpan`), so `record.ts` itself is unchanged. New guard `record-clause-break.test.ts` drives `recordBreaks` over a state promise with a limit clause (not a trajectory row). **Decision D-23 (supersedes my first reading):** the signal for `a-break-names-its-clause` is emitted by the recorder, after it commits a pass: the test plan defines it as "read from the incident the break opens... upheld when every incident opened by a clause's signal names `promise/clause`; broken reports an incident naming only a promise". `incident-signal.ts` reads each incident the pass *opened* from a break that named a clause (an extended incident was named when it opened; a break naming no clause writes nothing) and writes one span per verdict through `commandTracer()` + `markPromise`, with the Build Phase 5 pointer, no project (like the recorder's own mark: the promise lives in dusk's registry, whichever project the pass was for). The write is a dependency of `recordBreaks` (`markIncident`), best-effort, never failing the pass; `record-clause-break.test.ts` pins it. Build Phase 6 / the close: `mark-first`'s own close needs this span reported in a real run of the recorder, as D-19's spans were.
-- [ ] Make the new sentence of the incident promise true.
+- [x] Make the new sentence of the incident promise true.
   <details><summary>Technical</summary>
 
   `indusk promises change an-incident-names-its-tests --plan mark-first --statement "When a clause breaks, its incident names the promise and the clause that broke, and the tests tied to that clause are reachable from it; the plan it reopens can still be edited." --reason "the incident names its clause first"`.
 
   </details>
+Ran exactly as given; `promises check` clean. The sentence is true by `incident-names-clause.test.ts` (A17, A18).
 - [ ] Review the incident changes against the TypeScript extension's rules.
   <details><summary>Technical</summary>
 
