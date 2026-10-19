@@ -147,6 +147,14 @@ async function resolveApproval(
 	return sha;
 }
 
+/** Every file tracked on the branch, one per line, without `.indusk/`'s bookkeeping. */
+async function trackedTree(code: AuditSource["code"]): Promise<string> {
+	return (await git(code.repo, "ls-tree", "-r", "--name-only", code.branch))
+		.split("\n")
+		.filter((p) => p && !isBookkeeping(p))
+		.join("\n");
+}
+
 /** The diff, the stat of what the branch changed and the tree of every tracked file, all without `.indusk/`'s bookkeeping where it would leak. */
 async function codeChanges(
 	code: AuditSource["code"],
@@ -160,11 +168,7 @@ async function codeChanges(
 		.filter((p) => !isBookkeeping(p));
 	const diff = paths.length > 0 ? await git(repo, "diff", range, "--", ...paths) : "";
 	const stat = await git(repo, "diff", "--stat", range);
-	const tree = (await git(repo, "ls-tree", "-r", "--name-only", branch))
-		.split("\n")
-		.filter((p) => p && !isBookkeeping(p))
-		.join("\n");
-	return { diff, stat, tree };
+	return { diff, stat, tree: await trackedTree(code) };
 }
 
 /** The auditor's inputs for `plan`; `approved` names the approval commit by hand when history was rewritten. */
@@ -204,4 +208,37 @@ export async function auditInputs(
 	const code = await codeChanges(src.code);
 
 	return { plan, approvedAt: sha, documents, implAsApproved, trajectoryNow, ...code };
+}
+
+/**
+ * What the plan review's reader is handed before approval (audit-concerns-are-answered,
+ * ADR D9): the four documents as they stand and the tracked-file list, nothing else —
+ * never `research.md`, which holds the planning conversation's decisions, and no diff,
+ * since no code exists yet. A document the plan lacks is null.
+ *
+ * promise: the-auditor-sees-the-plan-not-the-session
+ * clause: a-plan-is-read-cold-before-approval/the-reader-sees-documents-only
+ */
+export interface PlanReviewInputs {
+	plan: string;
+	documents: Record<"brief" | "testPlan" | "adr" | "impl", AuditText | null>;
+	/** `git ls-tree -r --name-only <branch>` less `.indusk/`: every tracked file. */
+	tree: string;
+}
+
+export async function planReviewInputs(checkout: string, plan: string): Promise<PlanReviewInputs> {
+	const src = await auditSource(checkout, plan);
+	const { docsRoot, planDir } = src;
+	const doc = (file: string): AuditText | null =>
+		existsSync(join(docsRoot, planDir, file)) ? readText(docsRoot, `${planDir}/${file}`) : null;
+	return {
+		plan,
+		documents: {
+			brief: doc("brief.md"),
+			testPlan: doc("test-plan.md"),
+			adr: doc("adr.md"),
+			impl: doc("impl.md"),
+		},
+		tree: await trackedTree(src.code),
+	};
 }

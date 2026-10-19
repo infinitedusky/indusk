@@ -58,13 +58,18 @@ export function stepPrompt(step: SessionStepName, plan: string, reason?: Shorten
 		case "plan-adr":
 		case "plan-impl":
 			return planningPrompt(step, plan);
+		case "plan-review":
+			return planReviewPrompt(plan);
 		case "retrospective":
 			return `/retrospective ${plan}\n\nThe plan has been accepted. Run the retrospective to the end; it lands the plan with \`indusk plans land ${plan}\`. ${UNATTENDED}`;
 	}
 }
 
 /** The document each planning step writes, and what its prompt adds to the shared rules. */
-const PLANNING_DOCUMENTS: Record<PlanningStep, { file: string; extra: string }> = {
+const PLANNING_DOCUMENTS: Record<
+	Exclude<PlanningStep, "plan-review">,
+	{ file: string; extra: string }
+> = {
 	"plan-test-plan": {
 		file: "test-plan.md",
 		extra: "Write one clause plan per promise clause, with a measure for each.",
@@ -88,7 +93,7 @@ const PLANNING_DOCUMENTS: Record<PlanningStep, { file: string; extra: string }> 
  *
  * promise: an-accepted-brief-is-planned-unasked
  */
-function planningPrompt(step: PlanningStep, plan: string): string {
+function planningPrompt(step: Exclude<PlanningStep, "plan-review">, plan: string): string {
 	const { file, extra } = PLANNING_DOCUMENTS[step];
 	const dir = `.indusk/planning/${plan}`;
 	return `Write the \`${file}\` of plan \`${plan}\` and nothing else.
@@ -100,6 +105,21 @@ ${UNATTENDED} Record each open decision, with its reason, in the document. When 
 The earlier documents stay exactly as the earlier steps left them: an ADR or test plan still \`proposed\` or \`draft\` is not a reason to stop (the person approves them all once, after the impl), and you change no other document's status, only the status your own document needs.
 
 Never approve anything: do not run \`indusk plans approve\`, approve a look, or build. Commit ${file} on the plan's branch and end.`;
+}
+
+/**
+ * The planning run's last step (audit-concerns-are-answered, ADR D9): the plan is read
+ * cold by a fresh reader and every finding answered before the person is asked to approve.
+ *
+ * promise: a-plan-is-read-cold-before-approval
+ */
+function planReviewPrompt(plan: string): string {
+	const dir = `.indusk/planning/${plan}`;
+	return `/audit ${plan} --before-approval
+
+Write only ${dir}/plan-review.md and the plan documents its answers change: no code, and never the research. ${UNATTENDED} Answer each finding yourself, with fix, amendment or nothing and its reason; write a \`blocker: <what you could not decide>\` line in plan-review.md and end when you cannot.
+
+Never approve anything: do not run \`indusk plans approve\`, approve a look, or build. Commit what you wrote on the plan's branch and end.`;
 }
 
 export interface BuildSessionOptions {

@@ -58,7 +58,7 @@ The **falsification** requirement passes if ANY of the three conditions above ho
 - **Complete:** `audit.md` exists in the plan folder — `isAuditComplete(planRoot)`. The gate reads that the file exists, never what it says: an audit's findings are advisory.
 - **Skip:** the impl's frontmatter contains BOTH `audit: skipped` AND `audit_reason: "{non-empty text}"` — `isAuditSkipped(implContent)`.
 
-Cleanup runs AFTER falsification and the audit after cleanup: `/work` → `/falsify` → `/work` → `/cleanup` → `/work` → `/audit` → `/retrospective`. Evaluate the rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when ALL requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
+Cleanup runs AFTER falsification, and the audit before both, when the build phases close: `/work` → `/audit` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Evaluate the rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when ALL requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
 
 > **Retrospective blocked: ritual gate not satisfied for `{plan-name}` (missing: `{the `missing` list — falsification, cleanup, audit, rows and/or promises}`).**
 >

@@ -24,7 +24,7 @@ export function currentBuildStep(env: NodeJS.ProcessEnv = process.env): string |
  * a build step, so everything a build step is refused is refused them too; they
  * are named apart because approving is refused them as well.
  */
-export const PLANNING_STEPS = ["plan-test-plan", "plan-adr", "plan-impl"] as const;
+export const PLANNING_STEPS = ["plan-test-plan", "plan-adr", "plan-impl", "plan-review"] as const;
 
 export type PlanningStep = (typeof PLANNING_STEPS)[number];
 

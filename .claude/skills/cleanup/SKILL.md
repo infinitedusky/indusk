@@ -14,7 +14,7 @@ Why this shape: cleanup phases are **visible** (admin UI renders all phases), **
 
 ## Runs after falsification
 
-The close-out sequence is: `/work` → `/falsify` → `/work` → **`/cleanup`** → `/work` → `/audit` → `/retrospective`. Cleanup runs AFTER falsification deliberately — you refactor under the maximal green coverage falsification just hardened. Never restructure code whose correctness hasn't been proven.
+The close-out sequence is: `/work` → `/audit` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Cleanup runs AFTER falsification deliberately — you refactor under the maximal green coverage falsification just hardened. Never restructure code whose correctness hasn't been proven.
 
 ## Your scope is inter-file. Local craft is already handled
 

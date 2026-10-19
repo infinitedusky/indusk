@@ -52,3 +52,4 @@ reason. It was split out on 2026-10-17.
 ## Open Questions
 
 - None.
+- 2026-10-19: the reader's (A2, A4, A10, A13, A17) and the review inputs' (A18) tests wait for their modules (`lib/audit/answers.ts`, `planReviewInputs`); their bodies are carried in the impl's register.

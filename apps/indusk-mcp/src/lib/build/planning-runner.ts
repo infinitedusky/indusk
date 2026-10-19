@@ -58,5 +58,6 @@ function fingerprint(state: PlanningState): string {
 		state.contractOk,
 		state.unapprovedLooks,
 		state.blocker,
+		state.review,
 	]);
 }

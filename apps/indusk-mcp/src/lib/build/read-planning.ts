@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
+import { isAnswered, PLAN_REVIEW_QUESTIONS, readAuditAnswers } from "../audit/answers.js";
 import { fencedLineMask } from "../impl-headings.js";
 import { induskMcpPackageRoot } from "../package-root.js";
 import { parsePlan } from "../plan-parser.js";
@@ -11,7 +12,7 @@ import { findPlanFolder } from "../promises/plan-folder.js";
 import { requiredDocuments } from "../workflow-types.js";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import { GATE_POLICY_FOR_BUILDS } from "./build-session.js";
-import type { PlanningDocument, PlanningState } from "./next-planning-step.js";
+import type { PlanningDocument, PlanningReview, PlanningState } from "./next-planning-step.js";
 
 /**
  * A plan as the planning run decides from it (a-brief-is-planned-unasked): the
@@ -144,6 +145,18 @@ function judgeImpl(
 	return { exists: true, ok: false, ...(refusal ? { refusal } : {}) };
 }
 
+/** The plan review as the run reads it: absent is not complete, and neither is a file with an open finding. */
+function readReview(text: string | null): PlanningReview {
+	if (text === null) return { exists: false, complete: false, dismissals: [], amendments: [] };
+	const read = readAuditAnswers(text, { questions: PLAN_REVIEW_QUESTIONS, causes: false });
+	return {
+		exists: true,
+		complete: isAnswered(read),
+		dismissals: read.dismissals,
+		amendments: read.amendments,
+	};
+}
+
 export async function readPlanningState(
 	anyCheckout: string,
 	plan: string,
@@ -163,6 +176,7 @@ export async function readPlanningState(
 	const testPlan = textOf(dir, "test-plan.md");
 	const adr = textOf(dir, "adr.md");
 	const impl = textOf(dir, "impl.md");
+	const reviewText = textOf(dir, "plan-review.md");
 
 	// An ADR passes by standing; a test plan passes by standing unless the plan's
 	// contract check refuses it (a promise clause with no clause plan), which is
@@ -188,7 +202,8 @@ export async function readPlanningState(
 		implStatus: typeof status === "string" ? status : null,
 		contractOk: contract.ok,
 		unapprovedLooks: brief === null ? [] : await deps.unapprovedLooks(root, brief),
-		blocker: blockerIn(testPlan) ?? blockerIn(adr) ?? blockerIn(impl),
+		blocker: blockerIn(testPlan) ?? blockerIn(adr) ?? blockerIn(impl) ?? blockerIn(reviewText),
+		review: readReview(reviewText),
 		briefStatus: typeof briefStatus === "string" ? briefStatus : null,
 		// A bare timestamp is a Date to YAML; `acceptBrief` quotes it, a hand edit may not.
 		acceptedAt:
