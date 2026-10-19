@@ -445,3 +445,6 @@
 {"plan":"mark-first","phase":5,"kind":"build","sha":"4beacd120913a0d1ffd9f1fd115cc8e68e7792cf","timestamp":"2026-10-19T03:47:26.018Z"}
 {"plan":"mark-first","phase":6,"kind":"build","sha":"e56940b4f5ffbdc7d885efa1cb15775bbdc91bad","timestamp":"2026-10-19T03:53:59.642Z"}
 {"plan":"mark-first","phase":7,"kind":"build","sha":"5f6df4bc4cdd604168296df011a6fb48a81a453a","timestamp":"2026-10-19T04:09:40.103Z"}
+{"plan":"a-plan-says-how-long-it-took","phase":1,"kind":"build","sha":"312f963dff93bcbaed07fd2a3c66388cfc082386","timestamp":"2026-10-19T03:09:39.355Z"}
+{"plan":"a-plan-says-how-long-it-took","phase":4,"kind":"build","sha":"216a7d0733d6a22bd5907eb554801ac7c0a1f006","timestamp":"2026-10-19T03:15:09.442Z"}
+{"plan":"a-plan-says-how-long-it-took","phase":5,"kind":"build","sha":"ea563f0785e8d30ef11da57936caeea6a54278c8","timestamp":"2026-10-19T03:20:31.203Z"}

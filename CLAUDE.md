@@ -96,6 +96,7 @@ dusk/
 - The daemon is found, not guessed: one daemon per machine on one stored address (`indusk telemetry address`), never a second; rules in `apps/indusk-mcp/CLAUDE.md` (Promises and telemetry) — see `/decisions/daemon-found-not-guessed`
 - Init sets up telemetry: the scaffold goes in each declared code repo, sends to the daemon's stored address with project and environment on every span, and offers a newer template beside an edit — see `/decisions/init-sets-up-telemetry`
 - Signals prove a clause beside its tests: a clause is upheld only when its tests pass and its signal has reported in a real run; a break names its clause; no signal reads "no signal" — see `/decisions/mark-first`
+- Plan timing: one per-plan log in machine state, written through one never-raising writer, read by `indusk plans time` — see `/decisions/plan-timing`
 
 ## Known Gotchas
 
