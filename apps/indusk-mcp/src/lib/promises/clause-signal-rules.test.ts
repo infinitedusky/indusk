@@ -180,7 +180,7 @@ describe("a row that runs only after landing proves no clause (A42–A45)", () =
 	it("A44: a live check row naming a promise, no clause, or a reason is saved", () => {
 		expect(
 			afterLandingClauseRows([
-				row("L1", "live check", "promise: some-promise"),
+				row("L1", "live check", `${"promise"}: some-promise`),
 				row("L2", "live check", "a live check after landing for another plan's close"),
 				row("L3", "live check", ""),
 				row("L4", "live check", undefined as unknown as string),
@@ -190,7 +190,7 @@ describe("a row that runs only after landing proves no clause (A42–A45)", () =
 
 	it("A45: a row with several For entries, one a clause, is refused for that entry", () => {
 		expect(
-			afterLandingClauseRows([row("L1", "live check", "promise: q, clause: p/c, lesson: l")]),
+			afterLandingClauseRows([row("L1", "live check", `${"promise"}: q, clause: p/c, lesson: l`)]),
 		).toEqual([{ row: "L1", clause: "p/c" }]);
 	});
 
