@@ -11,14 +11,13 @@ import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
 import {
   type Confirmation,
   confirmationsOf,
-  landedOnMain as landed,
+  landedAsker,
   liveCheckRecorded,
   type NextStep,
   nextStepFor,
   psAll,
   readDocumentsHash,
   readReviewText,
-  realGitReads,
   reportNextStep,
   reportPlanningAudit,
   reportSaysWhatIsTrue,
@@ -61,23 +60,6 @@ function liveOf(project: string, plan: string): LivePlan {
   };
 }
 
-/**
- * The trunk's merge subjects are read once for all plans: asking git per plan on every
- * render of the nav would be a log per plan.
- */
-function landedAsker(projectPath: string): (plan: string) => boolean {
-  const git = realGitReads(projectPath);
-  let subjects: string[] | null = null;
-  const reads = {
-    mergeSubjects: (trunk: string) => {
-      if (subjects === null) subjects = git.mergeSubjects(trunk);
-      return subjects;
-    },
-    hasPath: git.hasPath,
-  };
-  return (plan) => landed("HEAD", plan, reads);
-}
-
 export interface SituationOptions {
   /** The plan whose confirmation list is wanted (the plan's own page): each clause signal and live check. */
   confirmFor?: { plan: string; promises: readonly string[] };
@@ -91,6 +73,8 @@ export async function withSituations(
   waiting: readonly Waiting[],
   options: SituationOptions = {},
 ): Promise<Plan[]> {
+  // The trunk's merge subjects are read once for all plans, from the trunk branch (never the
+  // root checkout's own) and, for a workbench plan, from its code repository (A94, A95).
   const isLanded = landedAsker(projectPath);
   const out: Plan[] = [];
   for (const plan of plans) {
