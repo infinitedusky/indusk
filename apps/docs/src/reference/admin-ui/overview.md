@@ -132,6 +132,26 @@ sequenceDiagram
     Host->>Host: ask the plan's documents for the next step
 ```
 
+### What the plan page says of a plan
+
+The plan page and the plan's row in the nav say the plan's situation in one sentence, from one reader in the package (`situation()`), over the run record and the plan's own files. Never in progress without a process: planning, building and releasing read as such only while a live process runs for the plan, and a run whose process is gone reads stopped.
+
+| Situation | Reads as |
+|---|---|
+| Planning | "Planning" and the step: writing the test plan, the decision, the impl, or reading the plan cold (the planning audit) |
+| Building | "Building" and the phase the plan is on, read from its impl each time, never the phase the run started at |
+| Waiting on you | what the person decides: approve the plan, review the build, re-approve the brief, or the plan review still to be written |
+| Stopped | the reason, and that Build starts it again at the phase the plan is on (a run that died says so) |
+| Complete | a plan merged to main: green, nothing pulsing, with a confirmation list |
+
+Every plan that is not closed also shows its **next step and who takes it**: the system while it runs, the person at a decision or a restart, an event while a merged plan waits on its clause signals.
+
+The planning steps end with a **Planning audit** step after the impl. It reads in progress only while the planning run is on its plan-review step, to do while the plan review is missing or unanswered, and done once it is answered. The Impl step asks for approval only after that, so the page never asks for approval while the audit is open.
+
+A release reads **released only when the plan is on main**: the trunk's history holds the landing merge `plans land` makes (`Merge plan/<plan>: <plan> landed`) or the plan's archive folder. A release whose step ended cleanly while landing refused reads stopped, with the refusal's reason when it carries one. Branch containment is never the question: landing deletes the branch, and a branch just made from main is already contained in it.
+
+A plan merged to main reads **complete**, not "landed" or "releasing", and lists what is still to be confirmed: each split and limit clause of its brief's promises (confirmed once its signal has reported upheld in a real run) and each live check in its impl (confirmed once its result is written under Notes with a date), each ticked as it is confirmed.
+
 ### Sessions
 
 The admin runs one agent per plan and kind: a plan can have a planning session and a build at once, and plans run side by side. Starting a session a plan already has attaches the page to it when no other page is showing it; when one is (the plan page and the brief open at once), the start asks instead — "A planning session is already running on this plan. Do you want to continue that session here?" — with **Continue it here**, which attaches this page too. A draft's conversation is its own (`draft:<id>`) and never collides with a plan. A machine runs at most `sessions.max` sessions, 4 by default, set in `~/.indusk/config.json` (`{ "sessions": { "max": 6 } }`, under `INDUSK_HOME` when that is set); a start beyond the cap is refused, naming each running session, and a session is stopped from its plan's page. A build holds its place under the cap from its first step to its last: it is admitted once, when it starts, and each step's session after that starts even if another plan filled the cap in between (the same-plan rule still applies). Every page asks for its own plan's session (`GET /api/sessions?project=&plan=&kind=`), and **Needs you** lists one entry per running session. See [the decision](/decisions/sessions-per-plan).

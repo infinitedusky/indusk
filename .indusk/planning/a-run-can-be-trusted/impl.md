@@ -643,12 +643,27 @@ This phase makes the admin say true things from the record the last phase keeps.
 
 #### Build Phase 2 Document
 
-- [ ] Document what the plan page's stop sentence can say and why.
+- [x] Document what the plan page's stop sentence can say and why.
   <details><summary>Technical</summary>
 
   Update `apps/docs/src/reference/admin-ui/overview.md` with the situation sentences (planning, building, waiting, complete, stopped), the next step and who takes it, the Planning audit step, the confirmation list of a merged plan, and the rule that a release reads released only when on main.
 
   </details>
+
+#### Build Phase 2 Forward Intelligence
+
+- **Trajectory**: A14–A21, A65–A72, A81, A82 and A87 are `passing`. They were authored beside the code in the same pass, so no red window was observed; the check-gates hook refused the first checkoff while they read `planned`, and their states were set with `updateRowState` once the tests ran green. `indusk plans tests --phase 2` runs 25 files; 24 pass and `admin-recorder.test.ts` (A59, written red for Build Phase 6) is the expected red.
+- **Unattended: left open for a person.** The Verification item "The page matches the two looks the person approved" is a by-value check in Chromium against mockups; it is left unchecked. Two reasons it cannot be ticked here: it needs a person's judgement against the approved `plan.working` and `plan.released` mockups, and the admin's browser tier (`|browser (chromium)|` files such as `Badge.test.tsx` and `workflows.test.tsx`) fails identically at the Build Phase 1 commit (checked in a scratch worktree), so it gives no signal in this environment. Because that item is open, the mechanical Shape step reports "verification is not green" and skipped; the Shape review above was made by hand against the same rules.
+- **Decision**: A step reads in progress only when a `live` fact is given. `PlanSnapshot.live` absent means the caller did not look and a step reads as its documents say (so the older steps tests stay as they were); the admin always passes it (`withSituations`), so nothing it shows reads in progress without a process. `planReview` absent likewise keeps the old Impl reading ("you approve it"); the admin always passes it.
+- **Decision**: `plans land` captures no refusal text, so a release stopped after a clean step reads the step's own error, else "the release ended but the plan is not on main". `releaseOutcome` takes a `landError` so a later change can carry the refusal in.
+- **Decision**: the nav row does not carry the confirmation count (the page does): the nav reads "Complete — merged to main" and shows the next step on hover; the list needs a promise-standing read per plan, which the nav would pay on every render.
+- **Decision**: the Planning audit's signal compares done against not-done by whether `plan-review.md` is written with every finding answered, read from disk; the `read:` hash comparison joins it in Build Phase 5, when the step itself learns `stale` (A88). Until then a stale-but-answered review reads done in both places, so the signal cannot disagree with the page about it.
+- **Decision**: Build and release rows A21 and A87 run a real landing in a temporary repository through the package's `acceptPlan` and `landPlan` with the clause tests injected; both refuse inside a build step, so the test deletes `INDUSK_BUILD_STEP` for its run.
+- **Decision**: items 1 and 2 are one commit and items 3–5 another (and the five signal items a third): the admin build host and the run-record export are shared between them, so they cannot be committed apart without a tree that does not build.
+- **Watch out**: a page test that mocks `@/lib/decisions-reader` must now answer `withSituations` (the shared `decisionsReaderMock` does; `page.test.tsx` and `plan/[name]/page.test.tsx` mock it inline and now do too); a missing answer fails the page at import.
+- **Watch out**: the admin imports the package's built `dist/`; after any package change run `pnpm build` in `apps/indusk-mcp` before the admin's type check or tests.
+- **Watch out**: `decisions-reader.approval.test.ts` (A50, A54) and `decisions-reader.planning.test.ts` stay red as before; the first two are Build Phase 5's.
+- **Assumption**: Build Phase 5 turns the Planning audit's `planReview` input from three states to four (`stale`); `planSteps` and `planningAudit` already treat anything that is not `answered` as an open audit, so `stale` needs no change there.
 
 ### Build Phase 3: Refuse a shell command that writes a plan document
 
