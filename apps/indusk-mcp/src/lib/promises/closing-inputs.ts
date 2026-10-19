@@ -1,7 +1,7 @@
 import { execRunner, type Runner, runFiles } from "../tests/run-files.js";
 import { resolveTestCommand } from "../verify/red-tests.js";
 import type { ClauseReports, ClauseTestRunner, SignalReader } from "./clause-proof.js";
-import type { ClauseReport } from "./clause-standing.js";
+import { type ClauseReport, reportsOfClause } from "./clause-standing.js";
 import { readPromises } from "./registry.js";
 import {
 	healthWindowMs,
@@ -52,9 +52,13 @@ export function clauseTestRunner(
  * health window; a test run's spans already dropped by `parseMarkedSpan`). The
  * daemon is read once per close, on the first promise asked. A daemon that is
  * not running, or a watcher that is blind, is a failed read naming how to
- * start it — never an empty one.
+ * start it — never an empty one. `reads` is the daemon's read; the real one
+ * unless a test hands in its own.
  */
-export function localSignalReader(projectRoot: string): SignalReader {
+export function localSignalReader(
+	projectRoot: string,
+	reads: typeof readPromiseMarks = readPromiseMarks,
+): SignalReader {
 	let read: Promise<MarkedSpansResult | Error> | null = null;
 	const marks = (): Promise<MarkedSpansResult | Error> => {
 		if (read === null) {
@@ -62,7 +66,7 @@ export function localSignalReader(projectRoot: string): SignalReader {
 			if (!registry.ok) {
 				return Promise.resolve(new Error(`the promise registry cannot be read in ${projectRoot}`));
 			}
-			read = readPromiseMarks(projectRoot, registry.registry, {
+			read = reads(projectRoot, registry.registry, {
 				source: "local",
 				sinceMs: healthWindowMs(projectRoot, registry.registry),
 			}).catch((err: unknown) =>
@@ -78,12 +82,7 @@ export function localSignalReader(projectRoot: string): SignalReader {
 		if (result instanceof Error) return { ok: false, reason: result.message };
 		const seen = result.byPromise.get(promise.name)?.byClause ?? {};
 		const byClause: Record<string, ClauseReport[]> = {};
-		for (const [clause, s] of Object.entries(seen)) {
-			byClause[clause] = [...s.violations, ...(s.lastUpheld ? [s.lastUpheld] : [])].map((m) => ({
-				outcome: m.outcome === "upheld" ? "upheld" : "broken",
-				at: m.at.toISOString(),
-			}));
-		}
+		for (const [clause, s] of Object.entries(seen)) byClause[clause] = reportsOfClause(s);
 		return { ok: true, byClause, heartbeatOk: true };
 	};
 }

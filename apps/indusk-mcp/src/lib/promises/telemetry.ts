@@ -61,6 +61,13 @@ export interface MarkedSpan {
 	clause?: string;
 	/** The plan and phase that added the signal, read from a break's event or else its span; absent when it named none. */
 	signal?: { plan: string; phase: string };
+	/**
+	 * The measurement the signal carried (`indusk.signal.value`, `.bound`),
+	 * read only as numbers — a value that arrived as anything else is dropped,
+	 * never coerced (mark-first decision D-33).
+	 */
+	value?: number;
+	bound?: number;
 }
 
 /** The app, screen, state and device a look check's span names. */
@@ -144,17 +151,34 @@ export interface PromiseMarks {
 	byClause?: Record<string, { violations: MarkedSpan[]; lastUpheld: MarkedSpan | null }>;
 }
 
-/** The signalling spans (newest first) split by the clause they name. */
+/** An upheld report whose measurement is past its bound: it breaks a limit clause, however it was reported. */
+export function measuredPastBound(s: Pick<MarkedSpan, "value" | "bound">): boolean {
+	return s.value !== undefined && s.bound !== undefined && s.value > s.bound;
+}
+
+/**
+ * The signalling spans (newest first) split by the clause they name. A
+ * clause's `violations` are the reports that can break it: those saying
+ * broken, and those reported upheld but measured past their bound — kept so a
+ * limit clause still sees one when a later report sits inside its bound
+ * (`clauseStanding` decides from the numbers).
+ */
 function byClause(all: MarkedSpan[]): NonNullable<PromiseMarks["byClause"]> {
 	const out: NonNullable<PromiseMarks["byClause"]> = {};
 	for (const s of all) {
 		if (!s.clause) continue;
 		const c = out[s.clause] ?? { violations: [], lastUpheld: null };
 		out[s.clause] = c;
-		if (s.outcome === "broken") c.violations.push(s);
+		if (s.outcome === "broken" || measuredPastBound(s)) c.violations.push(s);
 		else if (c.lastUpheld === null) c.lastUpheld = s;
 	}
 	return out;
+}
+
+/** A numeric tag as a number; anything else (a string, a missing tag) is no number. */
+function numberTag(tags: JaegerTag[] | undefined, key: string): number | undefined {
+	const v = tag(tags, key);
+	return typeof v === "number" && Number.isFinite(v) ? v : undefined;
 }
 
 export interface MarkedSpansResult {
@@ -277,6 +301,8 @@ export function parseMarkedSpan(
 	}
 	const look = lookOf(span.tags);
 	const clause = tag(span.tags, PROMISE_MARK.clause);
+	const value = numberTag(span.tags, APP_SIGNAL_KEYS.value);
+	const bound = numberTag(span.tags, APP_SIGNAL_KEYS.bound);
 	return {
 		promise,
 		outcome,
@@ -290,6 +316,8 @@ export function parseMarkedSpan(
 		...(look ? { look } : {}),
 		...(typeof clause === "string" ? { clause } : {}),
 		...(signal ? { signal } : {}),
+		...(value !== undefined ? { value } : {}),
+		...(bound !== undefined ? { bound } : {}),
 	};
 }
 

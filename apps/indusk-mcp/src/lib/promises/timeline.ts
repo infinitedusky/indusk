@@ -38,6 +38,9 @@ export interface TimelineMark {
 	environment: string | null;
 	/** The clause the signal concerns (`indusk.clause`); absent when the span names none. */
 	clause?: string;
+	/** The measurement the signal carried, as numbers (`MarkedSpan`'s `value` and `bound`). */
+	value?: number;
+	bound?: number;
 }
 
 /** A range whose query was still full at the smallest slice: there may be more runs in it. */
@@ -159,6 +162,8 @@ async function readSourceWindow(
 					traceId: m.traceId,
 					environment: m.environment,
 					...(m.clause ? { clause: m.clause } : {}),
+					...(m.value !== undefined ? { value: m.value } : {}),
+					...(m.bound !== undefined ? { bound: m.bound } : {}),
 				})),
 			atLeast,
 		});

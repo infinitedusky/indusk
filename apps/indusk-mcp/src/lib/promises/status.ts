@@ -1,7 +1,7 @@
 import {
-	type ClauseReport,
 	clauseStanding,
 	readsSignal,
+	reportsOfClause,
 	standingWords,
 } from "./clause-standing.js";
 import { type HealthRule, healthOf } from "./health.js";
@@ -41,13 +41,7 @@ function clauseLines(p: PromiseEntry, m: PromiseMarks | undefined): string[] {
 	return (p.clauses ?? []).map((c) => {
 		if (c.kind === "rests-on")
 			return `  clause ${c.name}: rests on ${c.restsOn ?? "another promise"}`;
-		const seen = m?.byClause?.[c.name];
-		const reports: ClauseReport[] = [
-			...(seen?.violations ?? []).map((s) => ({ outcome: s.outcome, at: s.at.toISOString() })),
-			...(seen?.lastUpheld
-				? [{ outcome: seen.lastUpheld.outcome, at: seen.lastUpheld.at.toISOString() }]
-				: []),
-		];
+		const reports = reportsOfClause(m?.byClause?.[c.name]);
 		return `  clause ${c.name} (${c.kind}): ${standingWords(clauseStanding(c, { reports, heartbeatOk: true }))}`;
 	});
 }

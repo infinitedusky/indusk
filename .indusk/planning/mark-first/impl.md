@@ -715,12 +715,13 @@ This phase tests the finished plan against signals and breaks shaped differently
 
   </details>
   Done as written. The span's tags are read only for a broken span, as the event is only on a break: the pointer is what an incident carries, and an upheld span opens none.
-- [ ] Carry a signal's measured value and bound through the readers, so a measurement over its bound breaks a limit clause.
+- [x] Carry a signal's measured value and bound through the readers, so a measurement over its bound breaks a limit clause.
   <details><summary>Technical</summary>
 
   Hypothesis (A34): `clauseStanding` breaks a report whose `value` exceeds its `bound` (decision D-14), but nothing feeds it those numbers: `parseMarkedSpan` never reads `indusk.signal.value`/`bound`, `MarkedSpan` and `TimelineMark` have no such fields, and both `localSignalReader` (`closing-inputs.ts`) and `standingRows`' `reportsOf` (`standing.ts`) build reports from outcome and time only. The helper's documented call `signal.upheld({ …, value: 1200, bound: 1000 })` therefore reads holding and lets a plan close. Fix (decision D-33): `parseMarkedSpan` reads both as numbers (a non-number is dropped, never coerced); `MarkedSpan`, the timeline mark and the store's mark carry them; both report builders pass them to `ClauseReport`.
 
   </details>
+  Done. Three more things this needed: **Decision D-35:** `byClause` (the per-clause split of a daemon read) keeps an upheld report measured past its bound among the clause's `violations`, since it otherwise keeps only the newest upheld and a limit clause would lose an older over-bound report behind a later one inside its bound; `clauseStanding` still decides from the numbers. `reportsOfClause` (in `clause-standing.ts`) is now the one mapping from a daemon read to a clause's reports, used by closing's reader and by `promises status`, which had its own copy. `localSignalReader` takes the daemon's read as an optional second input (`reads`, the real `readPromiseMarks` by default), the seam A34 drives it through; A34's first case was red at authoring partly because that input did not exist yet (the reader then read no daemon), recorded here so the red is not mistaken for the hypothesis alone. The store holds marks in memory and needed no change beyond the timeline mark's two fields.
 - [ ] Skip a signal span as a test run's when the test-run mark is on its resource, not only on the span.
   <details><summary>Technical</summary>
 

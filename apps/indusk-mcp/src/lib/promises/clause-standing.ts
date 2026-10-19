@@ -1,4 +1,5 @@
 import type { PromiseClause, PromiseEntry } from "./registry.js";
+import type { MarkedSpan } from "./telemetry.js";
 
 /**
  * Where a clause stands, read from its own signal (mark-first ADR D4).
@@ -28,6 +29,23 @@ export interface ClauseReport {
 	at: string;
 	value?: number;
 	bound?: number;
+}
+
+/**
+ * A clause's reports as a read of the daemon holds them (`PromiseMarks`'s
+ * `byClause` entry): the reports that can break it, then its newest upheld,
+ * each with any measurement it carried. The one mapping closing's reader and
+ * `promises status` share.
+ */
+export function reportsOfClause(
+	seen: { violations: MarkedSpan[]; lastUpheld: MarkedSpan | null } | undefined,
+): ClauseReport[] {
+	return [...(seen?.violations ?? []), ...(seen?.lastUpheld ? [seen.lastUpheld] : [])].map((m) => ({
+		outcome: m.outcome === "upheld" ? "upheld" : "broken",
+		at: m.at.toISOString(),
+		...(m.value !== undefined ? { value: m.value } : {}),
+		...(m.bound !== undefined ? { bound: m.bound } : {}),
+	}));
 }
 
 export interface ClauseSignal {

@@ -326,7 +326,7 @@ function standingRows(
 	const clausesOf = (row: (typeof base)[number], seen: ReadonlySet<string>): ClauseRow[] => {
 		const marks = marksOf(row.entry);
 		const reportsOf = (clause: string): ClauseReport[] =>
-			marks.filter((m) => m.clause === clause).map((m) => ({ outcome: m.outcome, at: m.at }));
+			marks.filter((m) => m.clause === clause).map(clauseReport);
 		return clauseRows(row.entry, reportsOf, ctx.heartbeatOk, (name) => signalOf(name, seen));
 	};
 	return base.map((row) => {
@@ -339,6 +339,16 @@ function standingRows(
 			standing: signal === "broken" && row.standing !== "retired" ? "broken" : row.standing,
 		};
 	});
+}
+
+/** A held signal as a clause report: its outcome, time and any measurement it carried. */
+function clauseReport(m: TimelineMark): ClauseReport {
+	return {
+		outcome: m.outcome,
+		at: m.at,
+		...(m.value !== undefined ? { value: m.value } : {}),
+		...(m.bound !== undefined ? { bound: m.bound } : {}),
+	};
 }
 
 // A look's standing is its own module; this file re-exports it so `promises/standing` is unchanged.
