@@ -50,6 +50,8 @@ export function nextStepFor(s: Situation): NextStep | null {
 				by: "person",
 			};
 		case "complete": {
+			// A list nobody read, or one that could not be read, is never "everything confirmed" (A92).
+			if (s.confirmationNote !== undefined) return { text: s.confirmationNote, by: "person" };
 			const open = openConfirmations(s.confirmations);
 			return open.length > 0
 				? {

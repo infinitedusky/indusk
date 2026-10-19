@@ -56,8 +56,12 @@ export interface SituationInput {
 		/** The step the record's stop names (`ready-for-approval`, `review`, …), when it stopped on its own. */
 		stopStep?: string | null;
 	} | null;
-	/** The confirmation list of a plan on main. */
-	confirmations?: readonly Confirmation[];
+	/**
+	 * The confirmation list of a plan on main: the list when it was read, `{ unreadable }` when
+	 * the promise registry could not be read, absent when it was not read (the nav row reads
+	 * none). Only a list that was read and holds nothing open says everything is confirmed.
+	 */
+	confirmations?: readonly Confirmation[] | { unreadable: string };
 }
 
 export interface Situation {
@@ -76,6 +80,11 @@ export interface Situation {
 	stepName?: string | null;
 	/** A plan on main: each clause signal and live check, ticked as confirmed. */
 	confirmations?: readonly Confirmation[];
+	/**
+	 * A plan on main whose list was not read or could not be read: what to say in its place,
+	 * never that everything is confirmed (A92).
+	 */
+	confirmationNote?: string;
 }
 
 /** What each planning step is doing, in words. */
@@ -121,9 +130,26 @@ const endedCleanly = (run: SituationInput["run"]): boolean =>
 export const openConfirmations = (c: readonly Confirmation[] | undefined): Confirmation[] =>
 	(c ?? []).filter((x) => !x.confirmed);
 
+/** What a plan on main says in place of a list nobody read. */
+export const CONFIRMATIONS_NOT_READ = "see the plan's page for what is left to confirm";
+
+/** What a plan on main says when its promise registry could not be read. */
+export const confirmationsUnreadable = (reason: string): string =>
+	`the promise registry could not be read: ${reason}; what is left to confirm is not known`;
+
+function confirmationsRead(c: SituationInput["confirmations"]): {
+	list: readonly Confirmation[] | undefined;
+	note: string | undefined;
+} {
+	if (c === undefined) return { list: undefined, note: CONFIRMATIONS_NOT_READ };
+	if ("unreadable" in c) return { list: undefined, note: confirmationsUnreadable(c.unreadable) };
+	return { list: c, note: undefined };
+}
+
 export function situation(input: SituationInput): Situation {
-	const { run, confirmations } = input;
+	const { run } = input;
 	const base = { stepName: input.stepName };
+	const { list: confirmations, note } = confirmationsRead(input.confirmations);
 	const open = openConfirmations(confirmations);
 
 	// On the trunk: complete, whatever a release record says about how it ended.
@@ -132,7 +158,14 @@ export function situation(input: SituationInput): Situation {
 			open.length > 0
 				? `Complete — merged to main; ${open.length} still to confirm`
 				: "Complete — merged to main";
-		return { ...base, kind: "complete", text, running: false, confirmations: confirmations ?? [] };
+		return {
+			...base,
+			kind: "complete",
+			text,
+			running: false,
+			confirmations: confirmations ?? [],
+			...(note === undefined ? {} : { confirmationNote: note }),
+		};
 	}
 	if (input.archived) return { ...base, kind: "closed", text: "Closed", running: false };
 
@@ -190,18 +223,27 @@ export function situation(input: SituationInput): Situation {
 	return { ...base, kind: "idle", text: `${at}; nothing is running`, running: false };
 }
 
-/** Each live-check row's id, recorded once the impl's Notes holds its id beside a date and result. */
+/** A result that says the check did not pass: such a line records nothing (A93). */
+const FAILED_RESULT = /\b(?:fail|failed|red|broken|refused)\b/i;
+
+/**
+ * Each live-check row's id, recorded once a line of the impl's Notes holds its id beside a date
+ * and a result that is not a failure (`fail`, `failed`, `red`, `broken`, `refused`).
+ */
 export function liveCheckRecorded(implBody: string, id: string): boolean {
 	const notes = implBody.split(/^## Notes\s*$/m)[1];
 	if (notes === undefined) return false;
 	const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	return new RegExp(`^.*\\b${escaped}\\b.*\\d{4}-\\d{2}-\\d{2}.*$`, "m").test(notes);
+	const names = new RegExp(`\\b${escaped}\\b.*\\d{4}-\\d{2}-\\d{2}`);
+	return notes.split("\n").some((line) => names.test(line) && !FAILED_RESULT.test(line));
 }
 
 export interface ConfirmationSources {
 	/** The promises the plan makes, each with its clauses and where each stands. */
 	promises: ReadonlyArray<{
 		name: string;
+		/** The registry has the promise in force (`enforced`). */
+		inForce?: boolean;
 		clauses: ReadonlyArray<{
 			clause: string;
 			kind: "split" | "limit" | "rests-on";
@@ -215,19 +257,22 @@ export interface ConfirmationSources {
 /**
  * What a plan on main still has to confirm: each split and limit clause, confirmed once its
  * signal reports it holding in a real run, and each live check, confirmed once its result is
- * written in Notes. A resting clause counts through the promise it rests on.
+ * written in Notes. A resting clause counts through the promise it rests on. A promise with no
+ * split or limit clause is one confirmation by its own name, confirmed only once the registry
+ * has it in force (A93).
  */
 export function confirmationsOf(src: ConfirmationSources): Confirmation[] {
 	return [
-		...src.promises.flatMap((p) =>
-			p.clauses
-				.filter((c) => c.kind !== "rests-on")
-				.map((c) => ({
-					name: `${p.name}/${c.clause}`,
-					kind: "clause signal" as const,
-					confirmed: c.standing === "holding",
-				})),
-		),
+		...src.promises.flatMap((p) => {
+			const own = p.clauses.filter((c) => c.kind !== "rests-on");
+			if (own.length === 0)
+				return [{ name: p.name, kind: "clause signal" as const, confirmed: p.inForce === true }];
+			return own.map((c) => ({
+				name: `${p.name}/${c.clause}`,
+				kind: "clause signal" as const,
+				confirmed: c.standing === "holding",
+			}));
+		}),
 		...src.liveChecks.map((l) => ({
 			name: l.id,
 			kind: "live check" as const,
