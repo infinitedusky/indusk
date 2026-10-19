@@ -84,6 +84,10 @@ The person says the brief is settled. Refused, with nothing written, when the br
 
 Refused inside a build step, naming the step: a session that plans or builds does not decide the brief is settled. Approving a plan or a look is refused inside a planning step (`plan-test-plan`, `plan-adr`, `plan-impl`) the same way.
 
+#### What runs after it
+
+The planning loop writes the rest of the plan unattended, one fresh session per document: the test plan, then the ADR when the workflow has one, then the impl. Each session reads the plan's brief and research, follows the planner skill's section for its one document, records each open decision with its reason in that document, and commits it on the plan's branch. A document that fails its check is written again; the loop waits while a look the brief makes is not approved, and ends when the impl passes its structure check and the plan's contract passes, waiting for the person's approval. A session that cannot decide writes a `blocker:` line and ends the run with that reason; so do a failed session and two steps in a row that change nothing. No planning step approves anything or builds. The admin starts the loop; there is no CLI start yet.
+
 ### `plans reapprove <name>`
 
 The person approves the amendments an approved plan waits on. Refused before approval — that is `approve`'s, which also merges, and refuses a branch past approval. Runs the brief check and the looks check `approve` runs (an amendment that names a look waits for that look's approval), records the brief as the one approved (`approved_brief`, `approved_by`, `approved_at`), commits the impl, the brief and the promises the amendments changed on the plan's branch as `plan(<name>): amendment approved`, and appends each amendment to the plan's history (`.indusk/plan-history/<name>.md`, on `main`) as `amendment to the <part> <name>: was …, now …`, answered *Approve*, with who and when. Nothing waiting and the brief unchanged: nothing is written. `plans review` then shows each approved amendment, both versions, beside any still waiting.
