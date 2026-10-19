@@ -7,6 +7,7 @@ updated: 2026-09-25
 # parent (e.g. dawn-*) are declared in the PARENT's master.md, never here —
 # one source of truth per link.
 parents:
+  - stabilize
   - promise-core
 roadmap:
   - workbench-trust-fixes
