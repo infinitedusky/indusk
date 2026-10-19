@@ -32,7 +32,7 @@ live state.
    so unattended planning runs stop failing at the review. Closes itself once a
    planning run passes its review and a real amendment stop reports.
 3. **`a-brief-is-accepted-on-current-main`** — landed 2026-10-19 (`eca91fd2`): accepting a brief, or starting its planning, first merges main into its branch. Open until its three clauses report signals (with 4).
-4. **`a-run-can-be-trusted`** — approved 2026-10-19, ready to Build: the impl check refuses a plan with
+4. **`a-run-can-be-trusted`** — landed 2026-10-19 (`0f6c15a3`), complete; confirming its clauses: the impl check refuses a plan with
    clauses and no signals phase; shell writes to plan documents are refused; a
    run's state is kept on disk, a dead run shows dead with Restart; the landing
    test that fails under load is fixed; a release that does not land is not shown as

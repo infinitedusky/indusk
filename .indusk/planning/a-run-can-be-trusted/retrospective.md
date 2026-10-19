@@ -86,3 +86,5 @@ The three after-landing manual checks (L1–L3) were not run; they cannot run be
 
 - The audit is most useful as a list of cases to re-run, not a list of verdicts. Phase 7 turned 25 findings into concrete hypotheses in one pass.
 - Record unattended decisions with their reason in the plan as they are made; this close depended on them being written down.
+
+Landed on main at 0f6c15a3, 2026-10-19, by hand after the release stopped at Step 8a (and still read "released" on the installed build this plan replaces). Installed and the admin restarted; the plan reads "Complete — merged to main" with its confirmation list. Promises stay declared until their clauses report from real runs. The first shell write to a plan document after install was refused by the new guard.
