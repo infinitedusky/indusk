@@ -13,6 +13,7 @@ import { incidentText, recordViolations } from "./incidents.js";
 import { readPromises } from "./registry.js";
 import { type JaegerSpan, type MarkedSpan, parseMarkedSpan } from "./telemetry.js";
 
+// promise: a-clause-is-proved-twice
 // clause: a-clause-is-proved-twice/a-break-names-its-clause
 
 /**
