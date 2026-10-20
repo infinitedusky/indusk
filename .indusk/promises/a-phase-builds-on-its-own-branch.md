@@ -15,12 +15,9 @@ clauses:
   - name: starts-from-its-dependencies
     kind: limit
     statement: "A phase starts with every finished phase it depends on merged into its worktree."
-  - name: starts-from-the-work-it-waited-for
-    kind: limit
-    statement: "A phase that waited on another plan's phase for a file starts with that phase's finished work merged into its worktree, landed or not."
   - name: green-before-merging
     kind: limit
-    statement: "A phase merges into its plan's branch only when, with the merge made, its own tests and the tests of every clause the plan's branch has touched pass, so two phases that break something only together are caught at the merge that joins them. (Stories 1, 2.)"
+    statement: "A phase merges into its plan's branch only when, with the merge made, its own tests and the tests of every clause the plan's branch has touched pass, so two phases that break something only together are caught at the merge that joins them."
   - name: every-phase-is-checked
     kind: limit
     statement: "A phase that runs no test never merges, and a phase that touches a clause carries that clause's signal."
@@ -33,3 +30,4 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ## History
 - 2026-10-19 — declared (run-the-graph), from its planning conversation.
+- 2026-10-20 — changed by run-the-graph: sliced to one plan's phases (Sandy, 2026-10-19). It read: "Each phase works in its own worktree off its plan's branch, merges in what came before it when it starts, and merges into the plan's branch only when its check is green; only the plan's branch reaches the trunk, once its promises are verified." with the clauses own-worktree (limit), starts-from-its-dependencies (limit), starts-from-the-work-it-waited-for (limit), green-before-merging (limit), every-phase-is-checked (limit), only-the-plan-lands (limit).
