@@ -80,29 +80,29 @@ This document was written with nobody to ask, so each choice below is the author
 | A2 | A page showing ten plans, each with a run, asks the machine for its process list once and starts no more programs than a page showing one plan | Test Phase 1 | Build Phase 2 | written | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-admin/src/lib/page-reads.test.ts |
 | A3 | A page showing ten plans asks for the trunk's landing history once, answers every plan from it, and starts no per-plan program | Test Phase 1 | Build Phase 2 | written | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-admin/src/lib/page-reads.test.ts |
 | A4 | A plan with no run, and a project with no plans, load without asking for the process list | Test Phase 1 | Build Phase 2 | written | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-admin/src/lib/page-reads.test.ts |
-| A5 | When the one process-list read fails, every run with a live process reads liveness unknown (not stopped) and the page does not ask again once per run | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-mcp/src/lib/run-record/async-reads.test.ts |
-| A6 | Every plan's landed answer from the single trunk reading equals the per-plan question's answer, for a landed plan, a plan never landed, a plan with a similar name, a plan landed in an archive folder, a workbench plan landed in its code repository, and a project whose trunk is `master` beside `main` | Build Phase 1 | Build Phase 1 | planned | contract | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-mcp/src/lib/run-record/landed-once.contract.test.ts |
-| A7 | Two page loads a second apart read the process list and trunk history once between them | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
-| A8 | A load after the window reads both fresh, and a run whose process has since died reads stopped | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
-| A9 | Five simultaneous loads on a cold start read the process list once and the trunk history once | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
-| A10 | After one failed read the next load tries again at once and does not reuse the failure | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
-| A11 | Two projects loaded back to back each read their own trunk history; a plan landed in one never reads as landed in the other | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A5 | When the one process-list read fails, every run with a live process reads liveness unknown (not stopped) and the page does not ask again once per run | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-mcp/src/lib/run-record/async-reads.test.ts |
+| A6 | Every plan's landed answer from the single trunk reading equals the per-plan question's answer, for a landed plan, a plan never landed, a plan with a similar name, a plan landed in an archive folder, a workbench plan landed in its code repository, and a project whose trunk is `master` beside `main` | Build Phase 1 | Build Phase 1 | passing | contract | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-mcp/src/lib/run-record/landed-once.contract.test.ts |
+| A7 | Two page loads a second apart read the process list and trunk history once between them | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A8 | A load after the window reads both fresh, and a run whose process has since died reads stopped | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A9 | Five simultaneous loads on a cold start read the process list once and the trunk history once | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A10 | After one failed read the next load tries again at once and does not reuse the failure | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A11 | Two projects loaded back to back each read their own trunk history; a plan landed in one never reads as landed in the other | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
 | A12 | The plan page, the promises page and the looks page loaded one after another inside the window make one process-list read and one trunk-history read together | Build Phase 2 | Build Phase 2 | planned | contract | clause: admin-pages-load-fast/kept-briefly | apps/indusk-admin/src/lib/page-reads.contract.test.ts |
 | A13 | No code on the admin's page paths contains a synchronous program start | Test Phase 1 | Build Phase 2 | written | contract | clause: admin-pages-load-fast/never-freezes | apps/indusk-admin/src/__tests__/no-sync-starts.contract.test.ts |
 | A14 | While one page waits three seconds on a real slow `ps`, the server's event loop never lags past the limit and a request for another page is answered within one second | Test Phase 1 | Build Phase 2 | written | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-admin/src/lib/page-reads.test.ts |
-| A15 | When the process-list program never answers, the page still answers within its time limit with liveness unknown | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/async-reads.test.ts |
-| A16 | The same fixed process list and trunk history read through the asynchronous readers give the same runs and landings as the synchronous readers (the port reader's equivalence is proved in Build Phase 2, where it is changed) | Build Phase 1 | Build Phase 1 | planned | contract | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/async-reads.contract.test.ts |
-| A17 | A run that dies reads stopped on the next load after the kept reading expires, and a run that is alive still reads running | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-run-is-read-from-its-record | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A15 | When the process-list program never answers, the page still answers within its time limit with liveness unknown | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/async-reads.test.ts |
+| A16 | The same fixed process list and trunk history read through the asynchronous readers give the same runs and landings as the synchronous readers (the port reader's equivalence is proved in Build Phase 2, where it is changed) | Build Phase 1 | Build Phase 1 | passing | contract | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/async-reads.contract.test.ts |
+| A17 | A run that dies reads stopped on the next load after the kept reading expires, and a run that is alive still reads running | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-run-is-read-from-its-record | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
 | A18 | The offer of approval on a finished plan still reads the plan review and the live run, with the same answer as before | Test Phase 1 | Test Phase 1 | passing | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-admin/src/lib/decisions-reader.approval.test.ts |
 | A19 | Needs you still lists every plan waiting on the person, the same set as before | Test Phase 1 | Test Phase 1 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
-| A20 | A run started after the kept process table was read reads running or unknown, never stopped, and pressing Build drops the kept table | Build Phase 1 | Build Phase 2 | planned | unit | promise: a-run-is-read-from-its-record | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A20 | A run started after the kept process table was read reads running or unknown, never stopped, and pressing Build drops the kept table | Build Phase 1 | Build Phase 2 | written | unit | promise: a-run-is-read-from-its-record | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
 | A21 | A release that ends just after a page read the landing history reads the plan as landed, not "the plan is not on main" | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-run-is-read-from-its-record | apps/indusk-admin/src/lib/build-host.release.test.ts |
-| A22 | A page's report carries its elapsed time and its count of program starts, a page over one second or whose starts grow with its plans reports broken (a three-repository page with 18 starts is upheld, the bound being 6 per repository), and a broken report is sent though one was sent a moment before | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/page-reads-signal.test.ts |
-| A23 | A load that reads fresh although the last fresh reading was inside the window reports the kept-briefly clause broken | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/page-reads-signal.test.ts |
+| A22 | A page's report carries its elapsed time and its count of program starts, a page over one second or whose starts grow with its plans reports broken (a three-repository page with 18 starts is upheld, the bound being 6 per repository), and a broken report is sent though one was sent a moment before | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/page-reads-signal.test.ts |
+| A23 | A load that reads fresh although the last fresh reading was inside the window reports the kept-briefly clause broken | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/kept-briefly | apps/indusk-mcp/src/lib/run-record/page-reads-signal.test.ts |
 | A24 | A page's finish call hands the report the page's real read counts, early-refresh flags, reading ages and elapsed time counted from the top of the page (not zeros, not from the first read) | Build Phase 2 | Build Phase 2 | planned | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-admin/src/lib/page-reads.test.ts |
-| A25 | A `git log` and a `git ls-tree` that never answer stop waiting at the time limit and the page reads the plan as not landed | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
-| A26 | A window longer than the 15-second ceiling (a project with a 60-second refresh) is clamped, so a dead run reads stopped within the ceiling | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-run-is-read-from-its-record | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
-| A27 | The landing reader and the merge-subjects reader share one kept trunk-history read, so a page makes one `git log … --merges` | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A25 | A `git log` and a `git ls-tree` that never answer stop waiting at the time limit and the page reads the plan as not landed | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A26 | A window longer than the 15-second ceiling (a project with a 60-second refresh) is clamped, so a dead run reads stopped within the ceiling | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-run-is-read-from-its-record | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A27 | The landing reader and the merge-subjects reader share one kept trunk-history read, so a page makes one `git log … --merges` | Build Phase 1 | Build Phase 1 | passing | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
 | A28 | A plan the planning run wrote — brief accepted, test plan and ADR still draft, impl draft, plan review answered and current, no run going — is offered for approval under Needs you with its Approve | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard over approval-waits-for-a-finished-plan, found 2026-10-20 on this plan's own page (Sandy) | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
 
 ### Deferred Verification
@@ -222,13 +222,13 @@ This phase writes the tests whose subject exists today, so each fails on its own
 
 This phase builds the new reading module in the package. It reads the machine's process list and the trunk's landing history without stopping the server, gives up on a program that does not answer, keeps each reading for eight seconds per project, shares a read already under way, and never keeps a failure. It also builds the two adapters the rest of the code needs: process reads for a run's liveness that answer from the one process table, and a "has it landed" question that answers from the one list of landings. Nothing in the admin uses them yet; Build Phase 2 does. The phase hands Build Phase 2 four functions whose tests already pass.
 
-- [ ] Write the tests for the kept reads, the failed and slow reads and the table-backed liveness before the code, and watch them fail.
+- [x] Write the tests for the kept reads, the failed and slow reads and the table-backed liveness before the code, and watch them fail. (committed before the code, failing to load their subject)
   <details><summary>Technical</summary>
 
   `kept-reads.test.ts` (A7–A11, A17, A20), `page-reads-signal.test.ts` (A22, A23), `async-reads.test.ts` (A5, A15), `landed-once.contract.test.ts` (A6) and `async-reads.contract.test.ts` (A16) under `apps/indusk-mcp/src/lib/run-record/`. `keptRead` takes an injected clock and an injected read, so A7–A11 and A17 are `unit` tests with no real time and no program started. A6 and A16 start real `git` and `ps` over a temp repository: `contract`, listed in `apps/indusk-mcp/vitest.tiers.ts` (they start a process). Commit them red.
 
   </details>
-- [ ] Add the module that keeps a reading for a few seconds, per key, shares a read already in flight, and never keeps a failure.
+- [x] Add the module that keeps a reading for a few seconds, per key, shares a read already in flight, and never keeps a failure.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/run-record/kept-reads.ts`:
@@ -246,58 +246,59 @@ This phase builds the new reading module in the package. It reads the machine's 
   A module-level `Map<string, { at: number; value: T } | { pending: Promise<T> }>`. A rejected `read` clears the entry and rethrows (A10); a call while `pending` awaits the same promise (A9); a value older than `forMs` is read again (A8); keys differ by project root, and for landings by repository and trunk (A11). `refreshedEarly` is true when a fresh read was made although the previous successful read of the key was younger than `forMs` (a window that is not holding; A23), and `readAt` is when the value was read. Export `forgetKept(key?)` for tests and for the moments a reading is known stale (decision 12).
 
   </details>
-- [ ] Add the asynchronous reader of the machine's process list, with a time limit.
+- [x] Add the asynchronous reader of the machine's process list, with a time limit.
   <details><summary>Technical</summary>
 
   In `apps/indusk-mcp/src/lib/run-record/async-reads.ts`: `readProcessTable(): Promise<PsRow[] | null>` runs `execFile("ps", ["-axo", "pid=,lstart=,command="], { env: { ...process.env, LC_ALL: "C" }, maxBuffer: 32 * 1024 * 1024, timeout: READ_TIMEOUT_MS, killSignal: "SIGKILL" })` (`READ_TIMEOUT_MS = 3000`) and parses with the existing `parsePsAll`; a non-zero exit, a timeout or an error resolves `null` (not an empty table, so liveness reads unknown, decision 6). `keptProcessTable(now?)` wraps it in `keptRead("ps", …)` and throws on `null` so a failure is not kept.
 
   </details>
-- [ ] Add the table-backed process reads that answer a run's liveness from the one table.
+- [x] Add the table-backed process reads that answer a run's liveness from the one table.
   <details><summary>Technical</summary>
 
   `processReadsFromTable(table: PsRow[] | null): Required<ProcessDeps>` in `async-reads.ts`: `alive` = `isAlive(pid)` (signal 0, starts no program); `command(pid)` = the table row's command or `null`; `startTime(pid)` = the row's `startedAt` as a `Date` or `null`. Decided: `runStatus` gains an explicit `tableUnreadable: boolean` input (set when the table is `null`, or when the pid is alive but has no row, since the table may predate the process); with it set and the pid alive `runStatus` returns `{ state: "unknown" }` rather than "stopped" (A5, A20). `isOwnProcess` returns false for a null command today, which reads stopped, so this input is placed where the three reads are combined; read `isOwnProcess` in `process-identity.ts` first and keep `runStatus`'s existing tests green.
 
   </details>
-- [ ] Add the asynchronous reader of the trunk's landing history and the "has it landed" question built from it.
+- [x] Add the asynchronous reader of the trunk's landing history and the "has it landed" question built from it.
   <details><summary>Technical</summary>
 
   In `async-reads.ts`: `readMergeSubjects(dir, trunk): Promise<string[]>` runs `execFile("git", ["log", trunk, "--merges", "--format=%s"], { cwd: dir, timeout: READ_TIMEOUT_MS, … })`; `readLandings(root): Promise<(plan: string) => boolean>` resolves the root trunk and a workbench plan's code repository exactly as `landedAsker` in `landed.ts` does (reuse `trunkOf` and `codeRepoOf` by exporting them from `landed.ts`, and make `trunkOf`'s `git branch --show-current` and `rev-parse` asynchronous in the same file or a shared one), reads each repository's subjects once through `keptRead(`landings:${dir}\0${trunk}`, …)`, and answers `landedOnMain(trunk, plan, git)` with `GitReads` backed by the already-read subjects; `hasPath` (the archive-folder check, `git cat-file -e` per plan) is replaced by one non-recursive `git ls-tree --name-only <trunk> .indusk/planning/archive/` read per repository (decision 19; a recursive listing would list every file of every archived plan), kept under its own key, answered per plan from that list. Every program these readers start goes through one `startProgram(args)` helper that counts the start into the request's count (decision 15). The reporting path's `trunkMergeSubjects` unions several trunk branches and falls back to HEAD; `trunkMergeSubjectsAsync` keeps that rule exactly (A6 covers a project with `main` beside `master`). Same results as the synchronous `landedAsker` (A6). `trunkMergeSubjectsAsync(root)` does the same for the reporting path's `trunkMergeSubjects`.
 
   </details>
-- [ ] Report the three clauses' signal from the page's reads.
+- [x] Report the three clauses' signal from the page's reads.
   <details><summary>Technical</summary>
 
   signal: `admin-pages-load-fast/one-read-per-page`, `admin-pages-load-fast/kept-briefly` and `admin-pages-load-fast/never-freezes` — read where the page's reads are counted, in the clause signals the daemon reads. Reported from `apps/indusk-mcp/src/lib/run-record/page-reads-signal.ts`: `judgePageReads(input)` is a pure function taking `{ page, plans, processReads, landingReads, programStarts, refreshedEarly: boolean[], maxBlockedMs, elapsedMs }` and returning `{ clause, upheld | broken, why }[]`: `one-read-per-page` upheld when each read count is at most 1 and `programStarts` is at most `PAGE_STARTS_LIMIT = 6` whatever `plans` is, broken naming the page, the counts and the plan count; `kept-briefly` broken when any read was `refreshedEarly` (a fresh read although the previous one was inside the window; a reading older than the window cannot be returned, so this is the condition that shows the window failing, A23); `never-freezes` broken when `maxBlockedMs` is over `BLOCKED_LIMIT_MS = 100` or `elapsedMs` is over `PAGE_LIMIT_MS = 1000` (A22). `reportPageReads(root, input)` calls `judgePageReads` and writes each result with `writeClauseSignals` (`apps/indusk-mcp/src/lib/promises/clause-signal.ts`) filed under this plan's own name, `admin-pages-load-fast`, never under a plan the page shows, and never raises; broken results are written at once, upheld ones may be throttled by the caller (decision 14). The caller is Build Phase 2's page-reads module. A page with no counts reports nothing (reads "no signal").
 
   </details>
-- [ ] Make every test in this phase pass and leave the command line's synchronous readers as they are.
+- [x] Make every test in this phase pass and leave the command line's synchronous readers as they are.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run apps/indusk-mcp/src/lib/run-record` and `pnpm exec vitest related` the files changed; export the new functions from `apps/indusk-mcp/src/lib/run-record/index.ts` (the admin imports the package's `run-record` entry), and add the asynchronous twins `gitCommonDirOfAsync` (`worktree/layout.ts`), the asynchronous impl-hook read in `build/read-planning.ts` and the asynchronous `lsof` read in `telemetry/daemon-reads.ts` the admin's page path needs (decision 11; the trace in Build Phase 2 names which). `psAll`, `ps`, `landedAsker`, `planLandedOnMain` and `trunkMergeSubjects` are not removed (decision 3).
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
-- [ ] The kept reading is reused inside the window, read again after it, shared by simultaneous requests, never kept when it failed, and never shared between projects.
+- [x] The kept reading is reused inside the window, read again after it, shared by simultaneous requests, never kept when it failed, and never shared between projects. (41 tests pass across the three unit files)
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts apps/indusk-mcp/src/lib/run-record/page-reads-signal.test.ts`: A7, A8, A9, A10, A11, A17, A20, A22, A23 pass (goes green; A20's admin half, that pressing Build drops the table, passes in Build Phase 2).
 
   </details>
-- [ ] A read that fails or does not answer reads as unknown liveness and not-landed, without a second read per run.
+- [x] A read that fails or does not answer reads as unknown liveness and not-landed, without a second read per run.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run apps/indusk-mcp/src/lib/run-record/async-reads.test.ts`: A5 and A15 pass (goes green).
 
   </details>
-- [ ] The new readers give the same landings, runs and port state as the old ones on a real repository and a real process list.
+- [x] The new readers give the same landings, runs and port state as the old ones on a real repository and a real process list. (the two contract files and the existing landing tests pass; the port state is proved in the next build phase, where it changes)
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run --config apps/indusk-mcp/vitest.system.config.ts apps/indusk-mcp/src/lib/run-record/landed-once.contract.test.ts apps/indusk-mcp/src/lib/run-record/async-reads.contract.test.ts`: A6 and A16 pass (goes green). Also `pnpm exec vitest related apps/indusk-mcp/src/lib/run-record/liveness.ts apps/indusk-mcp/src/lib/run-record/landed.ts` — the existing run-record tests stay green. The whole suite runs at landing, not here.
 
   </details>
-- [ ] The tests that wait for the admin's wiring are still red.
+- [x] The tests that wait for the admin's wiring are still red. (the page-reads and scan files still fail on process-list counts of 40, the lag under a slow list and the named synchronous starts)
   <details><summary>Technical</summary>
 
   A2, A3, A4 and A13 still fail on their own assertions (no phase turns them green early); A12 and A14 are not yet written.
@@ -306,7 +307,7 @@ This phase builds the new reading module in the package. It reads the machine's 
 
 #### Build Phase 1 Context
 
-- [ ] Record the rule that a page path reads the process list and the trunk history through the kept reads.
+- [x] Record the rule that a page path reads the process list and the trunk history through the kept reads. (written in the package's area rules beside the run-record entry, which was condensed so the file did not grow; it was already over its budget)
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md` (area rules, "Promises and telemetry" neighbourhood or the run-record entry): "A reader a page calls reads through `run-record/kept-reads.ts`: once per page, kept for `KEPT_FOR_MS`, never a synchronous program start. The synchronous `psAll`/`landedAsker` are for the command line." Destination: that file, area tier; it is not always-on, so it is not the root.
@@ -315,7 +316,7 @@ This phase builds the new reading module in the package. It reads the machine's 
 
 #### Build Phase 1 Document
 
-- [ ] Add the package-side change to the changelog.
+- [x] Add the package-side change to the changelog. (no reference page for run-record exists, so the changelog line is the whole entry)
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`, under the unreleased heading in the file's existing style: "Run liveness and landing are read once per page and kept for eight seconds (asynchronous process-list and trunk-history readers in the package)." The reference page for `run-record`, if one exists under `apps/docs/src/reference/`, gains a short paragraph on `keptRead`; found by search, and if none exists the changelog line is the whole entry.
@@ -527,3 +528,4 @@ This phase is the check against the real running admin that the three pages name
 - Test Phase 1, decided unattended from the plan itself: the slow-`ps` shim in A14 sleeps 2 s (not 3 s) and only on the whole-process-list call, because a 3 s sleep on every `ps` made one page spend about 15 s and would race the 3 s `READ_TIMEOUT_MS` once Build Phase 1 adds it. The page-reads and scan tests read 40 process-list reads and 16 synchronous starts today. The package must be built (`pnpm build` in `apps/indusk-mcp`, git-ignored `dist/`) before any admin test loads.
 - `everyday-tests-never-wait.test.ts` is red on this branch before Test Phase 1, for files that are not this plan's (`decided-unattended-hook.test.ts`, `accept-brief-conflict.test.ts`, and others); none of this plan's files is named.
 - A1 is a `manual:` live check: the three clause rows prove the clauses and A1 is the recorded measure of the headline sentence, as the test plan's untestable row U1 states. It is unverified to tools by design.
+- Build Phase 1, decided unattended (each inside the impl's decisions): (1) the new readers take an injectable `exec` and `now` (`ReadDeps`), so the never-answers rows (A15, A25) are fake-timer unit tests that start no program; the time limit is enforced by a timer race in `startProgram` as well as by `execFile`'s `timeout`. (2) `startProgram`, `Exec` and `countStarts` live in `lib/start-program.ts`, not `async-reads.ts`, so `worktree/layout.ts`, `build/read-planning.ts` and `telemetry/daemon-reads.ts` use them without an import cycle; `async-reads.ts` re-exports them. (3) Liveness unknown rides on `ProcessDeps` as an optional `unreadable(pid)` (true only for a live pid the table does not show) rather than a fourth `runStatus` argument; `runStatus` reads such a run unknown. `realProcessReads` is typed without it. (4) `trunkOfAsync` lists local branches with one kept `git for-each-ref` only when the checked-out branch is not a trunk branch, instead of one `rev-parse` per candidate, and `trunkMergeSubjectsAsync` uses the same listing, so both share one kept `git log` key per branch (A27); the log reads `refs/heads/<trunk>` (or `HEAD`). (5) `readLandings` reads every declared repository of a workbench once (the plan's `code.json` picks among them) because the returned question is synchronous and the plan list is not known up front; the starts stay independent of the plan count. (6) `reportPageReads` keeps its own throttle for upheld reports (15 s per root and page) so the package function alone satisfies A22; the admin may add nothing on top. (7) A clock that runs backwards reads as `refreshedEarly`. (8) The asynchronous twins added for decision 11 are `gitCommonDirOfAsync` (tested for equality in the contract file), `runImplHookAsync` and `lsofOrNullAsync`/`holdersAsync`; Build Phase 2's trace wires and tests them. (9) The package's CLAUDE.md was already over its nested budget (29.6 KB against 16 KB), so the new rule replaced words in the run-record entry and the file did not grow. (10) `vitest related` on the run-record files shows 14 failures in `src/lib/run/*` only when `INDUSK_GATE_POLICY=auto` is in the environment (this unattended session); the same files pass with that variable unset, and none touches this plan's files.
