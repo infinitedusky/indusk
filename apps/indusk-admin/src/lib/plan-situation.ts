@@ -170,6 +170,15 @@ async function confirmationsFor(
  * manager's own sessions, a plain `git log` of the trunk, and plan-review.md on disk.
  * At most once per plan in a while, so the nav's reads and the page's poll do not flood.
  */
+/** The Planning and Release steps the page draws for the plan, by name and state. */
+function drawnSteps(plan: Plan): Array<{ name: string; state: string }> {
+  const { planning, release } = planSteps(snapshotOf(plan));
+  return [...planning, ...release].map((s) => ({
+    name: s.name,
+    state: s.state,
+  }));
+}
+
 function reportSituation(
   project: string,
   root: string,
@@ -190,6 +199,7 @@ function reportSituation(
         .filter((r) => r.project === project && r.plan === plan.name),
       table: psAll(),
       subjects: trunkMergeSubjects(root),
+      steps: drawnSteps(plan),
     }),
   );
   // signal: a-run-is-read-from-its-record/always-a-next-step

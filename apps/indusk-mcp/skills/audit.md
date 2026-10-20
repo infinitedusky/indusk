@@ -119,12 +119,13 @@ The heading is the question's text, unnumbered. Under each heading: findings as 
 The same reader, shape and answers, but run on a plan nobody has approved: the plan is read cold before the person is asked to sign it. The planner runs it before presenting a plan written by hand, and an unattended planning run does it as its last step (`plan-review`).
 
 1. **Get the inputs.** `indusk plans review-inputs {plan}` prints JSON: `documents` (`brief`, `testPlan`, `adr`, `impl`, as they stand) `tree` (every tracked file) and `read` (a hash of the four documents as printed). Never `research.md` and never the conversation — they hold the decisions the reader must not inherit. The model is the same `audit` tier.
-2. **Spawn the reader** in the foreground (`run_in_background: false`) and wait for its report; never end your turn while the reader runs, because in an unattended run an ended turn ends the step. Give it the inputs and these four questions, verbatim, each one `##` heading in `.indusk/planning/{plan}/plan-review.md` (they are `PLAN_REVIEW_QUESTIONS` in `lib/audit/answers.ts`):
+2. **Spawn the reader** in the foreground (`run_in_background: false`) and wait for its report; never end your turn while the reader runs, because in an unattended run an ended turn ends the step. Give it the inputs and these five questions, verbatim, each one `##` heading in `.indusk/planning/{plan}/plan-review.md` (they are `PLAN_REVIEW_QUESTIONS` in `lib/audit/answers.ts`):
 
    1. **Do the planned tests prove each promise's sentence, or something narrower?**
    2. **Does the impl build what each promise claims, and nothing it does not?**
    3. **Which skip reason would you not accept?**
    4. **What else would have to change for each promise to hold?**
+   5. **Which way could a clause fail that no signal would see?** — for each clause, list the ways it could fail to hold (including each place its promise is shown) and name any that none of its signals would report.
 
    Start `plan-review.md` with frontmatter `read: <the hash review-inputs printed>`: the review is about those documents, and when any of them changes afterwards (your own fixes included) the review is out of date and the planning run reads the plan cold again. Findings are written as in `audit.md` (a `- ` item; `*` and numbered items count too), each with its `- breaks when:` line and no remedy; a question with nothing to say gets `- nothing`.
 3. **Answer each finding yourself**, the planning agent, with one of: `  - answer: fix — <document changed>` (change the test plan, the ADR or the impl, and name which), `  - answer: amendment — <the part of the brief changed>` (edit the brief, and tell the person plainly — nothing is approved yet, so there is no re-approval to wait for, but it is theirs to see), or `  - answer: nothing — <reason>`. There is no `signal` answer before approval: no code exists to emit one, and the reader refuses it.

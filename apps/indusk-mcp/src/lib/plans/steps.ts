@@ -213,8 +213,13 @@ function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<Releas
 					? "skipped"
 					: "not-yet";
 	switch (name) {
-		case "Build":
-			return named(segment(at("executing")));
+		case "Build": {
+			// A build running reads as the Build step even before the plan's documents show a phase started.
+			const executing = at("executing");
+			if (plan.live?.build === true && executing !== "done" && executing !== "skipped")
+				return named("current");
+			return named(segment(executing));
+		}
 		case "Falsify":
 			return named(segment(at("falsify")));
 		case "Cleanup":
