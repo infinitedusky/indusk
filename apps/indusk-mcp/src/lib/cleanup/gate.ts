@@ -7,7 +7,7 @@ import { parsePhaseHeading } from "../impl-headings.js";
 import { foldedLineMask } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
-import { readPromises } from "../promises/registry.js";
+import { readPromisesKept } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
 import { reasonFits, sentenceCount } from "../rituals/reason.js";
 import { isRitualSkipped, type SkipCheck } from "../rituals/skip.js";
@@ -230,7 +230,7 @@ function unprovenPromisesOf(planDirIn: string, implContent: string): string[] {
 	const briefPath = join(planDir, "brief.md");
 	if (at === -1 || !existsSync(briefPath)) return [];
 	if (parseBriefContract(readFileSync(briefPath, "utf-8")).shape === "legacy") return [];
-	const read = readPromises(planDir.slice(0, at));
+	const read = readPromisesKept(planDir.slice(0, at));
 	// A registry that cannot be read is `promises check`'s refusal to make.
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
 	if (registry === null) return [];

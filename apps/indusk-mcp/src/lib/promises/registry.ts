@@ -517,6 +517,46 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 	return { ok: true, registry };
 }
 
+const KEPT_UNTIL_CHANGED_MS = 2000;
+const registryKept = new Map<string, { signature: string; read: ReadRegistryResult }>();
+
+/** Every promise and incident file by name, size and modified time, and the newest modified time. */
+function registrySignature(dir: string): { signature: string; newest: number } {
+	const parts: string[] = [];
+	let newest = 0;
+	for (const sub of [dir, join(dir, INCIDENTS_SUBDIR)]) {
+		for (const file of markdownFiles(sub)) {
+			const st = statSync(join(sub, file));
+			parts.push(`${sub}/${file}:${st.size}:${st.mtimeMs}`);
+			newest = Math.max(newest, st.mtimeMs);
+		}
+	}
+	return { signature: parts.join("\n"), newest };
+}
+
+/**
+ * `readPromises` for the readers that ask on every page load (the admin asks
+ * once per plan on a page: 179 files parsed 3 to 4 times a load took a second
+ * of the server's time). The reading is kept while no promise or incident file
+ * has changed; a file modified in the last two seconds is never trusted to be
+ * unchanged, since a second edit in the same instant would keep its size and
+ * time. The result is shared and read-only.
+ */
+export function readPromisesKept(
+	planRoot: string,
+	now: () => number = Date.now,
+): ReadRegistryResult {
+	const dir = contractDir(planRoot);
+	if (!existsSync(dir) || !statSync(dir).isDirectory()) return readPromises(planRoot);
+	const { signature, newest } = registrySignature(dir);
+	const kept = registryKept.get(dir);
+	if (kept && kept.signature === signature) return kept.read;
+	const read = readPromises(planRoot);
+	if (now() - newest > KEPT_UNTIL_CHANGED_MS) registryKept.set(dir, { signature, read });
+	else registryKept.delete(dir);
+	return read;
+}
+
 /** The promise called `name`, or one that carries it as an earlier name; undefined when neither. */
 export function findPromise<T extends Pick<PromiseEntry, "name" | "aliases">>(
 	promises: readonly T[],
