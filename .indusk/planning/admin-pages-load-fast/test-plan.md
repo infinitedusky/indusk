@@ -40,12 +40,12 @@ Every admin page answers in under a second.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A1 | Loading a plan page, the promises page and the looks page of the real running admin each answers in under one second. | live check |
+| A1 | Loading every page route of the real running admin (plan, promises, looks, scorecards, research, draft, home), fresh after the kept reading has expired and again inside it, each answers in under one second. | live check |
 | A2 | Loading a page that shows ten plans, each with a run, asks the machine for its process list exactly once, not ten times. | unit |
 | A3 | Loading a page that shows ten plans asks for the trunk's landing history exactly once and answers every plan's "has it landed" from that one reading. | unit |
 | A4 | A plan with no run, and a project with no plans, load without asking for the process list at all. | unit |
 | A5 | When the one process-list read fails, every run on the page reads as its record says with the liveness marked unknown — the page still loads and does not ask again once per run. | unit |
-| A6 | Every plan's "has it landed" answer from the single trunk reading equals the answer the per-plan question gave before this change, for a trunk holding a landed plan, a plan never landed and a plan with a similar name. | contract |
+| A6 | Every plan's "has it landed" answer from the single trunk reading equals the answer the per-plan question gave before this change, for a trunk holding a landed plan, a plan never landed, a plan with a similar name, a plan landed in an archive folder, a workbench plan landed in its code repository, and a project whose trunk is `master` beside `main`. | contract |
 
 ### `kept-briefly` — those reads are kept for a few seconds, so the page's own live refresh and the other pages reuse them
 
@@ -79,9 +79,9 @@ Every admin page answers in under a second.
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A13 | No code on the admin's page paths — the admin's own readers and the package's run-record readers it imports — contains a synchronous program start. | contract |
-| A14 | While one page waits on a program that takes three seconds to answer, a request for another page is answered within one second. | unit |
+| A14 | While one page waits on a real program (a `ps` that takes three seconds), the server's event loop never lags past the limit and a request for another page is answered within one second. | unit |
 | A15 | When the process-list program never answers, the page still answers within its time limit with liveness unknown, rather than waiting forever. | unit |
-| A16 | The same fixed process list, trunk history and port answer read through the new asynchronous readers give the same runs, landings and port state as the synchronous readers gave. | contract |
+| A16 | The same fixed process list and trunk history read through the new asynchronous readers give the same runs and landings as the synchronous readers gave (the port reader, changed in the build's second phase, gets its own equivalence test there). | contract |
 
 ### Not for a promise
 
@@ -90,6 +90,10 @@ Regression guards over what must not break; each runs an existing promise's test
 | ID | Assertion (user-visible behavior) | Level | Why |
 |----|-----------------------------------|-------|-----|
 | A17 | A run that dies is read as stopped on the next page load after the kept reading expires, and a run that is alive still reads running. | unit | `a-run-is-read-from-its-record` — the brief names this as kept for a few seconds at most |
+| A20 | A run started after the kept process table was read reads running or unknown, never stopped. | unit | `a-run-is-read-from-its-record` — a live run reads running |
+| A21 | A release that ends just after a page read the landing history reads the plan as landed. | unit | `a-run-is-read-from-its-record` — landing still reads true |
+| A22 | A page's report carries elapsed time and program starts; a page over a second or whose starts grow with its plans reports `never-freezes` / `one-read-per-page` broken, and a broken report is never throttled away. | unit | signals for the three clauses report each failure |
+| A23 | A fresh read although the last one was inside the window reports `kept-briefly` broken. | unit | the window failing is otherwise invisible |
 | A18 | The offer of approval on a finished plan still reads the plan review and the live run, with the same answer as before. | unit | `approval-waits-for-a-finished-plan` stays upheld |
 | A19 | Needs you still lists every plan waiting on the person, the same set as before this change. | unit | `decisions-wait-in-one-place` stays upheld |
 
