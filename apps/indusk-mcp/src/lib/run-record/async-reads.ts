@@ -2,8 +2,9 @@ import { getTrunkBranches } from "../config.js";
 import { isAlive, type ProcessDeps, type PsRow, parsePsAll } from "../process-identity.js";
 import { type Exec, type StartOptions, startProgram } from "../start-program.js";
 import { pickTrunk } from "../trunk-branch.js";
+import { gitCommonDirOfAsync } from "../worktree/layout.js";
 import { declaredRepoDirs, isWorkbench } from "../worktree/repos.js";
-import { type Kept, type KeptDeps, keptRead } from "./kept-reads.js";
+import { forgetKept, type Kept, type KeptDeps, keptRead } from "./kept-reads.js";
 import {
 	codeRepoSpec,
 	type GitReads,
@@ -28,6 +29,11 @@ export interface ReadDeps extends KeptDeps {
 	exec?: Exec;
 	/** Told of every kept reading a reader asks for, so a page can report ages and early refreshes. */
 	onKept?: (reading: KeptNote) => void;
+	/**
+	 * Readings that failed earlier in this page: a reader asks them no second time, so one page
+	 * never starts the same failing program twice. A later page tries again at once.
+	 */
+	failed?: Set<string>;
 }
 
 /** What a page learns of one kept reading it asked for. */
@@ -47,6 +53,7 @@ export {
 	beginStartCount,
 	countStarts,
 	type Exec,
+	onPage,
 	READ_TIMEOUT_MS,
 	startProgram,
 } from "../start-program.js";
@@ -98,6 +105,19 @@ export function processReadsFromTable(table: readonly PsRow[] | null): Required<
 	};
 }
 
+/** Drops the kept process list: a run has just been started, so a table taken before it is stale (decision 12). */
+export function forgetProcessList(): void {
+	forgetKept("ps");
+}
+
+/**
+ * Finds a project's shared git directory asynchronously, so the synchronous readers beneath a page
+ * (the project's id, the bookkeeping home) are answered from what is found and start no program.
+ */
+export async function warmProject(root: string): Promise<void> {
+	await gitCommonDirOfAsync(root);
+}
+
 // ── the trunk's landing history ─────────────────────────────────────────────────────────────────
 
 const refOf = (trunk: string) => (trunk === "HEAD" ? "HEAD" : `refs/heads/${trunk}`);
@@ -137,8 +157,17 @@ async function readBranches(dir: string, deps: ReadDeps): Promise<Set<string>> {
 	return new Set(out.split("\n").filter(Boolean));
 }
 
+/** Drops every kept reading of the trunk's history: a release has just ended, so a landing read before it is stale. */
+export function forgetLandings(): void {
+	for (const prefix of ["landings:", "archive:", "branches:"]) forgetKept(prefix);
+}
+
 const kept = async <T>(key: string, read: () => Promise<T>, deps: ReadDeps) => {
-	const result = await keptRead(key, read, deps);
+	if (deps.failed?.has(key)) throw new Error(`${key} did not read earlier in this page`);
+	const result = await keptRead(key, read, deps).catch((error: unknown) => {
+		deps.failed?.add(key);
+		throw error;
+	});
 	deps.onKept?.({
 		key,
 		ageMs: result.ageMs,
@@ -272,8 +301,11 @@ export async function trunkMergeSubjectsAsync(
 	);
 	for (const subjects of logs) out.push(...subjects);
 	if (out.length > 0) return out;
+	// No trunk branch has a log: the checkout's own history, through the key the landing reader
+	// reads the same repository by, so a page makes one `git log … --merges` either way.
 	try {
-		return (await keptSubjects(root, "HEAD", deps)).value;
+		const trunk = await trunkOfAsync(root, getTrunkBranches(root), deps);
+		return (await keptSubjects(root, trunk, deps)).value;
 	} catch {
 		return [];
 	}

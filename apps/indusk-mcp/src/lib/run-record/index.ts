@@ -9,8 +9,11 @@ export {
 	beginStartCount,
 	countStarts,
 	type Exec,
+	forgetLandings,
+	forgetProcessList,
 	type KeptNote,
 	keptProcessTable,
+	onPage,
 	processReadsFromTable,
 	READ_TIMEOUT_MS,
 	type ReadDeps,
@@ -19,6 +22,7 @@ export {
 	readProcessTable,
 	startProgram,
 	trunkMergeSubjectsAsync,
+	warmProject,
 } from "./async-reads.js";
 export {
 	forgetKept,
@@ -27,6 +31,7 @@ export {
 	type Kept,
 	keptRead,
 	keptWindow,
+	peekKept,
 	resetKept,
 } from "./kept-reads.js";
 export {

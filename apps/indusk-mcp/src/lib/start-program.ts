@@ -59,6 +59,11 @@ export function beginStartCount(): { count(): number } {
 	return { count: () => counter.count };
 }
 
+/** Whether the caller is inside a page's count (`beginStartCount` or `countStarts`): a reader may keep what it reads. */
+export function onPage(): boolean {
+	return starts.getStore() !== undefined;
+}
+
 export interface StartOptions {
 	cwd?: string;
 	env?: NodeJS.ProcessEnv;

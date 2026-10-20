@@ -125,6 +125,14 @@ export async function keptRead<T>(
 	}
 }
 
+/** The reading under `key` if one is kept and still inside its window; it starts no read. */
+export function peekKept<T>(key: string, now: () => number = Date.now): T | undefined {
+	const done = store().get(key)?.done;
+	if (done === undefined) return undefined;
+	const age = now() - done.at;
+	return age >= 0 && age < done.windowMs ? (done.value as T) : undefined;
+}
+
 /** Drops a kept reading, and with a prefix every key under it, at a moment it is known to be stale. */
 export function forgetKept(keyOrPrefix?: string): void {
 	const map = store();
