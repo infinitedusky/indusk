@@ -71,6 +71,7 @@ Avoids a question going ahead late after a restart. Rejected: each restart would
 
 ### Stop on every question
 Safest for correctness. Rejected: it is today's behaviour and the first expectation (runs stop less) fails. Most choices are cheap or moderate and recoverable by a follow-on.
+*Amended at close (2026-10-19):* the built default is hold for every cost (decision 4, the amendment before the build), so every question stops its session. This rejection still holds for the first expectation; the stale text is now corrected here, not the code.
 
 ### Never stop; decide everything and show a log afterwards
 Fastest. Rejected: an expensive choice (a changed look, a skipped gate) cannot be repaired by a follow-on after the fact, and the person would learn of it only after the work was built on it.
@@ -83,6 +84,7 @@ Strongest guarantee. Rejected by Sandy's decision: it would stop the flow that f
 
 ### A new answering surface for questions
 Rejected by Sandy's decision: Needs you and the decision card are where decisions are answered today; a new surface splits attention. The looks change, the place does not.
+*Amended at close (2026-10-19):* the built admin has a second answer route (`api/plans/[name]/question`) and a question-row block beside the decision card, which is hidden for recorded questions. The route is reachable and not removed; see the retrospective's audit disposition.
 
 ### One follow-on per late answer
 Rejected: a person who answers twice has changed their mind, not asked for two plans (A23).
