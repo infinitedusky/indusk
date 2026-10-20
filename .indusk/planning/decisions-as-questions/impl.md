@@ -82,6 +82,20 @@ An unattended session asks each choice the plan does not settle as a question th
 | T25 | Each place that decides a clause reports it: upheld when what it decided holds, broken naming what did not, and a failed report never fails what reported it | Build Phase 7 | Build Phase 7 | passing | unit | the signal writers for this plan's clauses; each clause's upheld signal is read from a real run at close | apps/indusk-mcp/src/lib/questions/signals.test.ts |
 | T26 | Closing the plan reads every one of its clauses upheld by a signal from a real run | Build Phase 7 | Build Phase 7 | skipped | live check | the close itself: `indusk promises confirm` refuses a clause no real run reported | manual: with the local daemon up and this build installed, in an unattended run ask one question with nothing set and answer it after its session has stopped; set cheap to a time and ask a cheap question, let it go ahead, answer it late against its recommendation; ask one whose option changes the brief with every cost set to `immediate` and see it hold; try a release with the follow-on open; then `indusk promises confirm decisions-as-questions` |
 | T27 | With cheap set to five minutes a cheap question goes ahead at five, not at four (where an answer is used); with moderate set to `immediate` a moderate question goes ahead at once and its session is not stopped, while a cheap one with cheap unset still holds; a setting that is not `hold`, a whole number of minutes or `immediate` is refused when read, naming the key | Build Phase 1 | Build Phase 1 | passing | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/deadline.test.ts |
+| T28 | With cheap set to five minutes and no admin page read at all, a cheap question a build session holds open goes ahead with its recommendation once its stored time passes; the timer is cleared when the session ends first | Phase 0 | Build Phase 8 | planned | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/due-timer.test.ts |
+| T29 | An answer to a question on a set time whose session has gone (an admin restart, a dead `claude`) is recorded, not refused, and starts the plan's run again, which is told the answer | Phase 0 | Build Phase 8 | planned | contract | clause: the-cost-sets-the-wait/a-hold-frees-the-slot | apps/indusk-admin/src/lib/question-answer.test.ts |
+| T30 | The sweep leaves a question untouched when its session says the request was already answered; when the session is gone it marks the question went-ahead as not yet told, and the next step's session is told what was done | Phase 0 | Build Phase 8 | planned | unit | clause: the-cost-sets-the-wait/the-setting-decides | apps/indusk-mcp/src/lib/questions/sweep.test.ts, apps/indusk-mcp/src/lib/questions/answer.test.ts |
+| T31 | When a step's session ends with a question on a set time still waiting, the record no longer names that session, and the plan is listed under Needs you with the question's time left | Phase 0 | Build Phase 8 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/waiting-questions.test.ts |
+| T32 | A held question answered while the machine runs `sessions.max` sessions keeps its plan under Needs you as answered and waiting to restart, and the answer's response says the restart was refused | Phase 0 | Build Phase 8 | planned | unit | clause: the-cost-sets-the-wait/a-hold-frees-the-slot, promise: sessions-are-capped | apps/indusk-mcp/src/lib/plans/waiting-questions.test.ts, apps/indusk-admin/src/lib/question-answer.test.ts |
+| T33 | A question whose recommended option is listed second is offered under Needs you and on the plan page with the recommendation as the first choice, and the plan page shows its question row, not a second decision card | Phase 0 | Build Phase 8 | planned | unit | clause: a-decision-is-a-question/asked-with-a-recommendation | apps/indusk-mcp/src/lib/plans/waiting-questions.test.ts |
+| T34 | A question that cannot be written to the plan's history ends the step as unable to continue, naming the failure; the session is never told to decide the choice itself | Phase 0 | Build Phase 8 | planned | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/lib/build/question-unkept.test.ts |
+| T35 | A step that writes no new choice reports the never-silent clause upheld even when the plan's brief, test plan or ADR quote the refused phrase; the save check and its library port both ignore the phrase inside quotes or backticks and judge only lines the step added | Phase 0 | Build Phase 8 | planned | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/lib/questions/silent.test.ts, apps/indusk-mcp/src/lib/questions/silent-parity.test.ts |
+| T36 | A saved line saying a choice was made or chosen unattended, in any of those words, needs a question reference as the original phrase does; a matching line that introduces a list needs a reference on every item of the list | Phase 0 | Build Phase 8 | planned | unit | clause: a-decision-is-a-question/never-decided-silently | apps/indusk-mcp/src/lib/questions/silent-parity.test.ts |
+| T37 | On a question that went ahead, the person can keep what was done in one click and that opens no follow-on; only a choice of another option, or words that are not what was done, opens one | Phase 0 | Build Phase 8 | planned | contract | clause: a-late-answer-opens-a-follow-on/disagreement-opens-a-plan | apps/indusk-admin/src/components/cockpit/QuestionRows.test.tsx |
+| T38 | A second late answer to the same question is recorded and rewrites the open draft follow-on's wanted choice, through the same path the admin uses; no second plan is opened | Phase 0 | Build Phase 8 | planned | unit | clause: a-late-answer-opens-a-follow-on/disagreement-opens-a-plan | apps/indusk-mcp/src/lib/questions/answer.test.ts |
+| T39 | A follow-on that has landed on the trunk no longer refuses the release though its folder is not yet archived; one whose brief cannot be parsed still refuses; a brief marked superseded still refuses; `workflow.steps.release_follow_on: false` is refused when read, naming the key | Phase 0 | Build Phase 8 | planned | unit | clause: a-release-waits-for-a-known-wrong/release-refuses | apps/indusk-mcp/src/lib/release/follow-on-refusal.test.ts |
+| T40 | `indusk release` run from a linked worktree whose branch predates the follow-on's commit still refuses, naming it: it reads the trunk's planning folder, where the follow-on is written | Phase 0 | Build Phase 8 | planned | live check | a regression guard: the release reads the folder the opener writes to | apps/indusk-mcp/src/__tests__/release-follow-on.test.ts |
+| T41 | Drawn in Chromium, an expensive question row is in the foundation's warning colour with no timer, a cheap row shows its time left, and a went-ahead row shows what was done; a row drawn otherwise fails | Phase 0 | Build Phase 8 | planned | contract | look: question-row.cheap, look: question-row.expensive, look: question-row.went-ahead | apps/indusk-admin/src/components/ui/QuestionRow.looks.test.tsx |
 
 ### Deferred Verification
 
@@ -758,6 +772,161 @@ Added before approval (2026-10-19): a plan with clauses closes only when each cl
   `apps/docs/src/guide/questions.md`: a short "Signals" section.
 
   </details>
+
+### Build Phase 8: Falsification — timed questions nobody reads, answers that are lost, and a release that waits for the wrong plans
+
+**Tier**: med — the work step's default
+
+The finished build holds on the paths a person watches, but not on the ones nobody does: a question on a set time only goes ahead when someone opens the admin, an answer to a question whose session has died is refused, a restart refused at the session limit drops the plan from Needs you, and the never-silent check both reports this plan's own description of the rule as a break and misses other wordings. On the release side, a landed follow-on keeps blocking, an unreadable one stops blocking, and running the release from a worktree reads the wrong folder. This phase fixes each, and once it closes every question reaches an outcome with or without anyone looking, every answer is kept, and the release waits for exactly the follow-ons still open.
+
+- [ ] Make a question on a set time go ahead when its time comes even if nobody opens the admin.
+  <details><summary>Technical</summary>
+
+  Today `sweepHistory` runs only inside `readWaiting` (`apps/indusk-admin/src/lib/decisions-reader.ts:105`), i.e. on a page render. An unattended build with no browser open on the admin holds a timed question's request open forever, holding its slot. Add `lib/questions/due-timer.ts`: `scheduleDue(q, now, setTimer, fire)` returning a cancel; `build-session.ts` `oneSession` calls it on a `wait` reply with `fire` running `sweepHistory` for the plan through `opts.manager.reply`, and cancels it when `session.done` resolves. The read-time sweep stays for the admin-down case. Answers T28.
+
+  </details>
+- [ ] Keep an answer to a question whose session has gone, and start the plan's run again with it.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/lib/question-answer.ts:60`: `tellSession` throws `no session … is running` (`session/manager.ts:368`) before `deps.record`, so the answer is lost with a 409. When the throw is a missing session, take the `resume` route (record, then `resume()`). In `build-session.ts`, when `session.done` resolves, re-record any question of this plan still `waiting` whose `session.id` is this session, without `session`. Answers T29 and the record half of T31.
+
+  </details>
+- [ ] Make the sweep record a go-ahead only when it acted, and tell the next step about a go-ahead no session heard.
+  <details><summary>Technical</summary>
+
+  `sweep.ts:27` swallows every `send` error and records `went-ahead`. If the error is `already answered` (the person's answer won the race), return the question unchanged. If the session is gone, record `went-ahead` with `told: false`; a successful send records `told: true`. `answer.ts` `untold` also returns `went-ahead` questions with `told === false`, and `answersNote` words those as "went ahead with your recommendation <done>". Answers T30.
+
+  </details>
+- [ ] List a plan under Needs you while any question of its waits with no session, and while an answered one waits for its run to restart.
+  <details><summary>Technical</summary>
+
+  `lib/plans/waiting.ts` `heldQuestion` matches only `dueAt === null`. Match any `waiting` question with no `session` (showing its time left when `dueAt` is set), and an `answered`, untold question of a plan with no running build or planning run (worded "answered — its run did not restart"; Build restarts it). `answerOneQuestion` returns the resume refusal's message in its response instead of swallowing it (`question-answer.ts:76`), and the admin shows it. Answers T31, T32.
+
+  </details>
+- [ ] Offer a question's recommended option first wherever it is offered, and show a recorded question as its row rather than a second decision card.
+  <details><summary>Technical</summary>
+
+  `askedOf` and `heldQuestion` in `waiting.ts` take `options[0]` as `accept`. For a question with a record (`heldQuestion`, and `askedOf` when the pending request belongs to a recorded question — pass the records in, match by `session.requestId`), `accept` is `recommended` and `alternative` the first other option. The plan page (`app/p/[project]/plan/[name]/page.tsx`, near line 204) does not draw `DecisionCard` for a wait whose request is a recorded question; `QuestionRows` already draws it. Answers T33.
+
+  </details>
+- [ ] Stop the step, rather than telling the session to decide, when a question cannot be kept.
+  <details><summary>Technical</summary>
+
+  `build-session.ts:296`: the refusal tells the session to "record the choice and its reason in the plan", which is deciding without asking. Reply with a refusal that says to stop, stop the session, and return an error naming the history failure so the run stops as `cannot-continue`. Extract the branch into a pure function so T34 does not spawn a process. Answers T34.
+
+  </details>
+- [ ] Make the never-silent check judge only what a step newly wrote, and ignore the phrase where it is quoted.
+  <details><summary>Technical</summary>
+
+  `reportSilent` (`build-session.ts`) runs `silentDecisions` over the whole plan folder, and this plan's own `brief.md:20`, `impl.md:31` and `adr.md:13` quote the phrase, so every step of this plan reports `never-decided-silently` broken and T26's close can never confirm it. Snapshot the folder's documents when the step starts and judge only added lines at its end (port `addedLines` into `silent.ts`). In both `silent.ts` and `hooks/validate-decided-unattended.js`, ignore a match inside double quotes or backticks. Keep them equal through `silent-parity.test.ts`. Answers T35.
+
+  </details>
+- [ ] Widen the check to other words for a choice made without a question, and to lists under such a line.
+  <details><summary>Technical</summary>
+
+  `DECIDED` matches one phrase; "Decisions made unattended:" (this plan's own Notes heading) and "chosen unattended" pass, as does one reference on a heading above a numbered list of several choices. Match `(decided|decision|decisions|made|chosen)` within a few words of `unattended`. A matching line ending in `:` requires `question: <id>` on each list item that follows it. Same change in the hook and `silent.ts`. The existing lines in this plan are not re-judged by the save check (it reads added lines) nor by the step report once the item above lands. Answers T36.
+
+  </details>
+- [ ] Let the person keep what was done on a question that went ahead without opening a follow-on.
+  <details><summary>Technical</summary>
+
+  `QuestionRows.tsx:80` drops the option equal to `done` from a went-ahead row, so agreeing is only possible in words, and `differs` opens a follow-on for any words not equal to the label. Add a "Keep <done>" choice that answers with the `done` label. Answers T37.
+
+  </details>
+- [ ] Accept a second late answer and rewrite the open follow-on with it.
+  <details><summary>Technical</summary>
+
+  ADR decision 8 (a second answer updates the follow-on, test-plan A23) is unreachable: `applyAnswer` (`answer.ts:17`) and `answerOneQuestion` refuse an `answered-late` question. Allow a further answer on `answered-late` (keep `answered` refused), record the new answer, and let `openFollowOnOnTrunk` update the draft (it already does when the brief is still `draft`). Answers T38.
+
+  </details>
+- [ ] Count a landed follow-on as closed and an unreadable one as open, and stop the release step from being switched off.
+  <details><summary>Technical</summary>
+
+  `follow-on-refusal.ts`: `plans land` never writes `landed` into a brief; it merges with the subject `Merge <branch>: <plan> landed` (`plans/land.ts:110`). `openFollowOns` takes a `landed(name)` predicate; the CLI passes one reading the trunk's log for that subject. A brief whose frontmatter does not parse but carries a `follow_on_of:` line counts as open with status `unreadable` (today `catch { continue }`). Drop `superseded` from `CLOSED` (the brief names landed, abandoned or archived). In `lib/checks/steps.ts`, refuse `release_follow_on: false` when read, naming the key: only the release placement is built, so `false` only switches the promise off. Answers T39.
+
+  </details>
+- [ ] Make the release read the trunk's planning folder, where follow-ons are written.
+  <details><summary>Technical</summary>
+
+  `bin/commands/release.ts:52,56` read `getPlanningDir(root)` with `root` the checkout's toplevel; the opener writes to `bookkeepingRoots(anyCheckout).trunk`. Use the trunk in both calls. Answers T40.
+
+  </details>
+- [ ] Hold the question rows' looks by what they draw, and correct the live check's row to what it checks.
+  <details><summary>Technical</summary>
+
+  T22's file (`apps/indusk-admin/src/__tests__/question-looks.test.ts`) checks approvals, stories and the lint, and renders nothing. Add `QuestionRow.looks.test.tsx` in the admin's browser project (Chromium): render each story, assert the expensive row's computed colour is the foundation's bad colour and it shows no time, the cheap row shows its time left, the went-ahead row shows `done`. Change T22's `Asserts` text to what its file checks (approvals recorded, stories present, lint clean); the by-value check against the served admin stays `indusk looks check admin` at landing. Answers T41.
+
+  </details>
+
+#### Build Phase 8 Verification
+
+- [ ] Each hypothesis above fails before its fix and passes after it, and the earlier rows of this plan still pass.
+  <details><summary>Technical</summary>
+
+  T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T41: `indusk plans tests decisions-as-questions --phase "Build Phase 8"`; T1 to T25 stay green (`indusk plans tests decisions-as-questions --landing` minus the system tier).
+
+  </details>
+- [ ] The release refuses from a linked worktree, run once here.
+  <details><summary>Technical</summary>
+
+  T40 is in the `SYSTEM` array: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/release-follow-on.test.ts`.
+
+  </details>
+
+#### Build Phase 8 Context
+
+- [ ] Add to the question rules that every question reaches an outcome without anyone looking, and that a step is told any outcome its session never heard.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/questions/CLAUDE.md` (area tier): the session holding a timed question runs its timer and an admin read is only the catch-up; a send that fails because the request was answered changes nothing; a went-ahead nobody heard is `told: false` and is told on the next step. Guard: T28 and T30 carry `clause: the-cost-sets-the-wait/the-setting-decides`.
+
+  </details>
+- [ ] Add to the hooks' rules that the never-silent check judges added lines outside quotes, and is kept equal to its library port.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/hooks/CLAUDE.md`: the wording set and the list rule live in the hook and `lib/questions/silent.ts`, changed together; guard: `silent-parity.test.ts` (T35, T36) carries `clause: a-decision-is-a-question/never-decided-silently`.
+
+  </details>
+
+#### Build Phase 8 Document
+
+- [ ] Correct the work skill's reference page, which still says an unattended build never asks.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/skills/work.md:265` says a build "does not ask" and that a question is answered with "decide on your own judgement and record why". Rewrite to match `skills/work.md`'s Unattended section: a choice is asked with `ask_decision`, cited as `question: <id>`.
+
+  </details>
+- [ ] Say in the questions guide and the release reference what the fixes change.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/questions.md`: a timed question goes ahead on time whether or not the admin is open; a went-ahead row can keep what was done; a second late answer rewrites the follow-on. `apps/docs/src/reference/cli/release.md`: a landed follow-on is closed; the step cannot be switched off; the release reads the trunk's planning folder.
+
+  </details>
+
+#### Build Phase 8 hunt record
+
+Choices this hunt made with no one to ask (`INDUSK_GATE_POLICY=auto`; the installed indusk in this session has no `ask_decision` tool, so none could be asked as a question):
+
+1. **`release_follow_on: false` is refused rather than kept as an off switch.** Reason: the brief promises the release refuses while a follow-on is open, and the move to the pull request the ADR allows is not built, so `false` can only switch the promise off. The person may prefer to keep the switch; that changes a config surface, not the brief.
+2. **`superseded` stops counting as closed.** Reason: nothing writes it into a follow-on, and the brief names landed, abandoned or archived.
+3. **T22 is corrected to what it checks, and a new row checks the looks by value in the admin's Chromium test project.** Reason: the by-value check against the served admin needs a built Storybook and a running daemon; the component test needs neither and fails when a row is drawn wrong.
+
+Every audit finding was checked against the code. All were confirmed except the two below, which no row covers and for which no failing input formed:
+
+- **The planning run's held stop is recognised by its wording** (`build-host.ts`, `ASKED_A_QUESTION`). The package writes the words and the admin matches them. No other stop reason contains them today. Fragile, but no input breaks it.
+- **The per-cost wait is machine-wide** (`session/limits.ts`). It is intended, beside `sessions.max`.
+
+Searched without a hypothesis forming:
+- **The cost and deadline rules** (`cost.ts`, `deadline.ts`): an unknown `changes` value is refused at ask (`ask.ts` `optionsOf`); an option that changes what was agreed is never due under any setting or stored deadline; a stored `null` is never re-read from settings.
+- **Repeated replies to one request**: `SessionManager.reply` refuses a second answer to the same request, so a person and the sweep cannot both reach the session (the record side is the T30 fix).
+- **Question ids**: one build or planning session per plan, so `nextQuestionId` has no concurrent caller.
+- **Landing**: `plans/land.ts` reads no question; T16 and T18 hold.
+- **The dead-draft sweep**: `isFollowOn` reads the frontmatter as lines, so an unparseable follow-on is still kept.
+
+Not investigated, with reasons:
+- **Workbench layouts for the release and the opener**: both resolve the trunk through `bookkeepingRoots`, and the T40 fix makes them share it. A workbench run of the release was not traced, because no workbench project uses follow-ons yet.
+- **How long `claude -p` keeps a permission request open**: whether a very long timed wait outlives the CLI's own limits can only be learned from a real run. T26's procedure covers a timed question.
+- **The follow-on name colliding with an unrelated draft named `<plan>-q-<n>`**: the opener would overwrite it, but a hand-made plan with that name is improbable. Not authored.
 
 ## Files Affected
 
