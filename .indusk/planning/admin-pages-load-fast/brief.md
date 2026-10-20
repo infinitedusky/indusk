@@ -55,14 +55,15 @@ None.
 
 ## Looks
 
-Amended 2026-10-20 after the audit (the person's answer to q-5): two things on a page change besides how fast it arrives.
+Amended 2026-10-20 after the audit: two things on a page change besides how fast it arrives. Paging the scorecards (the person's answer to q-5) was cut from this plan on 2026-10-20 to close it now; it moves to the follow-on `scorecards-are-paged`.
 
 ### This plan makes
 
-1. **`scorecards.paged`**. The scorecards page shows 25 entries at a time, newest first, with a header reading "N scorecards" and controls to move to older and newer pages, so every scorecard in the log can still be reached. (Built in Build Phase 3 as "the latest 100" with no way to reach older ones; this replaces that. Not yet drawn: the mockup is drawn and approved before re-approval.)
+None.
 
 ### Not drawn
 
+- **The scorecards page shows the latest 100.** The page draws the newest 100 scorecards and its header reads "latest 100 of N"; older ones stay in the log and cannot be reached from the page until `scorecards-are-paged` pages them 25 at a time. Only the header's words change, so this has no mockup; it is listed so the person approves it or sends it back.
 - **How fresh the counts are.** The red number of broken promises in the nav, a promise's own health, and the Looks page's mockups are shown from the last reading, up to 60 seconds old, while a newer one is read behind it; a promise that breaks can take up to a minute to turn the count red. Nothing is drawn differently, so this has no mockup; it is listed so the person approves it or sends it back.
 
 ## Depends On
