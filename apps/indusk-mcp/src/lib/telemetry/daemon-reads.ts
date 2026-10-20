@@ -16,6 +16,7 @@ import {
 import { join } from "node:path";
 import { acquireLock, acquireLockAsync } from "../agents/lock.js";
 import { type PsRow, psAll } from "../process-identity.js";
+import { startProgram } from "../start-program.js";
 import { addressFilePath, readAddress, type StoredAddress } from "./daemon-address.js";
 import { daemonConfigPath, homeKind, realTempRoots } from "./daemon-process.js";
 import { type Report, sendDaemonReports } from "./daemon-reports.js";
@@ -96,6 +97,46 @@ function lsofOrNull(args: string[]): string | null {
 	const r = spawnSync("lsof", ["-nP", ...args], { encoding: "utf-8", maxBuffer: 8 * 1024 * 1024 });
 	if ((r.error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") return null;
 	return r.stdout ?? "";
+}
+
+/**
+ * `lsofOrNull` without stopping the server (decision 11): `lsof`'s standard output, `null` when
+ * it is not on the PATH. It exits 1 when it finds nothing, which is an answer; any other
+ * failure, including no answer in time, reads as nothing found.
+ */
+export async function lsofOrNullAsync(args: string[]): Promise<string | null> {
+	try {
+		return await startProgram("lsof", ["-nP", ...args], { maxBuffer: 8 * 1024 * 1024 });
+	} catch (e) {
+		const failed = e as { code?: unknown; stdout?: unknown };
+		if (failed.code === "ENOENT") return null;
+		return typeof failed.stdout === "string" ? failed.stdout : "";
+	}
+}
+
+/** `holders` without stopping the server: who listens on each port, from a process table already read. */
+export async function holdersAsync(
+	ports: number[],
+	rows: readonly PsRow[],
+): Promise<Record<number, { pid: number; command: string } | null>> {
+	const entries = await Promise.all(
+		ports.map(async (port) => {
+			const out = (await lsofOrNullAsync([`-iTCP:${port}`, "-sTCP:LISTEN", "-Fp"])) ?? "";
+			const pid = Number.parseInt(
+				out
+					.split("\n")
+					.find((l) => l.startsWith("p"))
+					?.slice(1) ?? "",
+				10,
+			);
+			const command = rows.find((r) => r.pid === pid)?.command;
+			return [
+				port,
+				Number.isInteger(pid) && command !== undefined ? { pid, command } : null,
+			] as const;
+		}),
+	);
+	return Object.fromEntries(entries);
 }
 
 function lsof(args: string[]): string {

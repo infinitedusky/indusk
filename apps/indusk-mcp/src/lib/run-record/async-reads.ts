@@ -1,7 +1,6 @@
-import { AsyncLocalStorage } from "node:async_hooks";
-import { execFile } from "node:child_process";
 import { getTrunkBranches } from "../config.js";
 import { isAlive, type ProcessDeps, type PsRow, parsePsAll } from "../process-identity.js";
+import { type Exec, type StartOptions, startProgram } from "../start-program.js";
 import { pickTrunk } from "../trunk-branch.js";
 import { declaredRepoDirs, isWorkbench } from "../worktree/repos.js";
 import { type Kept, type KeptDeps, keptRead } from "./kept-reads.js";
@@ -24,82 +23,6 @@ import {
  * clause: admin-pages-load-fast/one-read-per-page
  */
 
-/** A read that does not answer in this long is abandoned, and its program killed. */
-export const READ_TIMEOUT_MS = 3000;
-
-export interface ExecOptions {
-	cwd?: string;
-	env?: NodeJS.ProcessEnv;
-	maxBuffer?: number;
-	timeout: number;
-	killSignal: NodeJS.Signals;
-}
-/** Starts a program and gives its standard output; the input that lets a test hand in its own. */
-export type Exec = (file: string, args: string[], options: ExecOptions) => Promise<string>;
-
-const realExec: Exec = (file, args, options) =>
-	new Promise((resolve, reject) => {
-		execFile(file, args, { ...options, encoding: "utf-8" }, (error, stdout) =>
-			error ? reject(error) : resolve(stdout),
-		);
-	});
-
-/** The starts a request has made; `countStarts` opens one around a page. */
-const starts = new AsyncLocalStorage<{ count: number }>();
-
-/** Runs `fn` and reports how many programs `startProgram` started inside it, awaited or not. */
-export async function countStarts<T>(fn: () => Promise<T>): Promise<{ result: T; starts: number }> {
-	const counter = { count: 0 };
-	const result = await starts.run(counter, fn);
-	return { result, starts: counter.count };
-}
-
-export interface StartOptions {
-	cwd?: string;
-	env?: NodeJS.ProcessEnv;
-	maxBuffer?: number;
-	timeoutMs?: number;
-	exec?: Exec;
-}
-
-/**
- * The one way a page's reads start a program: asynchronous, counted into the request's count,
- * killed and rejected at the time limit even if the program never answers.
- */
-export function startProgram(
-	file: string,
-	args: string[],
-	options: StartOptions = {},
-): Promise<string> {
-	const store = starts.getStore();
-	if (store) store.count += 1;
-	const timeout = options.timeoutMs ?? READ_TIMEOUT_MS;
-	const exec = options.exec ?? realExec;
-	return new Promise((resolve, reject) => {
-		const timer = setTimeout(
-			() => reject(new Error(`${file} ${args[0] ?? ""} did not answer in ${timeout} ms`)),
-			timeout,
-		);
-		timer.unref?.();
-		exec(file, args, {
-			...(options.cwd === undefined ? {} : { cwd: options.cwd }),
-			...(options.env === undefined ? {} : { env: options.env }),
-			...(options.maxBuffer === undefined ? {} : { maxBuffer: options.maxBuffer }),
-			timeout,
-			killSignal: "SIGKILL",
-		}).then(
-			(out) => {
-				clearTimeout(timer);
-				resolve(out);
-			},
-			(error) => {
-				clearTimeout(timer);
-				reject(error);
-			},
-		);
-	});
-}
-
 /** What every reader here takes: the program runner and the clock are inputs. */
 export interface ReadDeps extends KeptDeps {
 	exec?: Exec;
@@ -108,6 +31,8 @@ const startIn = (deps: ReadDeps, cwd?: string): StartOptions => ({
 	...(cwd === undefined ? {} : { cwd }),
 	...(deps.exec === undefined ? {} : { exec: deps.exec }),
 });
+
+export { countStarts, type Exec, READ_TIMEOUT_MS, startProgram } from "../start-program.js";
 
 // ── the process list ────────────────────────────────────────────────────────────────────────────
 

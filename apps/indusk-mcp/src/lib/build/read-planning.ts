@@ -11,6 +11,7 @@ import { unapprovedMockups } from "../plans/approved-brief.js";
 import { planReviewAnswered, planReviewAnswers, planReviewState } from "../plans/plan-review.js";
 import { type ContractResult, checkPlanContract } from "../promises/contract.js";
 import { findPlanFolder } from "../promises/plan-folder.js";
+import { startProgram } from "../start-program.js";
 import { requiredDocuments } from "../workflow-types.js";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import { GATE_POLICY_FOR_BUILDS } from "./build-session.js";
@@ -100,6 +101,34 @@ export const realPlanningReads: PlanningReadDeps = {
 	unapprovedLooks: unapprovedMockups,
 	briefChanges: briefChangesSinceAcceptance,
 };
+
+/**
+ * `runHook` without stopping the server (admin-pages-load-fast, decision 11): the same program,
+ * the same input and environment, started asynchronously and counted. A non-zero exit is an
+ * answer (the hook refusing), not a failure; only a program that could not be run sets `error`.
+ */
+export async function runImplHookAsync(
+	input: Parameters<PlanningReadDeps["runHook"]>[0],
+): Promise<ReturnType<PlanningReadDeps["runHook"]>> {
+	try {
+		await startProgram(process.execPath, [implHookPath()], {
+			input: JSON.stringify(input),
+			cwd: input.cwd,
+			timeoutMs: 30_000,
+			env: { ...process.env, ...GATE_POLICY_FOR_BUILDS, INDUSK_SKIP_UPDATE_CHECK: "1" },
+		});
+		return { status: 0, stderr: "", error: undefined, signal: null };
+	} catch (e) {
+		const failed = e as { code?: unknown; stderr?: unknown; signal?: unknown; message?: string };
+		const exited = typeof failed.code === "number";
+		return {
+			status: exited ? (failed.code as number) : null,
+			stderr: typeof failed.stderr === "string" ? failed.stderr : "",
+			error: exited ? undefined : failed.message,
+			signal: typeof failed.signal === "string" ? (failed.signal as NodeJS.Signals) : null,
+		};
+	}
+}
 
 const ABSENT: PlanningDocument = { exists: false, ok: false };
 

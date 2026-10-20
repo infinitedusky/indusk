@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepoWithCommit } from "../../__tests__/helpers/test-git.js";
 import { realProcessReads } from "../process-identity.js";
+import { gitCommonDirOf, gitCommonDirOfAsync } from "../worktree/layout.js";
 import { processReadsFromTable, readMergeSubjects, readProcessTable } from "./async-reads.js";
 import { resetKept } from "./kept-reads.js";
 import { realGitReads } from "./landed.js";
@@ -57,5 +58,16 @@ describe("A16 — asynchronous readers equal the synchronous ones", () => {
 		git(dir, ["merge", "-q", "--no-ff", "-m", "Merge plan/a: a landed", "plan/a"]);
 		expect(await readMergeSubjects(dir, "main")).toEqual(realGitReads(dir).mergeSubjects("main"));
 		expect(await readMergeSubjects(dir, "main")).toEqual(["Merge plan/a: a landed"]);
+	});
+
+	it("A16 the git common directory read asynchronously equals the synchronous read, and a non-repository reads null", async () => {
+		initRepoWithCommit(dir);
+		expect(await gitCommonDirOfAsync(dir)).toBe(gitCommonDirOf(dir));
+		const plain = mkdtempSync(join(tmpdir(), "not-a-repo-"));
+		try {
+			expect(await gitCommonDirOfAsync(plain)).toBeNull();
+		} finally {
+			rmSync(plain, { recursive: true, force: true });
+		}
 	});
 });

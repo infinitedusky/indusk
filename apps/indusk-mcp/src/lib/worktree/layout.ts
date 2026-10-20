@@ -28,6 +28,7 @@ import {
 	symlinkSync,
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import { startProgram } from "../start-program.js";
 
 /**
  * Root entries that are never worktrees.
@@ -89,6 +90,22 @@ export function gitCommonDirOf(path: string): string | null {
 	);
 	if (r.status !== 0 || !r.stdout) return null;
 	return r.stdout.trim();
+}
+
+/** `gitCommonDirOf` without stopping the server: the admin's looks page reads it (decision 11). */
+export async function gitCommonDirOfAsync(path: string): Promise<string | null> {
+	try {
+		const out = await startProgram("git", [
+			"-C",
+			path,
+			"rev-parse",
+			"--path-format=absolute",
+			"--git-common-dir",
+		]);
+		return out.trim() || null;
+	} catch {
+		return null;
+	}
 }
 
 /**
