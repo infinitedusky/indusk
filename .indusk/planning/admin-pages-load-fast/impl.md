@@ -456,12 +456,12 @@ This phase is the check against the real running admin that the three pages name
   Recorded: after a fifth round every page route is under one second, fresh and kept (numbers in Notes, "Recorded result (A1), fifth round"). The person chose to accept this result and improve it in a later plan.
 
   </details>
-- [ ] Confirm the live refresh reuses the kept reading on the running admin.
+- [x] Confirm the live refresh reuses the kept reading on the running admin. (closed on unit proof — question: q-4, the person answered "Close on unit proof")
   <details><summary>Technical</summary>
 
   With the plan page open for 30 seconds, read the page-reads reports the daemon holds (`indusk promises status admin-pages-load-fast`, or the clause signals it reads): the counts for each load are at most 1 and a refresh inside the window reads "reused".
 
-  blocker: not confirmed. The admin that was measured was this branch's own build on a spare port with `INDUSK_SKIP_TELEMETRY_AUTOSTART=1` (the machine's daemon serves the main checkout's older code, which has no page-reads report), and the local Jaeger answers HTTP 500 to the thirty-day promise queries, so the reports could not be read back. Reuse inside the window is proved by the unit rows A7, A9 and A12; the live reading waits for a page under one second and a landed build.
+  Closed on unit proof (question: q-4): the live reading was not taken. The admin that was measured was this branch's own build on a spare port with `INDUSK_SKIP_TELEMETRY_AUTOSTART=1` (the machine's daemon serves the main checkout's older code, which has no page-reads report), and the local Jaeger answers HTTP 500 to the thirty-day promise queries, so the reports could not be read back. Reuse inside the window is proved by the unit rows A7, A9 and A12; the live reading waits for a page under one second and a landed build.
 
   </details>
 
