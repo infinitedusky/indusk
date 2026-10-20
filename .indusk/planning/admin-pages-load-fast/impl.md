@@ -156,7 +156,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
   A18 (`decisions-reader.approval.test.ts`) and A19 (`decisions.test.ts`) exist and pass today; run them and record that they pass. They are listed under Regression Guards: no red window, and the build must keep them green.
 
   </details>
-- [ ] Make sure no test written here fails only because a file it loads is missing.
+- [x] Make sure no test written here fails only because a file it loads is missing. (checked: every failure is an assertion about a count, a lag or a named start; none says "Cannot find module")
   <details><summary>Technical</summary>
 
   Run `pnpm exec vitest run apps/indusk-admin/src/lib/page-reads.test.ts apps/indusk-admin/src/__tests__/no-sync-starts.contract.test.ts` from the repo root. Each failure message must be an assertion about counts or about a named synchronous start, never "Cannot find module".
