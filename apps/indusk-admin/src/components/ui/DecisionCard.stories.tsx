@@ -43,6 +43,22 @@ export const Working: Story = {
     ),
   },
 };
+/** A plan merged to main: complete, with what is still to be confirmed (a-run-can-be-trusted). */
+export const Complete: Story = {
+  args: {
+    tone: "info",
+    who: { label: "Complete", state: "ok" },
+    title: "Complete — merged to main",
+    children: (
+      <ul className="grid list-none gap-2 text-md leading-4 text-ink-soft">
+        <li className="text-ok">✓ main-is-merged-first — clause signal</li>
+        <li className="text-ok">✓ the-person-never-merges — clause signal</li>
+        <li className="text-idle">○ a-conflict-refuses — clause signal</li>
+        <li className="text-idle">○ L2 — live check</li>
+      </ul>
+    ),
+  },
+};
 export const Released: Story = {
   args: {
     tone: "info",

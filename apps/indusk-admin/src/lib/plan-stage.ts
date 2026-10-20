@@ -24,6 +24,15 @@ export function navMarkOf(
   const waitingAt = waiting?.[plan.name];
   if (waitingAt !== undefined) return { state: "needs", stage: waitingAt };
   if (released) return { state: "released", stage: "Released" };
+  // The package's one reader of what a plan reads as (a-run-can-be-trusted): a plan on main is
+  // complete, one a process works on is working, one whose run stopped says so.
+  const said = plan.situation?.situation;
+  if (said) {
+    if (said.kind === "complete")
+      return { state: "released", stage: said.text };
+    if (said.running) return { state: "working", stage: said.text };
+    if (said.kind === "stopped") return { state: "idle", stage: said.text };
+  }
   const step = stepAt(snapshotOf(plan));
   if (step)
     return {

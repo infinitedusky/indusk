@@ -191,3 +191,57 @@ describe("phase-summaries A7 — a task's folded detail reaches the page whole",
 		expect(phase.summary).toBe("This phase makes a placed component put its words in place.");
 	});
 });
+
+/**
+ * a-run-can-be-trusted, Build Phase 7 (found by hand 2026-10-19): a phase's Forward
+ * Intelligence section ended only at a gate heading, so the next phase's whole task list was
+ * read as the previous phase's notes and every build phase parsed with no implementation items.
+ */
+describe("a phase's Forward Intelligence ends where the next phase begins", () => {
+	const impl = [
+		"---",
+		'title: "p — Impl"',
+		"status: in-progress",
+		"---",
+		"",
+		"### Build Phase 1: first",
+		"",
+		"- [x] Do the first thing.",
+		"",
+		"#### Build Phase 1 Verification",
+		"",
+		"- [x] It holds.",
+		"",
+		"#### Build Phase 1 Forward Intelligence",
+		"",
+		"- **Decision**: one.",
+		"",
+		"### Build Phase 2: second",
+		"",
+		"What the second phase does.",
+		"",
+		"- [ ] Do the second thing.",
+		"- [ ] Do the third thing.",
+		"",
+		"#### Build Phase 2 Verification",
+		"",
+		"- [ ] It holds too.",
+		"",
+		"#### Build Phase 2 Forward Intelligence",
+		"",
+		"- **Decision**: two.",
+		"",
+	].join("\n");
+
+	it("parses every phase's tasks, and each phase keeps its own forward intelligence", () => {
+		const parsed = parseImplString(impl);
+		const [one, two] = parsed.phases;
+		const tasks = (p: (typeof parsed.phases)[number]) =>
+			p.gates.filter((g) => g.type === "implementation").flatMap((g) => g.items.map((i) => i.text));
+		expect(tasks(one)).toEqual(["Do the first thing."]);
+		expect(tasks(two)).toEqual(["Do the second thing.", "Do the third thing."]);
+		expect(one.forwardIntelligence).toBe("- **Decision**: one.");
+		expect(two.forwardIntelligence).toBe("- **Decision**: two.");
+		expect(two.summary).toBe("What the second phase does.");
+	});
+});

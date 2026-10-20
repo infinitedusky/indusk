@@ -5,7 +5,7 @@ import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { clauseTestRunner, localSignalReader } from "../../lib/promises/closing-inputs.js";
 import { markClosing } from "../../lib/promises/closing-signal.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
-import { confirmPlan } from "../../lib/promises/confirm.js";
+import { confirmPlan, reportSignalRules } from "../../lib/promises/confirm.js";
 import {
 	type ContractRefusal,
 	checkAllContracts,
@@ -230,7 +230,7 @@ export async function promisesWatch(
 export async function promisesContract(
 	projectRoot: string,
 	plan: string | undefined,
-	opts: { all?: boolean; implStdin?: boolean } = {},
+	opts: { all?: boolean; implStdin?: boolean; clauseSignalsOnly?: boolean } = {},
 ): Promise<void> {
 	const refuse = (refusals: ContractRefusal[]) => {
 		for (const r of refusals) console.error(`${r.file}: ${r.message}`);
@@ -269,7 +269,10 @@ export async function promisesContract(
 	// has not finished (an impl over the ~64 KB pipe buffer arrives in parts),
 	// so a large impl was refused at random.
 	const implText = opts.implStdin ? await text(process.stdin) : undefined;
-	const result = checkPlanContract(projectRoot, plan, implText === undefined ? {} : { implText });
+	const result = checkPlanContract(projectRoot, plan, {
+		...(implText === undefined ? {} : { implText }),
+		...(opts.clauseSignalsOnly ? { clauseSignalsOnly: true } : {}),
+	});
 	if (!result.ok) {
 		refuse(result.refusals);
 		return;
@@ -311,6 +314,7 @@ export async function promisesConfirm(
 		readSignals: localSignalReader(projectRoot),
 	});
 	await markClosing(projectRoot, plan, result);
+	await reportSignalRules(projectRoot, plan, result);
 	if (!result.ok) {
 		for (const r of result.refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(

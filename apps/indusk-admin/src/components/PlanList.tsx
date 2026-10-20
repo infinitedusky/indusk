@@ -338,7 +338,16 @@ function PlanItem({
         worktree={plan.worktree ? <PlanWorktreeMark plan={plan} /> : undefined}
         stage={
           <>
-            {mark.stage}
+            <span
+              data-testid="plan-situation"
+              title={
+                plan.situation?.next
+                  ? `Next, ${plan.situation.next.by === "person" ? "you" : plan.situation.next.by === "event" ? "an event" : "the system"}: ${plan.situation.next.text}`
+                  : undefined
+              }
+            >
+              {mark.stage}
+            </span>
             {plan.malformed && (
               <Badge variant="blocked" data-testid={`malformed-${plan.name}`}>
                 malformed

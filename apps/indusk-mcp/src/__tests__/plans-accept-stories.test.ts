@@ -10,8 +10,10 @@ import {
 	briefOf,
 	briefWorkbench,
 	PLAN,
+	PLAN_DIR,
 } from "./helpers/brief-app.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { approveWithReview } from "./helpers/plan-review-fixture.js";
 import { commitFile, git } from "./helpers/versioned-workbench.js";
 
 /**
@@ -93,7 +95,7 @@ describe.skipIf(SHOULD_SKIP)("a new component ends its plan with a story", () =>
 		app.writePlan({ brief: "looks-listed", impl: "internal" });
 		write(`${MOCKUPS}/screens/home.full.html`, HOME_FULL_INLINE);
 		for (const look of ["home.full", "detail.default", "badge.ok"]) await approveMockup(look);
-		const approved = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const approved = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 		expect(approved.code, out(approved)).toBe(0);
 
 		const refused = runCli(app.trunk, ["plans", "accept", PLAN]);
@@ -133,7 +135,7 @@ describe.skipIf(SHOULD_SKIP)("a workbench plan is accepted under the same looks 
 		try {
 			// An interface change against a brief that lists no look.
 			bench.writePlan({ brief: "none", impl: "internal" });
-			const approved = runCli(bench.root, ["plans", "approve", PLAN]);
+			const approved = approveWithReview(bench.root, PLAN, join(bench.root, PLAN_DIR));
 			expect(approved.code, out(approved)).toBe(0);
 			commitFile(bench.code, "src/Card.jsx", "export const Card = 2;\n", "the build");
 

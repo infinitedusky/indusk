@@ -9,6 +9,7 @@ import {
 	type PlanLifecycleProject,
 	planLifecycleProject,
 } from "./helpers/plan-lifecycle-fixture.js";
+import { approveWithReview } from "./helpers/plan-review-fixture.js";
 import { writePromise } from "./helpers/promises-fixture.js";
 import { git } from "./helpers/test-git.js";
 
@@ -55,7 +56,7 @@ function approvedAndBuilt(): void {
 		},
 		"plan documents",
 	);
-	const approve = runCli(p.trunk, ["plans", "approve", PLAN]);
+	const approve = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 	expect(approve.code, `${approve.stdout}\n${approve.stderr}`).toBe(0);
 
 	const built = `${implText(PLAN, { rows: [{ state: "passing" }] })}\n### Build Phase 2: ${FALSIFICATION}\n\n- [x] read the expiry from a monotonic clock\n\n### Build Phase 3: ${CLEANUP}\n\n- [x] fold the two clocks into one\n`;

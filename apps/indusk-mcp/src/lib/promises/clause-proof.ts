@@ -52,6 +52,8 @@ export interface HalfResult {
 	refusals: string[];
 	checked: string[];
 	refused: string[];
+	/** The signal half's `promise/clause` keys that have reported nothing at all (not those that reported broken). */
+	noSignal?: string[];
 }
 
 /** The clauses a signal reports and a test proves: splits and limits, never a resting clause. */
@@ -152,6 +154,7 @@ export async function clauseSignalHalf(
 	const refusals: string[] = [];
 	const checked: string[] = [];
 	const refused: string[] = [];
+	const noSignal: string[] = [];
 	for (const { promise } of held) {
 		const clauses = provableClauses(promise);
 		if (clauses.length === 0) continue;
@@ -175,6 +178,7 @@ export async function clauseSignalHalf(
 			const standing = clauseStanding(c, { reports, heartbeatOk: read.heartbeatOk });
 			if (standing === "holding") continue;
 			refused.push(key(promise, c.name));
+			if (standing !== "broken") noSignal.push(key(promise, c.name));
 			refusals.push(
 				standing === "broken"
 					? `${key(promise, c.name)}: signal — its signal reports broken; the clause is not upheld`
@@ -182,7 +186,7 @@ export async function clauseSignalHalf(
 			);
 		}
 	}
-	return { refusals, checked, refused };
+	return { refusals, checked, refused, noSignal };
 }
 
 /** Whether the plan's brief opts in to clauses (`clauses: required`): its promises close on their tests run now and their signals. */

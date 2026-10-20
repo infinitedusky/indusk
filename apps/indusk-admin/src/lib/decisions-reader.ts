@@ -9,6 +9,9 @@ import {
   type Waiting,
 } from "@infinitedusky/indusk-mcp/plans/waiting";
 import { buildState, planningState } from "./build-host";
+
+export { withSituations } from "./plan-situation";
+
 import { snapshotOf } from "./plan-snapshot";
 import type { Plan } from "./planning-reader";
 import { sessionManager } from "./session-host";

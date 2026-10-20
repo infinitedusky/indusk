@@ -1,6 +1,7 @@
 // promise: a-brief-is-accepted-on-current-main
 // clause: a-brief-is-accepted-on-current-main/main-is-merged-first
 // clause: a-brief-is-accepted-on-current-main/a-conflict-refuses
+// clause: a-plan-with-clauses-carries-its-signals/the-two-landed-plans-report
 // promise: an-accepted-brief-is-planned-unasked
 
 import { spawnSync } from "node:child_process";
@@ -205,6 +206,67 @@ function conflict(): void {
   p.commit(wt, { "docs/notes.md": "a\nmine\nc\n" }, "mine");
   p.commit(trunk, { "docs/notes.md": "a\ntheirs\nc\n" }, "theirs");
 }
+
+/** A tracer that keeps each span's attributes, as the package's capture tracer does. */
+function captured(): {
+  tracer: { startSpan: () => unknown };
+  spans: Array<Record<string, unknown>>;
+} {
+  const spans: Array<Record<string, unknown>> = [];
+  return {
+    spans,
+    tracer: {
+      startSpan: () => {
+        const attrs: Record<string, unknown> = {};
+        spans.push(attrs);
+        return {
+          setAttribute: (k: string, v: unknown) => {
+            attrs[k] = v;
+          },
+          addEvent: () => {},
+          end: () => {},
+        };
+      },
+    },
+  };
+}
+const outcomeOf = (spans: Array<Record<string, unknown>>, clause: string) =>
+  spans.find((s) => s["indusk.clause"] === clause)?.["indusk.promise.outcome"];
+
+describe("the planning start reports the clauses of a brief accepted on current main", () => {
+  // a-run-can-be-trusted A47, second half: the admin's planning start reports through the
+  // same function the command line does, so each lane's span is read here.
+  it("a branch behind main reports main-is-merged-first and the-person-never-merges upheld", async () => {
+    p.commit(trunk, { "docs/from-main.md": "main\n" }, "main moves");
+    const { tracer, spans } = captured();
+    await startPlanning(PROJECT, PLAN, {
+      tracer: tracer as unknown as NonNullable<
+        Parameters<typeof startPlanning>[2]
+      >["tracer"],
+    });
+    expect(outcomeOf(spans, "main-is-merged-first")).toBe("upheld");
+    expect(outcomeOf(spans, "the-person-never-merges")).toBe("upheld");
+    expect(
+      spans.every(
+        (s) => s["indusk.promise"] === "a-brief-is-accepted-on-current-main",
+      ),
+    ).toBe(true);
+  });
+
+  it("a conflicting planning start reports a-conflict-refuses upheld, the branch as it was", async () => {
+    conflict();
+    const { tracer, spans } = captured();
+    await expect(
+      startPlanning(PROJECT, PLAN, {
+        tracer: tracer as unknown as NonNullable<
+          Parameters<typeof startPlanning>[2]
+        >["tracer"],
+      }),
+    ).rejects.toThrow(/docs\/notes\.md/);
+    expect(outcomeOf(spans, "a-conflict-refuses")).toBe("upheld");
+    expect(outcomeOf(spans, "main-is-merged-first")).toBeUndefined();
+  });
+});
 
 describe("the planning start brings main in", () => {
   it("A7: a brief accepted by hand on a branch behind main is planned in a worktree holding main's newest commit", async () => {

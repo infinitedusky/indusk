@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { briefText, implText } from "./helpers/plan-fixture.js";
+import { approveWithReview } from "./helpers/plan-review-fixture.js";
 import { writePromise } from "./helpers/promises-fixture.js";
 import {
 	commitFile,
@@ -122,7 +123,7 @@ describe.skipIf(SHOULD_SKIP).each(LAYOUTS)("a plan in a workbench — %s", (_lab
 		);
 
 		// A11: approve checks the brief and marks it approved at the root; nothing merges.
-		const approve = runCli(wb.root, ["plans", "approve", PLAN]);
+		const approve = approveWithReview(wb.root, PLAN, planDir(wb));
 		expect(approve.code, out(approve)).toBe(0);
 		const impl = matter(git(wb.root, ["show", `HEAD:.indusk/planning/${PLAN}/impl.md`]));
 		expect(impl.data.status).toBe("approved");
@@ -173,7 +174,7 @@ describe.skipIf(SHOULD_SKIP).each(LAYOUTS)("a plan in a workbench — %s", (_lab
 		writeFileSync(join(planDir(wb), "test-plan.md"), "# Test Plan\n");
 		const approvedImpl = implText(PLAN, { status: "draft", rows: [{ state: "planned" }] });
 		writeFileSync(join(planDir(wb), "impl.md"), approvedImpl);
-		const approve = runCli(wb.root, ["plans", "approve", PLAN]);
+		const approve = approveWithReview(wb.root, PLAN, planDir(wb));
 		expect(approve.code, out(approve)).toBe(0);
 		const approvedSha = git(wb.root, ["rev-parse", "HEAD"]);
 
@@ -210,7 +211,7 @@ describe.skipIf(SHOULD_SKIP).each(LAYOUTS)("a plan in a workbench — %s", (_lab
 			join(planDir(wb), "impl.md"),
 			implText(PLAN, { status: "draft", rows: [{ state: "planned" }] }),
 		);
-		const r = runCli(wb.root, ["plans", "approve", PLAN]);
+		const r = approveWithReview(wb.root, PLAN, planDir(wb));
 		expect(r.code).not.toBe(0);
 		expect(out(r)).toContain(NAME);
 		expect(matter(readFileSync(join(planDir(wb), "impl.md"), "utf-8")).data.status).toBe("draft");
@@ -262,7 +263,7 @@ describe.skipIf(SHOULD_SKIP)("a plan in a workbench whose repo works from a base
 			join(planDir(wb), "impl.md"),
 			implText(PLAN, { status: "draft", rows: [{ state: "planned" }] }),
 		);
-		const approve = runCli(wb.root, ["plans", "approve", PLAN]);
+		const approve = approveWithReview(wb.root, PLAN, planDir(wb));
 		expect(approve.code, out(approve)).toBe(0);
 		commitFile(codeRoot(wb), "src/seat.ts", "export const seat = 1;\n", "the build");
 		expect(runCli(wb.root, ["plans", "accept", PLAN]).code).toBe(0);

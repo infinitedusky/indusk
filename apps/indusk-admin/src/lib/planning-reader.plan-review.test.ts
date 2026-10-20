@@ -2,6 +2,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { planDocumentsHash } from "@infinitedusky/indusk-mcp/plans/plan-review";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { snapshotOf } from "./plan-snapshot";
 import { readActivePlans } from "./planning-reader";
@@ -10,7 +11,9 @@ import { readActivePlans } from "./planning-reader";
  * approval-waits-for-the-planning-run A10: the plan's page reader, on a real
  * plan folder, hands the snapshot the state of its plan review: missing,
  * unanswered or answered. The reading is the package's; this proves the admin
- * asks it for each plan it reads.
+ * asks it for each plan it reads. a-run-can-be-trusted (Decision 11): the review
+ * records the hash of the documents it read (`read:`), and one written for other
+ * documents reads stale.
  */
 
 const QUESTIONS = [
@@ -23,8 +26,16 @@ const QUESTIONS = [
 let project: string;
 const planDir = () => join(project, ".indusk/planning/p");
 
-const review = (answered: boolean) =>
+/** A review; `read` defaults to the hash of the plan's documents as they stand. */
+const review = (
+  answered: boolean,
+  read: string = planDocumentsHash(planDir()),
+) =>
   [
+    "---",
+    `read: ${read}`,
+    "---",
+    "",
     "# Plan review",
     "",
     ...QUESTIONS.flatMap((q, i) => [
@@ -72,5 +83,13 @@ describe("A10 — a plan read from its folder carries its plan review's state", 
   it("A10 every question's section and every finding answered reads answered", async () => {
     writeFileSync(join(planDir(), "plan-review.md"), review(true));
     expect(await planReviewOf()).toBe("answered");
+  });
+
+  it("a-run-can-be-trusted A50: an answered review written for other documents reads stale", async () => {
+    writeFileSync(
+      join(planDir(), "plan-review.md"),
+      review(true, "e".repeat(64)),
+    );
+    expect(await planReviewOf()).toBe("stale");
   });
 });

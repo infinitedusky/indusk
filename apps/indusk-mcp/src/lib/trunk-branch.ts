@@ -24,3 +24,19 @@ export async function currentTrunkBranch(projectRoot: string): Promise<TrunkBran
 	const allowed = getTrunkBranches(projectRoot);
 	return { branch, allowed, onTrunk: allowed.includes(branch) };
 }
+
+/**
+ * Which branch is the trunk when the question is what landed, not where the checkout is: the
+ * checked-out branch when it is one of the trunk branches, else the first trunk branch that
+ * exists, else null. A root checkout on another branch (or detached) still has a trunk, and
+ * what landed is read from it, never from whatever the checkout is on (a-run-can-be-trusted
+ * A94). Pure: the caller reads the branch and whether each exists.
+ */
+export function pickTrunk(
+	current: string,
+	allowed: readonly string[],
+	exists: (branch: string) => boolean,
+): string | null {
+	if (current !== "" && allowed.includes(current)) return current;
+	return allowed.find((b) => exists(b)) ?? null;
+}

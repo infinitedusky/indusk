@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { buildState, startBuild } from "@/lib/build-host";
+import { buildView, startBuild } from "@/lib/build-host";
 import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
 import { ownsSession } from "@/lib/session-owner";
 
@@ -7,14 +7,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** What the plan's build is doing: `?project=&plan=` (admin-plan-authoring A11–A14). */
-export function GET(request: NextRequest): Response {
+export async function GET(request: NextRequest): Promise<Response> {
   const refused = adminOnly(request);
   if (refused) return refused;
   const project = request.nextUrl.searchParams.get("project") ?? "";
   const plan = request.nextUrl.searchParams.get("plan") ?? "";
   const session = sessionManager().forPlan(project, plan, "build");
   return Response.json({
-    build: buildState(project, plan),
+    ...(await buildView(project, plan)),
     sessionId: ownsSession(session, project, plan, "build") ? session.id : null,
   });
 }

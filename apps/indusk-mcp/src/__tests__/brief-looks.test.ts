@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseBriefContract } from "../lib/promises/brief-contract.js";
 import { checkAllContracts } from "../lib/promises/contract.js";
@@ -8,8 +9,10 @@ import {
 	briefOf,
 	implOf,
 	PLAN,
+	PLAN_DIR,
 } from "./helpers/brief-app.js";
-import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { SHOULD_SKIP } from "./helpers/cli.js";
+import { approveWithReview } from "./helpers/plan-review-fixture.js";
 
 /**
  * promise: a-brief-lists-its-looks — brief-as-the-contract A1, A3, and the
@@ -36,7 +39,7 @@ describe.skipIf(SHOULD_SKIP)("the Looks section at approval", () => {
 		app.writePlan({ brief: "legacy", impl: "interface" });
 		const before = app.project.mainSha();
 
-		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 
 		expect(r.code, out(r)).not.toBe(0);
 		expect(out(r)).toContain("src/Card.jsx");
@@ -46,13 +49,13 @@ describe.skipIf(SHOULD_SKIP)("the Looks section at approval", () => {
 
 	it("A2 a brief that says why it has no looks is approved when its plan changes nothing under an app's interface", () => {
 		app.writePlan({ brief: "none", impl: "internal" });
-		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 		expect(r.code, out(r)).toBe(0);
 	});
 
 	it("A22 a brief written before the Looks section is approved when its plan changes nothing under an app's interface", () => {
 		app.writePlan({ brief: "legacy", impl: "internal" });
-		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 		expect(r.code, out(r)).toBe(0);
 	});
 });
@@ -72,7 +75,7 @@ describe.skipIf(SHOULD_SKIP)("a Files Affected cell is read path by path", () =>
 			});
 			const before = app.project.mainSha();
 
-			const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+			const r = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 
 			expect(r.code, out(r)).not.toBe(0);
 			expect(out(r)).toContain("src/Card.jsx");

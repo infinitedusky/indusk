@@ -319,12 +319,13 @@ A plan that declared no promise has nothing to confirm, and the command says so.
 
 ### Step 9: Archival
 
-Move the planning artifacts to the archive:
+Move the planning artifacts to the archive, through the package:
 
 ```bash
-mkdir -p .indusk/planning/archive
-mv .indusk/planning/{plan-name} .indusk/planning/archive/{plan-name}
+indusk plans archive {plan-name}
 ```
+
+It runs `git mv` of the plan's folder into `.indusk/planning/archive/`, and refuses, moving nothing, while the plan still owns a `declared` promise (Step 8a confirms them) or the archive already holds the name. Never move a plan folder with the shell: `plan-write-guard` refuses a shell command that writes, moves or deletes a plan document, and names this command.
 
 The docs site now holds the published knowledge. The archive holds the process history. Both are preserved, but the docs are the primary reference going forward.
 

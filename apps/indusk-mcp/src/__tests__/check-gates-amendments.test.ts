@@ -8,10 +8,11 @@ import {
 	PLAN,
 	PLAN_DIR,
 } from "./helpers/brief-app.js";
-import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { SHOULD_SKIP } from "./helpers/cli.js";
 import { runHook } from "./helpers/hook-runner.js";
 import { briefText } from "./helpers/plan-fixture.js";
 import { DOMAIN } from "./helpers/plan-lifecycle-fixture.js";
+import { approveWithReview } from "./helpers/plan-review-fixture.js";
 import { writePromise } from "./helpers/promises-fixture.js";
 
 /**
@@ -54,7 +55,7 @@ beforeEach(() => {
 	impl = join(app.wt, PLAN_DIR, "impl.md");
 	writePromiseWith(SENTENCE);
 	app.writePlan({ brief: brief(SENTENCE), impl: implOf("internal") });
-	const approved = runCli(app.trunk, ["plans", "approve", PLAN]);
+	const approved = approveWithReview(app.trunk, PLAN, join(app.wt, PLAN_DIR));
 	expect(approved.code, `${approved.stdout}\n${approved.stderr}`).toBe(0);
 });
 afterEach(() => app.cleanup());

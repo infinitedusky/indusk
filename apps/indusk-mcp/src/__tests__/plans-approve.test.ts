@@ -9,6 +9,7 @@ import {
 	type PlanLifecycleProject,
 	planLifecycleProject,
 } from "./helpers/plan-lifecycle-fixture.js";
+import { answeredPlanReview, approveWithReview } from "./helpers/plan-review-fixture.js";
 import { writePromise } from "./helpers/promises-fixture.js";
 import { git } from "./helpers/test-git.js";
 
@@ -69,7 +70,7 @@ function writePlan(opts: { declare?: boolean; extra?: Record<string, string> } =
 describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 	it("A9 — merges the documents and promises into main; the build continues on the same branch", () => {
 		writePlan();
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code, out(r)).toBe(0);
 
 		const main = p.onMain();
@@ -86,7 +87,7 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 
 	it("A10 — approval ends by naming the command for a new session", () => {
 		writePlan();
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code, out(r)).toBe(0);
 		expect(out(r).trim().split("\n").pop()).toContain(`/work ${PLAN}`);
 		expect(out(r)).toMatch(/new session/i);
@@ -95,7 +96,7 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 	it("A23 — a brief naming a promise the registry does not hold is refused with the contract's message; main unchanged", () => {
 		writePlan({ declare: false });
 		const before = p.mainSha();
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code).not.toBe(0);
 		expect(out(r)).toContain(
 			`${NAME}: the brief says ${PLAN} makes this promise, but the registry does not hold it`,
@@ -106,7 +107,7 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 	it("A9 — a branch that changes anything outside .indusk/ is refused, naming the file; main unchanged", () => {
 		writePlan({ extra: { "src/seat.ts": "export const seat = 1;\n" } });
 		const before = p.mainSha();
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code).not.toBe(0);
 		expect(out(r)).toContain("src/seat.ts");
 		expect(p.mainSha()).toBe(before);
@@ -132,7 +133,7 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 			join(wt, planDir, "impl.md"),
 			implText(PLAN, { status: "draft", rows: [{ state: "planned" }] }),
 		);
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code, out(r)).toBe(0);
 		expect(p.onMain()).toEqual(
 			expect.arrayContaining([`${planDir}/impl.md`, `.indusk/promises/${NAME}.md`]),
@@ -144,7 +145,7 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		writePlan();
 		writeFileSync(join(wt, "seat.ts"), "export const seat = 1;\n");
 		const head = git(wt, ["rev-parse", "HEAD"]);
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code).not.toBe(0);
 		expect(out(r)).toContain("seat.ts");
 		expect(git(wt, ["rev-parse", "HEAD"])).toBe(head);
@@ -158,7 +159,7 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		git(wt, ["merge", "-q", "main"]);
 		writePlan({ extra: { ".indusk/current.md": "# now\n\n## Session plan — seat-holds\n" } });
 		writeFileSync(join(p.trunk, ".indusk", "current.md"), "# now\n\n## Session eval — notes\n");
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code, out(r)).toBe(0);
 		expect(git(p.trunk, ["log", "--format=%s", "main"])).toMatch(/bookkeeping/);
 		expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
@@ -171,11 +172,28 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		git(wt, ["merge", "-q", "main"]);
 		git(p.trunk, ["mv", ".claude/lessons/old-name.md", ".claude/lessons/new-name.md"]);
 		writePlan();
-		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		const r = approveWithReview(p.trunk, PLAN, join(wt, planDir));
 		expect(r.code, out(r)).toBe(0);
 		expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
 		const files = git(p.trunk, ["ls-tree", "-r", "--name-only", "main", ".claude/lessons"]);
 		expect(files).toContain(".claude/lessons/new-name.md");
 		expect(files).not.toContain(".claude/lessons/old-name.md");
+	});
+
+	// a-run-can-be-trusted A54 (Decision 11): `plans approve` asks the one reader of the plan
+	// review that the admin's offer asks, so neither lets through a plan the other withholds.
+	it("A54 — a plan with no plan review, or one written for other documents, is refused naming it; main unchanged", () => {
+		writePlan();
+		const before = p.mainSha();
+		const missing = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(missing.code).not.toBe(0);
+		expect(out(missing)).toContain("needs its plan review: it has no plan-review.md");
+		expect(p.mainSha()).toBe(before);
+
+		writeFileSync(join(wt, planDir, "plan-review.md"), answeredPlanReview("0".repeat(64)));
+		const stale = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(stale.code).not.toBe(0);
+		expect(out(stale)).toContain("written for other documents than stand now");
+		expect(p.mainSha()).toBe(before);
 	});
 });
