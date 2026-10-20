@@ -103,6 +103,7 @@ This document was written with nobody to ask, so each choice below is the author
 | A25 | A `git log` and a `git ls-tree` that never answer stop waiting at the time limit and the page reads the plan as not landed | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/never-freezes | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
 | A26 | A window longer than the 15-second ceiling (a project with a 60-second refresh) is clamped, so a dead run reads stopped within the ceiling | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-run-is-read-from-its-record | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
 | A27 | The landing reader and the merge-subjects reader share one kept trunk-history read, so a page makes one `git log … --merges` | Build Phase 1 | Build Phase 1 | planned | unit | clause: admin-pages-load-fast/one-read-per-page | apps/indusk-mcp/src/lib/run-record/kept-reads.test.ts |
+| A28 | A plan the planning run wrote — brief accepted, test plan and ADR still draft, impl draft, plan review answered and current, no run going — is offered for approval under Needs you with its Approve | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard over approval-waits-for-a-finished-plan, found 2026-10-20 on this plan's own page (Sandy) | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
 
 ### Deferred Verification
 
@@ -372,6 +373,12 @@ This phase moves the admin onto Build Phase 1's readers. A page reads the proces
   <details><summary>Technical</summary>
 
   signal: `admin-pages-load-fast/one-read-per-page`, `admin-pages-load-fast/kept-briefly` and `admin-pages-load-fast/never-freezes` — read in the clause signals the daemon holds, one report per page load. Reported from `apps/indusk-admin/src/lib/page-reads.ts` (`finishPage`): a Next server component has no end-of-render hook, so it is called from `after()` of `next/server` when the installed Next version has it (check `apps/indusk-admin/package.json`), and otherwise once the page's reads have all settled, with the page's elapsed time measured from its first read to that point. It calls `reportPageReads` from `apps/indusk-mcp/src/lib/run-record/page-reads-signal.ts` with the request's counts, program starts, early-refresh flags, maximum blocked time and elapsed time. Upheld results go through the existing `throttled(id, send)` helper of `build-host.ts` so a five-second live refresh does not report every time; broken results bypass it (decision 14). It never raises (a failed report must not fail a page).
+
+  </details>
+- [ ] Offer a plan for approval once its earlier documents exist, not only once each was accepted by itself.
+  <details><summary>Technical</summary>
+
+  Added at approval (Sandy, 2026-10-20): this plan's own page showed "Impl: needs you" with no Approve, because `awaitingApproval` in `apps/indusk-mcp/src/lib/plans/waiting.ts` requires every document before the impl to read finished (`documentFinished`), and the unattended planning run leaves the test plan and ADR `draft` — approving the plan is what accepts them. Require each required document before the impl to exist (as `plans/steps` does for "done"), keeping the plan-review rule. A28.
 
   </details>
 - [ ] Make every test in this phase pass.
