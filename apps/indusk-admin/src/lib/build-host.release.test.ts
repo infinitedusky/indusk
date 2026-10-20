@@ -1,4 +1,5 @@
 // promise: decisions-wait-in-one-place
+// promise: a-run-is-read-from-its-record
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
