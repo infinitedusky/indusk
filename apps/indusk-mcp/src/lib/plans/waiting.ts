@@ -19,8 +19,9 @@ import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
  *   - **review** — its build stopped at review, or the plan stands at review
  *     (the build's stop is held in memory; the position is on disk, so it
  *     survives a restart of the admin).
- *   - **approval** — its impl is a draft, every other document its type
- *     requires is accepted, no session's turn is still open on it (an idle
+ *   - **approval** — its impl is a draft, its brief is accepted, every other
+ *     document its type requires before the impl exists (the planning run
+ *     leaves the test plan and ADR drafts; approving accepts them), no session's turn is still open on it (an idle
  *     session waiting for the person is not writing), no planning run for it
  *     is going, and its plan review is written for the documents as they stand
  *     with every finding answered (`readPlanReview`, the one reader `plans
@@ -303,9 +304,15 @@ function awaitingApproval(plan: PlanSnapshot): boolean {
 		plan.workflow === null
 			? ["brief", "test-plan"]
 			: requiredDocuments(plan.workflow, plan.documentsOff);
+	// The brief is the person's contract and must be finished. The planning run leaves the test plan
+	// and the ADR as drafts, because approving the plan is what accepts them: those need only exist.
 	return required
 		.filter((d) => BEFORE_IMPL.includes(d))
-		.every((d) => documentFinished(d, plan.documents[d]?.status));
+		.every((d) =>
+			d === "brief"
+				? documentFinished(d, plan.documents[d]?.status)
+				: plan.documents[d] !== undefined,
+		);
 }
 
 /** The documents a plan writes before its impl; the retrospective comes after. */
