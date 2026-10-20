@@ -20,6 +20,8 @@ export function stopSentence(stop: RunnerStop, phase: string | null): string {
 			return `Stopped${phase ? ` at ${phase}` : ""}: the brief changed after you approved it (${stop.amendments.join(", ")}). It waits for your re-approval.`;
 		case "judgement":
 			return `Stopped${phase ? ` at ${phase}` : ""} for a judgement the plan declared — ${stop.item}`;
+		case "question":
+			return `Stopped${phase ? ` at ${phase}` : ""}: it asked a question (${stop.id}) and waits for your answer, holding no place. Your answer starts it again.`;
 		case "cannot-continue":
 			if (stop.why === PROCESS_GONE) {
 				return `Stopped: the run died (${PROCESS_GONE}). Build starts it again${at(phase)}.`;

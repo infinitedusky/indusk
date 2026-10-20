@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { type QuestionWait, readQuestionWait } from "../questions/deadline.js";
 import { induskHome } from "../version-check.js";
 
 /** How many sessions a machine runs together when its config says nothing. */
@@ -24,4 +25,23 @@ export function readSessionsMax(home: string = induskHome()): number {
 	} catch {
 		return DEFAULT_SESSIONS_MAX;
 	}
+}
+
+/**
+ * What an unanswered question does, per cost (decisions-as-questions, ADR decision
+ * 4): `sessions.question_wait.cheap|moderate|expensive` from the InDusk home's
+ * `config.json` — `hold`, a whole number of minutes, or `immediate`. Absent reads
+ * as `hold` for every cost. A value that is none of these throws, naming the key;
+ * the caller decides what a bad setting does (the sweep holds everything).
+ */
+export function readQuestionWaitSetting(home: string = induskHome()): QuestionWait {
+	const path = join(home, "config.json");
+	if (!existsSync(path)) return readQuestionWait({});
+	let parsed: { sessions?: { question_wait?: unknown } };
+	try {
+		parsed = JSON.parse(readFileSync(path, "utf-8"));
+	} catch {
+		return readQuestionWait({});
+	}
+	return readQuestionWait(parsed?.sessions?.question_wait);
 }

@@ -72,6 +72,20 @@ export interface DecisionDeps {
   approve(): Promise<unknown>;
   /** `acceptPlan` and the release, as the build's Accept runs them. */
   release(): Promise<unknown>;
+  /**
+   * The plan's question records (decisions-as-questions). A held question — its session
+   * gone — is answered by recording the answer and starting the plan's run again, which
+   * tells the agent; a question a live session still asks is answered through that
+   * session and recorded too.
+   */
+  questions?: {
+    /** Record the person's words as the answer to question `id`. */
+    answer(id: string, text: string): void;
+    /** Start the plan's run again after a held question was answered. */
+    resume(): Promise<unknown>;
+    /** The id of the question a live session asked as `requestId`, if it is one. */
+    byRequest(requestId: string): string | undefined;
+  };
   /** `appendDecision` for the plan. */
   record(
     entry: DecisionEntry,
@@ -81,7 +95,7 @@ export interface DecisionDeps {
 
 export interface Answered {
   answer: string;
-  via: "question" | "approve" | "release" | "say" | "session";
+  via: "question" | "approve" | "release" | "say" | "session" | "resume";
   sessionId?: string;
   commit: ReturnType<typeof appendDecision>["commit"];
 }
@@ -102,6 +116,24 @@ export async function answerDecision(
     throw new Error(
       `${waiting.plan} waits on an amendment, which is answered on the amendment card`,
     );
+  }
+  if (waiting.on === "question" && waiting.restart && deps.questions) {
+    // The question is answered and kept; only its run is missing. Starting it again answers nothing,
+    // so no second decision is recorded.
+    if (choice.choice !== "accept") {
+      throw new Error(
+        `${waiting.plan}'s question is already answered; its run waits to be started again`,
+      );
+    }
+    await deps.questions.resume();
+    return {
+      answer: waiting.accept,
+      via: "resume",
+      commit: {
+        committed: false,
+        reason: "the answer was recorded earlier; this only started the run",
+      },
+    };
   }
   const answer = answerOf(waiting, choice);
   const reached = await deliver(deps, project, waiting, choice, answer);
@@ -145,6 +177,12 @@ async function deliver(
   choice: DecisionChoice,
   answer: string,
 ): Promise<Pick<Answered, "via" | "sessionId">> {
+  if (waiting.on === "question" && waiting.questionId && deps.questions) {
+    // A held question: the session that asked it ended. The answer is recorded and the run starts again.
+    deps.questions.answer(waiting.questionId, answer);
+    await deps.questions.resume();
+    return { via: "resume" };
+  }
   if (waiting.on === "question") {
     const target = sessionThatAsked(deps, project, waiting);
     if (!target || !waiting.requestId) {
@@ -156,6 +194,9 @@ async function deliver(
       requestId: waiting.requestId,
       answers: questionAnswers(waiting, choice, answer),
     });
+    const asked =
+      waiting.requestId && deps.questions?.byRequest(waiting.requestId);
+    if (asked && deps.questions) deps.questions.answer(asked, answer);
     return { via: "question", sessionId: target.id };
   }
   if (choice.choice === "accept") {
@@ -177,7 +218,9 @@ async function deliver(
     // A plan-review answer is the button's words, which say nothing alone.
     deps.sessions.say(
       ours.id,
-      waiting.on === "plan-review" ? `${waiting.decision}\n\n${answer}` : answer,
+      waiting.on === "plan-review"
+        ? `${waiting.decision}\n\n${answer}`
+        : answer,
     );
     return { via: "say", sessionId: ours.id };
   }

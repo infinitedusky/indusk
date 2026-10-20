@@ -930,6 +930,8 @@ export function decisionsReaderMock() {
         amendments: AMENDED.map((plan) => ({ plan, count: 1 })),
       }),
     readPlanHistory: (_path: string, plan: string) => HISTORY[plan] ?? [],
+    // The plans in these pages have asked no question.
+    readPlanQuestions: () => [],
     // What runs for a plan is the build host's read, which a browser page test has no process for.
     withSituations: async (_project: string, _path: string, plans: Plan[]) =>
       plans,

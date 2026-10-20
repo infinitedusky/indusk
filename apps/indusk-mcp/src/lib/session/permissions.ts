@@ -11,9 +11,8 @@ import type { PermissionEvent, QuestionEvent } from "./protocol.js";
  * - A tool given no path (Bash, a search, an MCP tool) is allowed: it runs
  *   in the worktree, and the project's hooks still judge it. This is a
  *   boundary on what the build is *asked* about, not a sandbox.
- * - A question is answered with a refusal that tells the session to decide on
- *   its own judgement and record the decision, because the build stops only
- *   for a judgement the plan declared.
+ * - A plain question is refused naming `ask_decision`, the tool a choice is asked
+ *   through; the build stops for a judgement the plan declared or a question that holds.
  *
  * A project conversation is decided differently (`decideConfinedPermission`,
  * new-project-flow Build Phase 7): its agent runs in a draft folder under the
@@ -92,11 +91,15 @@ function describePath(ev: PermissionEvent): string {
 	return "That path";
 }
 
-/** A build asks no one: the reply to its question tells it to decide and record why. */
+/**
+ * A plain question in a build is refused, naming the tool a choice is asked through:
+ * `ask_decision` carries the recommendation, the reason, the cost and what each option
+ * changes, which `AskUserQuestion` cannot (decisions-as-questions, ADR decision 12).
+ */
 export function refuseBuildQuestion(_ev: QuestionEvent): Decision {
 	return {
 		allow: false,
 		message:
-			"This build runs unattended and stops only for a judgement the plan declared. Decide on your own judgement, record the decision and its reason in the plan, and continue.",
+			"This build runs unattended and AskUserQuestion reaches no one. Ask a choice the plan does not settle with the `ask_decision` tool (options, your recommendation and reason, a cost, and what each option changes), and never record it as decided unattended.",
 	};
 }

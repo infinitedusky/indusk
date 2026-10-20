@@ -27,7 +27,7 @@ When an unattended session meets a choice the plan does not settle, it puts it t
 |----|-----------------------------------|-------|
 | A1 | A question an unattended session asks appears on the plan's page with its options, the recommended one marked with its reason, and its cost. | contract |
 | A2 | A question asked without a recommendation, without a reason, with fewer than two options, or with a cost other than cheap / moderate / expensive is refused: the session is told what is missing and nothing reaches the person. | unit |
-| A3 | A plan with open questions is listed under Needs you, and a plan with only cheap or moderate questions is listed with the time left. | live check |
+| A3 | A plan with open questions is listed under Needs you, and a plan whose open questions are all on a set time is listed with the time left. | live check |
 
 ### `never-decided-silently` — a session never records a choice as decided unattended without asking it as a question
 
@@ -42,41 +42,54 @@ When an unattended session meets a choice the plan does not settle, it puts it t
 
 ## `the-cost-sets-the-wait`
 
-An unanswered cheap question goes ahead with its recommendation after five minutes, a moderate one after an hour, and an expensive one stops its session and frees its slot until the person answers.
+What an unanswered question does is its cost's setting: hold until the person answers, go ahead with its recommendation after a set time, or go ahead at once; with nothing set, every cost holds, and a held question stops its session and frees its slot until the person answers.
 
-### `cheap-and-moderate-go-ahead` — a cheap or moderate question unanswered past its time goes ahead with the recommendation, and says it did
+The setting is one per cost — cheap, moderate, expensive — each `hold`, a number of minutes, or `immediate`, and `hold` when the project sets nothing.
 
-- Signal: the question record's state and the session's events, read in the admin. Upheld when a cheap question left unanswered five minutes, and a moderate one left an hour, are both recorded as having gone ahead with the recommendation, with the time it did so; broken reports a question past its time still waiting, or gone ahead early.
-- Measure: for each cheap or moderate question, minutes between its deadline and the session being told to continue; expect under one minute while the admin runs.
+### `holds-by-default` — with no setting for its cost, a question holds until the person answers
+
+- Signal: the question record's state and the project's settings, read by the sweep on each admin read. Upheld when a question whose cost has no setting is still waiting, with no timer, until the person answers; broken reports a question with no setting for its cost that went ahead, or that showed a timer.
+- Measure: questions with no setting for their cost that went ahead without an answer; expect none, ever.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A7 | A cheap question unanswered at five minutes goes ahead with its recommendation; one answered at four minutes does not, and the answer is used. | unit |
-| A8 | A moderate question goes ahead at an hour, not at five minutes. | unit |
+| A7 | With nothing set, a cheap, a moderate and an expensive question each stay waiting however long they are left, and the answer, when it comes, is used. | unit |
+| A8 | With nothing set, a question's row shows no timer and no time left. | unit |
+| A11 | A real unattended run with nothing set, asking a cheap question and left alone, does not continue on its own. | live check |
+
+### `the-setting-decides` — a question goes ahead with its recommendation only as its cost's setting says, after the set time or at once, and says it did
+
+- Signal: the question record's state, its stored deadline and the session's events, read in the admin. Upheld when every question that went ahead had a setting for its cost that allowed it, went ahead at or after its stored deadline (at once for `immediate`), and is recorded with what was done and when; broken reports a question that went ahead early or against its setting, or one past its deadline still waiting.
+- Measure: for each question on a set time, minutes between its deadline and the session being told to continue; expect under one minute while the admin runs.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A52 | With cheap set to five minutes, a cheap question unanswered at five minutes goes ahead with its recommendation; one answered at four minutes does not, and the answer is used. | unit |
+| A53 | With moderate set to `immediate`, a moderate question goes ahead with its recommendation at once and its session is not stopped; a cheap question, with cheap not set, still holds. | unit |
+| A54 | A setting that is not `hold`, a whole number of minutes or `immediate` is refused when the settings are read, naming the key. | unit |
 | A9 | A question that went ahead says so on its row: what was done and when. | contract |
 | A10 | When the admin was not running at a question's deadline, the question goes ahead on the admin's next read, not at the moment the admin starts counting afresh: the deadline is a stored time, so a restart never gives a question more time. | unit |
-| A11 | A real unattended run that asks a cheap question and is left alone continues on its own after five minutes. | live check |
 
-### `expensive-waits` — an expensive question stops its session, frees its slot, and the run resumes when the person answers
+### `a-hold-frees-the-slot` — a held question stops its session, frees its slot, and the run resumes when the person answers
 
-- Signal: the session list and the question record. Upheld when an expensive question's session is stopped, the machine's running-session count drops by one, and the run resumes with the person's answer; broken reports a stopped plan still holding a slot, or a run that went ahead without an answer.
-- Measure: sessions held by plans waiting on an expensive question, at any time; expect zero. Time from answer to the run resuming; expect under a minute.
+- Signal: the session list and the question record. Upheld when a held question's session is stopped, the machine's running-session count drops by one, and the run resumes with the person's answer; broken reports a stopped plan still holding a slot, or a run that went ahead without an answer.
+- Measure: sessions held by plans waiting on a held question, at any time; expect zero. Time from answer to the run resuming; expect under a minute.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A12 | A session that asks an expensive question stops, and the plan is listed under Needs you with no timer. | contract |
+| A12 | A session that asks a question that holds stops, and the plan is listed under Needs you with no timer. | contract |
 | A13 | While it waits, the machine counts one fewer running session, and a queued plan can take the freed slot. | unit |
-| A14 | Left unanswered for any length of time, an expensive question never goes ahead. | unit |
+| A14 | A question on a set time does not stop its session, and that session keeps its slot until the question goes ahead or is answered. | unit |
 | A15 | When the person answers, the plan's run resumes and the agent is told the answer. | contract |
-| A16 | A real run stopped by an expensive question, once answered in the admin, finishes its phase using the answer. | live check |
+| A16 | A real run stopped by a held question, once answered in the admin, finishes its phase using the answer. | live check |
 
 ## `what-was-agreed-is-never-cheap`
 
-A question whose answer would change the brief, a promise or a look, or skip a gate, is expensive whatever cost the agent gave it.
+A question whose answer would change the brief, a promise or a look, or skip a gate, is expensive whatever cost the agent gave it, and holds until the person answers whatever its cost's setting.
 
-### `never-timed-out` — a question whose answer would change the brief, a promise or a look, or skip a gate, never goes ahead on a timer
+### `never-timed-out` — a question whose answer would change the brief, a promise or a look, or skip a gate, never goes ahead without the person, whatever its cost's setting
 
-- Signal: the question record's cost as shown on the page, against what each option would change. Upheld when every such question shows as expensive, whatever cost the agent gave it; broken reports a question with such an option that has a timer or went ahead.
+- Signal: the question record's cost and state as shown on the page, against what each option would change. Upheld when every such question shows as expensive and is still waiting until the person answers, whatever the settings; broken reports a question with such an option that has a timer or went ahead.
 - Measure: questions with an option that changes the brief, a promise, a look or a gate that carried a timer or went ahead; expect none, ever.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -84,7 +97,7 @@ A question whose answer would change the brief, a promise or a look, or skip a g
 | A17 | A question given as cheap by the agent, one of whose options changes the brief, is shown as expensive with no timer. | unit |
 | A18 | The same holds for an option that changes a promise, one that changes a look, and one that skips a gate: each is shown as expensive. | unit |
 | A19 | A question whose options change none of these keeps the cost the agent gave it. | unit |
-| A20 | A question like A17, left unanswered past five minutes and past an hour, is still waiting. | unit |
+| A20 | A question like A17, with every cost set to `immediate`, and again with every cost set to five minutes, is still waiting however long it is left. | unit |
 
 ## `a-late-answer-opens-a-follow-on`
 
@@ -150,7 +163,7 @@ Each below is an existing promise from earlier plans, listed in the brief under 
 |----|-----------------------------------|-------|-----|
 | A37 | A late answer that changes the brief still stops for the person's re-approval; the follow-on, not the answer, carries the change. | unit | promise: a-change-to-what-was-agreed-needs-the-person |
 | A38 | No timer, however long it runs, approves a brief, a test plan, a look or an ADR. | unit | promise: only-a-person-reapproves |
-| A39 | With the cap reached, a plan waiting on an expensive question holds none of the slots, and a plan waiting on a timer does hold one. | unit | promise: sessions-are-capped |
+| A39 | With the cap reached, a plan waiting on a held question holds none of the slots, and a plan waiting on a set time does hold one. | unit | promise: sessions-are-capped |
 | A40 | A plan with questions open is no more or less accepted than the same plan without; questions change nothing about acceptance. | unit | promise: nothing-ships-until-accepted |
 | A41 | A failure no promise claims still opens its bugfix plan, and the follow-on is opened beside it. | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan |
 
@@ -161,7 +174,7 @@ Both are existing promises this plan changes; the impl gives the phase that make
 | ID | Assertion (user-visible behavior) | Level | For |
 |----|-----------------------------------|-------|-----|
 | A42 | A plan waiting on the person is listed under Needs you, and its page shows each open question with its recommendation, options, cost and a reply in words; the answer reaches the agent and is recorded in the plan's history. | live check | promise: decisions-wait-in-one-place |
-| A43 | An approved plan's build runs through its phases, falsification and cleanup without asking approval, and stops only when ready for review, for a declared judgement, for an expensive question, or when it cannot continue; a cheap or moderate question does not stop it. | live check | promise: a-build-runs-to-review-unasked |
+| A43 | An approved plan's build runs through its phases, falsification and cleanup without asking approval, and stops only when ready for review, for a declared judgement, for an expensive question, or when it cannot continue; a question its cost's setting sends ahead does not stop it. | live check | promise: a-build-runs-to-review-unasked |
 
 ## Looks
 
@@ -194,12 +207,12 @@ The three new looks are held by value in Chromium and approved as mockups by a p
 
 Decided unattended (`INDUSK_GATE_POLICY=auto`); each with its reason, for the reviewer to approve with the plan.
 
-1. **The deadline is a stored time, counted in wall-clock.** This settles the research's open question (does a moderate question's hour count only while the admin runs?): it does not. A question goes ahead on the admin's next read after its deadline (A10). Reason: counting only while the admin runs would give a question a different length each restart, and a person who leaves for an hour expects an hour; the cost is a question that goes ahead late if the admin was down.
+1. **The deadline is a stored time, counted in wall-clock.** This settles the research's open question (does a set time count only while the admin runs?): it does not. A question goes ahead on the admin's next read after its deadline (A10). Reason: counting only while the admin runs would give a question a different length each restart, and a person who leaves for an hour expects an hour; the cost is a question that goes ahead late if the admin was down.
 2. **The cost is checked, not trusted.** The agent states a cost; the admin raises it to expensive when an option changes the brief, a promise, a look or a gate (A17–A19). Reason: the brief's third promise says the cost is "whatever cost the agent gave it" is overridden, so the check cannot live in the agent's judgement.
 3. **A late-disagreement plan is opened once per question** (A23). Reason: a person who answers twice has changed their mind, not asked for two plans; the second answer updates the one plan.
 4. **Rows are small and mostly unit.** The timer, the cost rule, the follow-on and the release refusal are pure rules over a question record and the planning folder, so they are unit rows that run in the phase loop. Live checks (A3, A6, A11, A16, A34, A42–A48) need a running admin or a real unattended run; they run in the slow tier after landing and never block landing or release (`/decisions/release-checks-run-once`; a failure there reads as a broken promise). Reason: `/decisions/tests-never-make-us-wait`.
 5. **No `promise`-level row.** Each clause has rows of lower level, and the signals are the proof a clause is upheld in a real run. Reason: a `promise` row would restate a clause the unit and live rows already prove.
-6. **Dependent on no other plan.** The brief says `run-the-graph` narrows the hold later; here an expensive question stops the plan's session whole (A12). Reason: the brief's Not-promised list.
+6. **Dependent on no other plan.** The brief says `run-the-graph` narrows the hold later; here a held question stops the plan's session whole (A12). Reason: the brief's Not-promised list.
 
 ## Notes
 

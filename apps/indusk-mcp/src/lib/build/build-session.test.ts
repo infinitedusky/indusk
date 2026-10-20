@@ -1,9 +1,12 @@
 // clause: an-accepted-brief-is-planned-unasked/each-document-passes-its-check
 // clause: an-accepted-brief-is-planned-unasked/decides-and-records
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
+import { readHistoryLines } from "../plans/history.js";
+import { readQuestions, recordQuestion } from "../questions/history.js";
 import { SessionManager } from "../session/manager.js";
 import type { Session, SessionOptions, StartedEvent } from "../session/start.js";
 import { runStepSession, stepEnv, stepPrompt } from "./build-session.js";
@@ -18,7 +21,7 @@ import { runStepSession, stepEnv, stepPrompt } from "./build-session.js";
  *
  * One step of a build is one session that nobody answers: it runs under
  * `INDUSK_GATE_POLICY=auto`, its writes outside the worktree are refused, its
- * questions are answered "decide and record why", and a rate-limited step is
+ * plain questions are refused naming `ask_decision`, and a rate-limited step is
  * tried again. Sessions here are scripted fakes; A24 runs the real `claude`.
  */
 
@@ -100,7 +103,7 @@ describe("A30 — a build step is a session nobody answers", () => {
 		expect(m.started[0].prompt.startsWith("/work seats")).toBe(true);
 	});
 
-	it("a write outside the worktree is refused; one inside is allowed; a question is told to decide", async () => {
+	it("a write outside the worktree is refused; one inside is allowed; a plain question is refused, naming ask_decision", async () => {
 		const m = scriptedManager([
 			[
 				{
@@ -123,7 +126,7 @@ describe("A30 — a build step is a session nobody answers", () => {
 		const by = Object.fromEntries(m.replies.map((r) => [r.requestId, r.body]));
 		expect(by.in).toEqual({ allow: true });
 		expect(by.out).toMatchObject({ allow: false, message: expect.stringContaining(WORKTREE) });
-		expect(by.q).toMatchObject({ allow: false, message: expect.stringMatching(/own judgement/) });
+		expect(by.q).toMatchObject({ allow: false, message: expect.stringMatching(/ask_decision/) });
 	});
 
 	it("a rate-limited step is tried again after the evaluator's waits, then succeeds", async () => {
@@ -232,7 +235,7 @@ describe("decided-prompts-stay-closed A1, A2, A7 — every request a build decid
 		expect(decided.q).toMatchObject({
 			allow: false,
 			by: "rule",
-			message: expect.stringMatching(/own judgement/),
+			message: expect.stringMatching(/ask_decision/),
 		});
 	});
 });
@@ -320,5 +323,119 @@ describe("A17 — an earlier document's draft or proposed status is no reason to
 	it("A17 tells a planning step it changes no other document's status", () => {
 		const prompt = stepPrompt("plan-impl", "seats");
 		expect(prompt).toMatch(/other document'?s? status|status of any other document/i);
+	});
+});
+
+/**
+ * decisions-as-questions, Build Phase 2: an unattended session asks a choice through
+ * `ask_decision`. The question is recorded in the plan's history; what the session
+ * hears back depends on its cost's setting (hold by default).
+ *
+ * clause: a-decision-is-a-question/asked-with-a-recommendation
+ * clause: the-cost-sets-the-wait/holds-by-default
+ * clause: the-cost-sets-the-wait/the-setting-decides
+ * clause: the-cost-sets-the-wait/a-hold-frees-the-slot
+ * promise: a-build-runs-to-review-unasked
+ */
+describe("ask_decision — a build asks a choice and it becomes a question", () => {
+	let f: Fixture;
+	beforeEach(() => {
+		f = makeFixture();
+	});
+	afterEach(() => f.cleanup());
+
+	const decision = (over: Record<string, unknown> = {}): StartedEvent => ({
+		type: "question",
+		requestId: "d",
+		questions: [],
+		decision: true,
+		input: {
+			question: "Which store?",
+			options: [{ label: "sqlite" }, { label: "files" }],
+			recommended: "sqlite",
+			reason: "simplest",
+			cost: "cheap",
+			...over,
+		},
+	});
+	const run = (m: ReturnType<typeof scriptedManager>) =>
+		runStepSession("work", { ...opts(m.manager), worktree: f.worktree });
+
+	it("with nothing set the question holds: the session is refused, stopped, and the run waits", async () => {
+		const m = scriptedManager([[decision(), ok]]);
+		const out = await run(m);
+		expect(out).toEqual({ error: null, waiting: "q-1" });
+		const reply = m.replies.find((r) => r.requestId === "d")?.body;
+		expect(reply).toMatchObject({ allow: false, message: expect.stringContaining("q-1") });
+		const [q] = readQuestions(f.worktree, "seats");
+		expect(q).toMatchObject({ id: "q-1", state: "waiting", dueAt: null, text: "Which store?" });
+	});
+
+	it("a malformed question is returned to the session, saying what is missing, and recorded nowhere", async () => {
+		const m = scriptedManager([[decision({ reason: "" }), ok]]);
+		expect(await run(m)).toEqual({ error: null });
+		expect(m.replies.find((r) => r.requestId === "d")?.body).toMatchObject({
+			allow: false,
+			message: expect.stringMatching(/reason/),
+		});
+		expect(readQuestions(f.worktree, "seats")).toEqual([]);
+	});
+
+	it("`immediate` answers the session with its recommendation at once and does not stop it", async () => {
+		writeFileSync(
+			join(f.home, "config.json"),
+			JSON.stringify({ sessions: { question_wait: { cheap: "immediate" } } }),
+		);
+		const m = scriptedManager([[decision(), ok]]);
+		expect(await run(m)).toEqual({ error: null });
+		expect(m.replies.find((r) => r.requestId === "d")?.body).toEqual({ "Which store?": "sqlite" });
+		expect(readQuestions(f.worktree, "seats")[0]).toMatchObject({
+			state: "went-ahead",
+			done: "sqlite",
+		});
+	});
+
+	it("a set time leaves the request open, tied to its session while it lives, and untied when it ends (T31)", async () => {
+		writeFileSync(
+			join(f.home, "config.json"),
+			JSON.stringify({ sessions: { question_wait: { cheap: 5 } } }),
+		);
+		const m = scriptedManager([[decision(), ok]]);
+		expect(await run(m)).toEqual({ error: null });
+		expect(m.replies.find((r) => r.requestId === "d")).toBeUndefined();
+		const [q] = readQuestions(f.worktree, "seats");
+		expect(q).toMatchObject({ state: "waiting" });
+		expect(q?.dueAt).toBeGreaterThan(q?.askedAt ?? 0);
+		// Tied to its session while the session lived: the line written when it was asked says so.
+		const lines = readHistoryLines(f.worktree, "seats").filter((l) => l.includes("question q-1"));
+		expect(lines.some((l) => l.includes('"requestId":"d"'))).toBe(true);
+		// The session ended, so the record no longer names it and the plan waits under Needs you.
+		expect(q?.session).toBeUndefined();
+	});
+
+	it("the answers given while it was stopped are told to the next session, once", async () => {
+		recordQuestion(f.worktree, {
+			id: "q-1",
+			plan: "seats",
+			text: "Which store?",
+			options: [
+				{ label: "sqlite", changes: [] },
+				{ label: "files", changes: [] },
+			],
+			recommended: "sqlite",
+			reason: "r",
+			statedCost: "cheap",
+			cost: "cheap",
+			askedAt: 1,
+			dueAt: null,
+			state: "answered",
+			answer: "files, we already run one",
+		});
+		const first = scriptedManager([[ok]]);
+		await run(first);
+		expect(first.started[0].prompt).toContain("files, we already run one");
+		const second = scriptedManager([[ok]]);
+		await run(second);
+		expect(second.started[0].prompt).not.toContain("files, we already run one");
 	});
 });

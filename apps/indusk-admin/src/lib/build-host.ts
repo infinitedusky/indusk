@@ -79,6 +79,9 @@ const builds = (): Map<string, BuildState> => {
 
 const key = (project: string, plan: string) => `${project}/${plan}`;
 
+/** What a planning run's stop says when it ended on a question that holds (the package words it). */
+const ASKED_A_QUESTION = "asked a question";
+
 /**
  * A run's record on disk (a-run-can-be-trusted, Decision 3): the truth, where
  * the maps below are a cache. A run writes its step, phase, process and stop as
@@ -626,6 +629,9 @@ export async function startBuild(
           : null;
       state.stop = judged?.stop ?? stop;
       if (judged) state.release = judged.release;
+      // A run that ended on a held question holds no place while it waits.
+      if (stop.step === "question")
+        sessionManager().holdQuestion(project, plan);
       handle.update({ stop: state.stop, stopReason: whyOf(state.stop) });
     })
     .catch((err: Error) => {
@@ -941,6 +947,11 @@ export async function startPlanning(
     .then((stop) => {
       state.stop = stop;
       handle.update({ stop, stopReason: whyOf(stop) });
+      if (
+        stop.step === "cannot-continue" &&
+        stop.why.includes(ASKED_A_QUESTION)
+      )
+        sessionManager().holdQuestion(project, plan);
     })
     .catch((err: Error) => {
       state.stop = { step: "cannot-continue", why: err.message };
@@ -953,4 +964,26 @@ export async function startPlanning(
       releasePlace();
     });
   return state;
+}
+
+/**
+ * A held question was answered (decisions-as-questions, ADR decision 6): the plan no
+ * longer waits, and its run starts again — a planning run that stopped on the question
+ * is planned again, anything else is built — and the new session is told the answer.
+ */
+export async function resumeAfterQuestion(
+  project: string,
+  plan: string,
+): Promise<unknown> {
+  sessionManager().releaseQuestion(project, plan);
+  const planning = planningState(project, plan);
+  const stop = planning?.stop;
+  if (
+    planning &&
+    !planning.running &&
+    stop?.step === "cannot-continue" &&
+    stop.why.includes(ASKED_A_QUESTION)
+  )
+    return startPlanning(project, plan);
+  return startBuild(project, plan);
 }

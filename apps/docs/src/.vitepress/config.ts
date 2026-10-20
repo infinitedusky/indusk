@@ -63,6 +63,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Plan Lifecycle", link: "/guide/plan-lifecycle" },
 						{ text: "Briefs", link: "/guide/briefs" },
+						{ text: "Questions", link: "/guide/questions" },
 						{ text: "One Contract per Repo", link: "/guide/contract" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 						{ text: "Test Levels", link: "/guide/test-levels" },
@@ -287,6 +288,7 @@ const config = defineConfig({
 						{ text: "Plan Timing", link: "/decisions/plan-timing" },
 						{ text: "Planner Promises", link: "/decisions/planner-promises" },
 						{ text: "Plans Are Promises", link: "/decisions/plans-are-promises" },
+						{ text: "Decisions as Questions", link: "/decisions/decisions-as-questions" },
 						{ text: "Sessions per Plan", link: "/decisions/sessions-per-plan" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },

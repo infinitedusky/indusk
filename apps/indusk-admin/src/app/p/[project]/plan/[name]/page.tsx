@@ -2,6 +2,7 @@ import { readPlanParts } from "@infinitedusky/indusk-mcp/plans/parts";
 import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
 import { activePhaseOf } from "@/components/bars/ProgressLines";
 import { DecisionCard } from "@/components/cockpit/DecisionCard";
+import { QuestionRows } from "@/components/cockpit/QuestionRows";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { PlanWorkflows } from "@/components/PlanWorkflows";
 import { MasterStory } from "@/components/plan/MasterStory";
@@ -22,6 +23,7 @@ import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
 import {
   readPlanHistory,
+  readPlanQuestions,
   readWaiting,
   withSituations,
 } from "@/lib/decisions-reader";
@@ -155,7 +157,9 @@ export default async function PlanPage({ params }: PlanPageProps) {
           />
           {plan.malformed ? <MalformedNotice /> : null}
           <WaitingAmendments project={project} plan={name} parts={parts} />
-          {waiting && waiting.on !== "amendment" ? (
+          {waiting &&
+          waiting.on !== "amendment" &&
+          !waiting.recordedQuestion ? (
             <DecisionCard project={project} waiting={waiting} />
           ) : null}
           <MasterStory
@@ -197,11 +201,20 @@ export default async function PlanPage({ params }: PlanPageProps) {
       />
       <WaitingAmendments project={project} plan={name} parts={parts} />
       {plan.situation ? <PlanSituationLine situation={plan.situation} /> : null}
-      {waiting && waiting.on !== "amendment" ? (
+      {waiting &&
+      waiting.on !== "amendment" &&
+      !waiting.questionId &&
+      !waiting.recordedQuestion ? (
         <DecisionCard project={project} waiting={waiting} />
-      ) : (
+      ) : waiting?.questionId || waiting?.recordedQuestion ? null : (
         <PlanStatusCard plan={plan} dates={dates} />
       )}
+      <QuestionRows
+        project={project}
+        plan={name}
+        questions={readPlanQuestions(projectPath, name)}
+        now={Date.now()}
+      />
       {sessionControl}
       {buildControls}
     </>

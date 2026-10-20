@@ -49,7 +49,7 @@ export interface RunnerDeps {
 		step: BuildStepName,
 		phase?: string,
 		reason?: ShortenReason,
-	) => Promise<{ error: string | null }>;
+	) => Promise<{ error: string | null; waiting?: string }>;
 	accept: (by: "person" | "auto") => Promise<void>;
 	onStep?: (update: RunnerUpdate) => void;
 	/** Where the run reports the clauses it keeps (the significant-concern clause); absent, it reports nothing. */
@@ -62,6 +62,8 @@ export type RunnerUpdate =
 
 export type RunnerStop =
 	| Exclude<BuildStep, { step: SessionStep }>
+	/** The run ended on a question that holds; it resumes with the person's answer. */
+	| { step: "question"; id: string }
 	| { step: "released" }
 	| { step: "release-failed"; why: string };
 
@@ -92,7 +94,7 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 			...("phase" in next ? { detail: next.phase } : {}),
 			...(next.step === "shorten-reason" ? { detail: next.ritual } : {}),
 		});
-		const { error } =
+		const { error, waiting } =
 			next.step === "shorten-reason"
 				? await deps.run(next.step, undefined, {
 						ritual: next.ritual,
@@ -100,6 +102,11 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 						sentences: next.sentences,
 					})
 				: await deps.run(next.step, "phase" in next ? next.phase : undefined);
+		if (waiting) {
+			const stop: RunnerStop = { step: "question", id: waiting };
+			deps.onStep?.({ kind: "stopped", stop });
+			return stop;
+		}
 		const after = await deps.read();
 		previous = last;
 		last = { progressed: fingerprint(after) !== fingerprint(before), error };

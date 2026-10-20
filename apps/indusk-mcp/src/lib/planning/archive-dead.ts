@@ -77,6 +77,17 @@ function newestMtimeMs(dir: string): number {
 	return newest;
 }
 
+/**
+ * Whether the plan's brief carries `follow_on_of` in its frontmatter. Read as a line, not
+ * parsed: a brief that does not parse is the status rule's to block, as it always was.
+ */
+function isFollowOn(planDir: string): boolean {
+	const brief = join(planDir, "brief.md");
+	if (!existsSync(brief)) return false;
+	const head = /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(brief, "utf-8"))?.[1] ?? "";
+	return /^follow_on_of:\s*\S/m.test(head);
+}
+
 /** Names protected by master.md: linked on a line that does not mention "draft". */
 function readProtectedNames(planningDir: string): Set<string> {
 	const masterPath = join(planningDir, "master.md");
@@ -122,6 +133,13 @@ export function classifyPlans(
 
 		const statuses: Record<string, string> = {};
 		let blocking: string | null = null;
+		// A follow-on (decisions-as-questions, ADR decision 13) stays open until a person
+		// lands, abandons or archives it: the age limit never closes it, or the release
+		// would stop waiting with nobody deciding.
+		if (isFollowOn(planDir)) {
+			skipped.push({ name, reason: "a follow-on (follow_on_of): a person closes it" });
+			continue;
+		}
 		for (const f of readdirSync(planDir)) {
 			if (!f.endsWith(".md")) continue;
 			try {

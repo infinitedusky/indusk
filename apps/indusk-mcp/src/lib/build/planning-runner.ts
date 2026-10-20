@@ -25,7 +25,7 @@ import { PLANNING_STEPS, type PlanningStep } from "./step-env.js";
 export interface PlanningRunnerDeps {
 	read: () => Promise<PlanningState>;
 	/** Run one step's session to its end; `error` when it failed after its retries. */
-	run: (step: PlanningStep) => Promise<{ error: string | null }>;
+	run: (step: PlanningStep) => Promise<{ error: string | null; waiting?: string }>;
 	onStep?: (step: PlanningStep) => void;
 	/** Where the run reports reaching approval (the plan review's clauses); absent, it reports nothing. */
 	signals?: { root: string; plan: string };
@@ -58,7 +58,14 @@ export async function runPlanning(deps: PlanningRunnerDeps): Promise<PlanningSto
 		}
 		if (next.step === "plan-review") reviewed = true;
 		deps.onStep?.(next.step);
-		const { error } = await deps.run(next.step);
+		const { error, waiting } = await deps.run(next.step);
+		// A question that holds ends the step: the run stops until the person answers it.
+		if (waiting) {
+			return {
+				step: "cannot-continue",
+				why: `it asked a question (${waiting}) and waits for your answer`,
+			};
+		}
 		const after = await deps.read();
 		previous = last;
 		last = { progressed: fingerprint(after) !== fingerprint(before), error };

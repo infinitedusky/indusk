@@ -22,3 +22,10 @@ Loaded by Claude Code when a file under `src/lib/release/` is read
   never loses the release:** a throw is `no failure routed: …` on stderr and
   `routing` on the record. **A bugfix plan's name never collides with an open
   plan for another file, an archived one, a trunk folder or a `plan/<name>` branch** (`bugfix-plan.ts`).
+- **Only the release reads a follow-on's marker; landing never does.**
+  `follow-on-refusal.ts`'s `openFollowOns` lists the plans whose brief carries
+  `follow_on_of` and is not landed, abandoned or archived; `runRelease` refuses
+  before any publish step, naming each (`workflow.steps.release_follow_on`,
+  default on). `plans land` and `accept` never import it, so landing a plan, or
+  the follow-on itself, never waits — guarded by `land-follow-on.test.ts`
+  (`clause: a-release-waits-for-a-known-wrong/landing-never-waits`).
