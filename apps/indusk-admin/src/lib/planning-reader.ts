@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { join, sep } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
@@ -750,6 +750,13 @@ export async function readEvalScorecards(
   // In the project's home, outside every checkout (bookkeeping-lives-where-it-is-read).
   const path = join(evalDir(projectRoot), "results.log");
   if (!existsSync(path)) return [];
+  // The log is megabytes; parse it again only when it has changed.
+  const { size, mtimeMs } = await stat(path);
+  const signature = `${size}:${mtimeMs}`;
+  const kept = keptScorecards.get(path);
+  if (kept && kept.signature === signature) {
+    return kept.cards.filter((c) => inRange(c, planDateRange));
+  }
   const raw = await readFile(path, "utf-8");
   const out: Scorecard[] = [];
   for (const line of raw.split("\n")) {
@@ -760,7 +767,7 @@ export async function readEvalScorecards(
       if (typeof parsed.timestamp !== "string") continue;
       const ts = new Date(parsed.timestamp);
       if (Number.isNaN(ts.getTime())) continue;
-      if (ts >= planDateRange.from && ts <= planDateRange.to) out.push(parsed);
+      out.push(parsed);
     } catch {
       // Skip malformed lines — see fn doc.
     }
@@ -768,7 +775,18 @@ export async function readEvalScorecards(
   out.sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
   );
-  return out;
+  keptScorecards.set(path, { signature, cards: out });
+  return out.filter((c) => inRange(c, planDateRange));
+}
+
+const keptScorecards = new Map<
+  string,
+  { signature: string; cards: Scorecard[] }
+>();
+
+function inRange(card: Scorecard, range: { from: Date; to: Date }): boolean {
+  const ts = new Date(card.timestamp);
+  return ts >= range.from && ts <= range.to;
 }
 
 // The research-directory reader (.indusk/research/) lives in

@@ -119,9 +119,11 @@ export default async function PerProjectPromisesPage({
   // D7): one cached read each; unreachable is said, never drawn green.
   // The alarm source's chip leads: it is the one that raises (ADR D5).
   const reads = registry
-    ? await readHealth(projectPath, registry, {
-        cacheMs: readAdminRefreshMs(projectPath),
-      })
+    ? await standingKept(`health:${projectPath}`, () =>
+        readHealth(projectPath, registry, {
+          cacheMs: readAdminRefreshMs(projectPath),
+        }),
+      )
     : null;
   const alarm = reads ? alarmRead(reads) : undefined;
   const health = reads
@@ -167,10 +169,14 @@ export default async function PerProjectPromisesPage({
     : [];
   // Looks beside the promises (ui-promises ADR decision 7): each look's
   // standing from the same package reader the nav counts.
-  const looks = await readLookStanding(projectPath, {
-    cacheMs: readAdminRefreshMs(projectPath),
-  });
-  const planNames = await readHealthNames(projectPath);
+  const looks = await standingKept(`looks:${projectPath}`, () =>
+    readLookStanding(projectPath, {
+      cacheMs: readAdminRefreshMs(projectPath),
+    }),
+  );
+  const planNames = await standingKept(`health-names:${projectPath}`, () =>
+    readHealthNames(projectPath),
+  );
   const declarations = readPlanHierarchy(projectPath);
   const rows = buildRows(standing, {
     planTitles: planNames.planTitles,

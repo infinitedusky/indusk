@@ -13,6 +13,7 @@ import type { OpenStory } from "@/components/looks/Stories";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { startPage } from "@/lib/page-reads";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { standingKept } from "@/lib/standing-kept";
 
 interface LooksRouteProps {
   params: Promise<{ project: string }>;
@@ -81,7 +82,10 @@ export default async function PerProjectLooksPage({
   // A plan worktree is named by its plan's title; one the package reads no
   // title for reads as its handle in words, never as the folder name.
   const checkouts = await countedCheckouts(projectPath);
-  const { planTitles, words } = await readHealthNames(projectPath);
+  const { planTitles, words } = await standingKept(
+    `health-names:${projectPath}`,
+    () => readHealthNames(projectPath),
+  );
   const titles = Object.fromEntries(
     checkouts.flatMap((c) =>
       c.plan

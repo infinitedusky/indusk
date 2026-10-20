@@ -100,7 +100,11 @@ export default async function PerProjectLayout({
   // (day-monitor, A23) — the same cached read the Promises page makes, red
   // from the alarm source alone (promise-sources, ADR D5).
   const registry = registryOf(promisesRead);
-  const reads = registry ? await readHealth(projectPath, registry) : null;
+  const reads = registry
+    ? await standingKept(`health:${projectPath}`, () =>
+        readHealth(projectPath, registry),
+      )
+    : null;
   // The plans' worktrees' promises too, as each plan's page reads them, so a
   // break red on a plan's page is red here (plan-page-promise-health A7).
   const red =
@@ -125,14 +129,21 @@ export default async function PerProjectLayout({
         )
       ).filter((s) => s.standing === "broken").length
     : 0;
-  const brokenLooks = (await readLookStanding(projectPath)).rows.filter(
-    (l) => l.standing === "broken",
-  ).length;
+  // The look standing draws every mockup to learn its coverage; the nav serves the last
+  // answer while a newer one is read behind it (admin-pages-load-fast, fifth round).
+  const brokenLooks = (
+    await standingKept(`looks:${projectPath}`, () =>
+      readLookStanding(projectPath),
+    )
+  ).rows.filter((l) => l.standing === "broken").length;
   const brokenCount = brokenPromises + brokenLooks;
 
   // Each Path's released count: when a release shipped a plan, from the
   // package's `planDates` (display-names), read once for the whole nav.
-  const { planDates, words } = await readHealthNames(projectPath);
+  const { planDates, words } = await standingKept(
+    `health-names:${projectPath}`,
+    () => readHealthNames(projectPath),
+  );
   // Each plan's title, from the copy the admin reads it from (its worktree
   // first), so Needs you names a worktree plan by its own title.
   const planTitles = Object.fromEntries(

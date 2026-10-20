@@ -43,6 +43,7 @@ import {
   readPlanHierarchy,
 } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
+import { standingKept } from "@/lib/standing-kept";
 import { projectTrusted } from "@/lib/trust-reader";
 
 interface PlanPageProps {
@@ -69,7 +70,11 @@ export default async function PlanPage({ params }: PlanPageProps) {
   });
 
   // The dates the released card reads come from the package.
-  const dates = (await readHealthNames(projectPath)).planDates[name];
+  const dates = (
+    await standingKept(`health-names:${projectPath}`, () =>
+      readHealthNames(projectPath),
+    )
+  ).planDates[name];
 
   // The one decision the plan waits on, and what it was answered before
   // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
@@ -292,7 +297,10 @@ async function masterPage(
     readActivePlans(projectPath),
     readArchivedPlans(projectPath),
   ]);
-  const { planDates, words } = await readHealthNames(projectPath);
+  const { planDates, words } = await standingKept(
+    `health-names:${projectPath}`,
+    () => readHealthNames(projectPath),
+  );
   const isReleased = (n: string) => (planDates[n]?.released ?? null) !== null;
   const group = groupOf(
     buildGroups(active, archived, grouping, isReleased, words).groups,

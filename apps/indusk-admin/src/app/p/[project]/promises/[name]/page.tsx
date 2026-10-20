@@ -21,6 +21,7 @@ import { startPage } from "@/lib/page-reads";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { standingKept } from "@/lib/standing-kept";
 
 interface PromisePageProps {
   params: Promise<{ project: string; name: string }>;
@@ -57,7 +58,9 @@ export default async function PromisePage({ params }: PromisePageProps) {
     : null;
   if (!registry || !entry || !proof) notFound();
 
-  const names = await readHealthNames(projectPath);
+  const names = await standingKept(`health-names:${projectPath}`, () =>
+    readHealthNames(projectPath),
+  );
   const sentenceOf = (n: string) => promiseWords(n, names.words);
   const planHrefPrefix = `/p/${project}/plan/`;
   const beside = registry.promises.filter(
