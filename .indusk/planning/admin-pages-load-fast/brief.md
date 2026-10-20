@@ -1,10 +1,11 @@
 ---
 title: "Admin pages load fast"
 date: 2026-10-20
-status: draft
+status: accepted
 workflow: bugfix
 clauses: required
 description: "Every admin page answers in under a second: the process list and the trunk's landing history are read once per page for all plans, kept for a few seconds, and never read in a way that freezes the server."
+accepted_at: "2026-10-20T02:25:42.982Z"
 ---
 
 # Admin pages load fast — Brief
