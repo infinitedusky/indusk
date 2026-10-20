@@ -27,3 +27,4 @@ Each decision the plan waited on, the answer and who gave it, as the admin recor
 - 2026-10-20T13:43:46.511Z — amendment to the look home.default: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
 - 2026-10-20T13:43:46.511Z — amendment to the look nav.expanded: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
 - 2026-10-20T13:43:46.511Z — amendment to the look dashboard.default: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
+- 2026-10-20T13:43:46.511Z — amendment to the look promise.broken: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
