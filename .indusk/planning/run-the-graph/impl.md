@@ -83,6 +83,7 @@ Test paths are repo-root-relative.
 | T36 | Approving a plan and closing a phase still end by naming the command for what runs next (A41) | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
 | T37 | The manual one-phase path gives the same next step as today when no graph run is active (A44) | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: the graph step is added beside the manual path | apps/indusk-mcp/src/lib/build/next-step.test.ts |
 | T38 | While an amendment waits, the graph launches nothing, running phases finish, and the step stops on the amendment (A45) | Build Phase 5 | Build Phase 5 | planned | unit | a regression guard: a-change-to-what-was-agreed-needs-the-person, which the step loop checks before each step | apps/indusk-mcp/src/lib/build/graph-run-amendment.test.ts |
+| T40 | With two phases of one plan running, the plan page and its nav row name both, and the run-record signals for where it is and whether it died judge each phase by its own process, reporting no break | Build Phase 5 | Build Phase 5 | planned | unit | a regression guard over a-run-is-read-from-its-record, which this slice must not falsely break (Sandy, 2026-10-20) | apps/indusk-mcp/src/lib/run-record/situation-phases.test.ts |
 | T39 | A real plan with two independent phases and a dependent third, built from the admin's host with a scripted agent, runs the two at once and ends with all three on the plan's branch (A10) | Build Phase 5 | Build Phase 5 | planned | live check | a live check run at landing and release: the real run the clause signals report from; the clauses it touches are proved by the unit rows | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
 
 ### Deferred Verification
@@ -660,6 +661,12 @@ This phase connects the pieces inside the admin's existing build. When the build
   signal: `the-work-runs-as-a-graph/reviews-are-phases` — step half, reported from `apps/indusk-mcp/src/lib/build/graph-run-signals.ts`, called by `runBuild` before it starts an audit, falsify, cleanup or retrospective step. A plain scan of `git show plan/<plan>:<impl>` finds no open phase; `broken` names the step and the open phase it started over. Best-effort.
 
   </details>
+- [ ] Show every running phase on the plan page and in its nav row, and judge the run-record signals per phase, so two phases running at once never read as a false break.
+  <details><summary>Technical</summary>
+
+  Added at approval (Sandy, 2026-10-20): with the run record listing phases (Build Phase 2), the plan's situation names each running phase ("building — Build Phase 2, Build Phase 3"), and `a-run-is-read-from-its-record`'s `shows-where-it-is` and `dead-reads-stopped` judge each listed phase against its own process (`run-record/situation-signals.ts`, `liveness.ts`), never the first phase alone. Uses existing words and components: no look changes. T40.
+
+  </details>
 
 #### Build Phase 5 Verification
 
@@ -721,6 +728,7 @@ This phase connects the pieces inside the admin's existing build. When the build
 
 ## Notes
 
+- **Confirmed by Sandy before approval (2026-10-20):** after an admin restart the build stays stopped until Build is pressed (resuming on its own is a later slice); a terminal `plans approve` names the next session and does not start the build (approving in the admin does); a bad dependency line stops the build when the graph is read, not at save. Added at his request: every running phase is shown and judged per phase (the task and T40 in Build Phase 5), so no false break of `a-run-is-read-from-its-record`.
 - **This impl's own dependency and files lines are dogfood.** They are plain text to today's checks and take effect once Build Phase 1 lands. The intended graph: Test Phase 1 first; then Build Phases 1, 2 and 3 at once (their files do not overlap); 4 after 3; 5 after 1, 2 and 4. Longest chain: Test Phase 1 → 3 → 4 → 5.
 - **Inventory coverage** (ADR, "Inventory, entry by entry"): of the 37 entries marked blocking, 24 are changed by a named task and 13 are out of scope with a reason; the wrong and cosmetic entries handled here are the nine that would make a promise of this brief read false.
 - **Read as scope, for the person at approval:** the clauses about launching are judged while the plan's build runs in the admin. An admin restart leaves the build stopped until Build is pressed again, and a terminal approval names the next session as today (ADR D4); both are the later slice "nothing stops". The admin shows one phase per build until `activity-and-graph`.
