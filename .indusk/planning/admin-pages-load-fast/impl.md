@@ -1,7 +1,7 @@
 ---
 title: "Admin pages load fast — Impl"
 date: 2026-10-20
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "791be80e5ad1a18b594ec3747ee6a7d5258b2dc88495382048a49ee78251e0d6"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-20T02:59:49.810Z"
 ---
 
 # Admin pages load fast — Impl
