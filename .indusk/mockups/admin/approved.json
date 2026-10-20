@@ -8458,6 +8458,18 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-20T00:29:04.374Z",
 			"plan": "decisions-as-questions"
+		},
+		{
+			"kind": "story",
+			"story": "question-row.went-ahead",
+			"snapshotHash": "1f11ffb6591d85d90e9e8bc87db434455b0e9695a5c7b151e55ef9b2e4942b77",
+			"stylesheetHash": "c61ef0c236fd84a85d36b0f41b90bae7509afc42395175f625f042cd799f2a14",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-20T00:29:04.597Z",
+			"plan": "decisions-as-questions"
 		}
 	]
 }
