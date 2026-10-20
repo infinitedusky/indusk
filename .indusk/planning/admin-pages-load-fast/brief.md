@@ -59,7 +59,26 @@ Amended 2026-10-20 after the audit: two things on a page change besides how fast
 
 ### This plan makes
 
-None — the admin's pages draw what they drew; the only page changes are the scorecards header's words and how fresh the counts are, both listed under Not drawn.
+None.
+
+### Existing looks
+
+**Must not break**
+
+- **`home.default`**. The project list, now read through the page's one reading of the process list.
+- **`nav.expanded`**. The nav, whose broken count, look standing and plan names are served from the last reading while a newer one is read.
+- **`dashboard.default`**. The Promises page, whose rows are served from the last reading while a newer one is read.
+- **`promise.broken`**. A promise's own page, read through the page's reads.
+- **`plan.working`**. The plan page, whose plan folder is read once per change to its files.
+- **`looks.default`**. The Looks page, whose waiting looks are counted without being drawn.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
 
 ### Not drawn
 
