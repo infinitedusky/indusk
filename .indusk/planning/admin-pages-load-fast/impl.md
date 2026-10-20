@@ -162,6 +162,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
   Run `pnpm exec vitest run apps/indusk-admin/src/lib/page-reads.test.ts apps/indusk-admin/src/__tests__/no-sync-starts.contract.test.ts` from the repo root. Each failure message must be an assertion about counts or about a named synchronous start, never "Cannot find module".
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Deferred to Build Phase 1
 
