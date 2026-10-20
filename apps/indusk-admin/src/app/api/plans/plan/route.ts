@@ -1,17 +1,19 @@
 import type { NextRequest } from "next/server";
-import { planningState, startPlanning } from "@/lib/build-host";
+import { planningState, readNow, startPlanning } from "@/lib/build-host";
 import { adminOnly, refuse } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** What the plan's planning run is doing: `?project=&plan=` (a-brief-is-planned-unasked). */
-export function GET(request: NextRequest): Response {
+export async function GET(request: NextRequest): Promise<Response> {
   const refused = adminOnly(request);
   if (refused) return refused;
   const project = request.nextUrl.searchParams.get("project") ?? "";
   const plan = request.nextUrl.searchParams.get("plan") ?? "";
-  return Response.json({ planning: planningState(project, plan) });
+  return Response.json({
+    planning: planningState(project, plan, await readNow(project)),
+  });
 }
 
 /**

@@ -11,6 +11,7 @@ import { showOf } from "@/components/looks/address";
 import { LooksBody, type OpenMockup } from "@/components/looks/Looks";
 import type { OpenStory } from "@/components/looks/Stories";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { startPage } from "@/lib/page-reads";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface LooksRouteProps {
@@ -47,6 +48,7 @@ export default async function PerProjectLooksPage({
 }: LooksRouteProps) {
   const { project } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("looks", projectPath ?? "");
   if (!projectPath || !projectPathExists(projectPath)) {
     return (
       <StaleProjectFailurePage
@@ -87,10 +89,12 @@ export default async function PerProjectLooksPage({
         : [],
     ),
   );
+  const apps = await readLooks(checkout.root);
+  page.finish(0);
   return (
     <LooksBody
       project={project}
-      apps={await readLooks(checkout.root)}
+      apps={apps}
       path={`/p/${project}/looks`}
       open={open}
       openStory={openStory}

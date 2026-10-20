@@ -76,6 +76,9 @@ vi.mock("@/lib/timeline-strip", async () =>
 vi.mock("@/lib/registry-client", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).registryClientMock(),
 );
+vi.mock("@/lib/page-reads", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).pageReadsMock(),
+);
 vi.mock("@/lib/decisions-reader", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).decisionsReaderMock(),
 );

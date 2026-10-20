@@ -70,7 +70,12 @@ vi.mock("./session-host", () => ({
 }));
 vi.mock("./registry-client", () => ({ getProjectPath: () => "/p" }));
 
-import { readLandings, resetKept } from "@infinitedusky/indusk-mcp/run-record";
+import {
+  keptRead,
+  peekKept,
+  readLandings,
+  resetKept,
+} from "@infinitedusky/indusk-mcp/run-record";
 import { buildState, startBuild, startRelease } from "./build-host";
 
 const PROJECT = "seats";
@@ -121,5 +126,14 @@ describe("A21 — a release that ends just after the landing was read reads land
         error: null,
       }),
     );
+  });
+});
+
+describe("A20 — pressing Build drops the kept process table", () => {
+  it("A20 a table kept before the press is gone after it, so a run just started is never read from an older table", async () => {
+    await keptRead("ps", async () => []);
+    expect(peekKept("ps"), "kept before the press").toBeDefined();
+    await startBuild(PROJECT, PLAN);
+    expect(peekKept("ps"), "kept after the press").toBeUndefined();
   });
 });

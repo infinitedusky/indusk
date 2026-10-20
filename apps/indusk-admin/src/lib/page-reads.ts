@@ -1,18 +1,22 @@
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import {
   beginStartCount,
+  countStarts,
   type Exec,
   type KeptNote,
   keptProcessTable,
   keptWindow,
+  onPage,
   type PageReadsInput,
   type PsRow,
   processReadsFromTable,
   readLandings,
   reportPageReads,
   trunkMergeSubjectsAsync,
+  warmProject,
 } from "@infinitedusky/indusk-mcp/run-record";
 import { readAdminRefreshMs } from "./project-reader";
+import { getProjectPath } from "./registry-client";
 
 /**
  * Where a page gets its reads (admin-pages-load-fast, decisions 2, 8, 13, 14, 15, 19, 21).
@@ -55,6 +59,23 @@ export interface PageReads {
   counts: PageCounts;
 }
 
+/** What a rule needs of a page's reading: the table, the process reads over it, and the landings. */
+export type Reading = Pick<PageReads, "table" | "reads" | "landed">;
+
+const LATEST = Symbol.for("indusk.admin.latest-reading");
+const slot = globalThis as unknown as Record<symbol, Reading | undefined>;
+
+/** The most recent reading any request made: what a caller that was handed none reads with. */
+export function latestReading(): Reading {
+  return (
+    slot[LATEST] ?? {
+      table: null,
+      reads: processReadsFromTable(null),
+      landed: () => false,
+    }
+  );
+}
+
 /** What a page takes besides its path: the program runner, the clock and the report are inputs. */
 export interface PageDeps {
   exec?: Exec;
@@ -83,6 +104,7 @@ function readDeps(
 async function readThrough(
   projectPath: string,
   deps: PageDeps,
+  want: ReadWant = {},
 ): Promise<PageReads> {
   const counts: PageCounts = {
     processReads: 0,
@@ -92,38 +114,57 @@ async function readThrough(
     repositories: 0,
   };
   const logs = new Set<string>();
+  const failed = new Set<string>();
   const note = (k: KeptNote) => {
     counts.readings.push({ ageMs: k.ageMs, windowMs: k.windowMs });
     if (!k.reused) counts.refreshedEarly.push(k.refreshedEarly);
     if (k.key.startsWith("landings:")) logs.add(k.key);
   };
-  const withDeps = readDeps(projectPath, deps, note);
-  counts.processReads = 1;
+  const withDeps = { ...readDeps(projectPath, deps, note), failed };
+  // The project's shared git directory is found first, off the page's thread, so the readers
+  // beneath it that ask for it synchronously are answered and start nothing.
+  await warmProject(projectPath);
+  const wantList =
+    typeof want.processList === "function"
+      ? want.processList()
+      : want.processList !== false;
+  counts.processReads = wantList ? 1 : 0;
   counts.landingReads = 1;
   const [table, landed, subjects] = await Promise.all([
-    keptProcessTable(withDeps).then(
-      (k) => k.value,
-      () => null,
-    ),
+    wantList
+      ? keptProcessTable(withDeps).then(
+          (k) => k.value,
+          () => null,
+        )
+      : Promise.resolve(null),
     readLandings(projectPath, withDeps),
     trunkMergeSubjectsAsync(projectPath, withDeps),
   ]);
   counts.repositories = Math.max(1, logs.size);
-  return {
+  const read: PageReads = {
     table,
     reads: processReadsFromTable(table),
     landed,
     subjects,
     counts,
   };
+  slot[LATEST] = { table, reads: read.reads, landed };
+  return read;
+}
+
+/** What a page asks of its readings. A page whose plans have no run needs no process list. */
+export interface ReadWant {
+  /** Whether the process list is read; a function is asked after the project is found. */
+  processList?: boolean | (() => boolean);
 }
 
 /** One reading for a caller that is not a page (an API route, a timer tick): kept, so a tick inside the window starts nothing. */
 export function readPageReads(
   projectPath: string,
   deps: PageDeps = {},
+  want: ReadWant = {},
 ): Promise<PageReads> {
-  return readThrough(projectPath, deps);
+  return readThrough(projectPath, deps, want);
 }
 
 /** The rules' process reads for a caller that wants only the process table (a route, a timer). */
@@ -135,12 +176,14 @@ export async function readProcessReads(
     (k) => k.value,
     () => null,
   );
-  return processReadsFromTable(table);
+  const reads = processReadsFromTable(table);
+  slot[LATEST] = { table, reads, landed: latestReading().landed };
+  return reads;
 }
 
 export interface Page {
   /** The page's readings, read once however many times it is asked. */
-  reads(): Promise<PageReads>;
+  reads(want?: ReadWant): Promise<PageReads>;
   /** The page is done: report what it read, how long it took and how long the loop was blocked. */
   finish(plans: number): void;
 }
@@ -179,11 +222,13 @@ export function startPage(
   const starts = beginStartCount();
   const loop = monitorEventLoopDelay({ resolution: 10 });
   loop.enable();
+  // A page that returns early never finishes: the monitor is not left running for it.
+  setTimeout(() => loop.disable(), 30_000).unref?.();
   let reading: Promise<PageReads> | null = null;
   let done = false;
   return {
-    reads() {
-      reading ??= readThrough(projectPath, deps);
+    reads(want) {
+      reading ??= readThrough(projectPath, deps, want);
       return reading;
     },
     finish(plans) {
@@ -194,6 +239,8 @@ export function startPage(
       // The histogram's delays include the sampling interval; the loop was blocked by the excess.
       const maxBlockedMs = Math.max(0, loop.max / 1e6 - 10);
       const programStarts = starts.count();
+      // No project, no home for the report (the home page before any project is registered).
+      if (projectPath === "") return;
       void (reading ?? Promise.resolve(null)).then(
         (read) => {
           const counts = read?.counts;
@@ -219,4 +266,22 @@ export function startPage(
       );
     },
   };
+}
+
+/**
+ * Runs `fn` inside a page's count of program starts: the page's own when it opened one with
+ * `startPage`, else a count of its own, so a reader called outside a page (a test, a route)
+ * keeps what it reads for the window exactly as it does on a page.
+ */
+export async function withPageContext<T>(fn: () => Promise<T>): Promise<T> {
+  return onPage() ? fn() : (await countStarts(fn)).result;
+}
+
+/** `startPage` for a page that knows its project by name: the path is the registry's, none when it is not registered. */
+export function startPageFor(
+  page: string,
+  project: string,
+  deps: PageDeps = {},
+): Page {
+  return startPage(page, getProjectPath(project) ?? "", deps);
 }

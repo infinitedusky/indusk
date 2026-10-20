@@ -6,6 +6,7 @@ import { DraftConversation } from "@/components/drafts/DraftConversation";
 import { DraftParts } from "@/components/drafts/DraftParts";
 import { DraftProposal } from "@/components/drafts/DraftProposal";
 import { Tag } from "@/components/ui/Tag";
+import { startPage } from "@/lib/page-reads";
 import { getProjectPath } from "@/lib/registry-client";
 
 interface DraftPageProps {
@@ -25,10 +26,12 @@ interface DraftPageProps {
 export default async function DraftPage({ params }: DraftPageProps) {
   const { project, id } = await params;
   const root = getProjectPath(project);
+  const page = startPage("draft", root ?? "");
   if (!root) notFound();
   const view = readDraftView(draftHomeOf(root), id);
   if (!view) notFound();
   const repos = readWorkbenchRepos(root).map((r) => r.name);
+  page.finish(0);
 
   return (
     <article className="grid gap-5" data-testid="draft-page" data-draft={id}>

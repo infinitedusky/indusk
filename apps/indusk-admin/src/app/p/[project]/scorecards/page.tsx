@@ -1,5 +1,6 @@
 import { ScorecardsList } from "@/components/Scorecards";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { startPage } from "@/lib/page-reads";
 import { readEvalScorecards } from "@/lib/planning-reader";
 import { hasEvalDirectory } from "@/lib/project-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
@@ -27,6 +28,7 @@ export default async function PerProjectScorecardsPage({
 }: ScorecardsRouteProps) {
   const { project } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("scorecards", projectPath ?? "");
 
   if (!projectPath || !projectPathExists(projectPath)) {
     return (
@@ -48,7 +50,8 @@ export default async function PerProjectScorecardsPage({
   const ids = scorecards
     .map((s) => (s.changeId ? String(s.changeId) : ""))
     .filter((id) => id !== "");
-  const messages = getCommitMessages(projectPath, ids);
+  const messages = await getCommitMessages(projectPath, ids);
+  page.finish(0);
 
   // Single-project view — deliberately omit the project-name label per row
   // (it'd be redundant noise since every scorecard belongs to {project}).

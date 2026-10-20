@@ -23,6 +23,7 @@ import {
   PromisesProblems,
 } from "@/components/Promises";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { startPage } from "@/lib/page-reads";
 import { readPlanHierarchy } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { buildRows, parseQuery, readsNoSignal } from "@/lib/promise-dashboard";
@@ -94,6 +95,7 @@ export default async function PerProjectPromisesPage({
 }: PromisesRouteProps) {
   const { project } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("promises", projectPath ?? "");
 
   if (!projectPath || !projectPathExists(projectPath)) {
     return (
@@ -104,6 +106,9 @@ export default async function PerProjectPromisesPage({
     );
   }
 
+  // The machine's process list and the trunk's landings, read once and shared with the nav and
+  // the other pages inside the window; the daemon is found from the same list.
+  await page.reads({ processList: true });
   const read = readProjectPromises(projectPath);
   if (!read.ok && "missing" in read) {
     return <PromisesEmpty dir={read.missing} />;
@@ -169,6 +174,7 @@ export default async function PerProjectPromisesPage({
     sentenceOf: (name) => promiseWords(name, planNames.words),
     declarations,
   });
+  page.finish(rows.length);
   return (
     <div
       className="flex flex-col gap-4"

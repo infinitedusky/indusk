@@ -18,7 +18,12 @@ import {
   UnassignedWorktrees,
   WorktreeRecordError,
 } from "@/components/Worktrees";
-import { readWaiting, withSituations } from "@/lib/decisions-reader";
+import {
+  needsProcessList,
+  readWaiting,
+  startPage,
+  withSituations,
+} from "@/lib/decisions-reader";
 import { worktreePromises } from "@/lib/plan-health";
 import {
   readActivePlans,
@@ -75,6 +80,8 @@ export default async function PerProjectLayout({
     );
   }
 
+  // The nav is read for every page of the project: it keeps its own count of reads and starts.
+  const page = startPage("nav", projectPath);
   const [active, archived, research, worktrees] = await Promise.all([
     readActivePlans(projectPath),
     readArchivedPlans(projectPath),
@@ -131,9 +138,16 @@ export default async function PerProjectLayout({
 
   // Needs you: each plan waiting on the person, with the step it waits at —
   // the package's `planWaiting`, over what the admin holds (ADR decision 2).
-  const waiting = await readWaiting(project, projectPath, active);
+  // The process list and the trunk's landings are read once for the nav and shared with the page.
+  const read = await page.reads({
+    processList: () => needsProcessList(project, active),
+  });
+  const waiting = await readWaiting(project, projectPath, active, read);
   // What each plan reads as, and what runs for it, from the package's one reader of both.
-  const situated = await withSituations(project, projectPath, active, waiting);
+  const situated = await withSituations(project, projectPath, active, waiting, {
+    read,
+  });
+  page.finish(active.length);
 
   const summary = `${active.length} ${active.length === 1 ? "plan" : "plans"}`;
 

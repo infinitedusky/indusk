@@ -3,7 +3,7 @@ import {
   PlanCommandRefusal,
 } from "@infinitedusky/indusk-mcp/plans";
 import type { NextRequest } from "next/server";
-import { planningState, startBuild } from "@/lib/build-host";
+import { planningState, readNow, startBuild } from "@/lib/build-host";
 import { getProjectPath } from "@/lib/registry-client";
 import { adminOnly, refuse } from "@/lib/session-host";
 
@@ -50,7 +50,11 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (!root) return refuse(404, `no project named ${body.project}`);
   // The documents are still being written: approving would merge them under the
   // session, and the build it starts would be refused as "being planned".
-  const planning = planningState(body.project, body.plan);
+  const planning = planningState(
+    body.project,
+    body.plan,
+    await readNow(body.project),
+  );
   if (planning?.running) {
     return refuse(
       409,

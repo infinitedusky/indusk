@@ -12,6 +12,7 @@ import { delimiter, join } from "node:path";
 import { bookkeepingRoots } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   realProcessReads,
+  resetKept,
   startRunRecord,
   writeRunRecord,
 } from "@infinitedusky/indusk-mcp/run-record";
@@ -133,6 +134,8 @@ async function loadPage(project: { name: string; root: string }) {
 
 /** The programs one page load of `project` starts; what setup started is not counted. */
 async function startsOfLoading(project: { name: string; root: string }) {
+  // Each load is a page opened cold: whatever an earlier one kept would hide the reads it makes.
+  resetKept();
   started.calls.length = 0;
   await loadPage(project);
   return [...started.calls];
@@ -142,6 +145,7 @@ async function startsOfLoading(project: { name: string; root: string }) {
 vi.setConfig({ testTimeout: 90_000 });
 
 beforeEach(() => {
+  resetKept();
   started.calls.length = 0;
 });
 afterEach(() => {

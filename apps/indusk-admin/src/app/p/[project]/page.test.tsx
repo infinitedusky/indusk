@@ -113,6 +113,9 @@ vi.mock("@/lib/decisions-reader", () => ({
   readPlanHistory: () => [],
   withSituations: async (_project: string, _path: string, plans: unknown[]) =>
     plans,
+  needsProcessList: () => false,
+  startPage: () => ({ reads: async () => ({}), finish: () => {} }),
+  startPageFor: () => ({ reads: async () => ({}), finish: () => {} }),
 }));
 
 vi.mock("@/lib/registry-client", () => ({

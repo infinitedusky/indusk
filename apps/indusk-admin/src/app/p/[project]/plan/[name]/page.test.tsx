@@ -95,6 +95,9 @@ vi.mock("@/lib/decisions-reader", () => ({
   readPlanQuestions: () => [],
   withSituations: async (_project: string, _path: string, plans: unknown[]) =>
     plans,
+  needsProcessList: () => false,
+  startPage: () => ({ reads: async () => ({}), finish: () => {} }),
+  startPageFor: () => ({ reads: async () => ({}), finish: () => {} }),
 }));
 
 // The plan page's brief parts are read by the package from disk (node:fs), which
