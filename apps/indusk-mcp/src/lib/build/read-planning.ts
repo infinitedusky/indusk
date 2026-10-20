@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
@@ -63,7 +62,7 @@ export interface PlanningReadDeps {
 	locate: (anyCheckout: string, plan: string) => Promise<{ root: string; dir: string | null }>;
 	contract: (root: string, plan: string) => ContractResult;
 	/** Run the shipped impl hook on a write; `status` is its exit code (0 allows). */
-	runHook: (input: HookInput) => HookResult;
+	runHook: (input: HookInput) => HookResult | Promise<HookResult>;
 	unapprovedLooks: (root: string, briefText: string) => Promise<string[]>;
 	/** What the brief says now that it did not say when accepted; absent, none is compared. */
 	briefChanges?: (dir: string) => Promise<Amendment[]>;
@@ -87,29 +86,17 @@ export const realPlanningReads: PlanningReadDeps = {
 		return { root: live.copy.root, dir: findPlanFolder(live.copy.root, plan) };
 	},
 	contract: checkPlanContract,
-	runHook: (input) => {
-		const r = spawnSync(process.execPath, [implHookPath()], {
-			input: JSON.stringify(input),
-			cwd: input.cwd,
-			encoding: "utf-8",
-			timeout: 30_000,
-			// The policy the planning session wrote the impl under, or its skips read as failures.
-			env: { ...process.env, ...GATE_POLICY_FOR_BUILDS, INDUSK_SKIP_UPDATE_CHECK: "1" },
-		});
-		return { status: r.status, stderr: r.stderr, error: r.error?.message, signal: r.signal };
-	},
+	runHook: (input) => runImplHookAsync(input),
 	unapprovedLooks: unapprovedMockups,
 	briefChanges: briefChangesSinceAcceptance,
 };
 
 /**
- * `runHook` without stopping the server (admin-pages-load-fast, decision 11): the same program,
+ * `runHook` as the reader runs it, without stopping the server (admin-pages-load-fast, decision 11): the same program,
  * the same input and environment, started asynchronously and counted. A non-zero exit is an
  * answer (the hook refusing), not a failure; only a program that could not be run sets `error`.
  */
-export async function runImplHookAsync(
-	input: Parameters<PlanningReadDeps["runHook"]>[0],
-): Promise<ReturnType<PlanningReadDeps["runHook"]>> {
+export async function runImplHookAsync(input: HookInput): Promise<HookResult> {
 	try {
 		await startProgram(process.execPath, [implHookPath()], {
 			input: JSON.stringify(input),
@@ -156,13 +143,13 @@ function blockerIn(text: string | null): string | null {
  * could not run is not a refusal and ends the read (lesson
  * `detectors-must-distinguish-could-not-check-from-checked-and-failed`).
  */
-function judgeImpl(
+async function judgeImpl(
 	dir: string,
 	root: string,
 	impl: string,
 	deps: PlanningReadDeps,
-): PlanningDocument {
-	const ran = deps.runHook({
+): Promise<PlanningDocument> {
+	const ran = await deps.runHook({
 		tool_name: "Write",
 		tool_input: { file_path: join(dir, "impl.md"), content: impl },
 		cwd: root,
@@ -229,7 +216,7 @@ export async function readPlanningState(
 		!contract.ok && contract.refusals.some((r) => /(^|\/)test-plan\.md$/.test(r.file));
 	const standing = (text: string | null): PlanningDocument =>
 		text === null ? ABSENT : { exists: true, ok: text.trim() !== "" };
-	const implDocument = impl === null ? ABSENT : judgeImpl(dir, root, impl, deps);
+	const implDocument = impl === null ? ABSENT : await judgeImpl(dir, root, impl, deps);
 
 	const status = impl === null ? undefined : matter(impl).data.status;
 	const briefData = brief === null ? {} : matter(brief).data;

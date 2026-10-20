@@ -3,7 +3,7 @@ import { basename, join } from "node:path";
 import matter from "gray-matter";
 import { readWorkflowSteps } from "../checks/steps.js";
 import { readConfig } from "../config.js";
-import { firstParentLogSync, type TrunkCommit } from "../git.js";
+import { firstParentLogAsync, type TrunkCommit } from "../git.js";
 import { DOCUMENT_LABELS } from "../workflow-types.js";
 import { type PlanCopy, resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { planFolders } from "./plan-folder.js";
@@ -329,7 +329,7 @@ export async function readHealthNames(projectRoot: string): Promise<HealthNames>
 	const changelog = changelogPath
 		? (read(join(projectRoot, changelogPath)) ?? undefined)
 		: undefined;
-	const trunk = firstParentLogSync(projectRoot);
+	const trunk = await firstParentLogAsync(projectRoot);
 	const names: HealthNames = { planTitles: {}, planDates: {}, words: displayWords(projectRoot) };
 	const resolved = await resolvePlanCopies(projectRoot);
 	const live: Map<string, PlanCopy> = resolved.ok ? resolved.copies : new Map();
