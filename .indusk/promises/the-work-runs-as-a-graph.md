@@ -29,8 +29,9 @@ clauses:
     statement: "The phases falsify, cleanup, the audit and an incident write are build phases of the graph like any other, with the same dependencies, files and order; the steps that write them are not phases (Sandy, 2026-10-16)."
 ---
 
-Within an approved plan, every phase whose dependencies are done is running, up to the session cap, and no phase waits on one it does not depend on.
+Within an approved plan that is not a workbench plan, every phase whose dependencies are done is running, up to the session cap, and no phase waits on one it does not depend on.
 
 ## History
 - 2026-10-19 — declared (run-the-graph), from its planning conversation.
 - 2026-10-20 — changed by run-the-graph: sliced to one plan's phases (Sandy, 2026-10-19). It read: "Every phase whose dependencies are done and whose files no running phase touches is running, up to the session cap, and no phase waits on one it does not depend on." with the clauses a-phase-names-what-it-needs (split), ready-phases-start (split), no-needless-wait (limit), graph-is-current (limit), within-the-cap (rests-on), reviews-are-phases (limit).
+- 2026-10-20 — changed by run-the-graph: workbench plans are a later slice (Sandy, 2026-10-19). It read: "Within an approved plan, every phase whose dependencies are done is running, up to the session cap, and no phase waits on one it does not depend on."

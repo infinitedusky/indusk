@@ -53,7 +53,7 @@ hold is cheap.
 
 ### This plan makes
 
-1. **`the-work-runs-as-a-graph`** (behaviour). Within an approved plan, every phase whose dependencies are done is running, up to the session cap, and no phase waits on one it does not depend on.
+1. **`the-work-runs-as-a-graph`** (behaviour). Within an approved plan that is not a workbench plan, every phase whose dependencies are done is running, up to the session cap, and no phase waits on one it does not depend on.
    - **`a-phase-names-what-it-needs`** (split). Each phase in a plan names the phases it depends on; one that names none depends on the phase before it, so a plan written before this runs as it does today.
    - **`ready-phases-start`** (split). A phase becomes ready when the last phase it depends on finishes, and its session is launched within one minute while the session cap has room.
    - **`no-needless-wait`** (limit). No phase is held back by a phase of its plan it does not depend on, except that two phases of one plan that touch the same file never run at the same time.
@@ -94,6 +94,7 @@ None.
 - **Seeing the graph, and the activity feed** — `activity-and-graph`.
 - **Re-cutting a plan's phases for speed** — phases are cut by judgment when the impl is written.
 - **Running on the workbench server** — `workbench-server`; this runs on one machine.
+- **Workbench plans running as a graph** — a later slice (Sandy, 2026-10-19: they would not work at first); a workbench plan builds one phase at a time, as today, because every phase session would edit the one impl at the workbench root.
 
 ## Looks
 
