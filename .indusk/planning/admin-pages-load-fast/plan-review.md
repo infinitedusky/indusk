@@ -1,97 +1,113 @@
 ---
-read: 2fdab5feb3a1f66c27b66f12d9d47e5d7dd665f842fd9b6a2fafe77e59ba7d87
+read: d2d31ebdd259f690711fe800c1b8f2713cc18b2c4c056a1af2b942da455d117b
 ---
+
 # Plan review — admin-pages-load-fast
+
+Round 4, read cold by a reader on claude-sonnet-5-5 (the audit tier named `session`). The impl has no ADR; none is needed.
 
 ## Do the planned tests prove each promise's sentence, or something narrower?
 
-- test-plan.md:44 — A1, the only row that measures "every admin page answers in under a second", is a `manual:` live check (impl.md:74) that reports each page's fresh median; no test run by `verify` or at landing asserts a duration, so the headline sentence and the clause `never-freezes` are proved only by call counts and event-loop lag on stubs.
-  - breaks when: a page is slow for a reason the stubs do not model (a large plan set, a cold first request, one load in several over a second while the median stays under), and every counting and lag row still passes.
-  - answer: nothing — a wall-clock test is the flaky tier the test plan rejected on purpose; decision 14 puts each page's elapsed time in the report and breaks `never-freezes` over one second on any single load (not a median), so a slow load is seen in a real run; A1 is the recorded measure.
-- impl.md:95 — A22 and A23 test `judgePageReads`, a pure function fed hand-made inputs; no row proves `finishPage` in `page-reads.ts` (impl.md:365) actually calls `reportPageReads` with the page's real counts, early-refresh flags and elapsed time.
-  - breaks when: the page wiring passes zero counts or never calls the report; the unit tests stay green and the page reads "no signal".
-  - answer: fix — decision 20(g) adds row A24 (Build Phase 2): `finishPage` hands the report the real counts, flags, ages and elapsed time.
-- impl.md:88 — A15 proves the time limit only for the process-list reader; the same `READ_TIMEOUT_MS` on `git log` (impl.md:253) and on `git ls-tree` has no row.
-  - breaks when: a `git` invocation hangs (a stuck repository, a network filesystem); the page waits on it rather than answering with "not landed".
-  - answer: fix — decision 20(g) adds row A25 (Build Phase 1): a `git log` and `git ls-tree` that never answer stop at the time limit.
-- impl.md:85 — A12 loads the three page loaders in one vitest process with injected counting readers; it cannot show that the layout and each page, bundled separately by Next, share the one kept reading (decision 16 relies on a `globalThis` slot nothing tests under Next).
-  - breaks when: the running admin's route bundles each hold their own map, so the plan, promises and looks pages each read once and A1 is the only thing that notices.
-  - answer: nothing — no code exists yet to test under Next; separate bundles each holding a map show as a load that reads fresh inside the window, which the page-reads report judges `kept-briefly` broken (row A23, and decision 20(f) adds reading age), and A1 on the running admin shows it before close.
-- test-plan.md:92 — A17 and A8 prove a dead run reads stopped after the window, for the default window only; no row sets a long `admin.refresh_ms` to check the brief's "kept for a few seconds at most" (brief.md:39) against decision 13's `max(8 s, 1.5 × refresh_ms)`.
-  - breaks when: a project sets `admin.refresh_ms` to 60 s and a run that died reads running for up to 90 s.
-  - answer: fix — decision 20(a) caps the window at 15 s and row A26 (Build Phase 1) asserts the clamp.
-- impl.md:94 — A21 covers a release ending through the admin (which calls `forgetKept`); no row covers a landing or release finished from a terminal, so the landing reading's staleness is tested only for the admin's own actions.
-  - breaks when: `indusk plans land` or a release runs from the command line and the page, inside the window, still reads the plan as not on main.
-  - answer: nothing — the brief accepts "kept for a few seconds at most", and a landing from a terminal is read fresh within the window (at most 15 s after decision 20); the admin cannot know of a terminal's action, so only the window bounds it.
+- test-plan.md:43 and impl.md:75 — A1, the live check asserting every page route answers under one second on the running admin, is the only row that measures the headline sentence; it is a `manual:` script run once at close, "unverified to tools by design" (impl.md:514). Every automated row counts reads or scans source.
+  - breaks when: a page reads once, keeps its reading, starts nothing synchronous, and is still over a second (plan files, rendering, a large trunk's `git log`, the 3 s timeout path), and nobody reruns the script after close.
+  - answer: nothing — a wall-clock test is the flaky tier the test plan rejected on purpose; every page reports its elapsed time through the page-reads signal (decision 14, now counted from the top of the page by decision 21(b)) and a page over one second breaks `never-freezes` on any single load, so a slow page is seen in a real run after close, not only once by A1.
+- impl.md:88 and test-plan.md:83 — A14 (a `ps` shim sleeping three seconds, a 50 ms interval timer, event-loop lag under 100 ms) is a wall-clock bound on a real child process, the flakiness the test plan's first decision says it avoids everywhere but A1.
+  - breaks when: CI is loaded and the interval timer lags past 100 ms for reasons unrelated to the readers.
+  - answer: nothing — the bound is on event-loop lag while a child runs, which is exactly the freeze the clause names; the 100 ms limit is a constant against a 3 s shim (a blocked loop lags about 3 s, thirty times the limit), so a loaded machine does not produce a false red and a synchronous start cannot pass.
+- test-plan.md:35 — the failure "a page that shows a run's live state and a plan's landing state reads each twice (list and detail)" is asserted by A2, A3 and A12; the layout and page sharing one reading through React `cache()` (impl.md:334) is not asserted with the kept reading disabled.
+  - breaks when: the layout and the page each call `readPageReads` and the kept reading hides the second call; the counted starts per request are then 2 but the page reports 1 read.
+  - answer: nothing — the report counts program starts (decision 15), not calls, so a duplicate call hidden by the kept reading starts nothing and costs nothing; the failure the clause names is a second start, which A2, A3 and A12 catch.
+- test-plan.md:75 and impl.md:145 — A13, the contract row asserting no admin page-path code contains `spawnSync`, `execSync` or `execFileSync`, is a text grep for three names; it does not see a synchronous start through another API.
+  - breaks when: a later reader starts a program through a name outside the grep list, and A13 stays green.
+  - answer: nothing — the clause's failure is a synchronous start, and Node's only synchronous starts are those three plus `spawnSync` (all named); an awaited asynchronous start does not freeze the server, which A14 measures at run time; `execa` and similar are not in the admin's dependencies, and a new dependency is a visible change.
+- impl.md:98 — A24 asserts `finishPage` hands `reportPageReads` the right numbers, and A22/A23 assert `judgePageReads`; no row asserts that a report reaches the clause signals the daemon reads from a running admin, or that `after()` fires in a real Next render.
+  - breaks when: `after()` is not run for a page, or `writeClauseSignals` writes to a path the daemon does not read; all three signals read "no signal" while every test is green.
+  - answer: nothing — that path needs the running admin and daemon, which a unit test cannot stand up; a clause closes only on a report from a real run (mark-first), so a report that never arrives leaves the clause at "no signal" and the plan unclosed, and Build Phase 3's live check reads the signals from the daemon.
 
 ## Does the impl build what each promise claims, and nothing it does not?
 
-- impl.md:36 — Decision 13 sets the window to `max(KEPT_FOR_MS, 1.5 × admin.refresh_ms)` and decision 16 (impl.md:39) takes the longest `refresh_ms` of any project read for the machine-wide process table; the brief says the reads are kept "a few seconds" and a run that dies reads stopped "within that time" (brief.md:32, 39).
-  - breaks when: any registered project has a long `refresh_ms`; every project's dead runs read running for that long.
-  - answer: fix — decision 20(a) caps the window at 15 s whatever the refresh; row A26 asserts it. A longer refresh simply reads fresh each tick.
-- impl.md:329 — `readPageReads` runs `readLandings` and `trunkMergeSubjectsAsync` in parallel, two different functions each reading `git log … --merges` (impl.md:253); nothing says they share one kept key, yet A3/A12 assert exactly one trunk-history read.
-  - breaks when: the two functions use different keys; a page makes two `git log` reads and the second is not reused.
-  - answer: fix — decision 20(b) puts both on one kept key; row A27 (Build Phase 1) asserts a single read.
-- apps/indusk-mcp/src/lib/telemetry/daemon-reads.ts:288 — the page-reachable `holders()` calls `psAll()` again and runs one `lsof` per port, and `processes: psAll` is a second process-list read; impl.md:359 converts only the `lsof` start, not these `psAll` calls, and the per-port starts grow with ports rather than plans.
-  - breaks when: the promises page reads sources; it starts its own process-list read outside the kept table and, with more than a few listening ports, exceeds `PAGE_STARTS_LIMIT = 6`.
-  - answer: fix — decision 20(c) moves `holders()` and `processes` onto the kept table and the per-port `lsof` through `startProgram`; the Build Phase 2 task for decisions 9 and 11 covers it.
-- impl.md:35 — Decision 12 reads an alive pid absent from the table as liveness unknown; a run started from a terminal (`indusk run`) after the table was read is not covered by the Build-press and release-end forgets.
-  - breaks when: a run begins outside the admin and the page, within the window, shows it as unknown instead of running.
-  - answer: nothing — unknown for at most one window (now capped at 15 s) is the honest reading when the table predates the process; the opposite error, a live run read as stopped, is the harm the must-not-break promise names.
-- apps/indusk-admin/src/lib/build-host.ts:260 — `checkInProgress` and `reportBuildPressed` call `psAll()` outside any request, where no per-request `cache()` reading exists (impl.md:329); impl.md:335 says only that they use "the kept one".
-  - breaks when: a timer-driven check runs while no page is loading and starts its own `ps` per plan every 15 s, blocking the loop the background recorder shares.
-  - answer: fix — decision 20(e): both read the kept table through `keptRead` directly, so a tick within the window starts no `ps`.
+- impl.md:37 (decision 14) and impl.md:264 — `never-freezes` is the clause "no page starts another program in a way that stops the server answering"; the impl also makes it report broken when `elapsedMs` is over 1000, the headline duration, so a slow non-blocking program is reported under the wrong clause and the headline promise has no judged result of its own.
+  - breaks when: a page is slow because `git log` on a large trunk takes 2 s asynchronously; `never-freezes` reads broken though nothing froze.
+  - answer: nothing — decision 21(d) records why: a fourth clause would change the approved promises; the report writes `elapsed` and `blocked` as separate fields (decision 14) so a slow program is told apart from a frozen loop, and a slow page is a broken page for the person reading either way.
+- impl.md:258 versus impl.md:42 — the archive-folder replacement is a recursive `git ls-tree -r` in Build Phase 1 but non-recursive in decision 19.
+  - breaks when: the recursive form is built; a trunk with many archived plans lists every file under every archived plan on each fresh read and can exceed the one-second budget.
+  - answer: fix — the Build Phase 1 task text is corrected to the non-recursive form (decision 21(c)).
+- impl.md:38 (decision 15) and impl.md:264 — `PAGE_STARTS_LIMIT = 6` is a fixed bound on program starts per page, but a workbench reads a trunk and a code repository per repo.
+  - breaks when: a workbench with several repos legitimately starts more than six programs; `one-read-per-page` reports broken for a correct page.
+  - answer: fix — decision 21(a) scales the bound to 6 per repository, still independent of the plan count; row A22 now covers a three-repository page at 18 starts upheld.
+- impl.md:35 and impl.md:252 — `runStatus` gains `tableUnreadable`; a live pid absent from the table now reads unknown instead of stopped, which changes the existing promise `a-run-is-read-from-its-record` for a pid reused by an unrelated process.
+  - breaks when: a run's pid is reused by an unrelated process just after it died; the run reads unknown, not stopped, for up to the window.
+  - answer: nothing — unknown for at most one window is the honest reading when the table may predate the process, and the opposite error (a live run read stopped) is the harm the must-not-break promise names; pid reuse inside 15 s is rare, and the command match still rejects a different command.
+- impl.md:36, 43 and brief.md:32 — the brief says the reads are kept "a few seconds"; the impl keeps them 8 s by default and up to 15 s, and brief.md:39 says a dead run reads stopped "within that time".
+  - breaks when: a project has `admin.refresh_ms` of 10 s or more; a run that died reads running for up to 15 s.
+  - answer: nothing — decision 20(a) already narrowed this with the 15 s ceiling; the brief's "a few seconds at most" is read with the live refresh it names, 8 s is under two refresh ticks, and a longer refresh reads fresh each tick rather than keeping.
+- impl.md:32 (decision 9) — the port check is named in the brief, but the build task first traces it and may find no page reaches it and remove nothing.
+  - breaks when: the port check is reached through a route the trace's search terms (`net.connect`, `fetch(`) miss, and a page still waits on it.
+  - answer: nothing — the trace is where the profile frame becomes a call site, and A1's per-page timing and A14's lag test run against the real pages, so a missed wait shows as a slow page; the task records its finding in Notes either way.
+- impl.md:42 (decision 19) and impl.md:346 — the impl extends to `instrumentation.ts`, `getCommitMessages` batching, scorecards, research, draft and home pages; the brief's scope sentence names only the admin's server-side readers and the run-record readers.
+  - breaks when: commit-message batching or a changed archive listing alters those pages' output and no row asserts it.
+  - answer: nothing — the brief names "every admin page", and the batching returns the same messages by commit id through the same reader; the archive listing is covered by A6, which compares the new landing answers with the synchronous `landedAsker`'s.
 
 ## Which skip reason would you not accept?
 
-- impl.md:158 — Deferring A5–A23 to Build Phase 1 on "the file would fail to load rather than fail an assertion" is accepted for the kept-read module, but A20's admin half and A21 (landing and live-run must-not-break rows) are not written until Build Phase 2, so the must-not-break promise `a-run-is-read-from-its-record` has no red test while Build Phase 1 changes `runStatus`.
-  - breaks when: Build Phase 1's `tableUnreadable` change turns a stopped run into unknown in a code path the existing run-record tests do not reach, and nothing fails until Build Phase 2.
-  - answer: nothing — A20's package half and A26 are written in Build Phase 1, the existing run-record liveness tests must stay green in its verification, and the admin half cannot exist before the admin imports the module; Build Phase 2 closes before the plan does.
-- impl.md:74 — A1 left `manual:` and "unverified to tools by design" (impl.md:509) as the sole proof of the duration sentence is not a skip reason I would accept for a promise whose whole statement is a duration.
-  - breaks when: the manual script is not run at close or is run against an admin with fewer plans than Sandy's real set; the promise confirms with no duration ever asserted.
-  - answer: nothing — the clause rows gate close and a clause is upheld only when its signal has reported in a real run (mark-first); the signal carries each page's elapsed time (decision 14). A1 stays the recorded measure on the author's real plan set, by the person's stated preference for shipping over waiting on slow tiers.
-- impl.md:105 — Deferred Verification (every page, at all times) leaves the continuing measure to a report Sandy reads; the report is sent only by pages that call `readPageReads` (impl.md:506 accepts the rest as "no signal").
-  - breaks when: a page that never calls the module (scorecards, research, draft, home) becomes slow; nothing reports it.
-  - answer: fix — decision 20(d) makes the scorecards, research, draft and home pages call `finishPage`, so they report their elapsed time too.
+- impl.md:514 and test-plan.md:104 (U1) — "unverified to tools by design" for the headline sentence; the compensating control is the page-reads signal, which reads "no signal" for any route that never calls the module.
+  - breaks when: a page does not call `finishPage`; the control and the skipped test fail for the same reason and the headline has neither.
+  - answer: nothing — decision 20(d) wires every page, and A24 and the Build Phase 2 page list name them; A1 visits every route, so a page that reports nothing shows as "no signal" beside its measured time.
+- impl.md:108 (Deferred Verification mitigation) — "Sandy reads it, nobody guesses" is a reader, not a detector; nothing raises an alarm for a page over a second except the `never-freezes` report.
+  - breaks when: nobody opens the daemon's signals after close; a page regressing past a second goes unseen.
+  - answer: nothing — the `never-freezes` report is the detector, and a broken clause is raised by the daemon like any broken promise (mark-first), so it does not depend on someone opening it.
+- impl.md:154-157 — A5 through A11, A15, A16, A17, A20, A22, A23 are deferred because their imports do not exist; A17 (a dead run reads stopped after expiry) could be written today against `runStatus`.
+  - breaks when: the dead-run-reads-stopped behaviour regresses in Build Phase 1 and no red-first test existed to show it.
+  - answer: nothing — A17 asserts a dead run reads stopped once the kept table expires, which needs the kept-read module and its injected clock; the existing `runStatus` tests (listed in the regression guards) already cover the behaviour today and must stay green.
 
 ## What else would have to change for each promise to hold?
 
-- apps/indusk-admin/src/lib/vcs.ts:22 — the scorecards page calls `getCommitMessages` (page.tsx:51), one `git log` per commit id; impl.md:353 plans one `git log --no-walk` but that page does not call `readPageReads`, so its starts are not counted by the `startProgram` helper in the package.
-  - breaks when: the scorecards page shows many commits; the page starts one program per commit and no `one-read-per-page` report sees it.
-  - answer: fix — decision 20(d): one `git log --no-walk` through `startProgram`, and the page calls `finishPage`.
-- apps/indusk-admin/src/__tests__/admin-uses-package-commands.test.ts:34 — the existing guard A25 requires exactly `lib/git-only-path.ts` and `lib/vcs.ts` to import `child_process` in the admin; the plan neither lists this test among the guards to run nor says it stays true if the readers move into the package.
-  - breaks when: `vcs.ts` is moved or its import changes; A25 fails at landing.
-  - answer: nothing — the plan keeps `vcs.ts` where it is and only changes how it starts git; the test runs with the admin's tests at landing and any import change it flags is fixed then, with the guard's list updated by the same edit.
-- apps/indusk-mcp/src/lib/looks/check.ts:249 — `execFileSync("sh", …)` is a synchronous start in a package module under `looks/`; impl.md:359 names `looks/overview.ts` as the looks page's reach but the plan's inventory (decision 17) is left to the build to discover.
-  - breaks when: the looks page reaches `looks/check.ts`; A13 goes red late in Build Phase 2 and the page stays at its 30 s.
-  - answer: fix — decision 20(h) adds `looks/check.ts` to the inventory the Build Phase 2 task checks up front.
-- apps/indusk-admin/src/lib/plan-situation.ts:48 — `runOfPlan` is called twice per plan (`liveOf` and `situatedPlan`, line 108) and, in `build-host.ts:361`, its signature has no table parameter; the plan changes the signature (impl.md:335, 41) for every caller on every route.
-  - breaks when: one route (an API handler or event stream) keeps the old signature; it reads liveness through a per-run program and the page-path scan does not name it.
-  - answer: nothing — decision 18 already puts the request's table on every `statusOfRecord` and `runOfPlan` caller on every route, and A13's second part bans `realProcessReads` in any admin source, so a route keeping the old path fails the scan.
-- impl.md:329 — the window follows `admin.refresh_ms` per project but the live refresh reads per-page; the other pages (promises, looks) are said to share the reading yet only the plan and promises pages poll (admin CLAUDE.md), so the looks page's reuse depends on a navigation inside the window.
-  - breaks when: the looks page is opened more than the window after the last page read; it is a fresh read and its A1 time is the cold cost.
-  - answer: nothing — the brief promises reuse "instead of reading again" inside the window, not a warm reading for a page opened outside it; a fresh read is one read, and A1 measures that cold cost against the one-second sentence on purpose.
+- impl.md:35 (decision 12) — kept readings are dropped only when the admin presses Build or sees a release end; a release ended or run started from the command line does not call `forgetKept`.
+  - breaks when: a plan lands from the command line; the page reads "not on main" for up to the window.
+  - answer: nothing — the brief accepts "kept for a few seconds at most"; the admin cannot know of a terminal's action, so only the window bounds it (at most 15 s).
+- impl.md:27 and test-plan.md:18 — the live refresh fires every 5 s and the window is 8 s, so ticks at 0, 5, 10 s reuse at 5 s and read fresh at 10 s; `kept-briefly` holds for one tick in two.
+  - breaks when: the person judges the clause by every refresh reusing.
+  - answer: nothing — the clause is that a reading is reused inside the window and not read again, not that every tick reuses; a fresh read after the window is one read (decision 4 chose 8 s so it is at most one in two).
+- impl.md:36 (decision 13) — a project with a 60 s refresh gets a 15 s window and a fresh read on every tick, and `refreshedEarly` is false, so no report names it.
+  - breaks when: `admin.refresh_ms` exceeds 15 s; each refresh starts its own `ps` and `git`.
+  - answer: nothing — one read per refresh is one read per page, which is what `one-read-per-page` promises; a 60 s refresh makes that cheap by itself.
+- impl.md:246 — `keptProcessTable` throws on a `null` read so a failure is not kept; with the 3 s timeout, every page load while `ps` hangs waits 3 s.
+  - breaks when: `ps` hangs; every page is over a second until it recovers, and A15 asserts only that the page answers within its limit.
+  - answer: nothing — a hung `ps` is a real fault the page cannot answer around within a second; the reading falls back to the record with liveness unknown after 3 s (decision 6), and the slow load reports itself as broken.
+- impl.md:334 — `readPageReads` runs `readLandings` and `trunkMergeSubjectsAsync` in parallel; a page waits for the slowest read, tied to the `git log --merges` time of the largest repository.
+  - breaks when: a trunk's merge history is large enough that one `git log` takes over a second.
+  - answer: nothing — that read is kept and shared, so it costs once per window rather than per plan, and a page that is still over a second shows it in its report.
+- brief.md:41 — `decisions-wait-in-one-place` is guarded by A19, a pre-existing unit test, while the table argument and `tableUnreadable` default change.
+  - breaks when: a decisions reader keeps a path (an API route) that passes no table and silently returns an empty set.
+  - answer: nothing — decision 18 gives every caller on every route the table and A13's second part bans `realProcessReads` in any admin source, so a route keeping the old path fails the scan; A19 is re-run after the signature change.
 
 ## Which way could a clause fail that no signal would see?
 
-- `one-read-per-page`, test-plan.md:39 — the signal counts reads and `startProgram` starts made through the package helper; starts from the admin's own `vcs.ts`, from `daemon-reads.ts` `holders()` or from `looks/check.ts` are not counted.
-  - breaks when: a page starts programs outside `startProgram`; the count stays at 1 and the clause reads upheld.
-  - answer: fix — decision 20(c), (d) and (h) route `vcs.ts` and `holders()` through `startProgram` and inventory `looks/check.ts`; A13 stops any other unwrapped start at test time.
-- `one-read-per-page`, the scorecards, research, draft and home pages — each is a place the promise is shown; none calls `readPageReads`, so none reports.
-  - breaks when: one of those pages reads per plan; it reads "no signal", not broken.
-  - answer: fix — decision 20(d): each calls `finishPage` and reports.
-- `kept-briefly`, impl.md:259 — the signal reports `refreshedEarly` only; the test plan promised the age of the reading used on every page (test-plan.md:59), and the impl's report input has no age.
-  - breaks when: a reading older than the window is served (a window widened by another project's `refresh_ms`); no field shows it.
-  - answer: fix — decision 20(f) adds the age to the report and `judgePageReads` reads an over-window age as broken; A24 asserts it is passed.
-- `kept-briefly`, concurrent requests — a request that starts its own read while one is in flight is not `refreshedEarly` if the first has not yet completed; nothing counts it.
-  - breaks when: the in-flight share fails (key mismatch between layout and page); both reads look fresh and the window never shows broken.
-  - answer: nothing — a key mismatch makes the page's read count exceed one, which `one-read-per-page` reports broken through the program-start count (decision 15); A9 asserts the in-flight share.
-- `never-freezes`, impl.md:329 — `monitorEventLoopDelay` is process-wide, so a block from an unrelated request is charged to whichever page reports, and a page that does not report (see above) never charges its own.
-  - breaks when: a slow page that does not call the module freezes the loop; another page reports `never-freezes` broken and the real cause stays unnamed.
-  - answer: nothing — the clause is that the server does not freeze, which a process-wide measure detects; misattribution is accepted (decided in the first review), and after decision 20(d) every page reports so the slow page also names itself by its elapsed time.
-- `never-freezes`, impl.md:365 — the report runs from `after()`; if the report itself or its exporter flush blocks, it is the same loop it measures, and a failed report is silent (impl.md:365, "never raises").
-  - breaks when: `writeClauseSignals` fails or stalls; no report arrives and the clause reads "no signal" rather than broken.
-  - answer: nothing — decision 19 bounds the flush to one second off the page path, and "no signal" is the designed reading when reports stop; a clause closes only on a report from a real run (mark-first), so silence cannot read as upheld.
-- every clause — the headline sentence is a duration, and the report flags a page over one second only for pages that report; the cold first request after the admin starts (compile, first import of the package graph) happens before any report exists.
-  - breaks when: the first request after `indusk ui` starts takes over a second; nothing reports it.
-  - answer: nothing — the first request's elapsed time is reported when it finishes like any other (the report is written after the page), and a dev-compile or first-import cost is outside "pages answer" in steady use; A1 is run after a warm-up and records the cold load beside it.
+- `one-read-per-page` (shown on every page via the page-reads report)
+  - impl.md:511 — a page route that never calls `readPageReads`/`finishPage` reports nothing, and its per-plan starts are invisible; only A1 at close covers it.
+    - breaks when: a new page, or an existing page not in the Build Phase 2 list, reads per plan.
+    - answer: nothing — it reads "no signal", which keeps the clause from closing (mark-first), and decision 20(d) lists every existing page; a page added later is a later plan's change under A13's scan.
+  - impl.md:264 — starts are counted only through `startProgram`; a start made by a function that does not use it is not counted.
+    - breaks when: a reader added later starts a program directly; the count stays at its bound and the clause reads upheld.
+    - answer: nothing — decision 20(c) and (d) route the known package readers through `startProgram`, and A13 fails a synchronous start anywhere on the path; an unwrapped asynchronous start is outside the freeze the clause names and shows in `elapsed`.
+- `kept-briefly`
+  - impl.md:264 — judged broken only on `refreshedEarly`; a dead run reading running, or an unlanded release reading not-landed, within or past the window, is not reported.
+    - breaks when: a stale reading is served for the whole window after a change made outside the admin.
+    - answer: nothing — the window is the accepted staleness (brief: "kept for a few seconds at most"), and decision 20(f) adds reading age so a reading older than its window is reported broken.
+  - impl.md:36 and 39 — expiry of a short window against a long refresh is a fresh read, not an early one, so the window failing to cover the refresh is never reported.
+    - breaks when: a project's refresh exceeds the ceiling; every refresh reads fresh and nothing reports it.
+    - answer: nothing — that is the designed reading for a long refresh (see the answer above): each tick is one read.
+- `never-freezes`
+  - impl.md:334 — `maxBlockedMs` is process-wide; a block caused by another request or by the background recorder pass is attributed to whichever page was in flight, and a block outside any request is not seen.
+    - breaks when: the event loop is blocked between requests and the next report lands after it ends.
+    - answer: nothing — the clause is that the server does not freeze, which a process-wide measure detects; misattribution was accepted in the first review, and the recorder pass's starts are moved to the asynchronous readers (decision 19).
+  - impl.md:37 — `elapsedMs` runs from the page's first read to the end of its reads, so time before the first read and rendering after it are never measured.
+    - breaks when: plans are many or large and the page spends over a second outside the three reads.
+    - answer: fix — decision 21(b) counts elapsed time from the top of the page function; A24 asserts it.
+  - impl.md:42 — the report is sent from `after()` with a one-second-bounded flush; if the daemon is unreachable or `after()` never runs, reports are dropped and read "no signal", indistinguishable from a page nobody loaded.
+    - breaks when: the daemon's stored address is stale; every clause for the plan reads "no signal" while the pages are slow.
+    - answer: nothing — "no signal" is the designed reading when reports stop, and a clause closes only on a report from a real run, so silence cannot read as upheld; the daemon's address is found, not guessed (daemon-found-not-guessed).
+- `admin-pages-load-fast` (the headline sentence, shown on every page)
+  - impl.md:264 — no signal judges the headline duration; elapsed over one second is filed under `never-freezes`, only for pages that call `finishPage`.
+    - breaks when: a page over a second is judged `never-freezes` broken while the headline promise stays unjudged.
+    - answer: nothing — decision 21(d): a fourth clause would change the approved promises; the broken `never-freezes` report names the page and carries `elapsed`, which is what the person reads.
