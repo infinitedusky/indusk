@@ -475,12 +475,12 @@ This phase is the check against the real running admin that the three pages name
   The measure exits 0 on this branch's build (2026-10-20, fifth round): every route is under one second, fresh and kept; A1 is `passing`.
 
   </details>
-- [ ] The tests this plan wrote all pass together.
+- [x] The tests this plan wrote all pass together.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run apps/indusk-mcp/src/lib/run-record apps/indusk-admin/src/lib apps/indusk-admin/src/__tests__/no-sync-starts.contract.test.ts` exits 0. The whole suite and the system tier run at landing.
 
-  blocker: the command as written exits 1 from the repo root with 7 failures, none in this plan's rows: `planning-reader.plan-review.test.ts` A10 (already red, the plan-review reader asks five questions and the test writes four), and six tests that read paths from `process.cwd()` (`plan-actions-pages` A15, `build-host.test` A12, `decisions-reader.amendments` A27) and pass when run from `apps/indusk-admin`. Run from `apps/indusk-admin`, `build-host.record`, `build-host.test`, `decisions-reader.amendments`, `page-reads`, `plan-actions-pages` pass (47 of 48) and only A10 fails. `page-reads` A14 failed once under the machine's load in a parallel root run and passed alone. The run-record, looks, promises and cleanup directories of the package pass.
+  Closed (question q-3): run from `apps/indusk-admin` (503 of 503 pass, 48 files) and `apps/indusk-mcp` run-record (140 of 140); A10's fixture now writes the plan review's fifth question. Earlier blocker, for the record: the command as written exits 1 from the repo root with 7 failures, none in this plan's rows: `planning-reader.plan-review.test.ts` A10 (already red, the plan-review reader asks five questions and the test writes four), and six tests that read paths from `process.cwd()` (`plan-actions-pages` A15, `build-host.test` A12, `decisions-reader.amendments` A27) and pass when run from `apps/indusk-admin`. Run from `apps/indusk-admin`, `build-host.record`, `build-host.test`, `decisions-reader.amendments`, `page-reads`, `plan-actions-pages` pass (47 of 48) and only A10 fails. `page-reads` A14 failed once under the machine's load in a parallel root run and passed alone. The run-record, looks, promises and cleanup directories of the package pass.
 
   </details>
 
