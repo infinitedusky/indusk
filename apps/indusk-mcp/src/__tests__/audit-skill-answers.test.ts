@@ -24,12 +24,13 @@ const skill = (name: string) => readFileSync(join(PKG, "skills", `${name}.md`), 
 const audit = skill("audit");
 const planner = skill("planner");
 
-/** The four questions of the plan review, pinned here; the reader's exported list must match. */
+/** The five questions of the plan review, pinned here; the reader's exported list must match. */
 const PLAN_REVIEW_QUESTIONS = [
 	"Do the planned tests prove each promise's sentence, or something narrower?",
 	"Does the impl build what each promise claims, and nothing it does not?",
 	"Which skip reason would you not accept?",
 	"What else would have to change for each promise to hold?",
+	"Which way could a clause fail that no signal would see?",
 ];
 
 describe("A1 — the reader writes what would show a finding breaking, and no remedy", () => {
@@ -114,13 +115,19 @@ describe("A19 — the plan review is answered before approval and the planner ru
 });
 
 describe("A43 — the reader runs in the foreground and the turn waits for it", () => {
-	const afterApproval = audit.slice(audit.indexOf("3. **Spawn the reader.**"), audit.search(/Before approval/));
+	const afterApproval = audit.slice(
+		audit.indexOf("3. **Spawn the reader.**"),
+		audit.search(/Before approval/),
+	);
 	const beforeApproval = audit.slice(audit.search(/## Before approval/));
 	it.each([
 		["the post-build audit", afterApproval],
 		["the plan review", beforeApproval],
-	])("%s says run_in_background: false and never to end the turn while the reader runs", (_n, text) => {
-		expect(text).toContain("run_in_background: false");
-		expect(text).toMatch(/never end (your|the) turn while the reader runs/i);
-	});
+	])(
+		"%s says run_in_background: false and never to end the turn while the reader runs",
+		(_n, text) => {
+			expect(text).toContain("run_in_background: false");
+			expect(text).toMatch(/never end (your|the) turn while the reader runs/i);
+		},
+	);
 });

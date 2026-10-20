@@ -127,7 +127,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Name the smallest level that can prove the assertion.** An assertion's *wording* is behavioural; its *level* is usually `unit`, because the behaviour is decided by a rule, and a rule is tested by feeding it inputs. Reach for `contract` only when the question is about the thing you do not own — a store's late-run rule is a `unit`, "Jaeger still answers our query the way we expect" is a `contract`. Code that decides takes its clock and its reads as inputs so its rules can be `unit` tests (`lesson: code-that-decides-takes-its-clock-and-its-reads`); a test that starts a server or waits on the wall clock belongs in the system tier, and the everyday suite refuses it (`lesson: everyday-tests-never-wait`). The five are defined once, in the package's `test-levels` module. (In 1.61 a test's level was called its *kind*. A promise already has a kind, and a row names both, so the test's word changed.)
 
-   **Write the clause plan, before the ADR.** For a brief that states clauses, the test plan is the clause plan: one `## \`promise\`` section per promise, one `### \`clause\`` section under it per clause, and under each clause its **signal** (`- Signal:` — where it is read, what upheld looks like, what broken reports) and the assertion table that proves it. A resting clause names the promise it rests on and needs no table: that promise being in force proves it. The contract check refuses a promise or clause with no section and a clause with no signal. Its rows' `For` cells name the clause (step 7).
+   **Write the clause plan, before the ADR.** For a brief that states clauses, the test plan is the clause plan: one `## \`promise\`` section per promise, one `### \`clause\`` section under it per clause, and under each clause **every way it could fail to hold** (`- Fails when:` — a list, including each place the promise is shown) and its **signal** (`- Signal:` — where it is read, what upheld looks like, what broken reports — covering each failure listed, or saying why one needs none) and the assertion table that proves it. A resting clause names the promise it rests on and needs no table: that promise being in force proves it. The contract check refuses a promise or clause with no section and a clause with no signal. Its rows' `For` cells name the clause (step 7).
 
    **Group the assertions by promise.** Each promise the brief makes gets a heading, with the assertions that prove it under it. An assertion that proves no promise goes under its own heading with the reason: a regression guard, a rename, a lesson. The grouping becomes each row's `For` cell in the impl. A promise with no assertion under it will have no row to prove it, and the plan will not be able to close.
 
@@ -426,6 +426,7 @@ The assertions here become the source rows for the impl's `## Test Trajectory` t
 
 ### `{clause-name}` — {the clause's sentence}
 
+- Fails when: {each way this clause could fail to hold, one per line}
 - Signal: {where it is read; upheld when …; broken reports …}
 
 | ID | Assertion (user-visible behavior) | Level |

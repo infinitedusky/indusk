@@ -1,3 +1,4 @@
+// promise: a-run-is-read-from-its-record
 import { describe, expect, it } from "vitest";
 import { derivePlanPosition, type PlanPositionState } from "../lifecycle.js";
 import type { PlanSummary } from "../plan-parser.js";
@@ -233,5 +234,18 @@ describe("a-finished-ritual-stays-done — a finished ritual reads done whatever
 			state: "skipped",
 			reason: "nothing to extract",
 		});
+	});
+});
+
+describe("A104 — a running build reads as the Build step in progress", () => {
+	// clause: a-run-is-read-from-its-record/says-what-is-true
+	const approved = () => positionOf("impl", "approved");
+	it("shows Build current while a build runs, even before a phase has started", () => {
+		const steps = planSteps(feature(approved(), { live: { build: true } })).release;
+		expect(states(steps).Build).toBe("current");
+	});
+	it("shows Build not yet when nothing runs", () => {
+		const steps = planSteps(feature(approved(), { live: { build: false } })).release;
+		expect(states(steps).Build).toBe("not-yet");
 	});
 });

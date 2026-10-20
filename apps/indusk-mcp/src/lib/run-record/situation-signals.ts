@@ -142,6 +142,31 @@ export interface TrueInput {
 	table: readonly PsRow[];
 	/** The trunk's merge subjects, read plain. */
 	subjects: readonly string[];
+	/** The Planning and Release steps the page drew, by name and state (`plans/steps`). */
+	steps?: ReadonlyArray<{ name: string; state: string }>;
+}
+
+/**
+ * Each step the page drew against the record: a build that runs is the Build step in
+ * progress ("current"), one that does not run is not; Release reads done only with the
+ * landing in the trunk's log. Returns what is wrong with the first step that disagrees.
+ */
+function wrongStep(
+	steps: NonNullable<TrueInput["steps"]>,
+	building: boolean | null,
+	landed: boolean,
+): string | null {
+	const state = (name: string) => steps.find((s) => s.name === name)?.state;
+	const build = state("Build");
+	if (building !== null && build !== undefined && build !== "done" && build !== "skipped") {
+		if (building && build !== "current")
+			return `step Build showed ${build} but a build runs for it (should show current)`;
+		if (!building && build === "current")
+			return "step Build showed current but no build runs for it";
+	}
+	if (state("Release") === "done" && !landed)
+		return "step Release showed done but its landing is not in the trunk's log";
+	return null;
 }
 
 /**
@@ -150,6 +175,22 @@ export interface TrueInput {
  * trunk's log; stopped needs neither a live process nor a landing.
  */
 export function judgeSaysWhatIsTrue(input: TrueInput): ClauseVerdict | null {
+	const headline = judgeHeadline(input);
+	if (!input.steps) return headline;
+	const live =
+		input.heldHere ||
+		input.sessions.some((s) => s.kind === "build" && livesIn(input.table, s.pid, s.startedAt));
+	const wrong = wrongStep(
+		input.steps,
+		input.kind === "building" ? live : input.kind === "stopped" ? false : null,
+		landedIn(input.subjects, input.plan),
+	);
+	if (wrong === null) return headline;
+	if (headline?.broken !== undefined) return headline;
+	return verdict("says-what-is-true", `${input.plan} drew ${wrong}`);
+}
+
+function judgeHeadline(input: TrueInput): ClauseVerdict | null {
 	const { kind, plan, text } = input;
 	const wanted = kind === "planning" ? "planning" : "build";
 	const live =

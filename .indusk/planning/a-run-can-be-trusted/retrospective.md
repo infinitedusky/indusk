@@ -69,9 +69,9 @@ This close ran with nobody to answer. Each decision and its reason:
 - Have the hook-verdict rule (Decisions 8 and 17) checked by a test at the time the rule is first written, not left to the audit. The clause-signal rules shipped a self-reported verdict and only Phase 7's falsification removed it.
 - Run the clean-branch landing check against a branch with no commits on the first pass; it was the case that broke the first landed-check draft.
 
-## Step 8a — the close is blocked (not archived, not landed)
+## Step 8a — first close attempt (superseded by the second pass below)
 
-`indusk promises confirm a-run-can-be-trusted` refused and wrote nothing. Two rounds:
+Written before the manual landing recorded at the end of this file. `indusk promises confirm a-run-can-be-trusted` refused and wrote nothing. Two rounds:
 
 1. **26 refusals, token gaps.** Test files that prove a promise did not carry the literal `promise: <name>` token (24 files), and the two state promises had no `promise:` token in their code (`run-record/liveness.ts`, `promises/clause-signal-rules.ts`). Fixed: each file a row names for a promise now carries `// promise: <name>`; the two code doc comments carry the token. Decision (unattended): the tokens name exactly the promise each row proves, as confirm's refusals listed.
 2. **12 refusals, clause signals with no real-run report.** Each clause of `a-run-is-read-from-its-record`, `a-plan-with-clauses-carries-its-signals` and `landing-tests-hold-under-load` reads "no signal has reported it upheld in a run of the real system". The impl (Decision 10, Decision 14, rows L1–L3) says those signals come from real runs after landing. A signal cannot be written by hand, and I did not write one.
@@ -81,6 +81,30 @@ Decision (unattended): **stop here.** Step 8a says do not archive past a refusal
 Also recorded: the retrospective gate (`checkRetrospectiveReadiness`) passed while confirm refused 26. The gate counts rows and skips; it does not run confirm's token and signal rules. Highlighted as retro-audit.
 
 The three after-landing manual checks (L1–L3) were not run; they cannot run before landing.
+
+## Second pass — the close, run unattended (2026-10-19)
+
+**State on entry.** Main already holds this plan's landing merge `0f6c15a3` (made by hand at 19:13; `db2cadffb` records it). The branch carries five commits that never reached main: Build Phase 9 (`b4882ba2e`, `a364b8974`), its admin pass-through (`369581bcf`), the docs and changelog (`ae96999d7`) and the accept line (`23aa0bba0`). The 122-commit and 152-file figures in *What Actually Happened* describe the branch before that landing. Against main now the branch is 5 commits and 19 files. Every checklist item is ticked, and `checkRetrospectiveReadiness` passes.
+
+**Decisions (unattended), each with its reason:**
+
+1. **Admin recorder test (A59, system tier) failed on "Admin UI bundle not found".** The bundle was not built in this worktree. Built it (`pnpm --filter indusk-admin build`, then `node apps/indusk-mcp/scripts/bundle-admin.js`). Reason: a build artifact, not a code defect; no code changed for it.
+2. **Approval-reader test (A50–A55) failed on one offer (A51).** Its fixture copied the plan review's questions and listed four. The reader asks five; the fifth came with `ae96999d7`'s "five-question plan review". The reader is correct and the fixture was stale. The test now imports `PLAN_REVIEW_QUESTIONS`, so a copied list cannot drift again.
+3. **`promise:` tokens added** to `plans/steps.test.ts` and `run-record/situation-signals.test.ts`, which confirm refused because their rows name the promise and the token was missing.
+4. **No clause signal written by hand.** Five clause signals still read no-signal. This impl's Decision 10, Decision 14 and rows L1–L3 say they report only from real runs after landing.
+5. **No archive, no landing.** `indusk promises confirm` refuses while those five signals have not reported. `indusk plans archive` also refuses while a promise is `declared`. Step 10 needs the archive committed on the branch before landing, so landing is blocked by the same refusal. Step 8a says do not archive past a refusal, so the close stops here.
+6. **Finding, not fixed.** A confirm refusal is recorded as a broken report for each clause still at no-signal (`promises/clause-proof.ts`, the `refused-without-signals` rule, A84). After one confirm run, the clause reads "its signal reports broken", not "no signal". The rule may be intended; it means a refused close shows as a break. Moderate confidence: I read the code path and did not look at the cockpit.
+7. **Finding, not fixed.** The skill's order has no route for a plan whose clause signals only report after landing: archive precedes landing, and archive waits on confirm, which waits on the post-landing runs. The person decides the order: (a) land the accepted branch now with promises still declared, and archive and confirm after L1–L3 report; or (b) hold the plan open until those runs report.
+
+**Verification.**
+- `indusk plans tests a-run-can-be-trusted --landing`: 58 of 58 test files pass (after decisions 1–3).
+- `npx biome check` on the three test files changed in this pass: clean after formatting.
+- `indusk context check-pointers`: 53 pointers across 14 context files, all resolve.
+- `indusk promises confirm a-run-can-be-trusted`: refuses with five clause-signal refusals, nothing written.
+- Nested-context probe `pnpm e2e -- context-tiers`: not run. It needs `claude` and a running daemon, and it blocks a release, not a landing. Run it before the release.
+- Docs: the decision and lesson pages are on main (`cc38db36d`); `apps/docs` sidebar entries are present.
+
+**Not done, and why:** archive (Step 9), landing (Step 10), version bump (Step 11). Each waits on decision 7.
 
 ## Insights Worth Carrying Forward
 

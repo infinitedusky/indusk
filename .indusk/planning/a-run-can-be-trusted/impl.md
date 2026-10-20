@@ -1,7 +1,7 @@
 ---
 title: "A run can be trusted — Impl"
 date: 2026-10-19
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -12,7 +12,7 @@ gate_policy: ask
 approved_brief: "a05844d75bfa4eeaf8f04e3736e3e8f253e6b5d74e7cab00e0f23e22620c0866"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T18:56:46.038Z"
-accepted: 2026-10-19T22:58:36.676Z
+accepted: 2026-10-19T23:49:05.654Z
 accepted_by: person
 ---
 
@@ -189,6 +189,10 @@ Rows A65–A72 follow the test plan's sections for `says-what-is-true`, `never-i
 | A101 | The contract check refusing a draft impl on the two clause-signal rules sends no upheld report of `refused-without-signals` or `a-live-check-proves-no-clause`: the rule never reports its own verdict (Decisions 8 and 17) | Build Phase 7 | Build Phase 7 | passing | unit | clause: a-plan-with-clauses-carries-its-signals/refused-without-signals | apps/indusk-mcp/src/lib/promises/confirm-signal-rules.test.ts |
 | A102 | A recorder pass whose production read failed (`recordBreaks` resolving with `error` set, as a Jaeger timeout under load does) is written to the scan record as not finished, so the patient test goes on waiting instead of failing "finished a scan … found no incident" | Build Phase 7 | Build Phase 7 | passing | unit | clause: landing-tests-hold-under-load/recorder-waits-for-its-break | apps/indusk-mcp/src/lib/admin/recorder-loop.scan.test.ts |
 | A103 | A landing whose clause-test results carry the recorder clause only in unit files (`wait-for-incident.test.ts`, `recorder-loop.scan.test.ts`), the recorder landing test not among them, reports nothing for `recorder-waits-for-its-break`, never upheld | Build Phase 7 | Build Phase 7 | passing | unit | clause: landing-tests-hold-under-load/recorder-waits-for-its-break | apps/indusk-mcp/src/lib/plans/land-recorder-signal.test.ts |
+| A104 | While a build runs, the plan page's release list shows its Build step as running, read from the run record, never "not yet" | Build Phase 9 | Build Phase 9 | passing | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/plans/steps.test.ts |
+| A105 | The page's truth signal compares every step it shows (each Planning and Release circle) and the headline with the run record and the trunk, and reports broken naming the step, what it showed and what it should show | Build Phase 9 | Build Phase 9 | passing | unit | clause: a-run-is-read-from-its-record/says-what-is-true | apps/indusk-mcp/src/lib/run-record/situation-signals.test.ts |
+| A106 | The planner's instructions ask, for each clause's signal, every way the clause could fail to hold, and a signal (or a written reason) for each | Build Phase 9 | Build Phase 9 | passing | unit | so plans name their failure points from the start (Sandy, 2026-10-19) | apps/indusk-mcp/src/__tests__/planner-signal-failures.test.ts |
+| A107 | The plan review asks a fifth question — for each clause, a way it could fail that no signal would see — and the reader of a plan review requires it | Build Phase 9 | Build Phase 9 | passing | unit | so the cold read checks the failure points before approval (Sandy, 2026-10-19) | apps/indusk-mcp/src/lib/audit/answers.test.ts |
 | L1 | After landing, on the installed admin, a build on a scratch plan killed by hand reads stopped with its reason within a page load, and Build starts it again from the phase the plan is on | Build Phase 6 | Build Phase 6 | skipped | live check | a live check of the whole story on the installed admin, recorded in the retrospective; liveness against a real process and real start times is proved at landing by A73, so this proves no clause | manual: after landing run `pnpm install:local` and `indusk ui restart`; start a build on a scratch plan, `kill` its step session's `claude` process by hand, reload the plan page and read the stop sentence, press Build and read the phase it names; record date and result in Notes |
 | L2 | After landing, one real conflicting acceptance on a scratch plan, then `indusk promises confirm a-brief-is-accepted-on-current-main` succeeds and that plan closes | Build Phase 6 | Build Phase 6 | skipped | live check | a live check after landing for another plan's close; span delivery from a real process is proved at landing by A86, so this proves no clause | manual: after landing, make a scratch plan whose brief conflicts with main and run `indusk plans accept-brief <scratch>` (expect the refusal, the brief still a draft), accept one scratch brief behind main with no conflict, then run `indusk promises confirm a-brief-is-accepted-on-current-main` and its retrospective close; delete the scratch plans; record the result in Notes |
 | L3 | After landing, in a real session, a shell command that tries to tick a box in a plan's impl is refused with the file and the tool named | Build Phase 6 | Build Phase 6 | skipped | live check | a live check against the installed hook; the clause shell-write-refused is proved by A22–A30 | manual: after landing, in a new session run `sed -i 's/- \[ \]/- [x]/' .indusk/planning/<scratch>/impl.md` and read the refusal; record in Notes |
@@ -1311,6 +1315,64 @@ The plan grew one file that has two jobs: the library that records the shell gua
   <details><summary>Technical</summary>
 
   No public surface, command, hook registration or page changes; the docs name `parserReadsWrite` nowhere (grep `apps/docs/src` to confirm before closing).
+
+  </details>
+
+### Build Phase 9: Maintenance — the Build step reads the live run, and every plan names its failure points
+
+**Tier**: med — the work step's default
+
+Added after landing (Sandy, 2026-10-19). On `decisions-as-questions`' page the release list showed "Build — not yet" while its build ran, and the page's truth signal stayed upheld because it only judges the headline. This phase makes the Build step read the run record like the headline does and makes the signal check every step the page shows. It also changes how plans are written from now on: the planner lists every way a clause could fail to hold and puts a signal on each, and the cold read asks whether any failure would go unseen. Nothing else is retrofitted.
+
+- [x] Make the release list's Build step read the run record, so it shows running while a build runs.
+  <details><summary>Technical</summary>
+
+  `releaseStep("Build", plan)` in `apps/indusk-mcp/src/lib/plans/steps.ts`: when the snapshot's `live` says a build runs, the step reads in progress (as `PlanSnapshot.live` already does for planning steps). A104.
+
+  </details>
+- [x] Make the page's truth signal check every step it shows against the record, not only the headline.
+  <details><summary>Technical</summary>
+
+  `judgeSaysWhatIsTrue` in `apps/indusk-mcp/src/lib/run-record/situation-signals.ts` takes the steps the page drew (name and state, from `plans/steps`) and compares each with the run record and the trunk's log; a mismatch is broken, naming the step, what it showed and what it should show. The admin passes the drawn steps where it reports the signal today. A105.
+
+  </details>
+- [x] Tell the planner to list every way a clause could fail to hold before writing its signal.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/skills/planner.md`, step 5 (the clause plan): under each clause, a `- Fails when:` list — every way it could fail to hold, including each place the promise is shown — and the `- Signal:` line covers each (or names why one needs none). Resync `.claude/skills/planner.md`. A106.
+
+  </details>
+- [x] Add a fifth question to the plan review: a way a clause could fail that no signal would see.
+  <details><summary>Technical</summary>
+
+  `PLAN_REVIEW_QUESTIONS` in `apps/indusk-mcp/src/lib/audit/answers.ts` gains "Which way could a clause fail that no signal would see?"; the audit skill's before-approval section lists five questions; resync `.claude/skills/audit.md`; `answers.test.ts` and the skill-wording test expect five. A107.
+
+  </details>
+
+#### Build Phase 9 Verification
+
+- [x] The Build step shows a running build, the signal names a wrong step, and the planner and the plan review ask for failure points.
+  <details><summary>Technical</summary>
+
+  A104–A107: `indusk plans tests a-run-can-be-trusted --phase "Build Phase 9"`; type check clean. Result: A104–A107 pass; type checks clean in indusk-mcp and indusk-admin. Two must-not-break system-tier files fail in this build for reasons outside the phase: `admin-recorder.test.ts` (no built admin bundle in this worktree) and `plans-land.test.ts` (the unattended session's build-step variable makes `accept` refuse). Decision (unattended): not chased, since the phase touches neither; landing, outside a build step, runs them.
+
+  </details>
+
+#### Build Phase 9 Context
+
+- [x] Add to the planning rules that a clause lists how it could fail and its signal covers each.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/templates/planning/CLAUDE.md` (shipped; resync `.indusk/planning/CLAUDE.md`): one line beside the clause-plan rule.
+
+  </details>
+
+#### Build Phase 9 Document
+
+- [x] Say in the briefs guide that each clause lists its failure points and a signal for each.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/briefs.md` (or the clause-plan section it links); changelog unreleased line.
 
   </details>
 

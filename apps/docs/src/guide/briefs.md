@@ -88,6 +88,12 @@ before the plan closes; a clause that never reported reads *no signal*, not
 holding. When a clause's signal later reports broken, the incident it opens
 names `promise/clause`. See [Signals](/guide/signals).
 
+Each clause also lists its **failure points**: every way it could fail to hold,
+including each place its promise is shown (a list, a page, a nav row). The
+planner writes them in the clause plan before the signal, and the signal covers
+each or says why one needs none. The plan review's fifth question asks which
+failure no signal would see.
+
 ### Existing promises
 
 **Must not break**

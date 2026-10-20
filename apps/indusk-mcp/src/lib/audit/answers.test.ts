@@ -66,7 +66,7 @@ describe("readAuditAnswers", () => {
 				.missingCauses,
 		).toBe(false);
 	});
-	it("A17 — a plan review missing one of its four questions is incomplete, naming it", () => {
+	it("A17 — a plan review missing one of its five questions is incomplete, naming it", () => {
 		const all = PLAN_REVIEW_QUESTIONS.map((q) => `## ${q}\n- nothing\n`).join("\n");
 		expect(readAuditAnswers(all, { questions: PLAN_REVIEW_QUESTIONS }).missingQuestions).toEqual(
 			[],
@@ -78,6 +78,21 @@ describe("readAuditAnswers", () => {
 			PLAN_REVIEW_QUESTIONS[0],
 		]);
 		expect(AUDIT_QUESTIONS).toHaveLength(4);
+	});
+});
+
+describe("A107 — the plan review asks which way a clause could fail that no signal would see", () => {
+	it("is the fifth question, and a review without it is incomplete", () => {
+		expect(PLAN_REVIEW_QUESTIONS).toHaveLength(5);
+		expect(PLAN_REVIEW_QUESTIONS[4]).toBe(
+			"Which way could a clause fail that no signal would see?",
+		);
+		const four = PLAN_REVIEW_QUESTIONS.slice(0, 4)
+			.map((q) => `## ${q}\n- nothing\n`)
+			.join("\n");
+		expect(readAuditAnswers(four, { questions: PLAN_REVIEW_QUESTIONS }).missingQuestions).toEqual([
+			PLAN_REVIEW_QUESTIONS[4],
+		]);
 	});
 });
 

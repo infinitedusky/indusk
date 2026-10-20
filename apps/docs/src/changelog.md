@@ -12,6 +12,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **A running build reads as the Build step, and plans name their failure points** (a-run-can-be-trusted): the release list shows Build in progress while a build runs, the page's truth signal checks every step it draws against the run record and the trunk, the planner lists each clause's ways to fail beside its signal, and the plan review asks a fifth question: which failure no signal would see.
 - **The audit's open findings are closed** (audit-concerns-are-answered): the build waits for a complete audit, other list shapes and bare causes no longer pass, a Not promised edit is an amendment, a plan review goes stale with its documents, and a brief changed before approval is shown with the dismissals.
 - **The admin knows the package root** (the-admin-knows-the-package-root): `indusk ui` hands the package root it resolved to the admin daemon, and `induskMcpPackageRoot()` trusts it when it holds this package, so a planning run inside the admin reaches "ready for approval" instead of "cannot continue".
 
