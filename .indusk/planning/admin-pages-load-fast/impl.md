@@ -16,6 +16,8 @@ gate_policy: ask
 approved_brief: "f0e0d676b029281b3d85e19f0b39399de131334312494d0b912c00f8298231ab"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-20T13:43:46.511Z"
+accepted: 2026-10-20T13:44:12.389Z
+accepted_by: person
 ---
 
 # Admin pages load fast — Impl
