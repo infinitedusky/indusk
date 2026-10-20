@@ -184,7 +184,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
   `pnpm exec vitest run apps/indusk-admin/src/lib/page-reads.test.ts apps/indusk-admin/src/__tests__/no-sync-starts.contract.test.ts` exits non-zero; the output names the counts (A2, A3, A4), the event-loop lag under a slow `ps` (A14) and the files with a synchronous start (A13); `node apps/indusk-admin/scripts/measure-pages.mjs` exits 1 with times above one second (A1).
 
   </details>
-- [ ] The two existing guards pass.
+- [x] The two existing guards pass.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run apps/indusk-admin/src/lib/decisions-reader.approval.test.ts apps/indusk-admin/src/lib/decisions.test.ts` exits 0 (A18, A19).
