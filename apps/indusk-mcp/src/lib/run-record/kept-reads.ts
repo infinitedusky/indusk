@@ -6,6 +6,7 @@
  * that arrives while it is being read, and never kept when it failed. The synchronous readers
  * (`psAll`, `landedAsker`) are for the command line; a reader a page calls goes through here.
  *
+ * promise: admin-pages-load-fast
  * clause: admin-pages-load-fast/kept-briefly
  */
 

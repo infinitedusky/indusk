@@ -1,3 +1,4 @@
+// promise: admin-pages-load-fast
 // clause: admin-pages-load-fast/kept-briefly
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

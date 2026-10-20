@@ -1,3 +1,4 @@
+// promise: admin-pages-load-fast
 // clause: admin-pages-load-fast/never-freezes
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

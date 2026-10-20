@@ -1,3 +1,4 @@
+// promise: admin-pages-load-fast
 // clause: admin-pages-load-fast/never-freezes
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";

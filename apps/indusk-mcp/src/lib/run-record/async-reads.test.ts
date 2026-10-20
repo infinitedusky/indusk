@@ -1,3 +1,4 @@
+// promise: admin-pages-load-fast
 // clause: admin-pages-load-fast/never-freezes
 // clause: admin-pages-load-fast/one-read-per-page
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

@@ -1,3 +1,5 @@
+// promise: admin-pages-load-fast
+// clause: admin-pages-load-fast/never-freezes
 // clause: admin-pages-load-fast/kept-briefly
 // clause: admin-pages-load-fast/one-read-per-page
 // promise: a-run-is-read-from-its-record
