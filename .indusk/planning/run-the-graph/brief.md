@@ -64,7 +64,7 @@ hold is cheap.
    - **`own-worktree`** (limit). Every running phase has its own worktree and branch, cut from its plan's branch.
    - **`starts-from-its-dependencies`** (limit). A phase starts with every finished phase it depends on merged into its worktree.
    - **`green-before-merging`** (limit). A phase merges into its plan's branch only when, with the merge made, its own tests and the tests of every clause the plan's branch has touched pass, so two phases that break something only together are caught at the merge that joins them.
-   - **`every-phase-is-checked`** (limit). A phase that runs no test never merges, and a phase that touches a clause carries that clause's signal.
+   - **`every-phase-is-checked`** (limit). A phase that runs no test never merges, and the plan carries a signal for every clause it touches.
    - **`only-the-plan-lands`** (limit). Nothing reaches the trunk from a phase's branch; only a plan's branch, once its promises are verified.
 
 ### Existing promises
@@ -79,7 +79,7 @@ hold is cheap.
 
 **Changes**
 
-- **`a-session-belongs-to-its-plan`**. A plan's session starts whatever other plans' sessions are running; only a second session of the same kind on the same phase is refused, naming the session already running, so a plan can have a planning session and several phases building at the same time.
+- **`a-session-belongs-to-its-plan`**. A plan's session starts whatever other plans' sessions are running; only a second session of the same kind on the same phase is refused, naming the session already running, so a plan can have several phases building at the same time; while its phases build, a session with no phase in the plan's own worktree is refused, naming the running phase (Sandy, 2026-10-20).
 
 **Replaces**
 
