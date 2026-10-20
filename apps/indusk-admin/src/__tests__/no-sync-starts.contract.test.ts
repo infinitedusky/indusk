@@ -17,9 +17,10 @@ import { describe, expect, it } from "vitest";
  *      start, except a function named in ALLOWED with its reason;
  *   2. no admin source imports a synchronous reader by name, whatever else its module holds.
  *
- * ALLOWED is empty today; Build Phase 2 fills it from the inventory of reached modules, an
- * entry naming the synchronous functions it excuses and why (impl decision 17). An entry is
- * valid only while no admin source imports any function it names (checked below).
+ * ALLOWED is the inventory of reached modules Build Phase 2 made (impl decision 17): an entry names
+ * the synchronous functions it excuses and why. An entry is valid only while no admin source
+ * imports any function it names (checked below); the reasons were found by a call graph from the
+ * admin's imported names (Notes).
  */
 
 const ADMIN = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -49,7 +50,74 @@ interface Allowed {
   functions: string[];
   reason: string;
 }
-const ALLOWED: Allowed[] = [];
+const P = "apps/indusk-mcp/src/lib/";
+const ALLOWED: Allowed[] = [
+  {
+    file: `${P}bookkeeping/git.ts`,
+    functions: ["gitSync"],
+    reason:
+      "reached only by the notes writers a person's own action runs (answering a decision, approving, accepting: POST routes, one commit each), never by a page that reads",
+  },
+  {
+    file: `${P}git.ts`,
+    functions: ["headShaSyncOrNull", "diffFiles"],
+    reason:
+      "headShaSyncOrNull is for the release runner and `checks slow` and no admin export reaches it; diffFiles is reached only by adding a document to a new-project draft (a POST route)",
+  },
+  {
+    file: `${P}looks/check.ts`,
+    functions: ["shellCommand"],
+    reason:
+      "the look check's own runner, for `indusk looks check` and the retrospective; the Looks page reads looks/overview and the standing, which never call it (inventory, Notes)",
+  },
+  {
+    file: `${P}mcp-config.ts`,
+    functions: ["hasGlobalIndusk"],
+    reason:
+      "reached only by starting a plan from a draft (a POST route that provisions the plan's .mcp.json), not by a page",
+  },
+  {
+    file: `${P}plans/start.ts`,
+    functions: ["setupThroughExtension"],
+    reason:
+      "reached only by starting a workbench plan from a draft (a POST route), not by a page",
+  },
+  {
+    file: `${P}process-identity.ts`,
+    functions: ["ps", "psAll"],
+    reason:
+      "for the command line and the daemon's own checks; `ps` is read by no admin export, and `psAll` only through realDaemonReads' synchronous closure, which a page's resolver is never handed (telemetry/status.ts onThisPage hands it the kept table)",
+  },
+  {
+    file: `${P}run-record/landed.ts`,
+    functions: ["gitIn"],
+    reason:
+      "behind landedAsker and realGitReads, which are for the command line; the admin reads readLandings (the A13 import check bans the rest)",
+  },
+  {
+    file: `${P}run-record/situation-signals.ts`,
+    functions: ["trunkMergeSubjects"],
+    reason:
+      "kept for the command line; the admin's report of a release reads trunkMergeSubjectsAsync",
+  },
+  {
+    file: `${P}telemetry/daemon-reads.ts`,
+    functions: ["lsofOrNull"],
+    reason:
+      "for the command line and the daemon's own checks; reached only through realDaemonReads' synchronous closures, never handed to a page's resolver (listeningAsync is)",
+  },
+  {
+    file: `${P}version-check.ts`,
+    functions: ["fetchLatestFromNpm"],
+    reason: "the update notice's npm lookup; no admin export reaches it",
+  },
+  {
+    file: `${P}worktree/layout.ts`,
+    functions: ["gitCommonDirOf"],
+    reason:
+      "answers from the kept result of gitCommonDirOfAsync (found by every page's reads and the daemon's start, positive answers kept for the process); it starts git only on a path nothing has found yet, once, for the command line and a cold start",
+  },
+];
 
 const read = (file: string) => readFileSync(file, "utf-8");
 
