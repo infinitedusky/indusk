@@ -20,9 +20,11 @@ This document lists the behavioral assertions that, taken together, mean slice 1
 
 ## `the-work-runs-as-a-graph`
 
-Within an approved plan, every phase whose dependencies are done is running, up to the session cap, and no phase waits on one it does not depend on.
+Within an approved plan that is not a workbench plan, every phase whose dependencies are done is running, up to the session cap, and no phase waits on one it does not depend on. A workbench plan builds one phase at a time, as today (the brief's Not promised).
 
 ### `a-phase-names-what-it-needs` — each phase names the phases it depends on; one that names none depends on the phase before it
+
+A phase is named by its kind and number only: `Test Phase N` or `Build Phase N`, with `Phase N` meaning `Build Phase N` (as `### Phase N:` headings already do); the words after a heading's colon are never part of the name. Dependency lines, the graph's nodes, branch names and signals all use that one key.
 
 - Signal: a span on every graph read, from the graph reader's signal file, judging each node's dependencies against a plain scan of the impl's headings and dependency lines (outside fenced blocks), never through the reader's parser. Upheld when every phase's dependency list matches its line, or the phase before it when it has none; broken names the plan, the phase and both lists.
 - Fails when:
@@ -36,16 +38,19 @@ Within an approved plan, every phase whose dependencies are done is running, up 
 |----|-----------------------------------|-------|
 | A1 | A plan with six build phases where Phases 1 and 3 name nothing, Phase 2 names 1 and Phase 5 names 2 and 3, shows exactly those dependencies. | unit |
 | A2 | A plan written before this one, whose phases name nothing, shows each phase depending on the one before it; the first phase depends on nothing; in an impl with a Test Phase 1, every build phase also depends on it, even one marked `none`. | unit |
-| A3 | A phase that names a phase which does not exist, names itself, or closes a loop is refused when the impl is saved, naming the phase and the problem; the hook's reader and the package's reader give the same answer for the same text. | unit |
+| A3 | A phase that names a phase which does not exist, names itself, or closes a loop is refused when the impl is saved, naming the phase and the problem; `Phase 6` and `Build Phase 6` name the same phase whether its heading is written `### Phase 6:` or `### Build Phase 6:`; the hook's reader and the package's reader give the same answer for the same text. | unit |
 
 ### `ready-phases-start` — a phase becomes ready when the last phase it depends on finishes, and its session is launched within one minute while the session cap has room
 
-- Signal: a span from the driver's signal file at each launch and on each 30-second tick. The ready time is read from git, not from the driver: the time the plan's branch first held the last dependency's work, from the plan branch's reflog (a fast-forward and a merge commit read alike), or, for a phase with no dependency, the later of the plan's approval reaching the trunk and its build run's start in the run record. The launch time is the phase branch's creation time from its own reflog. Whether the cap had room is read from the session manager's sessions file against `sessions.max` at each tick and kept in the signal's own log. Upheld when every phase was launched within sixty seconds of becoming ready whenever the cap had room; broken names the phase, the ready time and the launch time or none. A plan whose build is stopped or waits on a question is not judged.
+- Signal: a span from the driver's signal file at each launch and on each 30-second tick. The ready time is read from git, not from the driver: the time the plan's branch first held the last dependency's work, from the plan branch's reflog (a fast-forward and a merge commit read alike), or, for a phase with no dependency, the later of the plan's approval reaching the trunk and its build run's start in the run record. The launch time is the phase branch's creation time from its own reflog. Whether the cap had room is read from the session manager's sessions file against `sessions.max` at each tick and kept in the signal's own log. Upheld when every phase was launched within sixty seconds of becoming ready whenever the cap had room, and every phase that ended ticked boxes only in its own section; broken names the phase, the ready time and the launch time or none, or the section it ticked outside. A plan whose build stopped on a recorded stop (a question, a declared judgement, a stopped phase, a person's stop) is not judged; a build the admin's restart ended has no recorded stop and is judged, and a phase carrying a declared judgement or a blocker is listed as waiting on a person, never as late.
 - Fails when:
   - a ready phase with cap room is launched late — the launch span (gap over sixty seconds while the signal's own readings showed room).
   - a ready phase with cap room is never launched (a missed phase end, the scheduler judging it not ready, a refused launch) — the tick span: ready over a minute by git's time, room now, no phase branch.
+  - a merge check that runs longer than a minute holds up a launch the cap has room for — the same launch and tick spans: the gap is measured whatever the driver was doing.
   - the admin is not running, so no driver runs — its first tick after it starts reports every phase ready since before it started, with its gap.
+  - the admin restarts mid-build and the build is not resumed — the first tick after it starts: a build ended with no recorded stop, and a phase ready with room and no session.
   - a phase branch is cut but its session never starts (setting up its worktree failed silently, the session was refused) — the tick span: a phase branch older than fifteen minutes with no session in the sessions file and no stop for it in the run record.
+  - a session works a phase other than the one it was launched for — the phase-end span: a plain diff of the impl between the plan's branch and the phase's branch shows a box ticked outside the launched phase's section.
   - the plan branch's reflog is missing (reflogs turned off) — the span reports unknown, never upheld.
 - Measure: seconds from ready to launch for every phase in the next twenty run by the graph that had cap room; expect under sixty for all.
 
@@ -56,17 +61,20 @@ Within an approved plan, every phase whose dependencies are done is running, up 
 | A6 | Run by the driver with the real session manager and a stand-in process, the plan's second ready phase gets its own session while the first runs, and a session beyond the cap is refused and started later. | unit |
 | A7 | When a phase's session ends with its phase finished, the phase is merged into the plan's branch and the phases that were waiting only for it are launched, without anyone running a command. | unit |
 | A8 | `indusk plans approve` run in a terminal launches no session: it asks the running admin to build the plan, and says plainly when the admin is not running. | unit |
-| A9 | After the admin restarts, a phase whose session was ended by the restart is launched again in its own worktree on the first tick, and a phase whose worktree shows it finished goes straight to its merge. | unit |
+| A9 | After the admin restarts, it resumes every build the restart ended, with nobody pressing Build: a phase whose session was ended is launched again in its own worktree, and a phase whose worktree shows it finished goes straight to its merge; a build that stopped on a recorded stop is not resumed. | unit |
+| A47 | A phase session is told the one phase it works and to work only that phase, and ticking an item of any other phase is refused, naming the session's phase; a session sent back after a failed merge is told why. | unit |
 | A10 | A real approved plan with two independent phases and a third depending on both, built from the admin with a scripted agent, runs the first two at once and ends with all three on the plan's branch. | live check |
 
 ### `no-needless-wait` — no phase is held back by a phase of its plan it does not depend on, except that two phases of one plan that touch the same file never run at the same time
 
-- Signal: a span from the scheduler's signal file after each scheduling call (the driver calls it; the scheduler stays pure), re-deriving each waiting phase's reason from its own reads, not the call's inputs: dependencies by a plain scan of the impl at the plan branch's tip, running phases from the session manager's sessions file, overlap by expanding both phases' declared paths against the plan branch's files (`git ls-files`) and comparing concrete paths, never by the scheduler's overlap function. Upheld when every waiting phase's reason is one of: a dependency not done, a running phase of the plan sharing a file, the cap, or the plan waiting on a question; broken names the phase and its reason.
+- Signal: a span from the scheduler's signal file after each scheduling call (the driver calls it; the scheduler stays pure), re-deriving each waiting phase's reason from its own reads, not the call's inputs: dependencies by a plain scan of the impl at the plan branch's tip, running phases from the session manager's sessions file, overlap three ways, never by the scheduler's overlap function: the declared strings against each other (equal, or one a glob the other's literal path matches), both declared sets expanded against the plan branch's files (`git ls-files`), and the files each running phase's branch has actually changed (`git diff --name-only` from the plan's branch), so a new file two phases both write is seen. Upheld when every waiting phase's reason is one of: a dependency not done, a running phase of the plan sharing a file (an undeclared phase shares with every phase), the cap, the plan waiting on a question, or a judgement or blocker the phase itself declares; broken names the phase and its reason.
 - Fails when:
   - a waiting phase has no reason, or a reason naming a phase it neither depends on nor shares a file with — the span.
-  - a ready phase with none of the four reasons is not started — the span.
-  - two declared file sets are judged overlapping when they are not, or not when they are — the span re-checks on concrete paths.
-  - two running phases of one plan touch the same file — the span.
+  - a ready phase with none of the five reasons is not started — the span.
+  - two declared file sets are judged overlapping when they are not, or not when they are — the span re-checks on the declared strings and on concrete paths.
+  - two running phases of one plan touch the same file, including one neither declared or one not yet created — the span compares their branches' changed files.
+  - two phases that declare no files run at once — the span (an undeclared phase shares with every phase).
+  - the gate hook refuses a phase session's ticks because an earlier phase it does not depend on is open — no span sees the refusal itself; the phase never closes, so the `ready-phases-start` tick span names its dependents ready late, and A46 holds the hook's rule.
   - the build's phase line shows a different reason — no signal: one function writes it from the scheduler's result, held by A26.
 - Measure: minutes a phase waited whose reason was none of the four; expect zero.
 
@@ -74,9 +82,10 @@ Within an approved plan, every phase whose dependencies are done is running, up 
 |----|-----------------------------------|-------|
 | A11 | A phase later in the document than a running phase, which does not depend on it and shares no file with it, starts without waiting for it. | unit |
 | A12 | A ready phase that shares a file with a running phase of its plan waits, and its reason names that phase and that file. | unit |
-| A13 | A phase that declares no files is treated as touching every file its plan's phases declare, waits for its plan's running phases, and says so. | unit |
-| A14 | The plan's documents, the changelog and other bookkeeping every phase edits are never counted as shared files. | unit |
+| A13 | A phase that declares no files shares a file with every other phase of its plan, declared or not: it waits for its plan's running phases and says so, no phase of its plan starts beside it, and two such phases never run at once. | unit |
+| A14 | Only the plan's impl is never counted as a shared file (its ticks merge line by line); the changelog, a `CLAUDE.md` file and a docs page count like any other file, so two phases that declare one never run at once. | unit |
 | A15 | With the cap at one and phases naming nothing, the order and the result are those of today's one-phase-at-a-time build. | unit |
+| A46 | In a phase's own worktree, the gate hook lets the phase's items be ticked and the phase close while an earlier phase it does not depend on is open, and refuses while a phase it depends on is open; an impl with no dependency lines is refused exactly as today. | unit |
 
 ### `graph-is-current` — when a phase ends or a plan is approved, the plan's graph is read again before its next phase starts
 
@@ -90,8 +99,8 @@ Within an approved plan, every phase whose dependencies are done is running, up 
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A16 | Each phase end is followed by a fresh read of the plan before the next launch, and the 30-second tick launches a ready phase whose end event was missed. | unit |
-| A17 | Two phases ending at the same moment are merged one after the other, and the phase waiting for both starts once, with both in its worktree. | unit |
+| A16 | Each phase end is followed by a fresh read of the plan before the next launch, and the 30-second tick launches a ready phase whose end event was missed; a merge check that has not returned holds up no launch the cap has room for. | unit |
+| A17 | Two phases ending at the same moment are merged one after the other, and the phase waiting for both starts once, with both in its worktree; a tick firing while a phase end is being handled launches each ready phase once, because one launcher does every launch. | unit |
 
 ### `within-the-cap` — rests on `sessions-are-capped`
 
@@ -125,9 +134,10 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `own-worktree` — every running phase has its own worktree and branch, cut from its plan's branch
 
-- Signal: a span from the phase-branch signal file each time a phase starts or resumes, read with plain git (`git worktree list --porcelain`, `git merge-base`, the phase branch's reflog), not the layout code. Upheld when the phase's worktree and branch are held by no other running phase, its branch was cut from the plan's branch, and a resumed phase's branch tip is the one it had before; broken names the phase and the shared worktree, the wrong base, or the lost commits.
+- Signal: a span from the phase-branch signal file each time a phase starts or resumes, read with plain git (`git worktree list --porcelain`, `git merge-base`, the phase branch's reflog), not the layout code. Upheld when the phase's branch is the name the signal's own plain rule gives its kind and number (`phase/<plan>/test-<n>` or `phase/<plan>/build-<n>`), its worktree and branch are held by no other running phase, its branch was cut from the plan's branch, and a resumed phase's branch tip is the one it had before; broken names the phase and the shared worktree, the wrong name or base, or the lost commits.
 - Fails when:
   - two running phases share a worktree or a branch — the span.
+  - a test phase and a build phase with the same number resolve to one branch, so the second "resumes" the first's — the span: the branch's name does not carry the starting phase's kind.
   - a phase is cut from the trunk or another branch — the span checks the base.
   - a resumed or restarted phase is cut fresh and loses its work — the span compares the branch tip before and after, and reads a re-creation in the branch's reflog.
   - the worktree is not set up (its install fails) — no signal: the phase stops with the failing command named, and its check cannot pass, so it never merges (`green-before-merging`).
@@ -136,7 +146,7 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A22 | Two phases of one plan running together are in two worktrees on two branches named for the plan and the phase, both cut from the plan's branch, and one's work is not visible in the other's worktree. | unit |
+| A22 | Two phases of one plan running together are in two worktrees on two branches named for the plan and the phase's kind and number, both cut from the plan's branch, and one's work is not visible in the other's worktree; Test Phase 2 and Build Phase 2 get different branches, and Build Phase 1 started after Test Phase 1 merged is cut fresh, not resumed on the test phase's branch. | unit |
 | A23 | A phase started again (after a red check, a question or an admin restart) carries on in its own worktree and branch with its earlier commits; a branch whose worktree was removed gets its worktree back from the branch, never a fresh cut. | unit |
 | A24 | A new phase worktree is set up as `indusk worktree create` sets one up — the same environment and install steps, through one function both call — and a failed setup stops the phase naming the command. | unit |
 
@@ -154,10 +164,13 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `green-before-merging` — a phase merges into its plan's branch only when, with the merge made, its own tests and the tests of every clause the plan's branch has touched pass
 
-- Signal: a span from the merge signal file after each merge and on each driver tick, reading every move of the plan's branch since the last judged one from its reflog. A move that brings a phase's work must have a test runner report in machine state, written by the check for exactly that commit, with every test passing and a test file for every touched clause — the touched clauses recomputed by a plain scan (the trajectory's `For` cells for rows of phases finished at that commit, and `clause:` and `promise:` tokens in files changed on the plan's branch since it left the trunk), not by the check's selector. A move that brings no phase's work while one of the plan's phase sessions is running is broken: something moved the branch outside the check. Broken names the commit and the red, missing or left-out tests, or the outside move.
+- Signal: a span from the merge signal file after each merge and on each driver tick, reading every move of the plan's branch since the last judged one from its reflog. A move that brings a phase's work must have a test runner report in machine state, written by the check for exactly that commit, in which every test expected to pass passed, recomputed by a plain scan and not by the check's selector: the test file of every row of the merged phase and of the phases finished at that commit whose Passes-at phase is finished there, every touched clause's test files (the trajectory's `For` cells for those rows, and `clause:` and `promise:` tokens in files changed on the plan's branch since it left the trunk), and the test files each Must-not-break promise's own file lists. For a test phase, each row it writes that passes at a later phase must be in the report and failing on a test's assertion, never on a file that did not load. A move that brings no phase's work while one of the plan's phase sessions is running is broken: something moved the branch outside the check. Broken names the commit and the red, missing or left-out tests, or the outside move.
 - Fails when:
   - the branch moves with a red run, or to a different commit than the one checked — the span.
   - the run leaves out a clause touched through another phase — the span's own scan finds its test file absent from the report.
+  - the run leaves out the phase's own rows that name no clause, or the Must-not-break tests — the span's own list finds them absent.
+  - the check counts a row that is red by design (written now, passing at a phase not yet merged) as a failure, so Test Phase 1 or a later phase can never merge — the `ready-phases-start` tick span names the waiting dependents; T19's fixture and A49 hold the selection.
+  - a test phase's red row fails because its file does not load, and is taken as red on its assertion — the span reads that file's result in the report.
   - the merge claims a run it never made — the span finds no report for that commit.
   - the branch is moved during a run by something else (Dawn's `indusk run`, a person's commit, a session in the plan's worktree) — the tick span; `indusk run` also refuses such a plan (A20).
   - a phase whose check stays red is merged after its attempts run out — the span.
@@ -167,7 +180,8 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 |----|-----------------------------------|-------|
 | A27 | A phase whose tests pass alone but fail once the plan's branch is merged into it is not merged; the first of two phases that break something only together stays merged, and the second is sent back with the failing tests named. | unit |
 | A28 | A green phase is merged into the plan's branch and the plan's worktree shows its files. | unit |
-| A29 | The merge check's real test selection, on a real plan's trajectory and changed files, picks the phase's own tests and the tests of every clause named by a finished phase's row or by a token in a changed file, and leaves out rows not yet written. | unit |
+| A29 | The merge check's real test selection, on a real plan's trajectory and changed files, picks the phase's own tests that pass at it, the tests of every clause named by a finished phase's row or by a token in a changed file, and the Must-not-break tests; it leaves out rows not yet written and rows written at a finished phase that pass only at a phase not yet merged. | unit |
+| A49 | A test phase merges when each row it owns passes and each row it writes for a later phase fails on its own assertion; a row whose file fails to load refuses the merge, naming it. | unit |
 | A30 | A phase whose check is red, or whose merge conflicts outside the impl, goes back to its own session told why; after its third failed attempt it is stopped and listed with the reason, its dependents keep waiting, and phases that do not need it go on. | unit |
 | A31 | Two phases that tick boxes and fill result cells on neighbouring lines of the impl merge without a conflict reaching a session. | unit |
 | A20 | `indusk run` refuses a plan the admin is building with the graph, naming the build. | unit |
@@ -188,11 +202,12 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `only-the-plan-lands` — nothing reaches the trunk from a phase's branch; only a plan's branch, once its promises are verified
 
-- Signal: a span from the merge signal file after each landing and each approval merge, read with plain git: every phase branch (`git for-each-ref refs/heads/phase/`) whose tip is in the trunk's history belongs to a plan whose landing brought it, i.e. its tip is in the history of the landing merge's plan-side parent. It judges by history, never by commit subjects, so an approval merge (`plan(<name>): approved — …`), which brings only documents, reads upheld. Broken names the phase branch and the trunk commit that brought it.
+- Signal: a span from the merge signal file after each landing, each approval merge and on each driver tick, read with plain git: every phase tip — each `git for-each-ref refs/heads/phase/` tip, and each tip a plan branch's reflog records being merged in (git's own reflog entry naming the `phase/` ref, kept after the branch is deleted) — that is in the trunk's history belongs to a plan whose landing brought it, i.e. it is in the history of the landing merge's plan-side parent. It judges by history, never by commit subjects, so an approval merge (`plan(<name>): approved — …`), which brings only documents, reads upheld. At a landing it also reads, at the landing merge's plan-side parent, the file of each promise the plan's brief makes and requires it confirmed (`state: enforced`). Broken names the phase tip and the trunk commit that brought it, or the promise not confirmed.
 - Fails when:
-  - a phase branch is merged into the trunk by hand or by a tool — the span at the next landing or approval.
+  - a phase branch is merged into the trunk by hand or by a tool — the tick span, or the span at the next landing or approval.
+  - a phase branch is merged into the trunk and deleted before the next landing — the tick span reads its tip from the plan branch's reflog.
   - landing deletes a plan's phase branches before the span reads them — the landing calls the span before it deletes.
-  - a plan lands with its promises not verified — no signal of its own: landing refuses it today by running the plan's clause tests (`land-clause-tests.test.ts`), unchanged here.
+  - a plan lands with its promises not verified — the landing span: a promise the brief makes whose file is not confirmed at the landed commit; landing also runs the plan's clause tests, unchanged here.
 - Measure: phase branches that reached the trunk other than through their plan's landing; expect none, ever.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -209,7 +224,8 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 | A38 | A plan whose impl is a draft has no phase in the graph; one whose impl is approved, in progress, or completed with an open phase has its open phases in it. | unit | Must-not-break: `a-plan-builds-only-after-approval`; and the work skill moves a plan's status on, which must not drop it from the graph. |
 | A39 | Phases branch from the plan's branch, never the trunk. | unit | Must-not-break: `a-plan-is-written-on-its-own-branch`. |
 | A40 | A phase boundary still names the command for what runs next. | unit | Must-not-break: `a-plan-boundary-names-the-next-session`. |
-| A41 | A phase session that stops on a question that holds holds its whole plan: no new phase of it starts, its running phases finish and merge, the build stops on the question, and the answer resumes the asking phase in its own worktree. | unit | Must-not-break: `the-cost-sets-the-wait` — in this slice a held question holds its plan. |
+| A41 | A phase session that stops on a question that holds holds its whole plan: no new phase of it starts, its running phases finish and merge, the build stops on the question, and the answer resumes the asking phase in its own worktree. An answer given while the plan's other phases are still finishing is kept: the build is not refused as already building, the asking phase resumes in the same run, and no answered question is held. | unit | Must-not-break: `the-cost-sets-the-wait` — in this slice a held question holds its plan. |
+| A48 | A ready phase carrying a blocker or an item a person must judge is not launched; the plan's other phases go on; once nothing else can run, the build stops on that judgement or blocker as it does today. | unit | A regression guard on `a-build-runs-to-review-unasked`, which stops for a judgement the plan declared; today only the first open phase is asked. |
 | A42 | A held question still frees its plan's place under the cap and resumes on the answer. | unit | A regression guard on `decisions-as-questions`' slot rule. |
 | A43 | The manual one-phase `/work` path works unchanged when no graph run is active. | unit | A regression guard: the driver is added beside the manual path. |
 | A26 | The build shows each phase of the plan as running, waiting (naming what for) or stopped (saying why), from the run record through one function, and the check that the admin shows the phase a session works compares each running phase. | unit | A display guard (brief story 6): the one place a person sees the phases; a wrong line could hide a broken clause, and no signal reads the screen. |
@@ -228,8 +244,11 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ## Notes
 
-- **Decision: a phase with no declared files touches every file its plan's phases declare** (A13). An unknown set cannot be shown free; treating it as empty lets two phases collide unseen. It costs parallelism only where a phase did not say what it touches.
+- **Decision: a phase with no declared files shares a file with every other phase of its plan** (A13), declared or not. An unknown set cannot be shown free; treating it as empty, or as the union of the others' declarations, lets two phases collide unseen. It costs parallelism only where a phase did not say what it touches.
+- **Decision: only the plan's impl is exempt from overlap** (A14). The changelog, `CLAUDE.md` files and docs pages are declared by the phase that edits them, so two phases that would append at the same point never run at once; a plan's shared rules section and changelog line are written by its last phase.
 - **Decision: a phase is ready when its dependencies' work is on the plan's branch**, read from the impl at the plan branch's tip (a merged phase's boxes are ticked there). A phase that finished in its worktree but is not merged is not done; its dependents wait for the merge.
+- **Decision: a merge check runs the tests expected to pass at that merge** (A29, A49). A row whose Passes-at phase is not yet merged is red by design and is not a failure; a test phase is judged by the test-phase rule, its later rows failing on their own assertions.
+- **Decision: a declared judgement or blocker stops only its own phase while others can run** (A48), then stops the build as today; a question still holds the whole plan (A41).
 - **Decision: a red check or a conflict sends the phase back to its own session, three attempts in all**, then stops it (A30). No question is raised for it in this slice; the build stops with `cannot-continue` naming the phase once nothing else can run.
 - **Decision: a held question holds the whole plan** (A41), as the brief's Must-not-break entry for `the-cost-sets-the-wait` says; holding one phase is a later slice.
 - **Decision: the one live check (A10) runs in the system tier** at landing and release, with a scripted agent, and proves no clause; each clause it touches is proved by unit rows.
