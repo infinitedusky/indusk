@@ -14,41 +14,34 @@ gate_policy: ask
 
 ## Goal
 
-An approved plan's phases run as a graph. Each phase names what it depends on and the files it writes; a pure scheduler starts every phase that is ready, up to the session cap, earlier plans first; each running phase works in its own worktree and branch and merges into its plan's branch only by compare-and-swap after the merged result is green; the trunk cascades into open plans; a plan that pulled another plan's unlanded work lands after it; a hold frees a phase's files at once. Brief: [brief.md](brief.md). Assertions: [test-plan.md](test-plan.md) (rows A1 to A103). Decisions D1 to D14: [adr.md](adr.md).
+Slice 1: within one approved plan, every phase whose dependencies are done runs at once, each in its own worktree on its own branch, and joins the plan's branch only when its tests and the plan's touched clauses' tests pass. Brief: [brief.md](brief.md). Assertions: [test-plan.md](test-plan.md) (A1 to A44). Decisions D1 to D10: [adr.md](adr.md). Rewritten for the slice on 2026-10-19; the thirteen-phase version is in this file's history at commit `0842d3fdf`.
 
 ## Scope
 
 ### In Scope
-- The two label lines on a phase (`**Depends on**:`, `**Files**:`), their parsing, defaults and refusals; the Maintenance-phase writer writing both.
-- The driver hosted only by the admin; terminal approval and landing asking the admin to read the graph.
-- Holds per phase for all three triggers (a question that holds, an amendment, an unresolved conflict), with the session manager's question holds, build admission and the admin's run record keyed by phase.
-- The runner record (`runner.jsonl`), the graph reader, the pure scheduler and the driver that launches sessions.
-- Phase worktrees and `phase/<plan>/<n>` branches, start-time merges, the merge check and the compare-and-swap into the plan's branch.
-- Conflict handling by an agent, holds and catch-up, the trunk cascade, and landing after pulled work.
-- One signal per split and limit clause, written beside the code that decides it, in the phase that builds that code.
-- Relaxing `a-session-belongs-to-its-plan`; teaching the falsify, cleanup and planner skills to write the dependency line.
+- The two label lines on a phase, their defaults and their refusal at save; the incident writer and the falsify, cleanup and planner skills writing them.
+- The graph read from the plan's branch, and the pure scheduler.
+- Sessions identified by plan, kind and phase; every phase session counted against the cap; a run record that keeps each phase's process; Dawn's `indusk run` refusing a plan the graph is building.
+- Phase branches and worktrees, cut once and resumed after, set up as `indusk worktree create` sets one up.
+- The checked fast-forward of a finished phase into its plan, its retries and stops; landing refusing phase branches and plans with unmerged phases.
+- The graph as the build's work step inside the admin, its tick, a question holding the whole plan, resume after an admin restart, and a terminal approval asking the admin to build.
+- One signal per split and limit clause, beside the code that decides it.
 
 ### Out of Scope
-- Effort in the tier (`research.md`'s proposed shape): no promise names it; recorded under Notes.
-- How a question is asked and what it costs (`decisions-as-questions`, landed; this plan only holds the asking phase), seeing the graph (`activity-and-graph`), running on the workbench server, re-cutting phases for speed.
+- Everything the brief lists as Not promised: two plans sharing a file, plan order, fix-first, the trunk cascade, per-phase holds, seeing the graph, re-cutting phases, the workbench server.
+- Workbench plans: they build one phase at a time as today in this slice (ADR open decision, awaiting Sandy).
+- Effort in the tier (`research.md`'s proposed shape): no promise names it.
 
 ## Boundary Map
 
 | Phase | Produces | Consumes |
 |-------|----------|----------|
-| Build Phase 1 | `lib/run/graph/declarations.ts`: `readDeclarations`, `Declarations`, `fileSetsOverlap`; refusal at impl save | `lib/models/tiers.ts` label-line parsing, `fencedLineMask` |
-| Build Phase 2 | `lib/run/graph/record.ts`: `appendRecord`, `readRecord`, record entry types | plan-timing writer as the model |
-| Build Phase 3 | `lib/run/graph/read-graph.ts`: `readGraph`, `Graph`, `PhaseNode` (virtual fix edges, plan rank); `read-graph-signals.ts` | Phases 1, 2; `order_plans`; sessions registry; `lib/promises/clause-signal.ts` |
-| Build Phase 4 | `lib/run/graph/schedule.ts`: `pickPhasesToStart`, waiting reasons; `schedule-signals.ts` (`reportScheduleSignals`) | Phase 3 types |
-| Build Phase 5 | relaxed session identity, admission and question holds (plan, kind, phase) in `lib/session/manager.ts`; one run record per running phase | existing manager, `lib/run-record/record.ts` |
-| Build Phase 6 | `lib/run/graph/phase-branch.ts`: `startPhase`, `MergeResolver` type, `pulled` record entries; `phase-branch-signals.ts` | Phases 1, 2; `lib/worktree/layout.ts` |
-| Build Phase 7 | `lib/run/graph/conflict.ts`: `mergeWithResolution` (agent, keep-rule, question); `conflict-signals.ts` | Phase 6 `MergeResolver` |
-| Build Phase 8 | `lib/run/graph/merge-into-plan.ts`: `mergePhaseIntoPlan` (the only caller of the compare-and-swap); `merge-signals.ts` | Phases 6, 7; `lib/plans/test-set.ts` |
-| Build Phase 9 | `lib/run/graph/hold.ts`: `holdPhase`, `releasePhase`, catch-up; `hold-signals.ts` | Phases 2, 4, 7 |
-| Build Phase 10 | `lib/run/graph/cascade.ts`: `cascadeTrunk`; `plans land` calls it; `cascade-signals.ts` | Phase 7; `lib/plans/bring-trunk.ts` |
-| Build Phase 11 | landing refusal and re-merge for pulled work; `lib/plans/land-pulled-signals.ts` | Phases 6, 7; `lib/plans/land.ts` |
-| Build Phase 12 | `lib/build/graph-driver.ts`: event and tick driver launching sessions, hosted by the admin; `askAdminToSchedule`; `graph-driver-signals.ts`; `graph-print.ts` | Phases 4 to 11; `lib/plans/ask-admin.ts` |
-| Build Phase 13 | the live checks in the system tier; ritual skills write the dependency line | Phases 1, 12 |
+| Build Phase 1 | `lib/graph/declarations.ts` (`readDeclarations`, `fileSetsOverlap`); `lib/graph/read-graph.ts` (`readGraph`, `Graph`, `PhaseNode`); `read-graph-signals.ts`; save-check refusal; incident writer and skills write the lines | `lib/models/tiers.ts` label parsing, `fencedLineMask`, `next-step.ts` `isOpen` |
+| Build Phase 2 | `lib/graph/schedule.ts` (`pickPhasesToStart`, waiting reasons); `schedule-signals.ts` | Build Phase 1 types |
+| Build Phase 3 | session identity and cap per phase in `lib/session/manager.ts`; `phases` in the run record and liveness; `indusk run` refusal | existing manager, `lib/run-record/` |
+| Build Phase 4 | `lib/graph/phase-branch.ts` (`startPhase`: cut or resume); `lib/worktree/provision.ts` (`provisionWorktree`); `phase-branch-signals.ts` | `lib/worktree/layout.ts`, `bin/commands/worktree.ts` |
+| Build Phase 5 | `lib/graph/merge.ts` (`mergePhase`); `lib/graph/record.ts`; the `merge` scope of `planTestSet`; landing refusals; `merge-signals.ts` | Build Phases 1 and 4; `lib/plans/test-set.ts`, `lib/plans/land.ts` |
+| Build Phase 6 | `lib/build/graph-run.ts` (the work step); admin host wiring; `askAdminToBuild`; phase lines; `graph-run-signals.ts`; the live check | Build Phases 2, 3, 5; `runBuild`, `build-host.ts` |
 
 ## Test Trajectory
 
@@ -56,70 +49,48 @@ Test paths are repo-root-relative.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | Phases naming dependencies show exactly those; phases naming none depend on the one before; the first phase is ready at approval; every build phase depends on Test Phase 1 when the impl has one, even with `none`; a test phase reads like a build phase (A1, A2, A4, A5) | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-work-runs-as-a-graph/a-phase-names-what-it-needs | apps/indusk-mcp/src/lib/run/graph/declarations.test.ts |
-| T2 | An impl naming a missing phase, itself, or a loop is refused at save, naming the phase and the problem (A3) | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-work-runs-as-a-graph/a-phase-names-what-it-needs | apps/indusk-mcp/src/__tests__/depends-on-refused.test.ts |
-| T3 | The runner record appends and reads back every entry kind; a torn last line reads as absent; merges, conflicts and agent resolutions are countable (A73) | Build Phase 2 | Build Phase 2 | planned | unit | the record every clause signal and the second expectation are read from (ADR decision D12) | apps/indusk-mcp/src/lib/run/graph/record.test.ts |
-| T4 | Review phases (falsification, cleanup, an audit phase the audit's answers add, maintenance) are nodes with dependencies and files; the steps that write them are not nodes and take no slot; a maintenance phase is a fix-class node, including one in an archived plan; held phases come from the record keyed by plan and phase (A19, A20, A21, A22) | Build Phase 3 | Build Phase 3 | planned | unit | clause: the-work-runs-as-a-graph/reviews-are-phases | apps/indusk-mcp/src/lib/run/graph/read-graph.test.ts |
-| T5 | A plan that is not approved has no phase in the graph (A98) | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/lib/run/graph/read-graph.test.ts |
-| T6 | Independent phases start together, a dependent one only when its last dependency finishes, within a minute on the given clock while the cap has room, and after a session frees when it is full (A6, A7, A8) | Build Phase 4 | Build Phase 4 | planned | unit | clause: the-work-runs-as-a-graph/ready-phases-start | apps/indusk-mcp/src/lib/run/graph/schedule-ready.test.ts |
-| T7 | A phase waits only for a dependency, a shared file, the cap or a hold, and its recorded reason names which; an undeclared phase is treated as touching its whole plan; a freed file starts the next phase on the next read (A10 to A14) | Build Phase 4 | Build Phase 4 | planned | unit | clause: the-work-runs-as-a-graph/no-needless-wait | apps/indusk-mcp/src/lib/run/graph/schedule-files.test.ts |
-| T8 | Two phases ending at the same moment cannot both claim one freed file (A18) | Build Phase 4 | Build Phase 4 | planned | unit | clause: the-work-runs-as-a-graph/graph-is-current | apps/indusk-mcp/src/lib/run/graph/schedule-files.test.ts |
-| T9 | Of contested ready phases the earliest plan's runs next, unplaced plans go last by approval, a reorder takes effect at the next read, other phases keep running, and the record names the order used (A47 to A52) | Build Phase 4 | Build Phase 4 | planned | unit | clause: earlier-plans-go-first/earliest-next | apps/indusk-mcp/src/lib/run/graph/schedule-order.test.ts |
-| T10 | A ready fix phase takes the next free session ahead of any non-fix phase; unstarted phases touching its files depend on it; a phase touching none is unaffected; two fixes go in plan order (A53, A54, A56, A57) | Build Phase 4 | Build Phase 4 | planned | unit | clause: earlier-plans-go-first/a-broken-promise-jumps-the-line | apps/indusk-mcp/src/lib/run/graph/schedule-fix.test.ts |
-| T11 | The scheduler offers no way to stop a running phase: a full cap with a fix ready, a landing, an approval or an earlier plan wanting a file never ends a running phase (A82, A83) | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-hold-is-cheap/running-phases-finish | apps/indusk-mcp/src/lib/run/graph/schedule-never-stops.test.ts |
-| T12 | With the cap at one and phases naming nothing, the order and result equal today's one-phase-at-a-time run (A101) | Build Phase 4 | Build Phase 4 | planned | unit | a regression guard: the zero-migration claim of the dependency clause | apps/indusk-mcp/src/lib/run/graph/chain-parity.test.ts |
-| T13 | A plan's session starts whatever other plans' sessions run; only a second session of the same kind on the same phase is refused, naming the one running (A96, A97) | Test Phase 1 | Build Phase 5 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager-parallel.test.ts |
-| T14 | Two running phases of a plan sit in different worktrees on differently named branches cut from the plan's branch; one's work is invisible to the other; a merged phase's worktree is removed, its branch kept until the plan lands, and a failed one is kept and listed (A23 to A26) | Build Phase 6 | Build Phase 6 | planned | unit | clause: a-phase-builds-on-its-own-branch/own-worktree | apps/indusk-mcp/src/lib/run/graph/phase-worktree.test.ts |
-| T15 | A phase starts with every finished dependency's files present and none from a phase it does not depend on (A27, A28) | Build Phase 6 | Build Phase 6 | planned | unit | clause: a-phase-builds-on-its-own-branch/starts-from-its-dependencies | apps/indusk-mcp/src/lib/run/graph/phase-start-merge.test.ts |
-| T16 | A phase that waited on another plan's phase for a file starts with that phase's work, landed or not, and its plan records having pulled it (A31, A32, A33) | Build Phase 6 | Build Phase 6 | planned | unit | clause: a-phase-builds-on-its-own-branch/starts-from-the-work-it-waited-for | apps/indusk-mcp/src/lib/run/graph/phase-start-waited.test.ts |
-| T17 | Phases branch from the plan's branch, not the trunk (A99) | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/lib/run/graph/phase-worktree.test.ts |
-| T18 | A conflicting merge an agent resolves with the plan's tests passing is kept; one after which tests fail is thrown away; one it cannot resolve becomes a question naming the files and holds only the affected phases not yet running, while an affected running phase finishes and is held at its merge; the same at all four merge points, including a dependency merge at phase start; the record counts them (A29, A68 to A72) | Build Phase 7 | Build Phase 7 | planned | unit | clause: trunk-cascades/agent-resolves-first | apps/indusk-mcp/src/lib/run/graph/conflict.test.ts |
-| T19 | A phase that passes alone but fails merged with another finished phase is not merged and the record names both; the first of two phases that break only together stays merged; a green phase merges; the check includes clauses touched through other phases (A34, A35, A36, A38) | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-phase-builds-on-its-own-branch/green-before-merging | apps/indusk-mcp/src/lib/run/graph/merge-into-plan.test.ts |
-| T20 | A phase failing its merge check is kept and listed as stopped with the failing tests while unrelated phases keep running; the third failure becomes a hold (A37) | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-phase-builds-on-its-own-branch/green-before-merging | apps/indusk-mcp/src/lib/run/graph/merge-failed.test.ts |
-| T21 | A phase whose check ran no test, whose rows are all deferred, or that touches a clause without its signal is not merged and the record says why; one with the signal and a passing test merges (A40 to A43) | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-phase-builds-on-its-own-branch/every-phase-is-checked | apps/indusk-mcp/src/lib/run/graph/merge-checked.test.ts |
-| T22 | Finished work is on the plan's branch and not the trunk until the plan lands; landing a phase branch is refused naming its plan; an unverified plan is refused landing (A44 to A46) | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-phase-builds-on-its-own-branch/only-the-plan-lands | apps/indusk-mcp/src/lib/run/graph/only-the-plan-lands.test.ts |
-| T23 | Exactly one function moves a plan's branch from a phase (compare-and-swap), pinned by a single-definition scan | Build Phase 8 | Build Phase 8 | planned | unit | the ADR's named risk: a later caller skipping the swap | apps/indusk-mcp/src/lib/run/graph/single-swap.test.ts |
-| T24 | A phase running at a landing is not interrupted and merges the trunk before it merges into its plan; one started after it does not merge it again; a conflicting trunk merge waits for the resolver (A65, A66, A67) | Build Phase 8 | Build Phase 8 | planned | unit | clause: trunk-cascades/phase-merges-at-its-end | apps/indusk-mcp/src/lib/run/graph/phase-end-trunk.test.ts |
-| T25 | A running phase that touches a fix's files merges the fix before it merges into its plan and is not stopped (A55) | Build Phase 8 | Build Phase 8 | planned | unit | clause: earlier-plans-go-first/a-broken-promise-jumps-the-line | apps/indusk-mcp/src/lib/run/graph/merge-fix.test.ts |
-| T26 | A held phase, put on hold through the record and read back by the graph reader keyed by plan and phase, stops being the reason any phase waits for a file, its slot is released, its dependents still wait naming it, another plan's phase of the same name is untouched, and a conflict hold or an amendment hold behave the same (A85 to A89) | Build Phase 9 | Build Phase 9 | planned | unit | clause: a-hold-is-cheap/a-hold-frees-its-files | apps/indusk-mcp/src/lib/run/graph/hold.test.ts |
-| T27 | A released phase waits for active phases it now depends on, merges finished work touching its files and the trunk, resumes where it stopped without redoing work, and with nothing to merge resumes at once (A90 to A94) | Build Phase 9 | Build Phase 9 | planned | unit | clause: a-hold-is-cheap/the-held-phase-catches-up | apps/indusk-mcp/src/lib/run/graph/catch-up.test.ts |
-| T28 | A landing brings every idle open plan's branch up to date within five minutes, skips a plan with a running phase, catches up a landing missed while the runner was off, skips unapproved and landed plans, and keeps each workbench repo's trunk its own (A59 to A63) | Build Phase 10 | Build Phase 10 | planned | unit | clause: trunk-cascades/branches-follow-the-trunk | apps/indusk-mcp/src/lib/run/graph/cascade.test.ts |
-| T29 | A plan that pulled another plan's unlanded work is refused landing naming that plan, lands once it has, is not refused for work since landed, and a plan that pulled nothing lands as today (A75 to A78) | Build Phase 11 | Build Phase 11 | planned | unit | clause: landing-follows-what-it-pulled/lands-after | apps/indusk-mcp/src/lib/plans/land-pulled.test.ts |
-| T30 | Before landing, such a plan merges the trunk holding the other plan's landed work, a conflict waits for the resolver, and the plan's tests run on the merged result (A79, A80, A81) | Build Phase 11 | Build Phase 11 | planned | unit | clause: landing-follows-what-it-pulled/merges-again-before-landing | apps/indusk-mcp/src/lib/plans/land-pulled.test.ts |
-| T31 | A graph read follows every phase end, approval and landing before any launch, and a stranded ready phase is launched by the 60-second tick (A15, A16, A17) | Build Phase 12 | Build Phase 12 | planned | unit | clause: the-work-runs-as-a-graph/graph-is-current | apps/indusk-mcp/src/lib/build/graph-driver.test.ts |
-| T32 | A phase boundary still names the command for what runs next, and the driver runs it (A100) | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/build/next-step-boundary.test.ts |
-| T33 | The manual one-phase `/work` path works unchanged when no driver is active (A102) | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: the driver is added beside the manual path, not instead of it | apps/indusk-mcp/src/lib/build/manual-path.test.ts |
-| T34 | A real approved plan with two independent phases starts two sessions in two worktrees without a second command (A9) | Build Phase 13 | Build Phase 13 | planned | live check | a live check after landing, recorded in the retrospective; the ready-phases clause is proved by T6 and T31 | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
-| T35 | A real dependent pair: the later phase's session reads a file only the earlier phase wrote (A30) | Build Phase 13 | Build Phase 13 | planned | live check | a live check after landing, recorded in the retrospective; the starts-from-its-dependencies clause is proved by T15 | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
-| T36 | A real plan where two phases collide only in combination is stopped at the join (A39) | Build Phase 13 | Build Phase 13 | planned | live check | a live check after landing, recorded in the retrospective; the green-before-merging clause is proved by T19 and T20 | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
-| T37 | A real maintenance phase starts at the first free session and its dependents start with the fix present (A58) | Build Phase 13 | Build Phase 13 | planned | live check | a live check after landing, recorded in the retrospective; the broken-promise-jumps-the-line clause is proved by T10 and T25 | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
-| T38 | A real landing brings two idle open plans' branches up to date within five minutes (A64) | Build Phase 13 | Build Phase 13 | planned | live check | a live check after landing, recorded in the retrospective; the branches-follow-the-trunk clause is proved by T28 | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
-| T39 | A real conflict between two phases' edits to one file is resolved by a real agent session and the plan's tests still pass (A74) | Build Phase 13 | Build Phase 13 | planned | live check | an end-to-end check with a real agent, run by `pnpm e2e` and recorded in the retrospective; the agent-resolves-first clause is proved by T18 | apps/indusk-mcp/e2e/run-graph-conflict.e2e.test.ts |
-| T40 | A real running phase continues to its end while the trunk changes and a fix is queued (A84) | Build Phase 13 | Build Phase 13 | planned | live check | a live check after landing, recorded in the retrospective; the running-phases-finish clause is proved by T11 | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
-| T41 | A real phase held on a question that holds and released by its answer resumes and finishes (A95) | Build Phase 13 | Build Phase 13 | planned | live check | a live check after landing, recorded in the retrospective; the held-phase-catches-up clause is proved by T27 | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
-| T42 | The graph printout and the admin's why-it-waits line show each phase's state, the reason it waits and its ready-to-launched gap exactly as the runner record holds them (A103) | Build Phase 12 | Build Phase 12 | planned | unit | a display guard: the one place the clauses are shown, read through one function over the record | apps/indusk-mcp/src/lib/build/graph-print.test.ts |
-| T43 | A phase the scheduler picks is launched by the real session manager with a stand-in process: a second phase of a running plan starts, and a fifth phase session at a cap of four is refused (A104) | Build Phase 12 | Build Phase 12 | planned | unit | clause: the-work-runs-as-a-graph/ready-phases-start | apps/indusk-mcp/src/lib/build/graph-driver-launch.test.ts |
-| T44 | The merge check's real test selection on a fixture plan picks every touched clause's tests, by rows' `For` cells and by tokens in changed files, and the built-so-far scope leaves out unwritten rows (A105) | Build Phase 8 | Build Phase 8 | planned | unit | clause: a-phase-builds-on-its-own-branch/green-before-merging | apps/indusk-mcp/src/lib/plans/test-set-touched.test.ts |
-| T45 | The admin's build host starts the driver's ticks when it starts, and each five-minute pass hands the cascade every open plan (A106) | Build Phase 12 | Build Phase 12 | planned | unit | clause: trunk-cascades/branches-follow-the-trunk | apps/indusk-mcp/src/lib/build/graph-driver-ticks.test.ts |
-| T46 | A phase started while its plan's branch is behind the trunk, because a running phase made the cascade skip it, starts with the trunk merged in (A17) | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-work-runs-as-a-graph/graph-is-current | apps/indusk-mcp/src/lib/run/graph/phase-start-trunk.test.ts |
-| T47 | Approving or landing from a terminal launches no session and asks the running admin to read the graph; with the admin down it says so plainly (A109) | Build Phase 12 | Build Phase 12 | planned | unit | clause: the-work-runs-as-a-graph/graph-is-current | apps/indusk-mcp/src/lib/plans/ask-admin-schedule.test.ts |
-| T48 | Two phase runs of one plan keep two run records, each with its own phase and process, both read alive (A110) | Test Phase 1 | Build Phase 5 | planned | unit | a regression guard: the admin reads each run from its own record, which one record per plan and kind breaks once phases run together | apps/indusk-mcp/src/lib/run-record/record-per-phase.test.ts |
-| T49 | A Maintenance phase in an archived plan's impl is a fix node, and its start cuts a plan branch from the trunk for that fix (A107) | Build Phase 6 | Build Phase 6 | planned | unit | clause: earlier-plans-go-first/a-broken-promise-jumps-the-line | apps/indusk-mcp/src/lib/run/graph/archived-fix.test.ts |
-| T50 | The Maintenance-phase writer gives a fix phase a dependency line naming no other phase and a files line from the broken promise's declared paths (A111) | Test Phase 1 | Build Phase 1 | planned | unit | clause: earlier-plans-go-first/a-broken-promise-jumps-the-line | apps/indusk-mcp/src/lib/promises/reopen-declarations.test.ts |
-| T51 | A plan with a phase still running or held is refused landing, naming those phases, and its own trunk merge goes through the resolver (A108) | Build Phase 11 | Build Phase 11 | planned | unit | clause: a-phase-builds-on-its-own-branch/only-the-plan-lands | apps/indusk-mcp/src/lib/plans/land-busy.test.ts |
-| T52 | A phase whose session stops on a question that holds is held alone: its files and place are freed, the plan's other phases keep theirs, a same-named phase of another plan is untouched, and the answer releases that phase alone (A112) | Build Phase 9 | Build Phase 9 | planned | unit | clause: a-hold-is-cheap/a-hold-frees-its-files | apps/indusk-mcp/src/lib/run/graph/hold-question.test.ts |
-| T53 | A held question still frees its slot and resumes on the answer, keyed by phase (A113) | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: decisions-as-questions' slot rule, whose keys this plan changes from plan to phase | apps/indusk-mcp/src/lib/session/question-wait.test.ts |
+| T1 | Phases naming dependencies show exactly those; phases naming none depend on the one before; the first depends on nothing; every build phase depends on Test Phase 1 when there is one (A1, A2) | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-work-runs-as-a-graph/a-phase-names-what-it-needs | apps/indusk-mcp/src/lib/graph/declarations.test.ts |
+| T2 | An impl naming a missing phase, itself, or a loop is refused at save naming the phase; the hook's reader and the package's agree (A3) | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-work-runs-as-a-graph/a-phase-names-what-it-needs | apps/indusk-mcp/src/__tests__/depends-on-refused.test.ts |
+| T3 | Falsification, Cleanup, Audit and Maintenance phases are nodes with their declared dependencies and files; the steps that write them are not (A19) | Build Phase 1 | Build Phase 1 | planned | unit | clause: the-work-runs-as-a-graph/reviews-are-phases | apps/indusk-mcp/src/lib/graph/read-graph.test.ts |
+| T4 | A draft plan has no node; an approved, in-progress, or completed-with-an-open-phase plan has its open phases; a phase closed on the plan's branch is done (A38) | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/lib/graph/read-graph-status.test.ts |
+| T5 | The incident writer gives a Maintenance phase a dependency line naming no phase and a files line from the promise's declared paths (A21) | Test Phase 1 | Build Phase 1 | planned | unit | clause: the-work-runs-as-a-graph/reviews-are-phases | apps/indusk-mcp/src/lib/promises/reopen-declarations.test.ts |
+| T6 | Independent phases are picked together; a dependent one only once its last dependency is done; a ready phase is not picked while the cap is full (A4, A5) | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-work-runs-as-a-graph/ready-phases-start | apps/indusk-mcp/src/lib/graph/schedule-ready.test.ts |
+| T7 | A phase waits only for a dependency, a running phase of its plan sharing a file, the cap or a question, and its reason says which; an undeclared phase touches its whole plan; bookkeeping files are never shared; two phases freed together never take one file (A11 to A14) | Build Phase 2 | Build Phase 2 | planned | unit | clause: the-work-runs-as-a-graph/no-needless-wait | apps/indusk-mcp/src/lib/graph/schedule-wait.test.ts |
+| T8 | With the cap at one and phases naming nothing, the order equals today's one-phase-at-a-time build (A15) | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard: the zero-migration claim of the dependency clause | apps/indusk-mcp/src/lib/graph/chain-parity.test.ts |
+| T9 | A plan's second phase session starts while its first runs; a second session on the same phase is refused naming the first (A36) | Test Phase 1 | Build Phase 3 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager-parallel.test.ts |
+| T10 | An admitted build's place covers one of its sessions; each further phase session takes its own place; a session beyond the cap is refused (A18) | Test Phase 1 | Build Phase 3 | planned | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/cap-per-phase.test.ts |
+| T11 | A build run record keeps each running phase's process and reads running while any is alive; a record without phases still reads (A37) | Test Phase 1 | Build Phase 3 | planned | unit | a regression guard: a-run-is-read-from-its-record, which one process per run breaks once phases run together | apps/indusk-mcp/src/lib/run-record/record-phases.test.ts |
+| T12 | `indusk run` refuses a plan the admin is building with the graph, naming the build (A20) | Build Phase 3 | Build Phase 3 | planned | unit | clause: a-phase-builds-on-its-own-branch/green-before-merging | apps/indusk-mcp/src/lib/run/refuse-graph-run.test.ts |
+| T13 | Two running phases sit in two worktrees on two `phase/<plan>/<n>` branches cut from the plan's branch, and one's work is not in the other's worktree (A22) | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-phase-builds-on-its-own-branch/own-worktree | apps/indusk-mcp/src/lib/graph/phase-worktree.test.ts |
+| T14 | A phase started again reuses its worktree and branch with its commits; a branch whose worktree is gone gets it back from the branch, never a fresh cut (A23) | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-phase-builds-on-its-own-branch/own-worktree | apps/indusk-mcp/src/lib/graph/phase-resume.test.ts |
+| T15 | A phase worktree and `indusk worktree create` run the same setup through one function; with no setup steps the lockfile's install runs; a failed step stops the phase naming it (A24) | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-phase-builds-on-its-own-branch/own-worktree | apps/indusk-mcp/src/lib/worktree/provision.test.ts |
+| T16 | A phase depending on two merged phases starts with both phases' files (A25) | Build Phase 4 | Build Phase 4 | planned | unit | clause: a-phase-builds-on-its-own-branch/starts-from-its-dependencies | apps/indusk-mcp/src/lib/graph/phase-start.test.ts |
+| T17 | Phases branch from the plan's branch, never the trunk (A39) | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/lib/graph/phase-worktree.test.ts |
+| T18 | A green phase is fast-forwarded into the plan and the plan's worktree shows its files; a phase green alone but red once the plan is merged in is not merged and is sent back naming the tests; of two that break only together the first stays merged (A27, A28) | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-phase-builds-on-its-own-branch/green-before-merging | apps/indusk-mcp/src/lib/graph/merge.test.ts |
+| T19 | The merge scope's real selection on a fixture plan picks the phase's tests, every clause named by a done phase's row or by a token in a changed file, and leaves out rows not yet written (A29) | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-phase-builds-on-its-own-branch/green-before-merging | apps/indusk-mcp/src/lib/plans/test-set-merge.test.ts |
+| T20 | A red check, a conflict outside the impl or a dirty worktree sends the phase back told why; the third failure stops it with its reason, its dependents wait, other phases go on (A30) | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-phase-builds-on-its-own-branch/green-before-merging | apps/indusk-mcp/src/lib/graph/merge-failed.test.ts |
+| T21 | Two phases ticking boxes and filling result cells on neighbouring impl lines merge with no session involved (A31) | Build Phase 5 | Build Phase 5 | planned | unit | parallel phases' impl ticks must never become a session's conflict (ADR decision D6) | apps/indusk-mcp/src/lib/graph/merge-impl-lines.test.ts |
+| T22 | A phase that ran no test, or only deferred rows, is not merged; one touching a clause with no signal task in it or a done phase is not merged, naming the clause; one with both merges (A32, A33) | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-phase-builds-on-its-own-branch/every-phase-is-checked | apps/indusk-mcp/src/lib/graph/merge-checked.test.ts |
+| T23 | Merged work is on the plan's branch, not the trunk, until landing; landing a phase branch is refused naming its plan; a plan with a phase running or stopped unmerged is refused naming them (A34, A35) | Build Phase 5 | Build Phase 5 | planned | unit | clause: a-phase-builds-on-its-own-branch/only-the-plan-lands | apps/indusk-mcp/src/lib/graph/only-the-plan-lands.test.ts |
+| T24 | The work step, with stand-in sessions, starts Phases 1 and 3 of the six-phase plan at once; a phase's end merges it and launches what waited only for it; Phase 5 starts once 2 and 3 have joined; the step returns when no phase is open (A4, A7) | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-work-runs-as-a-graph/ready-phases-start | apps/indusk-mcp/src/lib/build/graph-run.test.ts |
+| T25 | With the real session manager and a stand-in process, a plan's second phase gets its own session, and one beyond the cap is refused and launched when a session ends (A6) | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-work-runs-as-a-graph/ready-phases-start | apps/indusk-mcp/src/lib/build/graph-run-launch.test.ts |
+| T26 | Each phase end is followed by a fresh read before a launch; the tick launches a phase whose end event was missed; two phases ending together merge one after the other and their dependent starts once (A16, A17) | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-work-runs-as-a-graph/graph-is-current | apps/indusk-mcp/src/lib/build/graph-run-current.test.ts |
+| T27 | A terminal approval launches nothing, asks the running admin to build, and says plainly when the admin is not running (A8) | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-work-runs-as-a-graph/ready-phases-start | apps/indusk-mcp/src/lib/plans/ask-admin-build.test.ts |
+| T28 | After an admin restart, a phase whose session was ended is launched again in its own worktree on the first tick; one whose worktree shows it finished goes straight to its merge (A9) | Build Phase 6 | Build Phase 6 | planned | unit | clause: a-phase-builds-on-its-own-branch/own-worktree | apps/indusk-mcp/src/lib/build/graph-run-restart.test.ts |
+| T29 | Ritual steps start only once every phase is done; a phase a step writes is run by the graph before the next step (A44) | Build Phase 6 | Build Phase 6 | planned | unit | clause: the-work-runs-as-a-graph/reviews-are-phases | apps/indusk-mcp/src/lib/build/graph-run-rituals.test.ts |
+| T30 | A phase session stopping on a question that holds holds the plan: nothing new launches, running phases finish and merge, the step ends on the question, and the answer resumes the asking phase in its worktree (A41) | Build Phase 6 | Build Phase 6 | planned | unit | promise: the-cost-sets-the-wait | apps/indusk-mcp/src/lib/build/graph-run-question.test.ts |
+| T31 | The build shows each phase as running, waiting on what, or stopped and why, through one function over the run record; the shown-phase check compares each running phase (A26) | Build Phase 6 | Build Phase 6 | planned | unit | a display guard: the one place a person sees the phases (brief story 6) | apps/indusk-mcp/src/lib/run-record/phase-lines.test.ts |
+| T32 | A phase boundary still names the command for what runs next (A40) | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/build/next-step-boundary.test.ts |
+| T33 | The manual one-phase `/work` path gives the same next step as today when no graph run is active (A43) | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard: the graph is added beside the manual path | apps/indusk-mcp/src/lib/build/manual-path.test.ts |
+| T34 | A held question still frees its plan's place and resumes on the answer (A42) | Test Phase 1 | Test Phase 1 | planned | unit | promise: the-cost-sets-the-wait | apps/indusk-mcp/src/lib/session/question-wait.test.ts |
+| T35 | A real plan with two independent phases and a dependent third, built from the admin's host with a scripted agent, runs the two at once and ends with all three on the plan's branch (A10) | Build Phase 6 | Build Phase 6 | planned | live check | a live check run at landing and release, recorded in the retrospective; the clauses it touches are proved by the unit rows | apps/indusk-mcp/src/__tests__/run-graph.live.test.ts |
 
 ### Deferred Verification
 
-- **Whether an agent's conflict resolution is right beyond the plan's tests passing**
-  - reason: correctness of a resolution is a judgement tests cannot fully give; the end-to-end conflict row (T39) runs one real agent resolution, which shows the session starts, is permitted and commits, not that every resolution is right.
-  - would require: a run of real model-resolved conflicts across the first twenty parallel phases.
-  - mitigation: the runner record counts every conflict and agent resolution with the plan's tests (second brief expectation); the retrospective reads it.
-- **A master finishing in about the time of its longest chain** (first brief expectation)
-  - reason: durations over days cannot be compressed into a test.
-  - would require: Homework Gate's first milestone run to its last landing.
-  - mitigation: figure read from phase start and end times in the record when that milestone lands.
+- **A plan finishing in about the time of its longest chain** (the brief's expectation)
+  - reason: real phases' durations over hours or days cannot be compressed into a test.
+  - would require: the next plan with independent phases run to review.
+  - mitigation: read from the launch and merge times in the graph record when that plan reaches review.
 
 ## Checklist
 
@@ -127,543 +98,313 @@ Test paths are repo-root-relative.
 
 **Tier**: med — the step's default tier for work
 
-This phase writes the tests whose subjects already exist (the session rule and the run record that must change, the incident writer that must start declaring its phase's lines, and the phase-boundary command, the manual one-phase path and the held-question slot rule that must not) and records, with a reason and a body, every test that waits for a module a later phase creates. It hands the build phases a red session-rule test to turn green and a register they can check each later test against.
+This phase writes the tests whose subjects already exist — the session rule, the cap, the run record and the incident writer that must change, and the phase-boundary command, the manual path and the question slot rule that must not — and records, with a body, every test that waits for a module a later phase creates. It hands the build phases red tests to turn green and a register to check each later test against.
 
 - [ ] Confirm this plan's worktree exists and is the one in use.
   <details><summary>Technical</summary>
 
-  `indusk worktree create run-the-graph` (records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign run-the-graph <path>`). Worktree-per-plan default; no `worktree: none` in frontmatter.
+  `indusk worktree create run-the-graph` (or `indusk worktree assign run-the-graph <path>` for one made another way). No `worktree: none` in frontmatter.
 
   </details>
-- [ ] Write the session-rule test so it fails on its own assertion today.
+- [ ] Write the session-rule and cap tests so each fails on its own assertion today.
   <details><summary>Technical</summary>
 
-  T13 in `apps/indusk-mcp/src/lib/session/manager-parallel.test.ts` against the existing manager: a build session on plan A phase 1 then a second build session on plan A phase 2 must start (RED today: refused as "same kind on the same plan"); a second build session on plan A phase 1 must be refused naming the first (green today).
+  T9 `apps/indusk-mcp/src/lib/session/manager-parallel.test.ts`: build session on plan `p` phase `Build Phase 1`, then one on `Build Phase 2` must start (RED: refused as the same kind on the same plan); a second on `Build Phase 1` refused naming the first (green). T10 `cap-per-phase.test.ts`: cap 4, `admitBuild("x", "p")`, three phase sessions of `p` and one session of plan `q` — the fourth start is refused at the cap (RED: today the second `p` session is refused as a duplicate, and admitted builds' sessions are all exempt). Pass `phase` in the start options with a cast until Build Phase 3 types it.
 
   </details>
-- [ ] Write the two guard tests for what must not change.
+- [ ] Write the run-record test and the incident-writer test so each fails on its own assertion today.
   <details><summary>Technical</summary>
 
-  T32 `lib/build/next-step-boundary.test.ts`: the boundary of a finished phase names the command `indusk plans next-session <plan>` gives. T33 `lib/build/manual-path.test.ts`: a plan with no runner record yields the same next step the manual path gives today.
+  T11 `lib/run-record/record-phases.test.ts`: a build record with `process: null` and `phases: [{ phase: "Build Phase 2", process: <this test's own pid> }]` reads `running` from `runStatus` (RED: liveness reads only `process`); a record with no `phases` reads as today. T5 `lib/promises/reopen-declarations.test.ts`: `reopenOwner` for a promise declaring `sites: [src/a.ts]` writes `**Depends on**: none` and `**Files**: src/a.ts` under the new Maintenance heading (RED: neither is written).
 
   </details>
-- [ ] Write the run-record test and the incident-writer test so each fails on its own assertion today, and confirm the held-question slot test passes.
+- [ ] Write the two guard tests for what must not change, and confirm the question slot test passes.
   <details><summary>Technical</summary>
 
-  T48 `lib/run-record/record-per-phase.test.ts`: write two build records of plan `p` for phases `Build Phase 1` and `Build Phase 2`; both read back with their own phase and process (RED today: the path is keyed by plan and kind, so the second overwrites the first). T50 `lib/promises/reopen-declarations.test.ts`: `reopenOwner` on an owner whose promise declares `sites: [src/a.ts]` writes `**Depends on**: none` and `**Files**: src/a.ts` under the new Maintenance heading (RED today: neither line is written). T53 is the existing `lib/session/question-wait.test.ts`, green today; Build Phase 5 changes its keys to plan and phase and it must stay green.
+  T32 `lib/build/next-step-boundary.test.ts`: a finished phase's boundary names the command `indusk plans next-session <plan>` gives. T33 `lib/build/manual-path.test.ts`: a plan with no graph record yields the same `nextBuildStep` answer as today. T34 is the existing `lib/session/question-wait.test.ts`, green; it must stay green.
 
   </details>
 - [ ] Record each later test in the register below and confirm none fails only on a missing file.
   <details><summary>Technical</summary>
 
-  Every other row imports a module under `lib/run/graph/` or a function a later phase adds, so it is deferred with a body; none uses `.skip()`.
+  Every other row imports a module a later phase creates, so it is deferred with a body; none uses `.skip()`.
 
   </details>
 
 #### Deferred to Build Phase 1
 
-- **T1** — imports `readDeclarations`, introduced in Build Phase 1; the file would fail to load today. Body reviewed:
+- **T1**, **T2**, **T3**, **T4** — import `readDeclarations` and `readGraph`, and the refusal the save check gains, all introduced in Build Phase 1. Body reviewed:
 
   ```typescript
-  const d = readDeclarations(sixPhaseImpl); // P1,P3 none; P2 "Build Phase 1"; P5 "Build Phase 2, Build Phase 3"
-  expect(d.dependsOn("Build Phase 5")).toEqual(["Build Phase 2", "Build Phase 3"]);
-  expect(readDeclarations(unlabelledImpl).dependsOn("Build Phase 2")).toEqual(["Build Phase 1"]);
-  ```
-- **T2** — the refusal lives in the impl save check Build Phase 1 extends; today an unknown dependency line is plain text and nothing refuses it. Body reviewed:
-
-  ```typescript
-  const r = runValidator(implWith("**Depends on**: Build Phase 9")); // no such phase
-  expect(r.refused).toBe(true);
-  expect(r.message).toContain("Build Phase 9");
+  const d = readDeclarations(sixPhaseImpl); // P1, P3 none; P2 "Build Phase 1"; P5 "Build Phase 2, Build Phase 3"
+  expect(d.dependsOn("Build Phase 5")).toEqual(["Test Phase 1", "Build Phase 2", "Build Phase 3"]);
+  expect(readDeclarations(unlabelledImpl).dependsOn("Build Phase 2")).toEqual(["Test Phase 1", "Build Phase 1"]);
+  expect(runValidator(implWith("**Depends on**: Build Phase 9")).message).toContain("Build Phase 9");
+  const g = readGraph(planWorktree); // impl in-progress, Build Phase 1 ticked, a Falsification phase open
+  expect(g.node("Build Phase 1")).toBeUndefined(); // done
+  expect(g.node("Phase 7: Falsification")?.dependsOn).toEqual(["Build Phase 6"]);
   ```
 
 #### Deferred to Build Phase 2
 
-- **T3** — imports the record module Build Phase 2 creates. Body reviewed:
+- **T6**, **T7**, **T8** — import `pickPhasesToStart`, introduced in Build Phase 2. Body reviewed:
 
   ```typescript
-  appendRecord(home, { kind: "merge", plan: "p", conflicted: true, resolved: true });
-  writeFileSync(file, `${readFileSync(file)}{"kind":"mer`); // torn last line
-  expect(readRecord(home)).toHaveLength(1);
+  const r = pickPhasesToStart({ graph, running: [], waitingOnQuestion: false, room: 4 });
+  expect(r.start.map((p) => p.phase)).toEqual(["Build Phase 1", "Build Phase 3"]);
+  expect(r.waiting.find((w) => w.phase === "Build Phase 2")?.reason).toEqual({ kind: "dependency", on: "Build Phase 1" });
   ```
 
 #### Deferred to Build Phase 3
 
-- **T4**, **T5** — import `readGraph`, introduced in Build Phase 3. Body reviewed:
+- **T12** — imports the refusal Build Phase 3 adds to `indusk run`. Body reviewed:
 
   ```typescript
-  const g = readGraph(fixtureRoot); // plan with "Falsification" and "Cleanup" phases, one unapproved plan
-  expect(g.node("p", "Phase 7: Falsification").dependsOn).toEqual(["Build Phase 6"]);
-  expect(g.nodes.some((n) => n.plan === "unapproved")).toBe(false);
+  writeRunRecord(home, { ...startRunRecord("p", "build", now), phases: [{ phase: "Build Phase 1", process: alive }] });
+  await expect(runPlan(root, "p")).rejects.toThrow(/being built by the admin/);
   ```
 
 #### Deferred to Build Phase 4
 
-- **T6** to **T12** — import `pickPhasesToStart`, introduced in Build Phase 4. Body reviewed (T6; the others differ in the graph they feed it):
+- **T13** to **T17** — import `startPhase` and `provisionWorktree`, introduced in Build Phase 4; they use real throwaway git repositories. Body reviewed:
 
   ```typescript
-  const start = pickPhasesToStart({ graph, running: [], held: [], cap: 4, now });
-  expect(start.map((p) => p.phase)).toEqual(["Build Phase 1", "Build Phase 3"]);
+  const a = await startPhase(repo, "p", "Build Phase 1", { provision: noop });
+  const b = await startPhase(repo, "p", "Build Phase 3", { provision: noop });
+  expect(a.worktree).not.toBe(b.worktree);
+  expect(await tip(a.branch)).toBe(await tip("plan/p"));
+  await commitIn(a.worktree, "wip.ts");
+  const again = await startPhase(repo, "p", "Build Phase 1", { provision: noop });
+  expect(await tip(again.branch)).toBe(await tip(a.branch)); // resumed, not re-cut
+  ```
+
+#### Deferred to Build Phase 5
+
+- **T18** to **T23** — import `mergePhase` and the `merge` test-set scope, introduced in Build Phase 5. Body reviewed:
+
+  ```typescript
+  const r = await mergePhase({ repo, plan: "p", phase: "Build Phase 3", run: fixtureRunner });
+  expect(r.outcome).toBe("merged");
+  expect(existsSync(join(planWorktree, "src/three.ts"))).toBe(true);
+  const set = planTestSet(readsOf(fixturePlan), { merge: { phase: build(3), done: [build(1)], changed } });
+  expect(set.files.map((f) => f.path)).toContain("src/clause-a.test.ts"); // For: clause on a Build Phase 1 row
   ```
 
 #### Deferred to Build Phase 6
 
-- **T14** to **T17** — import `startPhase`, introduced in Build Phase 6; they run real throwaway git repositories. Body reviewed:
+- **T24** to **T31**, **T35** — import the graph work step, `askAdminToBuild` and the phase lines, introduced in Build Phase 6; T35 is a system-tier test. Body reviewed:
 
   ```typescript
-  const a = await startPhase(repo, "p", "Build Phase 1");
-  const b = await startPhase(repo, "p", "Build Phase 3");
-  expect(a.worktree).not.toBe(b.worktree);
-  expect(await mergeBase(a.branch, "plan/p")).toBe(await tip("plan/p"));
+  const manager = new SessionManager({ start: standIn, max: 4 });
+  const step = runGraphStep(depsWith(manager, sixPhasePlan));
+  await until(() => running(manager, "p").length === 2);
+  expect(running(manager, "p").map((s) => s.phase)).toEqual(["Build Phase 1", "Build Phase 3"]);
+  finish(manager, "Build Phase 1"); // stand-in ticks its boxes and commits
+  await until(() => running(manager, "p").some((s) => s.phase === "Build Phase 2"));
+  expect(await askAdminToBuild(cwd, "p", downDeps)).toMatch(/admin is not running/);
   ```
-- **T46**, **T49** — import `startPhase` too, and T49 `readGraph` over an archived owner. Body reviewed:
-
-  ```typescript
-  await commitOnTrunk(repo, "landed.ts"); // plan/p left behind: a phase was running
-  const c = await startPhase(repo, "p", "Build Phase 4");
-  expect(await contains(c.branch, await tip("main"))).toBe(true);
-  const g = readGraph(rootWithArchivedOwner); // archive/owner/impl.md has an open Maintenance phase
-  const fix = g.nodes.find((n) => n.plan === "owner" && n.isFix);
-  const f = await startPhase(repo, "owner", fix.phase);
-  expect(await mergeBase("plan/owner", "main")).toBe(await tip("main")); // cut from the trunk
-  ```
-
-#### Deferred to Build Phase 7
-
-- **T18** — imports `mergeWithResolution` from Build Phase 7. Body reviewed:
-
-  ```typescript
-  const out = await mergeWithResolution(wt, "main", { resolver: scripted("take-both"), tests: () => red });
-  expect(out.kept).toBe(false);
-  expect(await head(wt)).toBe(before); // thrown away
-  ```
-
-#### Deferred to Build Phase 8
-
-- **T19** to **T25** — import `mergePhaseIntoPlan`, introduced in Build Phase 8. Body reviewed:
-
-  ```typescript
-  const r = await mergePhaseIntoPlan({ repo, plan: "p", phase: "Build Phase 2", check: () => ({ ran: 0 }) });
-  expect(r.merged).toBe(false);
-  expect(r.reason).toBe("unchecked");
-  ```
-- **T44** — calls `planTestSet` with the touched and built-so-far scopes Build Phases 7 and 8 add, on a fixture plan's real trajectory and changed files; nothing injected. Body reviewed:
-
-  ```typescript
-  const set = planTestSet(readsOf(fixturePlan), { touched: { merged: ["Build Phase 1"], phase: "Build Phase 2", changed } });
-  expect(set.files.map((f) => f.path)).toContain("src/clause-a.test.ts"); // For: clause: p/a on a Build Phase 1 row
-  expect(set.files.map((f) => f.path)).toContain("src/clause-b.test.ts"); // `clause: p/b` token in a changed file
-  ```
-
-#### Deferred to Build Phase 9
-
-- **T26**, **T27** — import `holdPhase` and `releasePhase` from Build Phase 9. Body reviewed:
-
-  ```typescript
-  await holdPhase(home, { plan: "p", phase: "Build Phase 1", reason: "conflict" }); // q also has a Build Phase 1
-  const g = readGraph(root, { record: readRecord(home), sessions }); // held read back, keyed by plan and phase
-  const r = pickPhasesToStart({ graph: g, running: g.running, held: g.held, cap, now });
-  expect(r.start).toContain(waitingOnlyForItsFiles);
-  expect(r.waiting.find((w) => w.phase.plan === "q")?.reason).not.toBe("hold");
-  ```
-- **T52** — drives `holdPhase` and `releasePhase` with the per-phase `SessionManager.holdQuestion` Build Phase 5 keys. Body reviewed:
-
-  ```typescript
-  manager.holdQuestion("proj", "p", "Build Phase 2"); // the phase's session stopped on a question that holds
-  expect(manager.waitingOnQuestion("proj", "p", "Build Phase 1")).toBe(false);
-  await answer("p", "Build Phase 2");
-  expect(readRecord(home).at(-1)).toMatchObject({ kind: "released", plan: "p", phase: "Build Phase 2" });
-  ```
-
-#### Deferred to Build Phase 10
-
-- **T28** — imports `cascadeTrunk`, introduced in Build Phase 10. Body reviewed:
-
-  ```typescript
-  await cascadeTrunk(workbench, { openPlans: ["a", "b", "c"], runningPhases: [] });
-  for (const p of ["a", "b", "c"]) expect(await contains(`plan/${p}`, landedSha)).toBe(true);
-  ```
-
-#### Deferred to Build Phase 11
-
-- **T29**, **T30** — need the `pulled` entries Build Phase 6 records and the landing change this phase makes. Body reviewed:
-
-  ```typescript
-  appendRecord(home, pulled("reports", { plan: "login", branch: "plan/login", sha }));
-  await expect(land("reports")).rejects.toThrow(/wait for login/);
-  ```
-- **T51** — needs the record's `launched` and `held` entries and the landing change this phase makes. Body reviewed:
-
-  ```typescript
-  appendRecord(home, launched("p", "Build Phase 3"));
-  await expect(land("p")).rejects.toThrow(/Build Phase 3 is still running/);
-  ```
-
-#### Deferred to Build Phase 12
-
-- **T31** — imports the driver Build Phase 12 creates. Body reviewed:
-
-  ```typescript
-  driver.onPhaseEnded("p", "Build Phase 1"); // reads the graph again before any launch
-  expect(reads.at(-1)).toBeGreaterThan(endedAt);
-  clock.advance(60_000); // missed event
-  expect(launched).toContain("Build Phase 2");
-  ```
-- **T42** — imports the printout function Build Phase 12 adds beside the driver. Body reviewed:
-
-  ```typescript
-  appendRecord(home, waiting("p", "Build Phase 4", { file: "a.ts", phase: "Build Phase 2" }));
-  expect(printGraph(readRecord(home), "p")).toContain("Build Phase 4 waits for Build Phase 2 on a.ts");
-  ```
-- **T43**, **T45**, **T47** — import the driver, its tick starter and the admin request Build Phase 12 adds. Body reviewed:
-
-  ```typescript
-  const manager = new SessionManager({ start: standIn, max: 4 }); // real limits, no model
-  await driverWith(manager).onPlanApproved("p"); // p has two independent phases
-  expect(manager.running().filter((r) => r.plan === "p")).toHaveLength(2);
-  expect(startTicksCalledBy("apps/indusk-admin/src/lib/build-host.ts")).toBe(true); // T45
-  expect(await askAdminToSchedule(cwd, "p", "approved", downDeps)).toMatch(/admin is not running/); // T47
-  ```
-
-#### Deferred to Build Phase 13
-
-- **T34** to **T41** — the live checks drive the finished driver against real git and real sessions, so they cannot load before Build Phase 12. They are system-tier tests (`vitest.tiers.ts`), except T39, which needs a real agent and runs in `pnpm e2e`; none is in a phase's loop, and they prove no clause: each clause they touch is proved by its unit rows.
 
 #### Regression Guards
 
-- **T32** — the boundary command is printed correctly today; the row exists so the driver cannot change what a boundary names.
-- **T33** — the manual path works today; the row exists so the driver is added beside it, not instead of it.
-- **T53** — the held-question slot rule holds today; the row exists so changing its keys from plan to phase (Build Phase 5) keeps it holding.
+- **T32** — the boundary command is right today; the row keeps the graph from changing what a boundary names.
+- **T33** — the manual path works today; the row keeps the graph beside it, not instead of it.
+- **T34** — the held-question slot rule holds today; the row keeps it holding once sessions carry a phase.
 
 #### Test Phase 1 Verification
 
-- [ ] The session-rule test exists and fails because the second phase's session is refused, not because of a missing file.
+- [ ] The session-rule and cap tests exist and fail on their own assertions, not on a missing file.
   <details><summary>Technical</summary>
 
-  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager-parallel.test.ts` — T13 fails on its own `expect` (the plan-A-phase-2 start is refused); the same-phase refusal case is green.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager-parallel.test.ts src/lib/session/cap-per-phase.test.ts` — T9 fails because the second phase's start is refused; its same-phase case is green; T10 fails on its refusal assertion.
 
   </details>
-- [ ] The two guard tests pass today.
+- [ ] The run-record and incident-writer tests exist and fail on their own assertions.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/build/next-step-boundary.test.ts src/lib/build/manual-path.test.ts src/lib/session/question-wait.test.ts` — T32, T33 and T53 green.
+  `pnpm exec vitest run src/lib/run-record/record-phases.test.ts src/lib/promises/reopen-declarations.test.ts` — T11 reads `stopped` where it expects `running`; T5 finds no dependency line.
 
   </details>
-- [ ] The run-record and incident-writer tests exist and each fails on its own assertion.
+- [ ] The guard tests pass today.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/run-record/record-per-phase.test.ts src/lib/promises/reopen-declarations.test.ts` — T48 fails because the second record overwrote the first; T50 fails because no dependency or files line is written.
+  `pnpm exec vitest run src/lib/build/next-step-boundary.test.ts src/lib/build/manual-path.test.ts src/lib/session/question-wait.test.ts` — T32, T33, T34 green.
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [ ] Every deferred body above has been read and judged.
   <details><summary>Technical</summary>
 
-  Each body above reviewed against both questions: will it compile at the phase it names, and does it assert what its row claims?
+  Each body checked against two questions: will it load at the phase it names, and does it assert what its row claims?
 
   </details>
 
 #### Test Phase 1 Context
 
-- [ ] Record, in the package's rules file, that the graph's tests use real throwaway git repositories and an injected clock.
+- [ ] Record that the graph's tests use real throwaway git repositories and stand-in sessions, delivered by the tests themselves.
   <details><summary>Technical</summary>
 
-  guard: the graph tests carry `lesson: code-that-decides-takes-its-clock-and-its-reads` and `lesson: everyday-tests-never-wait`; no new text needed in a CLAUDE.md for this phase (the rule is delivered by the enforcer).
+  guard: the graph tests carry `lesson: code-that-decides-takes-its-clock-and-its-reads` and `lesson: everyday-tests-never-wait`; no CLAUDE.md text is needed for this phase.
 
   </details>
 
 #### Test Phase 1 Document
 
-- [ ] Add an Unreleased changelog line saying the session rule's tests were written first.
+- [ ] Add an Unreleased changelog line saying the session and record tests were written first.
   <details><summary>Technical</summary>
 
-  `apps/docs/src/changelog.md`, Unreleased: "Tests: the parallel-session rule and the phase-boundary guards are written before the runner."
+  `apps/docs/src/changelog.md`, Unreleased: "Tests: the per-phase session, cap and run-record rules are written before the graph."
 
   </details>
 
-### Build Phase 1: Phases say what they need and what they touch
+### Build Phase 1: Phases say what they need, and the plan reads as a graph
 
 **Tier**: med — the step's default tier for work
 **Depends on**: none
-**Files**: apps/indusk-mcp/src/lib/run/graph/declarations.ts, apps/indusk-mcp/src/lib/run/graph/declarations.test.ts, apps/indusk-mcp/src/lib/models/tiers.ts, apps/indusk-mcp/hooks/validate-impl-structure.js, apps/indusk-mcp/src/__tests__/depends-on-refused.test.ts, apps/indusk-mcp/src/__tests__/declarations-parity.test.ts, apps/indusk-mcp/src/lib/promises/reopen.ts, apps/indusk-mcp/src/lib/promises/reopen-declarations.test.ts
+**Files**: apps/indusk-mcp/src/lib/graph/declarations.ts, apps/indusk-mcp/src/lib/graph/declarations.test.ts, apps/indusk-mcp/src/lib/graph/read-graph.ts, apps/indusk-mcp/src/lib/graph/read-graph.test.ts, apps/indusk-mcp/src/lib/graph/read-graph-status.test.ts, apps/indusk-mcp/src/lib/graph/read-graph-signals.ts, apps/indusk-mcp/src/__tests__/depends-on-refused.test.ts, apps/indusk-mcp/src/__tests__/declarations-parity.test.ts, apps/indusk-mcp/hooks/validate-impl-structure.js, apps/indusk-mcp/src/lib/promises/reopen.ts, apps/indusk-mcp/src/lib/promises/reopen-declarations.test.ts, apps/indusk-mcp/skills/falsify.md, apps/indusk-mcp/skills/cleanup.md, apps/indusk-mcp/skills/planner.md
 
-This phase gives every phase of an impl two optional lines, one naming the phases it needs and one naming the files it writes, and makes the impl save check refuse a line that points nowhere or loops. A phase with no dependency line keeps depending on the one before it, so every existing plan still runs as a chain. Everything after this reads phases through what this phase builds.
+This phase gives every phase of an impl two optional lines — the phases it needs and the files it writes — and reads a plan's open phases from its branch as a graph. A phase with no dependency line still depends on the one before it, so every existing plan runs as a chain. A bad line is refused when the impl is saved, and the phases the incident writer and the review rituals author carry both lines. Everything after this reads phases through what this phase builds.
 
-- [ ] Read the dependency line and the files line under a phase heading.
+- [ ] Read the dependency line and the files line under each phase heading, with the default chain.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/src/lib/run/graph/declarations.ts`: `readDeclarations(implText): Declarations` parsed exactly as `**Tier**:` is (outside fenced blocks, one line per phase, a second line is an error). `**Depends on**: Build Phase 1, Build Phase 3` or `none`; `**Files**: a/b/**, c.md` with `repo:` prefix in a workbench. Exports `dependsOn(phase)`, `files(phase)`, `fileSetsOverlap(a, b)` (globs). No line means depends on the phase before; no files line means `undeclared`.
+  `apps/indusk-mcp/src/lib/graph/declarations.ts`: `readDeclarations(implText)` parsed as `**Tier**:` is (`lib/models/tiers.ts`, outside fences by `fencedLineMask`, a second line is an error). `dependsOn(phase)`: the named headings, `none` → nothing, no line → the phase before (the first: nothing); every build phase gains `Test Phase 1` when the impl has one (ADR D1). `files(phase)`: declared paths and globs, or `undeclared`. `fileSetsOverlap(a, b)` ignores the plan's own documents under `.indusk/planning/<plan>/`, `apps/docs/src/changelog.md` and every `CLAUDE.md`; an undeclared set overlaps every path its plan's phases declare.
 
   </details>
-- [ ] Make a phase with no dependency line depend on the phase before it, and let test phases and build phases both be named.
+- [ ] Refuse, when an impl is saved, a dependency on a phase that does not exist, on itself, or in a loop, naming the phase.
   <details><summary>Technical</summary>
 
-  The first phase of the document with no line has no dependency. Names are the headings as written (`Test Phase 1`, `Build Phase 2`, `Phase 7: Falsification`). In an impl with a `Test Phase 1`, every build phase gains an edge to it whatever its line says, so `none` never starts a build phase before the register (ADR D1); T1 asserts it.
+  Extend `hooks/validate-impl-structure.js` (read `apps/indusk-mcp/hooks/CLAUDE.md` first); its inline reader mirrors `declarations.ts` (a hook cannot import `.ts`), and `src/__tests__/declarations-parity.test.ts` feeds both the same forms (`none`, a fenced block, a missing line, a list) and asserts equal results. T2.
 
   </details>
-- [ ] Make saving an impl refuse an unknown phase, a self-dependency and a loop, naming the phases.
+- [ ] Read a plan's open phases from its branch as a graph, admitting approved, in-progress and completed plans with open phases.
   <details><summary>Technical</summary>
 
-  Extend `hooks/validate-impl-structure.js` through the shared parser the hooks already use (read `apps/indusk-mcp/hooks/CLAUDE.md` first); refusal text names the phase and the problem; scope the re-validation to the edit as the other rules do.
+  `lib/graph/read-graph.ts`: `readGraph(planWorktree, plan)` reads `impl.md` in the plan's worktree (on `plan/<plan>`); a phase closed there (`isOpen` from `lib/build/next-step.ts`) is done; nodes are open phases `{ phase, dependsOn, files, position, isReview }`. Status `approved`, `in-progress`, or `completed` with an open phase is read; a draft gives an empty graph (ADR D2). Falsification, Cleanup, Audit and Maintenance phases are ordinary nodes; no step is a node. T1, T3, T4.
+
+  </details>
+- [ ] Make the incident writer and the falsify, cleanup and planner skills write both lines on the phases they author.
+  <details><summary>Technical</summary>
+
+  `lib/promises/reopen.ts` (`reopenOwner`, both `maintenancePhase` shapes): `**Depends on**: none` and `**Files**:` from the promise's `sites:`. Edit `apps/indusk-mcp/skills/{falsify,cleanup,planner}.md` (never `.claude/skills/`): falsify and cleanup phases name the build phases they review; the planner writes both lines when it cuts phases, cutting small around shared types and schemas. T5 turns green.
 
   </details>
 - [ ] Add the root Key Decisions line for this plan.
   <details><summary>Technical</summary>
 
-  `CLAUDE.md` Key Decisions: "Run the graph: phases declare `**Depends on**:` and `**Files**:`, a pure scheduler starts ready phases on `phase/<plan>/<n>` branches, merged into the plan by compare-and-swap after a green check; earlier plans first — see `/decisions/run-the-graph`". Written here, not at planning, because the plan's branch may not change anything outside `.indusk/` before its build.
-
-  </details>
-
-- [ ] Make the hook's own reader and the scheduler's reader agree, and make the incident writers declare files.
-  <details><summary>Technical</summary>
-
-  `hooks/validate-impl-structure.js` mirrors `declarations.ts` inline (a hook cannot import `.ts`); add `declarations-parity.test.ts` feeding both the same forms (`none`, a `repo:` prefix, a fenced block, a missing line) and asserting equal results. `indusk update` syncs the installed hook copy. The Maintenance-phase writer is `lib/promises/reopen.ts` (`reopenOwner`, both `maintenancePhase` shapes; every caller goes through it): it writes `**Depends on**: none` and `**Files**:` from the broken promise's `sites:`, so a fix phase waits on no unrelated phase of its owner and has a file set to overlap. T50 turns green. (plan review)
-
-  </details>
-- [ ] Say, in the plan's own rules, that the plan's documents are not declared files.
-  <details><summary>Technical</summary>
-
-  ADR D2: shared gate files (paths under `.indusk/planning/<plan>/`, the changelog, the `CLAUDE.md` rules files and the docs pages a phase's Context and Document gates edit) are never declared and are excluded from overlap by `fileSetsOverlap`; `impl.md` ticks and State cells are merged by the scripted tick-union in Build Phase 8, and any other conflict in them goes to the resolver. No phase is refused for changing a file outside its declaration; its merge entry lists such files. (plan review: parallel phases all edit `impl.md`)
-
-  </details>
-
-#### Build Phase 1 Verification
-
-- [ ] The declaration tests pass.
-  <details><summary>Technical</summary>
-
-  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run/graph/declarations.test.ts src/__tests__/depends-on-refused.test.ts src/__tests__/declarations-parity.test.ts src/lib/promises/reopen-declarations.test.ts && pnpm exec vitest related src/lib/run/graph/declarations.ts hooks/validate-impl-structure.js src/lib/promises/reopen.ts` — T1, T2 and T50 pass; the whole suite runs at landing, not here.
-
-  </details>
-- [ ] This plan's own impl still passes the save check.
-  <details><summary>Technical</summary>
-
-  `node hooks/validate-impl-structure.js` against this file (or re-save it) — no refusal.
-
-  </details>
-
-#### Build Phase 1 Context
-
-- [ ] Record, in the package's rules file, that dependency and file lines are read by one parser.
-  <details><summary>Technical</summary>
-
-  `apps/indusk-mcp/CLAUDE.md` new section "Run the graph": "Phase dependencies and files are read only by `lib/run/graph/declarations.ts`; no second reader" — guarded by a single-definition scan in `declarations.test.ts` (carries `clause: the-work-runs-as-a-graph/a-phase-names-what-it-needs`).
-
-  </details>
-
-#### Build Phase 1 Document
-
-- [ ] Write the reference page for the two lines.
-  <details><summary>Technical</summary>
-
-  New `apps/docs/src/reference/cli/run-the-graph.md` (what the lines mean, the default chain, the refusals); changelog Unreleased entry from the ADR's Documentation Plan.
-
-  </details>
-
-### Build Phase 2: The runner keeps one record
-
-**Tier**: med — the step's default tier for work
-**Depends on**: none
-**Files**: apps/indusk-mcp/src/lib/run/graph/record.ts, apps/indusk-mcp/src/lib/run/graph/record.test.ts
-
-This phase adds the single place the runner writes down what happened: which phases are done, held, merged, conflicted, pulled from another plan, and when each became ready and was launched. Nothing else stores scheduler state; the scheduler, landing and the later graph view all read this file. It does not depend on the phase lines, so it is built beside them.
-
-- [ ] Add an append-only record file in machine state with one writer that never raises.
-  <details><summary>Technical</summary>
-
-  `lib/run/graph/record.ts`: `appendRecord(home, entry)` modelled on the plan-timing writer, file `runner.jsonl` under the `indusk eval home` directory. Entry kinds, each naming its plan and phase: `ready`, `launched`, `done`, `held {plan, phase, reason, since}`, `released`, `merge` (conflicted, resolvedBy `agent` or `script`, tests, files changed outside the declaration), `pulled {plan, branch, sha}`, `waiting {phase, reason}`, `graph-read`.
-
-  </details>
-- [ ] Make reading treat a missing or half-written last line as absent.
-  <details><summary>Technical</summary>
-
-  `readRecord(home)` returns entries in order; a torn trailing line is dropped, never thrown. Add `countMerges(entries)` returning merges, conflicts, agent-resolved-with-tests-passing and script-resolved apart (the second expectation).
-
-  </details>
-
-#### Build Phase 2 Verification
-
-- [ ] The record tests pass.
-  <details><summary>Technical</summary>
-
-  `pnpm exec vitest run src/lib/run/graph/record.test.ts && pnpm exec vitest related src/lib/run/graph/record.ts` — T3 passes.
-
-  </details>
-
-#### Build Phase 2 Context
-
-- [ ] Record, in the package's rules file, that the runner record is the only scheduler state.
-  <details><summary>Technical</summary>
-
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "Scheduler state is `runner.jsonl` plus the impl files; nothing is kept in memory or a database" — guard: `record.test.ts` scans the graph directory for any other store.
-
-  </details>
-
-#### Build Phase 2 Document
-
-- [ ] Describe the record in the reference page.
-  <details><summary>Technical</summary>
-
-  `reference/cli/run-the-graph.md` section "The runner record": entry kinds, where the file lives, that a torn last line reads as absent.
-
-  </details>
-
-### Build Phase 3: Reading the graph
-
-**Tier**: med — the step's default tier for work
-**Depends on**: Build Phase 1, Build Phase 2
-**Files**: apps/indusk-mcp/src/lib/run/graph/read-graph.ts, apps/indusk-mcp/src/lib/run/graph/read-graph.test.ts, apps/indusk-mcp/src/lib/run/graph/read-graph-signals.ts, apps/indusk-mcp/src/lib/plan-order.ts, apps/indusk-mcp/src/tools/plan-tools.ts
-
-This phase turns the approved plans on disk into one graph the scheduler can be handed: every phase of every approved plan with what it needs, what it touches, which plan it belongs to and where that plan comes in the order. It adds the extra edges a fix phase puts on the phases it could disturb. It starts nothing; the scheduler is the next phase.
-
-- [ ] Build the graph from the approved plans' impls, the plan order and the record.
-  <details><summary>Technical</summary>
-
-  `readGraph(root, { record, sessions })` returns `Graph` with `PhaseNode { plan, phase, dependsOn, files, rank, isFix, done, running, held }`, plus `running` and `held` lists keyed `{ plan, phase }`, `held` derived from the record's `held` and `released` entries (T26 drives that path). Plan rank comes from the plan-order function, called once per read; only plans whose impl is `approved` appear (`a-plan-builds-only-after-approval`), and, beside them, each open Maintenance phase (`openMaintenancePhasesIn`) of a plan under `.indusk/planning/archive/` with an open incident, as a fix node of that owner (ADR D4).
-
-  </details>
-- [ ] Count the review phases as ordinary phases and the steps that write them as nothing.
-  <details><summary>Technical</summary>
-
-  Falsification, Cleanup and Audit phases (an Audit phase is one the audit's answers add to the impl) are nodes with the dependencies they declare; the planning, audit and falsify steps are not nodes and take no session slot (`reviews-are-phases`). A Maintenance phase for an open incident is a fix node, in an active or an archived plan.
-
-  </details>
-- [ ] Add the extra edge a fix puts on every unstarted phase whose files overlap its own.
-  <details><summary>Technical</summary>
-
-  Virtual edges are computed on every read and never written to an impl; a running phase is not delayed (it merges the fix at its end, Build Phase 8).
-
-  </details>
-
-- [ ] Turn the plan-order rule into one callable function and have the graph reader call it.
-  <details><summary>Technical</summary>
-
-  `order_plans` (`src/tools/plan-tools.ts`) is a dependency sort only. Add `lib/plan-order.ts` implementing the brief's rule: root master through each parent's ordered `subplans:`, unplaced plans after, earlier approval first; `order_plans` and `readGraph` both call it. T9's schedule test gets one case fed through the real function, not hand-made ranks. (plan review: ADR D7 assumed the function existed)
+  `CLAUDE.md` Key Decisions: "Run the graph (slice 1): a phase declares `**Depends on**:` and `**Files**:`; the admin's build runs a plan's ready phases at once on `phase/<plan>/<n>` branches and fast-forwards each into the plan after a green check — see `/decisions/run-the-graph`". Written here because the plan's branch may change nothing outside `.indusk/` before its build.
 
   </details>
 - [ ] Report the signal for the clause that each phase names what it needs, on every graph read.
   <details><summary>Technical</summary>
 
-  signal: `the-work-runs-as-a-graph/a-phase-names-what-it-needs` — reported from `apps/indusk-mcp/src/lib/run/graph/read-graph-signals.ts`, called by `readGraph` after it builds the nodes. Judged against the impl text, not `readDeclarations`: a plain scan of each approved impl's phase headings and `**Depends on**:` lines (outside fences, by `fencedLineMask`) gives the expected list — the named phases, `none`, or the phase before for a phase with no line and nothing for the first; each node's `dependsOn` is compared with it. `writeClauseSignals(root, "run-graph.read", plan, { plan: "run-the-graph", phase: "Build Phase 3" }, verdicts)` from `lib/promises/clause-signal.ts`, one verdict per plan per read; `broken` names the plan, the phase and both lists. Best-effort: a signal never fails the read.
+  signal: `the-work-runs-as-a-graph/a-phase-names-what-it-needs` — reported from `apps/indusk-mcp/src/lib/graph/read-graph-signals.ts`, called by `readGraph` after it builds the nodes. Judged against the impl text, not `readDeclarations`: a plain scan of headings and `**Depends on**:` lines outside fences gives the expected list (the named phases, nothing for `none`, the phase before when absent, nothing for the first, plus `Test Phase 1` when present); each node's `dependsOn` must equal it, and a name the scan does not find among the headings, or a loop, is `broken`. `writeClauseSignals(root, "run-graph.read", plan, { plan: "run-the-graph", phase: "Build Phase 1" }, verdicts)` from `lib/promises/clause-signal.ts`; `broken` names the plan, the phase and both lists. Best-effort.
 
   </details>
 - [ ] Report the signal for the clause that review phases are phases of the graph, on every graph read.
   <details><summary>Technical</summary>
 
-  signal: `the-work-runs-as-a-graph/reviews-are-phases` — reported from `apps/indusk-mcp/src/lib/run/graph/read-graph-signals.ts`, same call. A plain heading scan finds each phase heading starting Falsification, Cleanup, Audit or Maintenance; each must have a node with its declared dependencies and files, a Maintenance phase must be a fix node, and no node may be a step (planning, the audit step, falsify or cleanup authoring, the retrospective). `broken` names the plan and the heading missing, the step shown as a node, or the Maintenance phase not marked a fix. That review phases are launched by the same rule is read by the driver's graph-is-current signal (every launch comes from a graph read), Build Phase 12. Best-effort.
+  signal: `the-work-runs-as-a-graph/reviews-are-phases` — read half, reported from `apps/indusk-mcp/src/lib/graph/read-graph-signals.ts`, same call. A plain heading scan finds each open phase whose heading starts Falsification, Cleanup, Audit or Maintenance; each must have a node with its declared dependencies and files, and no node may be a step (planning, the audit step, falsify or cleanup authoring, the retrospective). A review phase with no files line is named as undeclared (it runs serialised). `broken` names the plan and the heading. The step half is reported in Build Phase 6. Best-effort.
 
   </details>
 
-#### Build Phase 3 Verification
+#### Build Phase 1 Verification
 
-- [ ] The graph tests pass.
+- [ ] The declaration, refusal, graph and incident-writer tests pass.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/run/graph/read-graph.test.ts && pnpm exec vitest related src/lib/run/graph/read-graph.ts src/lib/run/graph/read-graph-signals.ts` — T4 and T5 pass.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/graph/declarations.test.ts src/__tests__/depends-on-refused.test.ts src/__tests__/declarations-parity.test.ts src/lib/graph/read-graph.test.ts src/lib/graph/read-graph-status.test.ts src/lib/promises/reopen-declarations.test.ts && pnpm exec vitest related src/lib/graph/declarations.ts src/lib/graph/read-graph.ts hooks/validate-impl-structure.js src/lib/promises/reopen.ts` — T1 to T5 pass.
 
   </details>
-
-#### Build Phase 3 Context
-
-- [ ] Record, in the package's rules file, that plan order is the existing order tool's and nothing new.
+- [ ] This plan's own impl still passes the save check.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "Plan rank comes only from `lib/plan-order.ts`, which `order_plans` also calls; the graph reader holds no ordering rule" — guard: `read-graph.test.ts` asserts the reader calls it once per read.
+  Re-save this file through the Edit tool (or run the hook on it) — no refusal; its own dependency lines name real phases with no loop.
 
   </details>
 
-#### Build Phase 3 Document
+#### Build Phase 1 Context
 
-- [ ] Add the graph-reading section and the six-phase example diagram.
+- [ ] Record, in the package's rules file, that phase dependencies and files are read by one parser.
   <details><summary>Technical</summary>
 
-  `reference/cli/run-the-graph.md`: Mermaid dependency graph of the brief's six-phase plan with ready, running and waiting phases.
+  `apps/indusk-mcp/CLAUDE.md`, new section "Run the graph": "Phase dependencies and files are read only by `lib/graph/declarations.ts` (the hook mirrors it, held by `declarations-parity.test.ts`)" — guard: a single-definition scan in `declarations.test.ts`, which carries `clause: the-work-runs-as-a-graph/a-phase-names-what-it-needs`.
 
   </details>
 
-### Build Phase 4: The scheduler
+#### Build Phase 1 Document
+
+- [ ] Start the guide page with the two lines and the default chain.
+  <details><summary>Technical</summary>
+
+  New `apps/docs/src/guide/phases-in-parallel.md`: the two lines, the default chain, what is never a shared file, the refusals; `reference/skills/planner.md`, `falsify.md`, `cleanup.md` note the lines; changelog Unreleased entry from the ADR.
+
+  </details>
+
+### Build Phase 2: The scheduler
 
 **Tier**: med — the step's default tier for work
-**Depends on**: Build Phase 3
-**Files**: apps/indusk-mcp/src/lib/run/graph/schedule.ts, apps/indusk-mcp/src/lib/run/graph/schedule-signals.ts, apps/indusk-mcp/src/lib/run/graph/schedule-ready.test.ts, apps/indusk-mcp/src/lib/run/graph/schedule-files.test.ts, apps/indusk-mcp/src/lib/run/graph/schedule-order.test.ts, apps/indusk-mcp/src/lib/run/graph/schedule-fix.test.ts, apps/indusk-mcp/src/lib/run/graph/schedule-never-stops.test.ts, apps/indusk-mcp/src/lib/run/graph/chain-parity.test.ts
+**Depends on**: Build Phase 1
+**Files**: apps/indusk-mcp/src/lib/graph/schedule.ts, apps/indusk-mcp/src/lib/graph/schedule-signals.ts, apps/indusk-mcp/src/lib/graph/schedule-ready.test.ts, apps/indusk-mcp/src/lib/graph/schedule-wait.test.ts, apps/indusk-mcp/src/lib/graph/chain-parity.test.ts
 
-This phase adds the one function that decides which phases to start. It is handed the graph, what is running, what is held, the session cap and the clock, and it returns the phases to launch in order, each waiting phase carrying the reason it waits. It has no way to stop anything, so a running phase always finishes. Every later phase calls it and none re-implements a rule.
+This phase adds the one function that decides which of a plan's phases to start. It is handed the graph, the phases running, whether the plan waits on a question, and how many places the cap has free, and returns the phases to launch with, for every other ready phase, the reason it waits. It reads nothing and has no way to stop a running phase.
 
-- [ ] Write the function that picks the phases to start.
+- [ ] Write the function that picks the phases to start, with a named reason for each phase that waits.
   <details><summary>Technical</summary>
 
-  `lib/run/graph/schedule.ts`: `pickPhasesToStart({ graph, running, held, cap, now }): { start: PhaseNode[]; waiting: {phase, reason}[] }`. Ready = every dependency done, plan approved, not held, not running. Starts if files do not overlap a running phase's, the cap has room, and no earlier-ranked ready phase wants an overlapping file. Rank: fix phases, then plan order, then position in the impl. `running` and `held` are `{ plan, phase }[]`, never bare phase names. A held phase is dropped from `running` when file holds are computed. An undeclared-files phase counts as touching every file its own plan declares. Reasons are one of: dependency, file (naming the phase and file), cap, hold.
-
-  </details>
-- [ ] Make two phases freed at the same moment unable to take the same file.
-  <details><summary>Technical</summary>
-
-  Starts are chosen sequentially within one call, each added start joining the running set for the next.
-
-  </details>
-- [ ] Make sure the function has no way to ask for a running phase to stop.
-  <details><summary>Technical</summary>
-
-  Return type has no stop field; T11 asserts the result shape for the full-cap-with-fix, landing, approval and earlier-plan cases.
+  `lib/graph/schedule.ts`: `pickPhasesToStart({ graph, running, stopped, waitingOnQuestion, room })` → `{ start: PhaseNode[]; waiting: { phase, reason }[] }`. Ready: every dependency done, not running, not stopped. A ready phase starts unless a running phase shares a file (`fileSetsOverlap`), `room` is used up, or the plan waits on a question. Reasons: `dependency` (naming it), `file` (naming the phase and the path), `cap`, `question`. Starts are chosen in impl order one at a time, each joining `running` for the next, so two freed phases never take one file. No `fs`, `child_process` or clock. T6, T7, T8.
 
   </details>
 - [ ] Report the signal for the clause that no phase waits needlessly, after each scheduling decision.
   <details><summary>Technical</summary>
 
-  signal: `the-work-runs-as-a-graph/no-needless-wait` — reported from `apps/indusk-mcp/src/lib/run/graph/schedule-signals.ts`. `judgeNoNeedlessWait({ root, graph, result })` re-derives each waiting phase's reason from its own reads, not the call's inputs and not `pickPhasesToStart`: holds by plan and phase from the record read back from disk, running phases from the session manager's sessions file, and overlap by expanding both phases' globs against the plan branch's file list (`git ls-files`) and intersecting concrete paths, never `fileSetsOverlap`. Reasons: a dependency not done, a running phase whose files overlap, the cap full, or a hold. `broken` names a waiting phase with no reason, one whose named phase it neither depends on nor overlaps, a ready phase not started while none of the four applies, or two running phases holding one file. The scheduler stays pure and does not import this file; `reportScheduleSignals(root, input, result, tracer?)` is called by the driver (Build Phase 12) after each call, writing through `writeClauseSignals(root, "run-graph.schedule", plan, { plan: "run-the-graph", phase: "Build Phase 4" }, verdicts)`. Best-effort.
-
-  </details>
-- [ ] Report the signal for the clause that the earliest plan's phase goes next on a contested file.
-  <details><summary>Technical</summary>
-
-  signal: `earlier-plans-go-first/earliest-next` — reported from `apps/indusk-mcp/src/lib/run/graph/schedule-signals.ts`, same call. For each start whose files overlap another ready phase's, the started phase's plan place, from `lib/plan-order.ts` called afresh (not the node's cached `rank`), is no later than any other non-fix contender's; `broken` names the phase started and the earlier plan's phase passed over. Best-effort.
-
-  </details>
-- [ ] Report the signal for the clause that a fix phase jumps the line, for the start of a phase.
-  <details><summary>Technical</summary>
-
-  signal: `earlier-plans-go-first/a-broken-promise-jumps-the-line` — start half, reported from `apps/indusk-mcp/src/lib/run/graph/schedule-signals.ts`, same call. When a fix node is ready and the result starts any non-fix phase while the fix is not started, `broken` names the fix passed over; every unstarted phase whose files overlap a fix's lists it as a dependency in the graph, or `broken` names that phase; a fix node with no declared files, or with a dependency other than Test Phase 1, is `broken` too. Independently of the graph, it reads the open incident files (`.indusk/promises/incidents/`) and each owner's impl, active or archived, with `openMaintenancePhasesIn`: an open incident whose owner has an open Maintenance phase and no fix node is `broken`, naming the incident and the owner. The merge half is reported in Build Phase 8. Best-effort.
+  signal: `the-work-runs-as-a-graph/no-needless-wait` — reported from `apps/indusk-mcp/src/lib/graph/schedule-signals.ts`. `reportScheduleSignals(root, plan, result)` re-derives each waiting phase's reason from its own reads, never the call's inputs or `fileSetsOverlap`: dependencies by a plain scan of `git show plan/<plan>:<impl>`, running phases from the session manager's sessions file (`admin-sessions.json`), overlap by expanding both phases' declared paths against `git ls-files` on the plan's branch and comparing concrete paths, the cap from the sessions file against `readSessionsMax()`. `broken` names a waiting phase with no valid reason, a ready phase not started while none applies, or two running phases on one path. The scheduler does not import this file; the driver calls it after each call (Build Phase 6). `writeClauseSignals(root, "run-graph.schedule", plan, { plan: "run-the-graph", phase: "Build Phase 2" }, verdicts)`. Best-effort.
 
   </details>
 
-#### Build Phase 4 Verification
+#### Build Phase 2 Verification
 
 - [ ] The scheduler tests pass.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/run/graph/schedule-ready.test.ts src/lib/run/graph/schedule-files.test.ts src/lib/run/graph/schedule-order.test.ts src/lib/run/graph/schedule-fix.test.ts src/lib/run/graph/schedule-never-stops.test.ts src/lib/run/graph/chain-parity.test.ts && pnpm exec vitest related src/lib/run/graph/schedule.ts src/lib/run/graph/schedule-signals.ts` — T6 to T12 pass.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/graph/schedule-ready.test.ts src/lib/graph/schedule-wait.test.ts src/lib/graph/chain-parity.test.ts && pnpm exec vitest related src/lib/graph/schedule.ts src/lib/graph/schedule-signals.ts` — T6, T7, T8 pass.
 
   </details>
 
-#### Build Phase 4 Context
+#### Build Phase 2 Context
 
-- [ ] Record, as a guard, that the scheduler takes its clock and reads as inputs.
+- [ ] Record, as a guard, that the scheduler takes its reads as inputs.
   <details><summary>Technical</summary>
 
-  guard: `schedule-ready.test.ts` carries `lesson: code-that-decides-takes-its-clock-and-its-reads`; the scheduler imports no `fs`, `child_process` or `Date.now` (scan in the same test).
+  guard: `schedule-ready.test.ts` carries `lesson: code-that-decides-takes-its-clock-and-its-reads` and scans `schedule.ts` for `fs`, `child_process` and `Date.now` imports.
 
   </details>
 
-#### Build Phase 4 Document
+#### Build Phase 2 Document
 
-- [ ] Document the ranking and the waiting reasons.
+- [ ] Add the reasons a phase waits to the guide page, with the six-phase example.
   <details><summary>Technical</summary>
 
-  `reference/cli/run-the-graph.md` section "Order and waiting": rank order, the four reasons a phase waits; `guide/parallel-plans.md` short page for a person: what runs together and why a phase waits.
+  `guide/phases-in-parallel.md` section "Why a phase waits": the four reasons; a Mermaid graph of the brief's six-phase plan.
 
   </details>
 
-### Build Phase 5: Several sessions of one plan at once
+### Build Phase 3: Several phase sessions of one plan, each counted
 
 **Tier**: med — the step's default tier for work
 **Depends on**: none
-**Files**: apps/indusk-mcp/src/lib/session/manager.ts, apps/indusk-mcp/src/lib/session/manager-parallel.test.ts, apps/indusk-mcp/src/lib/session/question-wait.ts, apps/indusk-mcp/src/lib/session/question-wait.test.ts, apps/indusk-mcp/src/lib/run-record/record.ts, apps/indusk-mcp/src/lib/run-record/record-per-phase.test.ts, apps/indusk-admin/src/lib/build-host.ts, apps/indusk-admin/src/app/api/plans/build/route.ts, apps/indusk-admin/src/app/api/sessions/route.ts, apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts, .indusk/promises/a-session-belongs-to-its-plan.md
+**Files**: apps/indusk-mcp/src/lib/session/manager.ts, apps/indusk-mcp/src/lib/session/manager-parallel.test.ts, apps/indusk-mcp/src/lib/session/cap-per-phase.test.ts, apps/indusk-mcp/src/lib/run-record/record.ts, apps/indusk-mcp/src/lib/run-record/liveness.ts, apps/indusk-mcp/src/lib/run-record/record-phases.test.ts, apps/indusk-mcp/src/bin/commands/run.ts, apps/indusk-mcp/src/lib/run/refuse-graph-run.test.ts, apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts, .indusk/promises/a-session-belongs-to-its-plan.md
 
-This phase lets a plan have a planning session and several phases building at the same time, by identifying a session by its plan, its kind and its phase instead of plan and kind alone. The cap does not change. Without it the scheduler could choose two phases of one plan and the session manager would refuse the second.
+This phase lets one plan have several building sessions at once, one per phase, each taking its own place under the machine's cap, and makes a build's record keep every running phase's process so the admin can tell a live build from a dead one. It also stops Dawn's runner from building a plan the admin is already building. The scheduler can then pick two phases of one plan without the session manager refusing the second.
 
-- [ ] Identify a session by plan, kind and phase.
+- [ ] Identify a session by plan, kind and phase, refusing only a second session on the same phase.
   <details><summary>Technical</summary>
 
-  `lib/session/manager.ts`: only a second session of the same kind on the same plan and phase is refused, naming the session already running; the cap check (`limits.ts`, `sessions.max`) is unchanged. Update `apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts` for the new identity.
+  `lib/session/manager.ts`: `ManagedStart` and `SessionRecord` gain `phase?: string`; `refusalFor` refuses a same-kind session only when the phase matches (no phase on either side matches as today, so planning and release are unchanged), naming the running one. Update `apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts`. T9 turns green.
+
+  </details>
+- [ ] Count every phase session against the cap, the build's admission covering only one of them.
+  <details><summary>Technical</summary>
+
+  `refusalFor` skips the cap check for an admitted build's session only while no other build session of that plan runs; `capRefusal` treats an admitted build as covering one of its running build sessions and counts the rest. `holdQuestion`/`releaseQuestion` keep their plan keys (a question holds the whole plan in this slice). T10 turns green; T34 stays green.
 
   </details>
 - [ ] Rewrite the changed promise's sentence now that the code makes it true.
@@ -672,693 +413,313 @@ This phase lets a plan have a planning session and several phases building at th
   `indusk promises change a-session-belongs-to-its-plan --plan run-the-graph --statement "A plan's session starts whatever other plans' sessions are running; only a second session of the same kind on the same phase is refused, naming the session already running, so a plan can have a planning session and several phases building at the same time." --reason "phases of one plan run in parallel"`.
 
   </details>
-
-- [ ] Count every phase session against the cap, and make the admin understand several build sessions of one plan.
+- [ ] Keep every running phase's process in the build's record, and read the build as running while any of them is alive.
   <details><summary>Technical</summary>
 
-  `lib/session/manager.ts` `refusalFor` (~line 230) and `capRefusal` (~line 255) exempt a build session whose plan has an admitted build; count each phase session instead, one place each. `apps/indusk-admin/src/lib/build-host.ts` `assertNoBuildSession` and `app/api/plans/build/route.ts`, `app/api/sessions/route.ts` read by plan and kind: read by plan, kind and phase, Stop stops all of a plan's phase sessions, Build is refused only when the plan's driver is already running. Add a case to `manager-parallel.test.ts`: cap 4, one admitted plan, three phases, a fourth session is refused. (plan review)
+  `lib/run-record/record.ts`: `RunRecord` gains optional `phases: { phase, process: RunProcess | null, state: "running" | "waiting" | "stopped", why: string | null }[]`; `isRecord` accepts it absent. `lib/run-record/liveness.ts` `runStatus`: running when `process` or any listed phase process is the own process. T11 turns green.
 
   </details>
-- [ ] Key admission and question holds by phase, so one phase's question frees only that phase's place.
+- [ ] Make Dawn's runner refuse a plan the admin is building.
   <details><summary>Technical</summary>
 
-  `lib/session/manager.ts`: `buildKey(project, plan, phase)`; `admitBuild`, `holdQuestion`, `releaseQuestion` and `waitingOnQuestion` take the phase (ADR D11, D13). `apps/indusk-admin/src/lib/build-host.ts`'s two `holdQuestion` calls and `resumeAfterQuestion` pass the phase the stopped session was working; a planning run's question, which has no phase, keys by plan and kind as today. T53 (`question-wait.test.ts`) stays green with the new keys.
-
-  </details>
-- [ ] Keep one run record per running phase, so two phases of one plan never overwrite each other's record.
-  <details><summary>Technical</summary>
-
-  `lib/run-record/record.ts`: `runRecordPath(home, plan, kind, phase?)` — a build run with a phase is `<plan>.build.<phase>.json`; planning and release keep their path. `readRunRecord` and the admin's liveness, status and Restart in `build-host.ts` read each running phase's record; a record with no phase (written before this) still reads. T48 turns green. (plan review: `a-run-is-read-from-its-record`)
+  `src/bin/commands/run.ts` (before `runDriver`): read the plan's build run record; refuse when `runStatus` reads running, or when the admin answers that it holds a build of the plan (`daemonStatus` + the admin's build state route), naming the build. With the admin down the record alone decides. T12.
 
   </details>
 
-#### Build Phase 5 Verification
+#### Build Phase 3 Verification
 
-- [ ] A plan's second phase session starts and the same-phase duplicate is refused.
+- [ ] A plan's second phase session starts, the same-phase duplicate is refused, and the cap counts each phase session.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/session/manager-parallel.test.ts src/lib/session/manager.test.ts src/lib/session/question-wait.test.ts src/lib/run-record/record-per-phase.test.ts && pnpm exec vitest related src/lib/session/manager.ts src/lib/run-record/record.ts` — T13 and T48 pass, T53 and the existing manager tests still pass.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager-parallel.test.ts src/lib/session/cap-per-phase.test.ts src/lib/session/manager.test.ts src/lib/session/question-wait.test.ts src/lib/run-record/record-phases.test.ts src/lib/run/refuse-graph-run.test.ts && pnpm exec vitest related src/lib/session/manager.ts src/lib/run-record/record.ts src/lib/run-record/liveness.ts` — T9 to T12 pass; T34 and the existing manager tests stay green. `cd ../indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts` passes.
 
   </details>
 
-#### Build Phase 5 Context
+#### Build Phase 3 Context
 
-- [ ] Update, in the package's rules file, the rule that states how a session is identified.
+- [ ] Update, in the package's rules file, how a session is identified and counted.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md`: replace "one session per plan and kind" wording with "per plan, kind and phase; `sessions.max` still caps the machine" — guard: `manager-parallel.test.ts` carries `promise: a-session-belongs-to-its-plan`.
+  `apps/indusk-mcp/CLAUDE.md`: "one session per plan, kind and phase; a build's admission covers one session and each further phase session takes its own place under `sessions.max`" — guard: `manager-parallel.test.ts` carries `promise: a-session-belongs-to-its-plan`, `cap-per-phase.test.ts` carries `promise: sessions-are-capped`.
 
   </details>
 
-#### Build Phase 5 Document
+#### Build Phase 3 Document
 
-- [ ] Update the sessions decision page for the new identity.
+- [ ] Note the new session identity on the sessions decision page.
   <details><summary>Technical</summary>
 
-  `apps/docs/src/decisions/sessions-per-plan.md`: add a dated note that identity is plan, kind and phase (run-the-graph).
+  `apps/docs/src/decisions/sessions-per-plan.md`: a dated note that identity is plan, kind and phase, and each phase session is counted (run-the-graph).
 
   </details>
 
-### Build Phase 6: A phase gets its own worktree and branch
+### Build Phase 4: A phase gets its own worktree and branch, and keeps them
 
 **Tier**: med — the step's default tier for work
-**Depends on**: Build Phase 1, Build Phase 2, Build Phase 3
-**Files**: apps/indusk-mcp/src/lib/run/graph/phase-branch.ts, apps/indusk-mcp/src/lib/worktree/layout.ts, apps/indusk-mcp/src/lib/run/graph/phase-branch-signals.ts, apps/indusk-mcp/src/lib/run/graph/phase-worktree.test.ts, apps/indusk-mcp/src/lib/run/graph/phase-start-merge.test.ts, apps/indusk-mcp/src/lib/run/graph/phase-start-waited.test.ts, apps/indusk-mcp/src/lib/run/graph/phase-start-trunk.test.ts, apps/indusk-mcp/src/lib/run/graph/archived-fix.test.ts
+**Depends on**: none
+**Files**: apps/indusk-mcp/src/lib/graph/phase-branch.ts, apps/indusk-mcp/src/lib/graph/phase-branch-signals.ts, apps/indusk-mcp/src/lib/graph/phase-worktree.test.ts, apps/indusk-mcp/src/lib/graph/phase-resume.test.ts, apps/indusk-mcp/src/lib/graph/phase-start.test.ts, apps/indusk-mcp/src/lib/worktree/provision.ts, apps/indusk-mcp/src/lib/worktree/provision.test.ts, apps/indusk-mcp/src/lib/worktree/layout.ts, apps/indusk-mcp/src/bin/commands/worktree.ts
 
-This phase makes a phase's start real: a worktree of its own on its own branch, cut from its plan's branch, with every finished dependency merged in and, when it waited on another plan's phase for a file, that phase's finished work merged in too. It records when a plan pulled another plan's unlanded work. Merging back is later phases' work; a conflict at start goes through a resolver this phase only names.
+This phase makes a phase's start real: a worktree of its own on its own branch, cut from the plan's branch — which already holds every finished dependency — and set up the way `indusk worktree create` sets one up, so its tests can run. A phase started again after a red check, a question or a restart carries on in the same worktree and branch with its earlier commits; it is never cut fresh.
 
-- [ ] Create the worktree and the branch for a phase, cut from the plan's branch.
+- [ ] Cut a new phase's branch and worktree from the plan's branch.
   <details><summary>Technical</summary>
 
-  `startPhase(repo, plan, phase, { resolver })` in `lib/run/graph/phase-branch.ts`; branch `phase/<plan>/<n>` (not `plan/<plan>/phase-<n>`: git cannot hold `plan/<plan>` and refs below it), worktree in the plan's layout (`lib/worktree/layout.ts`); `MergeResolver` is a type here, implemented in Build Phase 7, and tests use a stub.
+  `lib/graph/phase-branch.ts`: `startPhase(repo, plan, phase, { provision })` → `{ branch, worktree, resumed }`. Branch `phase/<plan>/<n>` (`n` from the heading; never `plan/<plan>/…`, which git cannot hold beside `plan/<plan>`), worktree path from `lib/worktree/layout.ts` beside the plan's. Cut with `git worktree add -b <branch> <path> plan/<plan>`. T13, T16, T17.
 
   </details>
-- [ ] Merge each finished dependency into the new worktree and nothing else.
+- [ ] Resume a phase that has a branch already, in its own worktree, never cutting it again.
   <details><summary>Technical</summary>
 
-  Fast-forward when the plan's branch already holds it. A dependency not named is not merged even if it finished first.
+  Branch and worktree both present (`git worktree list --porcelain`): reuse as is. Branch present, worktree gone: `git worktree add <path> <branch>` (no `-b`). Only a phase with no branch is cut. `resumed: true` in both resume cases. T14.
 
   </details>
-- [ ] Merge the finished work of a phase this one waited on in another plan, landed or not, and record the pull.
+- [ ] Set up a phase worktree exactly as a created worktree is set up, through one shared function.
   <details><summary>Technical</summary>
 
-  Append `pulled {plan, branch, sha}` for the pulling plan to the record.
+  Extract `provisionWorktree(root, repo, dir)` from `worktreeCreateResolved` in `src/bin/commands/worktree.ts` into `lib/worktree/provision.ts` (doppler env, then the repo's `post_create` steps); with no `post_create`, run the install the lockfile names (`pnpm install --frozen-lockfile` for `pnpm-lock.yaml`, `npm ci` for `package-lock.json`). `worktree create` and `startPhase` both call it; a failed step throws naming the command, and `startPhase` returns it as the phase's stop reason. A resumed phase is not set up again. T15.
 
   </details>
-- [ ] Bring the trunk into a new phase whose plan's branch is behind it, so a phase started after a landing always has the landed work.
+- [ ] Report the signal for the clause that every running phase has its own worktree, when a phase starts or resumes.
   <details><summary>Technical</summary>
 
-  In `startPhase`, when `git merge-base --is-ancestor <trunk> plan/<plan>` fails (the cascade skipped the plan because a phase was running, ADR D8), merge the trunk into the new worktree through the resolver as a start merge (ADR D5). T46.
-
-  </details>
-- [ ] Start a fix phase of an archived plan on a plan branch cut from the trunk for that fix.
-  <details><summary>Technical</summary>
-
-  When the owner of a fix node is archived and `plan/<owner>` does not exist, `startPhase` creates it from the trunk's tip and records the worktree assignment as `indusk worktree create <owner>` does for a reopened plan; the phase's worktree is cut from it as for any plan (ADR D4). T49.
-
-  </details>
-- [ ] Remove the worktree of a phase that merged and keep its branch until its plan lands (another plan may pull that finished branch); keep and list a phase that did not merge.
-  <details><summary>Technical</summary>
-
-  Removal happens after the Build Phase 8 merge; this phase provides `removePhase` and `listKept`.
-
-  </details>
-- [ ] Report the signal for the clause that every running phase has its own worktree, when a phase starts.
-  <details><summary>Technical</summary>
-
-  signal: `a-phase-builds-on-its-own-branch/own-worktree` — reported from `apps/indusk-mcp/src/lib/run/graph/phase-branch-signals.ts`, called by `startPhase` before it returns. Judged with plain git, not `lib/worktree/layout.ts`: `git worktree list --porcelain` shows the new path and branch once and held by no other running phase, and `git merge-base --is-ancestor plan/<plan> <branch>` holds while the branch's base is not the trunk alone. `writeClauseSignals(root, "run-graph.phase-start", plan, { plan: "run-the-graph", phase: "Build Phase 6" }, verdicts)`; `broken` names the phase and the shared worktree, shared branch or wrong base. Best-effort: a signal never fails the start.
+  signal: `a-phase-builds-on-its-own-branch/own-worktree` — reported from `apps/indusk-mcp/src/lib/graph/phase-branch-signals.ts`, called by `startPhase` before it returns. Plain git, not `layout.ts`: in `git worktree list --porcelain` the path and the branch appear once; for a cut, `git rev-parse <branch>` equals `plan/<plan>`'s tip; for a resume, the branch tip equals the tip read before the start and the branch's reflog shows no new creation entry. `writeClauseSignals(root, "run-graph.phase-start", plan, { plan: "run-the-graph", phase: "Build Phase 4" }, verdicts)`; `broken` names the phase and the shared worktree, wrong base or lost commits. Best-effort.
 
   </details>
 - [ ] Report the signal for the clause that a phase starts with its dependencies' work, when a phase starts.
   <details><summary>Technical</summary>
 
-  signal: `a-phase-builds-on-its-own-branch/starts-from-its-dependencies` — reported from `apps/indusk-mcp/src/lib/run/graph/phase-branch-signals.ts`, same point. For each finished dependency, its branch tip is an ancestor of the new worktree's `HEAD` (`git merge-base --is-ancestor`); no finished phase branch it does not depend on is an ancestor unless that work is already on the plan's branch; the worktree has no unmerged paths (`git ls-files -u` empty). `broken` names the phase and the missing or extra phase. Best-effort.
-
-  </details>
-- [ ] Report the signal for the clause that a phase starts with the other plan's work it waited for, when a phase starts.
-  <details><summary>Technical</summary>
-
-  signal: `a-phase-builds-on-its-own-branch/starts-from-the-work-it-waited-for` — reported from `apps/indusk-mcp/src/lib/run/graph/phase-branch-signals.ts`, same point. For each `waiting` record entry of this phase naming another plan's phase, that phase's branch tip is an ancestor of `HEAD`, and when that plan has not landed (its landing subject absent from a plain `git log <trunk> --merges`) a `pulled` entry for it exists in the record read back from disk. `broken` names the phase and the missing work or missing entry. Best-effort.
+  signal: `a-phase-builds-on-its-own-branch/starts-from-its-dependencies` — reported from `apps/indusk-mcp/src/lib/graph/phase-branch-signals.ts`, same point; `startPhase` takes the phase's dependency names for it. For each dependency with a `phase/<plan>/<n>` branch, its tip is an ancestor of the new worktree's `HEAD` (`git merge-base --is-ancestor`); `git ls-files -u` in the worktree is empty. `broken` names the phase and the missing dependency or the unmerged paths. Best-effort.
 
   </details>
 
-#### Build Phase 6 Verification
+#### Build Phase 4 Verification
 
-- [ ] The worktree and start-merge tests pass.
+- [ ] The worktree, resume, setup and start tests pass on real throwaway repositories.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/run/graph/phase-worktree.test.ts src/lib/run/graph/phase-start-merge.test.ts src/lib/run/graph/phase-start-waited.test.ts src/lib/run/graph/phase-start-trunk.test.ts src/lib/run/graph/archived-fix.test.ts && pnpm exec vitest related src/lib/run/graph/phase-branch.ts src/lib/run/graph/phase-branch-signals.ts` — T14 to T17, T46 and T49 pass, on real throwaway git repositories.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/graph/phase-worktree.test.ts src/lib/graph/phase-resume.test.ts src/lib/graph/phase-start.test.ts src/lib/worktree/provision.test.ts && pnpm exec vitest related src/lib/graph/phase-branch.ts src/lib/graph/phase-branch-signals.ts src/lib/worktree/provision.ts src/bin/commands/worktree.ts` — T13 to T17 pass; the existing worktree tests stay green.
 
   </details>
 
-#### Build Phase 6 Context
+#### Build Phase 4 Context
 
-- [ ] Record, in the package's rules file, why phase branches are named the way they are.
+- [ ] Record, in the package's rules file, why phase branches are named as they are and that a phase is never cut twice.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "Phase branches are `phase/<plan>/<n>`: a ref `plan/<plan>` cannot have refs below it" — guard: `phase-worktree.test.ts` asserts the name shape.
+  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "Phase branches are `phase/<plan>/<n>` (a ref `plan/<plan>` cannot have refs below it); a phase with a branch resumes on it, never re-cut" — guard: `phase-resume.test.ts` carries `clause: a-phase-builds-on-its-own-branch/own-worktree`.
 
   </details>
 
-#### Build Phase 6 Document
+#### Build Phase 4 Document
 
-- [ ] Document the phase worktree and what a phase starts with.
+- [ ] Describe a phase's branch and worktree in the guide page and the work skill's page.
   <details><summary>Technical</summary>
 
-  `reference/cli/run-the-graph.md` section "A phase's branch"; `reference/skills/work.md` the phase's worktree and merge-at-end.
+  `guide/phases-in-parallel.md` section "A phase's branch"; `reference/skills/work.md`: a graph-run phase works in its own worktree.
 
   </details>
 
-### Build Phase 7: Conflicts go to an agent first
+### Build Phase 5: A finished phase joins its plan only when green
 
-**Tier**: strong — decides whether a merge result is kept, the rule every merge point shares
-**Depends on**: Build Phase 6
-**Files**: apps/indusk-mcp/src/lib/run/graph/conflict.ts, apps/indusk-mcp/src/lib/run/graph/conflict.test.ts, apps/indusk-mcp/src/lib/run/graph/conflict-signals.ts, apps/indusk-mcp/src/lib/run/graph/merge-call-sites.test.ts, apps/indusk-mcp/src/lib/plans/test-set.ts
+**Tier**: strong — the merge check and the fast-forward are what keep a plan's branch green while phases run side by side
+**Depends on**: Build Phase 1, Build Phase 4
+**Files**: apps/indusk-mcp/src/lib/graph/merge.ts, apps/indusk-mcp/src/lib/graph/impl-lines.ts, apps/indusk-mcp/src/lib/graph/record.ts, apps/indusk-mcp/src/lib/graph/merge-signals.ts, apps/indusk-mcp/src/lib/graph/merge.test.ts, apps/indusk-mcp/src/lib/graph/merge-failed.test.ts, apps/indusk-mcp/src/lib/graph/merge-impl-lines.test.ts, apps/indusk-mcp/src/lib/graph/merge-checked.test.ts, apps/indusk-mcp/src/lib/graph/only-the-plan-lands.test.ts, apps/indusk-mcp/src/lib/plans/test-set.ts, apps/indusk-mcp/src/lib/plans/test-set-merge.test.ts, apps/indusk-mcp/src/lib/plans/land.ts
 
-This phase adds the one way a conflicting merge is handled at all four merge points. An agent resolves it in the merging worktree and the result is kept only if the plan's tests pass; otherwise the merge is undone and a question naming the files is raised, with only that plan's affected phases going on hold. It also makes every merge write down whether it conflicted and how it ended, which is how the second expectation is read.
+This phase adds a phase's end: the plan's branch is merged into the phase, the phase's tests and the tests of every clause the plan has touched run on that result, and only a green result moves the plan's branch forward, in the plan's own worktree so its files follow. A red check or a conflict sends the phase back to its own session; the third failure stops it without stopping anything that does not need it. Only a plan's branch ever reaches the trunk.
 
-- [ ] Hand a conflicting merge to an agent and keep the result only with the plan's tests passing.
+- [ ] Add the record a plan's graph run keeps in machine state.
   <details><summary>Technical</summary>
 
-  `mergeWithResolution(worktree, ref, { resolver, tests })` in `lib/run/graph/conflict.ts`; a failing result resets to the pre-merge head. The same function is used at phase start, phase end, trunk cascade and before landing.
+  `lib/graph/record.ts`: `appendGraphRecord(home, plan, entry)`, one never-raising writer modelled on the plan-timing writer, file `graph/<plan>.jsonl` under the `indusk eval home` directory; entries `run-started`, `launched`, `ended`, `merge { phase, outcome: merged | red | conflict | dirty | unchecked, commit, report, outside }`, `stopped { phase, why }`. `readGraphRecord` drops a torn last line; `attemptsSince(entries, phase)` counts failed merges since the last `run-started` (ADR D8).
 
   </details>
-- [ ] Turn an unresolved conflict into a question naming the files and hold only the affected phases.
+- [ ] Choose the merge check's tests: the phase's own, those of every clause the plan has touched, and what must not break.
   <details><summary>Technical</summary>
 
-  Affected = phases of the plan whose declared files overlap the conflicting files, and the phases that depend on them. Those not yet running are held at once; a running one is never stopped: it is marked held-at-merge, finishes, and its `mergePhaseIntoPlan` waits until the question is answered (ADR D9). Other plans and unaffected phases keep running. T18 asserts the running case.
+  `lib/plans/test-set.ts`: `TestSetRow` gains `for`; new scope `{ merge: { phase, done: PhaseRef[], changed: string[], tokens: (path) => string[] } }` — rows written or passing at this phase, every row of a done phase, every row whose `For` names a clause that a done phase's or this phase's row names or whose `clause:`/`promise:` token appears in a changed file, and the Must-not-break promises' tests. T19 runs it on a fixture plan with nothing injected.
 
   </details>
-- [ ] Record every merge, whether it conflicted and whether it was resolved with tests passing.
+- [ ] Merge the plan's branch into a finished phase, resolving neighbouring impl ticks line by line and sending any other conflict back.
   <details><summary>Technical</summary>
 
-  Appends `merge` entries (Build Phase 2) so `countMerges` yields the brief's second expectation.
+  `lib/graph/merge.ts` `mergePhase({ repo, plan, phase, run, home })`, steps in ADR D6 order. Dirty phase worktree → outcome `dirty`. `git merge plan/<plan>` in the phase worktree; on conflict, `lib/graph/impl-lines.ts` resolves `impl.md` when every conflicting line was changed by one side only (ticks, State cells); any other conflict → `git merge --abort`, outcome `conflict` naming the files. T21.
 
   </details>
-
-- [ ] Prove every merge point calls the resolver, and give an agent resolution a plan-tests scope that works mid-build.
+- [ ] Run the check on the merged result and refuse a merge that ran no test or carries a touched clause with no signal.
   <details><summary>Technical</summary>
 
-  `merge-call-sites.test.ts`: `startPhase`, `mergePhaseIntoPlan`, `cascadeTrunk` and the pre-landing merge (`landPlan`'s and `landWorkbenchPlan`'s own trunk merge, always, not only for a plan that pulled work) each go through `mergeWithResolution` (spy on it; a plain `git merge` fails the test). `planTestSet` gets a built-so-far scope: only rows whose State is written, so unbuilt rows never reject a correct resolution. Add a cap-and-permission case: the resolver session request is admitted by the real `session/manager.ts` limits with a stub process, spending no model call. (plan review)
+  `run(files, reportPath)` runs the project's test command on the set in the phase worktree with the JSON reporter (`--reporter=json --outputFile=<home>/graph/reports/<sha>.json`). Empty set or zero non-skipped tests → `unchecked`. For each clause the phase touches (its rows' `For`, tokens in `git diff --name-only plan/<plan>...HEAD`), a signal task for it must be in this phase's section or a done phase's, read with `lib/promises/clause-signal-rules.ts`; otherwise `unchecked` naming the clause. Red → `red` naming the failing tests. T18, T22.
 
   </details>
-- [ ] Report the signal for the clause that a conflict goes to an agent first, after every conflicting merge.
+- [ ] Move the plan's branch forward in the plan's worktree only on a green result, repeating if it moved meanwhile.
   <details><summary>Technical</summary>
 
-  signal: `trunk-cascades/agent-resolves-first` — reported from `apps/indusk-mcp/src/lib/run/graph/conflict-signals.ts`, called by `mergeWithResolution` after a merge that conflicted, at each of the four merge points (the point is a span attribute). Judged from the worktree with git, not the function's own result: kept means `git rev-parse HEAD` equals the commit the recorded test run passed on, with at least one test run; thrown away means `HEAD` equals the pre-merge head and no unmerged paths remain; a question means the record read back holds a `held` entry for each affected phase and none for a phase of another plan or one with no overlapping file and no dependency on one, and the session manager's sessions file still holds every affected phase that was running (none ended for the hold). `writeClauseSignals(root, "run-graph.conflict", plan, { plan: "run-the-graph", phase: "Build Phase 7" }, verdicts)`; `broken` names the plan, the merge point and which of these failed. Best-effort: a signal never fails the merge.
+  In the plan's worktree, `git merge --ff-only phase/<plan>/<n>`; if refused because `plan/<plan>` moved, repeat from the merge (not an attempt); if refused for local changes in the plan's worktree, outcome `stopped` naming them. On success append `merge … merged`, remove the phase worktree (`git worktree remove`), keep the branch. The driver calls `mergePhase` for one phase of a plan at a time (Build Phase 6). T18.
 
   </details>
-
-#### Build Phase 7 Verification
-
-- [ ] The conflict tests pass.
+- [ ] Send a failed phase back to its session up to three attempts, then stop it with its reason.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/run/graph/conflict.test.ts src/lib/run/graph/merge-call-sites.test.ts && pnpm exec vitest related src/lib/run/graph/conflict.ts src/lib/run/graph/conflict-signals.ts` — T18 passes at every merge point, including a dependency conflict at phase start.
+  `mergePhase` returns the outcome; `nextForPhase(entries, phase, outcome)` in `merge.ts` answers `retry` (with the reason to tell the session) while `attemptsSince` is under three, else appends `stopped` and answers `stop`. Same tier on retry (ADR open decision). T20.
 
   </details>
-
-#### Build Phase 7 Context
-
-- [ ] Record, in the package's rules file, that a resolution is kept only with the plan's tests passing.
+- [ ] Refuse landing a phase's branch, and a plan with a phase running or stopped unmerged; delete the plan's phase branches after it lands.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "A conflict resolution is kept only if the plan's tests pass; otherwise it becomes a question" — guard: `conflict.test.ts` carries `clause: trunk-cascades/agent-resolves-first`.
+  `lib/plans/land.ts` (`landPlan`): a ref under `phase/` is refused naming its plan; a plan whose graph record shows a `launched` phase with no `merge … merged` after it, or a `stopped` one, is refused naming them; after the landing merge and the signal below, `git branch -D` each `phase/<plan>/*`. Workbench landing is unchanged (workbench plans do not run as a graph in this slice). T23.
 
   </details>
-
-#### Build Phase 7 Document
-
-- [ ] Document conflicts and what the record counts.
+- [ ] Report the signal for the clause that a phase merges only when green, after each merge and on each tick.
   <details><summary>Technical</summary>
 
-  `reference/cli/run-the-graph.md` section "Conflicts"; note which counts answer the second expectation.
+  signal: `a-phase-builds-on-its-own-branch/green-before-merging` — reported from `apps/indusk-mcp/src/lib/graph/merge-signals.ts`, `reportMergeSignals(root, plan)`, called by `mergePhase` after a fast-forward and by the driver's tick (Build Phase 6). It walks `git reflog show --date=iso plan/<plan>` past the last entry it judged (kept in its own file beside the reports). A move whose new tip brings a `phase/<plan>/*` tip not in the old one must have `<home>/graph/reports/<new tip>.json` with every test passing, and a test file in it for every touched clause, recomputed by a plain scan: the impl's trajectory `For` cells read as text at the new tip for rows of phases closed there, and `clause:`/`promise:` tokens in `git diff --name-only <trunk>...<new tip>`. A move bringing no phase tip while the sessions file shows a phase session of the plan running is `broken` as an outside move. `writeClauseSignals(root, "run-graph.merge", plan, { plan: "run-the-graph", phase: "Build Phase 5" }, verdicts)`; `broken` names the commit and what was red, missing or left out. Best-effort.
 
   </details>
-
-### Build Phase 8: Merging a phase into its plan
-
-**Tier**: strong — the compare-and-swap and merge check are the safety core of the whole graph
-**Depends on**: Build Phase 6, Build Phase 7
-**Files**: apps/indusk-mcp/src/lib/run/graph/merge-into-plan.ts, apps/indusk-mcp/src/lib/plans/test-set.ts, apps/indusk-mcp/src/lib/plans/test-set-touched.test.ts, apps/indusk-mcp/src/lib/plans/land.ts, apps/indusk-mcp/src/lib/run/graph/merge-signals.ts, apps/indusk-mcp/src/lib/run/graph/merge-into-plan.test.ts, apps/indusk-mcp/src/lib/run/graph/merge-failed.test.ts, apps/indusk-mcp/src/lib/run/graph/merge-checked.test.ts, apps/indusk-mcp/src/lib/run/graph/only-the-plan-lands.test.ts, apps/indusk-mcp/src/lib/run/graph/single-swap.test.ts, apps/indusk-mcp/src/lib/run/graph/phase-end-trunk.test.ts, apps/indusk-mcp/src/lib/run/graph/merge-fix.test.ts, apps/indusk-mcp/src/lib/run/graph/plan-worktree-sync.test.ts
-
-This phase adds the end of a phase: it merges the trunk and any open fix branch that overlaps its files, merges the plan's tip, runs the check on that result, and moves the plan's branch with a compare-and-swap that fails if the branch moved meanwhile. A red check keeps the phase, lists it as stopped and never stops anyone else. Only a plan's branch can ever reach the trunk.
-
-- [ ] Merge the trunk, any overlapping fix and the plan's tip into the phase before checking.
+- [ ] Report the signal for the clause that every merged phase was checked, after each merge.
   <details><summary>Technical</summary>
 
-  `mergePhaseIntoPlan` in `lib/run/graph/merge-into-plan.ts`, steps in the ADR D6 order: trunk (D9 conflicts via `mergeWithResolution`), plan tip plus open fix branches overlapping the phase's files, check, swap.
+  signal: `a-phase-builds-on-its-own-branch/every-phase-is-checked` — reported from `apps/indusk-mcp/src/lib/graph/merge-signals.ts`, same call. The report for the new tip (not the record) shows at least one test that ran and was not skipped; for each clause the merged phase touches (its rows' `For` cells read as text, tokens in its changed files), a task naming that clause's signal exists in its section or a closed phase's section, read with the rule in `lib/promises/clause-signal-rules.ts`. `broken` names the phase and "no test ran" or the clause. Best-effort.
 
   </details>
-- [ ] Run the phase's tests and the tests of every clause the plan's branch has touched, and refuse a run with no test.
+- [ ] Report the signal for the clause that only a plan's branch reaches the trunk, after each landing and each approval.
   <details><summary>Technical</summary>
 
-  Touched clauses = the union of clauses named in the `For` cell of any row of a phase already merged or this one, and clauses whose `promise:` token appears in a file changed on the plan branch since it left the trunk; uses `lib/plans/test-set.ts`, whose `TestSetRow` gains the row's `For` field and which gains a touched-clauses scope. T44 runs that selection on a real fixture plan with nothing injected. The check writes the test runner's own report (`--reporter=json --outputFile`) in the phase worktree, named by the commit it ran on. An empty test set, all-deferred rows, or a touched clause without its signal row means no merge and a recorded reason.
-
-  </details>
-- [ ] Move the plan's branch with a compare-and-swap, repeating from the merge when it moved.
-  <details><summary>Technical</summary>
-
-  One function, `swapPlanBranch`, runs `git update-ref <ref> <new> <old>`; T23 scans that nothing else moves a plan branch from a phase.
-
-  </details>
-- [ ] Keep a phase whose check is red, list it with the failing tests, and make its third failure a hold.
-  <details><summary>Technical</summary>
-
-  Uses the existing three-attempt rule (`a-struggling-phase-asks-for-a-stronger-model`); a red check starts no repair.
-
-  </details>
-- [ ] Refuse landing a phase branch, and refuse an unverified plan.
-  <details><summary>Technical</summary>
-
-  `lib/plans/land.ts` refuses a ref under `phase/`, naming its plan.
+  signal: `a-phase-builds-on-its-own-branch/only-the-plan-lands` — reported from `apps/indusk-mcp/src/lib/graph/merge-signals.ts`, `reportLandsSignal(root, trunk, landedPlan?)`, called by `land.ts` after the landing merge and before it deletes phase branches, and by `lib/plans/approve.ts` after its approval merge. Plain git, never commit subjects: for each `git for-each-ref refs/heads/phase/` tip that `git merge-base --is-ancestor`s the trunk, its plan must be the landed plan and the tip must be an ancestor of the landing merge's second parent. An approval merge brings only documents and reads upheld. `broken` names the phase branch and the trunk commit. Best-effort.
 
   </details>
 
-- [ ] Move the plan's branch by compare-and-swap and bring its worktree with it.
+#### Build Phase 5 Verification
+
+- [ ] The merge, retry, impl-line, check and landing tests pass on real throwaway repositories.
   <details><summary>Technical</summary>
 
-  After `git update-ref <ref> <new> <old>` succeeds, run `git -C <plan worktree> reset --keep <new>` so index and files follow; a worktree with local edits is refused, never overwritten, and the merge is retried. `plan-worktree-sync.test.ts`: after a swap, `git status` in the plan worktree is clean and `landPlan`'s dirty check passes. (plan review: `update-ref` leaves a checked-out branch's files behind)
-
-  </details>
-- [ ] Resolve conflicts confined to the impl's checkboxes mechanically, without the agent.
-  <details><summary>Technical</summary>
-
-  In `mergePhaseIntoPlan`, a conflict confined to checklist boxes and State cells of `impl.md` is resolved by taking each side's ticked boxes (union of `[x]`); anything else in `impl.md`, or any other file, goes to the resolver. The union is kept only when the merge check is green, and is recorded as a `merge` entry with `conflicted: true, resolvedBy: "script"`, which `countMerges` counts apart from agent resolutions (ADR D6). Test: two parallel phases tick different boxes of adjacent rows and merge with no conflict question, and the record counts one scripted resolution. (plan review)
-
-  </details>
-- [ ] Report the signal for the clause that a phase merges only when green, after each move of a plan's branch.
-  <details><summary>Technical</summary>
-
-  signal: `a-phase-builds-on-its-own-branch/green-before-merging` — reported from `apps/indusk-mcp/src/lib/run/graph/merge-signals.ts`, called by `swapPlanBranch` after the swap succeeds. Judged from neither the record the merge wrote nor the check's selector: the new plan tip (`git rev-parse plan/<plan>`) must have a test runner report named by that commit in the phase worktree, with every test passing; and the touched clauses, recomputed by a plain scan (the impl trajectory's `For` cells read as text, and `clause:`/`promise:` tokens in `git diff --name-only <trunk>...<tip>`), must each have a test file in that report. `writeClauseSignals(root, "run-graph.merge", plan, { plan: "run-the-graph", phase: "Build Phase 8" }, verdicts)`; `broken` names the phase, the commit and the red, missing or left-out tests. Best-effort: a signal never fails the merge.
-
-  </details>
-- [ ] Report the signal for the clause that every merged phase was checked, after each move of a plan's branch.
-  <details><summary>Technical</summary>
-
-  signal: `a-phase-builds-on-its-own-branch/every-phase-is-checked` — reported from `apps/indusk-mcp/src/lib/run/graph/merge-signals.ts`, same point. The test runner's report for the swapped-in commit (not the record) shows at least one test run that is not deferred, and for every clause the phase touches its section of the impl has a task naming that clause's signal, read with the rule the contract check uses (`lib/promises/clause-signal-rules.ts`). `broken` names the phase and "no test ran" or the clause without its signal. Best-effort.
-
-  </details>
-- [ ] Report the signal for the clause that a phase merges the trunk at its end, after each move of a plan's branch.
-  <details><summary>Technical</summary>
-
-  signal: `trunk-cascades/phase-merges-at-its-end` — reported from `apps/indusk-mcp/src/lib/run/graph/merge-signals.ts`, same point. The trunk's tip read when the phase ended (`git rev-parse <trunk>`, per repo in a workbench) is an ancestor of the commit swapped in; `broken` names the phase and the trunk commit it went without. Best-effort.
-
-  </details>
-- [ ] Report the signal for the clause that a fix phase jumps the line, for a running phase's merge.
-  <details><summary>Technical</summary>
-
-  signal: `earlier-plans-go-first/a-broken-promise-jumps-the-line` — merge half, reported from `apps/indusk-mcp/src/lib/run/graph/merge-signals.ts`, same point. Every open fix branch whose declared files overlap the phase's is an ancestor of the commit swapped in; `broken` names the phase and the fix it merged without. Best-effort.
-
-  </details>
-- [ ] Report the signal for the clause that only a plan's branch reaches the trunk, after each landing.
-  <details><summary>Technical</summary>
-
-  signal: `a-phase-builds-on-its-own-branch/only-the-plan-lands` — reported from `apps/indusk-mcp/src/lib/run/graph/merge-signals.ts`, called by `lib/plans/land.ts` after a landing. Read from the trunk's own history with plain git, not the landing's result: the merges since the previous landing (`git log <trunk> --merges --first-parent --format=%H %P %s`) each name a `plan/` branch in their subject and none a `phase/` branch, and the landed plan's promises read verified from its promise files. `broken` names the commit and its source branch, or the unverified plan. Best-effort: a signal never fails the landing.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/graph/merge.test.ts src/lib/graph/merge-failed.test.ts src/lib/graph/merge-impl-lines.test.ts src/lib/graph/merge-checked.test.ts src/lib/graph/only-the-plan-lands.test.ts src/lib/plans/test-set-merge.test.ts && pnpm exec vitest related src/lib/graph/merge.ts src/lib/graph/record.ts src/lib/graph/merge-signals.ts src/lib/plans/test-set.ts src/lib/plans/land.ts` — T18 to T23 pass; the existing landing and test-set tests stay green.
 
   </details>
 
-#### Build Phase 8 Verification
+#### Build Phase 5 Context
 
-- [ ] The merge tests pass.
+- [ ] Record, in the package's rules file, that a plan's branch moves from a phase only by the checked fast-forward.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/run/graph/merge-into-plan.test.ts src/lib/run/graph/merge-failed.test.ts src/lib/run/graph/merge-checked.test.ts src/lib/run/graph/only-the-plan-lands.test.ts src/lib/run/graph/single-swap.test.ts src/lib/run/graph/phase-end-trunk.test.ts src/lib/run/graph/merge-fix.test.ts src/lib/run/graph/plan-worktree-sync.test.ts src/lib/plans/test-set-touched.test.ts && pnpm exec vitest related src/lib/run/graph/merge-into-plan.ts src/lib/run/graph/merge-signals.ts src/lib/plans/land.ts src/lib/plans/test-set.ts` — T19 to T25 and T44 pass.
+  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "A phase joins its plan only through `mergePhase`: plan merged in, checked, `--ff-only` in the plan's worktree; the record is `graph/<plan>.jsonl`" — guard: `merge.test.ts` carries `clause: a-phase-builds-on-its-own-branch/green-before-merging` and scans `src/` for another `merge --ff-only phase/` caller.
 
   </details>
 
-#### Build Phase 8 Context
+#### Build Phase 5 Document
 
-- [ ] Record, in the package's rules file, that only one function moves a plan branch from a phase.
+- [ ] Add a phase's end, as a sequence diagram, to the guide page.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "`swapPlanBranch` is the only code that moves a plan's branch from a phase" — guard: `single-swap.test.ts` scans for other `update-ref` callers.
+  `guide/phases-in-parallel.md` section "When a phase finishes": Mermaid sequence — merge the plan in, check, fast-forward, or back to the session; what a stopped phase means and that Build again gives it three fresh attempts.
 
   </details>
 
-#### Build Phase 8 Document
+### Build Phase 6: The admin's build runs the phases as a graph
 
-- [ ] Add the end-of-phase sequence diagram.
+**Tier**: strong — joins the scheduler, the sessions, the branches and the merge, and decides when each read and launch happens
+**Depends on**: Build Phase 2, Build Phase 3, Build Phase 5
+**Files**: apps/indusk-mcp/src/lib/build/graph-run.ts, apps/indusk-mcp/src/lib/build/graph-run-signals.ts, apps/indusk-mcp/src/lib/build/runner.ts, apps/indusk-mcp/src/lib/build/index.ts, apps/indusk-mcp/src/lib/build/graph-run.test.ts, apps/indusk-mcp/src/lib/build/graph-run-launch.test.ts, apps/indusk-mcp/src/lib/build/graph-run-current.test.ts, apps/indusk-mcp/src/lib/build/graph-run-restart.test.ts, apps/indusk-mcp/src/lib/build/graph-run-rituals.test.ts, apps/indusk-mcp/src/lib/build/graph-run-question.test.ts, apps/indusk-mcp/src/lib/run-record/phase-lines.ts, apps/indusk-mcp/src/lib/run-record/phase-lines.test.ts, apps/indusk-mcp/src/lib/plans/ask-admin.ts, apps/indusk-mcp/src/lib/plans/ask-admin-build.test.ts, apps/indusk-mcp/src/bin/commands/plans.ts, apps/indusk-admin/src/lib/build-host.ts, apps/indusk-mcp/src/__tests__/run-graph.live.test.ts, apps/indusk-mcp/vitest.tiers.ts
+
+This phase connects the pieces inside the admin's existing build. When the build reaches its work step, it runs the plan's phases as a graph: every ready phase gets its own branch and session, each finished phase is merged into the plan, the plan is read again, and what is now ready starts — until no phase is open, when the build goes on to its review steps as today. A question holds the whole plan, an admin restart resumes each phase where it was, and approving from a terminal asks the admin to build. The person sees each phase's state where the build shows its phase today.
+
+- [ ] Run the work step as a graph: launch every ready phase, merge each as it ends, read the plan again, and launch what is now ready.
   <details><summary>Technical</summary>
 
-  `reference/cli/run-the-graph.md`: Mermaid sequence: merge trunk, merge plan tip, check, compare-and-swap, retry.
+  `lib/build/graph-run.ts`: `runGraphStep(deps)` with `deps` = `{ readGraph, schedule, startPhase, startSession, mergePhase, record, room, now, tick }`. Loop: append `run-started`; read the graph from the plan's worktree; `pickPhasesToStart` with `room` from the session manager's cap; for each start, `startPhase` then `runStepSession` (`step: "work"`, `worktree` = the phase's, `phase` passed to the manager, the phase's tier model), appending `launched`. On a session's end: `ended`; when its phase is closed in its worktree, queue `mergePhase` (one per plan at a time); `retry` relaunches the session told why, `stop` marks it stopped; after every merge or end, read the graph again before any launch. Returns when nothing is open, running or ready: `done`, or `cannot-continue` naming stopped phases. After each scheduler call it calls `reportScheduleSignals`. T24, T26.
 
   </details>
-
-### Build Phase 9: Holds are cheap
-
-**Tier**: med — the step's default tier for work
-**Depends on**: Build Phase 2, Build Phase 4, Build Phase 5, Build Phase 7
-**Files**: apps/indusk-mcp/src/lib/run/graph/hold.ts, apps/indusk-mcp/src/lib/run/graph/hold-signals.ts, apps/indusk-mcp/src/lib/run/graph/hold.test.ts, apps/indusk-mcp/src/lib/run/graph/catch-up.test.ts, apps/indusk-mcp/src/lib/run/graph/hold-question.test.ts, apps/indusk-mcp/src/lib/build/amendment-signal.ts, apps/indusk-admin/src/lib/build-host.ts
-
-This phase adds the hold: a phase set aside gives up its place and its files at once so phases waiting only for those files go ahead, while phases that need its output still wait. When it is released it does its own catching up. All three triggers are wired: a question that holds, an amendment, and a conflict that cannot be resolved, which holds only phases not yet running. A running phase is held only by its own session stopping; nothing ends it.
-
-- [ ] Add holding and releasing a phase, written to the record.
+- [ ] Make the build's step loop hand its work step to the graph and start ritual steps only when every phase is done.
   <details><summary>Technical</summary>
 
-  `holdPhase(home, {plan, phase, reason})` appends `held`; `releasePhase` appends `released`, both keyed by plan and phase. The scheduler already drops held phases from running (Build Phase 4); the worktree and branch are kept. Wire the unresolved-conflict hold (Build Phase 7, phases not yet running; a running one is held at its merge), the amendment stop (`lib/build/amendment-signal.ts`) and the question that holds (below) to it.
+  `lib/build/runner.ts` `runBuild`: when `nextBuildStep` answers `work`, call `deps.runGraph()` (new `RunnerDeps` member) instead of `deps.run("work", phase)`; its `cannot-continue` and `question` stops end the run as a failed step and a question do today. Audit, falsify, cleanup and retrospective steps run as today; `nextBuildStep` already answers `work` while a phase is open, so a phase a ritual wrote runs as a graph before the next step. Workbench plans keep `deps.run("work", phase)` (ADR open decision). T29.
 
   </details>
-- [ ] Make a released phase catch up before it carries on.
+- [ ] Host the graph in the admin's build, launching phase sessions through its one session manager and keeping each phase's state in the run record.
   <details><summary>Technical</summary>
 
-  Waits for any active phase it now depends on, merges finished work touching its files and the trunk, then resumes from its stopping point without redoing earlier work.
+  `apps/indusk-admin/src/lib/build-host.ts` `depsFor`: supply `runGraph`, wiring `startSession` to `runStepSession` with `manager: sessionManager()` and `room` from `capRefusal`; each phase's `onSession` writes its process into the record's `phases`, and each launch, wait and stop updates its `state` and `why`. A 30-second tick (`setInterval`, cleared when the step returns) re-reads and launches, and calls `reportMergeSignals`. T25.
 
   </details>
-
-- [ ] Make a hold leave a clean, resumable worktree and say what releases it.
+- [ ] Hold the whole plan when a phase session stops on a question, and resume the asking phase in its worktree on the answer.
   <details><summary>Technical</summary>
 
-  `holdPhase` commits the worktree as a wip commit on the phase branch and frees its files; it never ends a session: a phase held by its question or amendment has already stopped its own session, and a phase not yet running has none. `releasePhase` is called by the amendment re-approval, by the answer to an unresolved-conflict question, and by the answer to the phase's question. A release starts a fresh `/work` session in the same worktree, which resumes from the first unchecked item. Test: hold with uncommitted edits to a file another phase then changes; release merges cleanly. (plan review)
+  A phase session returning `waiting` (a question that holds): launch nothing more, let running phases end and merge, then return `{ step: "question", id }`, which `startBuild` already turns into `holdQuestion(project, plan)`. `resumeAfterQuestion` restarts the build; the graph finds the asking phase open with its branch, and `startPhase` resumes it. T30.
 
   </details>
-- [ ] Hold only the asking phase when its session stops on a question that holds, and release only that phase when the question is answered.
+- [ ] Resume after an admin restart: relaunch each phase whose session was ended in its own worktree, and merge one that had finished.
   <details><summary>Technical</summary>
 
-  In `apps/indusk-admin/src/lib/build-host.ts`, where a run ends on a question that holds (`stop.step === "question"`, and the planning `ASKED_A_QUESTION` stop for a build), call `holdPhase` for the stopped session's phase and `sessionManager().holdQuestion(project, plan, phase)` (Build Phase 5's per-phase key); `resumeAfterQuestion` calls `releaseQuestion(project, plan, phase)` and `releasePhase`, and the driver starts the phase again. The plan's other phases keep their places and files. T52; T41 is the real run of it.
+  `reapRecorded` ends the old sessions as today; a build restarted on a dead run (`restartFor`) reaches the work step, whose first read finds `launched` phases open with branches: a phase closed in its own worktree goes straight to `mergePhase`; any other is relaunched through `startPhase` (resume). T28.
 
   </details>
-- [ ] Report the signal for the clause that a hold frees its files, at the first scheduling decision after a hold.
+- [ ] Make a terminal approval ask the running admin to build the plan, launching nothing itself.
   <details><summary>Technical</summary>
 
-  signal: `a-hold-is-cheap/a-hold-frees-its-files` — reported from `apps/indusk-mcp/src/lib/run/graph/hold-signals.ts`; `holdPhase` marks the hold pending and the driver (Build Phase 12) passes the next scheduler result to `reportHoldFreed`. No waiting reason names the held phase as the holder of a file, the session manager's own sessions hold no session for it, and every phase depending on it still names it. `writeClauseSignals(root, "run-graph.hold", plan, { plan: "run-the-graph", phase: "Build Phase 9" }, verdicts)`; `broken` names the held phase and the phase still waiting on its file, the slot not freed, or the dependent that started. Best-effort.
+  `lib/plans/ask-admin.ts`: `askAdminToBuild(cwd, plan, deps)` posting `{ project, plan }` to the admin's `/api/plans/build`, built like `askAdminToPlan`, with the same plain answers for an admin not running, a project not registered, or a refusal. `src/bin/commands/plans.ts` `approve` prints its answer after the approval; the approval stands either way. Approving in the admin already calls `startBuild`. T27.
 
   </details>
-- [ ] Report the signal for the clause that a held phase catches up, when it resumes.
+- [ ] Show each phase as running, waiting on what, or stopped and why, where the build shows its phase today.
   <details><summary>Technical</summary>
 
-  signal: `a-hold-is-cheap/the-held-phase-catches-up` — reported from `apps/indusk-mcp/src/lib/run/graph/hold-signals.ts`, called by `releasePhase` before the resumed session starts. Judged with git and the record read back: every phase it now depends on has a `done` entry; each finished phase branch whose files overlap its own, and the trunk's tip, are ancestors of its `HEAD`; the wip commit `holdPhase` made is an ancestor too (work kept, not redone). `broken` names the phase and the missing dependency, missing work or lost commit. On each driver tick the same file also reads the answered questions from `decisions-as-questions`' own store (not the record) and reports `broken` for a phase still held a minute after its question was answered or its amendment re-approved, naming the phase and the answer's time. Best-effort.
+  `lib/run-record/phase-lines.ts`: `phaseLines(record)` → one line per phase from the record's `phases` (`Build Phase 2 — running`, `Build Phase 5 — waits for Build Phase 3`, `Build Phase 4 — stopped: 2 tests red`). `buildView` in `build-host.ts` shows them in the `phase` place for a graph run; its `shows-where-it-is` check compares each running phase with the session working it. T31.
 
   </details>
-
-#### Build Phase 9 Verification
-
-- [ ] The hold tests pass.
+- [ ] Write the live check that builds a real three-phase plan from the admin's host with a scripted agent.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/run/graph/hold.test.ts src/lib/run/graph/catch-up.test.ts src/lib/run/graph/hold-question.test.ts && pnpm exec vitest related src/lib/run/graph/hold.ts src/lib/run/graph/hold-signals.ts` — T26, T27 and T52 pass.
-
-  </details>
-
-#### Build Phase 9 Context
-
-- [ ] Record, in the package's rules file, that this plan builds the hold state and not its triggers.
-  <details><summary>Technical</summary>
-
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "A hold is a `held` entry in the record, keyed by plan and phase; a question that holds holds its own phase, never its plan, and nothing ends a running phase's session to hold it" — guard: `hold-question.test.ts` carries `clause: a-hold-is-cheap/a-hold-frees-its-files`.
-
-  </details>
-
-#### Build Phase 9 Document
-
-- [ ] Document holds and catching up.
-  <details><summary>Technical</summary>
-
-  `reference/cli/run-the-graph.md` section "Holds"; `guide/parallel-plans.md` one paragraph on why a held phase stops blocking files.
-
-  </details>
-
-### Build Phase 10: The trunk follows into every open plan
-
-**Tier**: med — the step's default tier for work
-**Depends on**: Build Phase 7
-**Files**: apps/indusk-mcp/src/lib/run/graph/cascade.ts, apps/indusk-mcp/src/lib/run/graph/cascade.test.ts, apps/indusk-mcp/src/lib/plans/land.ts, apps/indusk-mcp/src/lib/run/graph/cascade-signals.ts
-
-This phase makes a landing reach every other open plan: the landing command brings the trunk into each open plan's branch that has no running phase, a five-minute pass catches any landing the event missed, and a plan with a running phase is left alone because that phase merges the trunk itself when it ends. In a workbench the trunk is each repo's own.
-
-- [ ] Call the cascade at the end of a landing.
-  <details><summary>Technical</summary>
-
-  `cascadeTrunk` in `lib/run/graph/cascade.ts` using `lib/plans/bring-trunk.ts` and `mergeWithResolution`; skips unapproved and landed plans and plans with a running phase; per-repo trunk in a workbench.
-
-  </details>
-- [ ] Add a five-minute pass that catches any branch behind the trunk.
-  <details><summary>Technical</summary>
-
-  The interval is a constant (ADR open decision), driven by Build Phase 12; `cascadeTrunk` itself takes its inputs so the pass is testable with an injected clock.
-
-  </details>
-
-- [ ] Cascade plain trunk commits as well as landings.
-  <details><summary>Technical</summary>
-
-  T28 gains a case: a commit made directly on the trunk (not a landing) reaches an idle open plan's branch on the five-minute tick. A plan with a running phase is cascaded when its last running phase ends, not only on the next tick. (plan review)
-
-  </details>
-- [ ] Report the signal for the clause that open plans follow the trunk, after each cascade and on each five-minute pass.
-  <details><summary>Technical</summary>
-
-  signal: `trunk-cascades/branches-follow-the-trunk` — reported from `apps/indusk-mcp/src/lib/run/graph/cascade-signals.ts`, called at the end of `cascadeTrunk`. Read with plain git per repo, not the cascade's own result: for each approved, unlanded plan with no running phase, `git merge-base --is-ancestor <trunk tip> plan/<plan>`; a branch behind for more than five minutes since that trunk commit's time is `broken`, naming the plan and the minutes behind; a cascade that merged into an unapproved, landed or running plan is `broken` too. `writeClauseSignals(root, "run-graph.cascade", plan, { plan: "run-the-graph", phase: "Build Phase 10" }, verdicts)`, one verdict per plan per pass. Best-effort: a signal never fails a landing.
-
-  </details>
-
-#### Build Phase 10 Verification
-
-- [ ] The cascade tests pass.
-  <details><summary>Technical</summary>
-
-  `pnpm exec vitest run src/lib/run/graph/cascade.test.ts src/lib/plans/land-own-worktree.test.ts && pnpm exec vitest related src/lib/run/graph/cascade.ts src/lib/run/graph/cascade-signals.ts src/lib/plans/land.ts` — T28 passes; existing landing tests still pass.
-
-  </details>
-
-#### Build Phase 10 Context
-
-- [ ] Record, in the package's rules file, that the trunk is the checkout's branch, per repo.
-  <details><summary>Technical</summary>
-
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "The trunk is the branch the project's main checkout is on, per repo in a workbench" — guard: `cascade.test.ts` workbench case.
-
-  </details>
-
-#### Build Phase 10 Document
-
-- [ ] Document the trunk cascade.
-  <details><summary>Technical</summary>
-
-  `reference/cli/run-the-graph.md` section "The trunk"; changelog Unreleased entry.
-
-  </details>
-
-### Build Phase 11: A plan lands after the work it pulled
-
-**Tier**: med — the step's default tier for work
-**Depends on**: Build Phase 6, Build Phase 7
-**Files**: apps/indusk-mcp/src/lib/plans/land.ts, apps/indusk-mcp/src/lib/plans/land-pulled.test.ts, apps/indusk-mcp/src/lib/plans/land-busy.test.ts, apps/indusk-mcp/src/lib/plans/land-pulled-signals.ts
-
-This phase makes landing honour what a phase pulled from another plan: the landing command refuses a plan holding another plan's unlanded work, naming that plan, and once that plan has landed the waiting plan merges the trunk again, with that work in it, and runs its tests before it lands.
-
-- [ ] Refuse landing a plan whose record shows pulled work from an unlanded plan.
-  <details><summary>Technical</summary>
-
-  `lib/plans/land.ts` reads `pulled` entries (Build Phase 6); the refusal names the source plan; a pulled plan that has since landed does not refuse; a plan with no entry lands as today.
-
-  </details>
-- [ ] Merge the trunk again before landing and run the plan's tests on the result.
-  <details><summary>Technical</summary>
-
-  Via `mergeWithResolution` (a conflict waits for the resolver); the `pulled` entry is cleared when the plan lands.
-
-  </details>
-- [ ] Refuse landing a plan that still has a phase running or held, and send every landing's own trunk merge through the resolver.
-  <details><summary>Technical</summary>
-
-  `landPlan` and `landWorkbenchPlan` read the runner record: a `launched` entry with no `done` for the plan, or a `held` with no `released`, refuses the landing naming those phases, before the branch and worktree are deleted (ADR D8). The plain `git merge --no-edit <trunk>` in `landPlan` (and its workbench twin) is replaced by `mergeWithResolution` for every plan, not only one that pulled work. T51; Build Phase 7's call-site test covers the merge.
-
-  </details>
-
-- [ ] Give workbench plans the same landing rules.
-  <details><summary>Technical</summary>
-
-  `landWorkbenchPlan` in `lib/plans/land.ts` reads `pulled` entries, holds `lands-after`, re-merges after a pulled plan lands, and runs the cascade's conflict path. T28 and T30 each gain a workbench case. (plan review)
-
-  </details>
-- [ ] Report the signal for the clause that a plan lands after the plans it pulled from, after each landing.
-  <details><summary>Technical</summary>
-
-  signal: `landing-follows-what-it-pulled/lands-after` — reported from `apps/indusk-mcp/src/lib/plans/land-pulled-signals.ts`, called by both `landPlan` and `landWorkbenchPlan` after a landing succeeds, before the `pulled` entries are cleared. For each `pulled` entry of the landed plan, the source plan's landing must already be on the trunk, read with a plain `git log <trunk> --merges --format=%s` for its landing subject (not the record). `writeClauseSignals(root, "run-graph.land", plan, { plan: "run-the-graph", phase: "Build Phase 11" }, verdicts)`; `broken` names both plans. Best-effort: a signal never fails the landing.
-
-  </details>
-- [ ] Report the signal for the clause that such a plan merges the trunk again before it lands, after each landing.
-  <details><summary>Technical</summary>
-
-  signal: `landing-follows-what-it-pulled/merges-again-before-landing` — reported from `apps/indusk-mcp/src/lib/plans/land-pulled-signals.ts`, same point. Each pulled plan's landing commit on the trunk is an ancestor of the landed plan branch's tip (`git merge-base --is-ancestor`); `broken` names the plan and the landing it went without. Best-effort.
-
-  </details>
-
-#### Build Phase 11 Verification
-
-- [ ] The pulled-work tests pass.
-  <details><summary>Technical</summary>
-
-  `pnpm exec vitest run src/lib/plans/land-pulled.test.ts src/lib/plans/land-busy.test.ts && pnpm exec vitest related src/lib/plans/land.ts src/lib/plans/land-pulled-signals.ts` — T29, T30 and T51 pass.
-
-  </details>
-
-#### Build Phase 11 Context
-
-- [ ] Record, in the package's rules file, that landing reads the pulled record.
-  <details><summary>Technical</summary>
-
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "Landing reads `pulled` entries from the runner record; a plan lands after the plans it pulled from".
-
-  </details>
-
-#### Build Phase 11 Document
-
-- [ ] Document the landing order rule.
-  <details><summary>Technical</summary>
-
-  `reference/cli/plans.md` landing section and `guide/parallel-plans.md`.
-
-  </details>
-
-### Build Phase 12: The driver starts the sessions
-
-**Tier**: strong — joins the scheduler, session manager, merges and record, and decides when each read happens
-**Depends on**: Build Phase 4, Build Phase 5, Build Phase 6, Build Phase 8, Build Phase 9, Build Phase 10, Build Phase 11
-**Files**: apps/indusk-mcp/src/lib/build/graph-driver.ts, apps/indusk-mcp/src/lib/build/index.ts, apps/indusk-mcp/src/lib/build/build-session.ts, apps/indusk-mcp/src/lib/build/next-step.ts, apps/indusk-mcp/src/lib/build/graph-driver-signals.ts, apps/indusk-mcp/src/lib/build/graph-print.ts, apps/indusk-mcp/src/lib/build/graph-print.test.ts, apps/indusk-mcp/src/lib/build/graph-driver.test.ts, apps/indusk-mcp/src/lib/build/graph-driver-launch.test.ts, apps/indusk-mcp/src/lib/build/graph-driver-ticks.test.ts, apps/indusk-mcp/src/lib/plans/ask-admin.ts, apps/indusk-mcp/src/lib/plans/ask-admin-schedule.test.ts, apps/indusk-mcp/src/lib/plans/approve.ts, apps/indusk-mcp/src/lib/plans/land.ts, apps/indusk-mcp/src/bin/commands/plans.ts, apps/indusk-admin/src/lib/build-host.ts, apps/indusk-admin/src/app/api/plans/graph/route.ts
-
-This phase connects the pieces. The driver lives only inside the admin, where the one session manager counts every session against the cap: it reads the graph again when a phase ends, a plan is approved or a plan lands, and on a 60-second tick, asks the scheduler what to start, sets up each phase's worktree and launches its session through that manager. Approving or landing from a terminal asks the admin to read the graph and never launches anything itself. At a phase boundary it still names and runs the next command. It sits beside the manual one-phase path, which keeps working with no driver.
-
-- [ ] Add the driver that reads the graph and launches what the scheduler returns.
-  <details><summary>Technical</summary>
-
-  `lib/build/graph-driver.ts` next to `build-session.ts`: `onPhaseEnded`, `onPlanApproved`, `onPlanLanded`, `tick(now)`; each reads the graph afresh, records `graph-read`, calls `pickPhasesToStart`, then `startPhase` and the admin's session manager (`admitBuild` per phase, then `start`); setting up the worktree is the phase's own time. T43 runs it against the real `SessionManager` with a stand-in process, so a refusal or a launch that never runs shows. After each scheduler call it passes the inputs and result to `reportScheduleSignals` (Build Phase 4) and, after a hold, to `reportHoldFreed` (Build Phase 9).
-
-  </details>
-- [ ] Add the 60-second readiness tick and the five-minute trunk pass.
-  <details><summary>Technical</summary>
-
-  Constants in the driver (ADR open decision); both injectable clocks.
-
-  </details>
-- [ ] Keep the manual path and the phase-boundary command working.
-  <details><summary>Technical</summary>
-
-  `next-step.ts` unchanged for a plan with no record; the boundary still prints the command `indusk plans next-session <plan>` gives and the driver runs it.
-
-  </details>
-- [ ] Publish the decision record to the docs site.
-  <details><summary>Technical</summary>
-
-  `apps/docs/src/decisions/run-the-graph.md` from `adr.md`.
-
-  </details>
-
-- [ ] Make the old one-phase-at-a-time build loop stand down for a plan the driver runs.
-  <details><summary>Technical</summary>
-
-  `lib/build/next-step.ts` `nextBuildStep`, `build-session.ts` `stepPrompt("work")` and `apps/indusk-admin/src/lib/build-host.ts` `startBuild`: a plan approved with the graph reads one phase per session (prompt names its phase). The driver never starts a ritual step (ADR D3): once every phase of the plan is done, the existing step loop (`nextBuildStep`, `runBuild`) runs audit, falsify, cleanup and retrospective one at a time as today, and starts a step only while none of the plan's phases is ready, running or held, so the phases a ritual authors are scheduled by the graph before the next step. Test: an approved plan is started once, never twice; a retrospective step is not started while a falsification phase is unscheduled. (plan review)
-
-  </details>
-- [ ] Hook the driver to approval and landing, host its ticks, and write the whole record.
-  <details><summary>Technical</summary>
-
-  `approve.ts` and `land.ts` (CLI processes) never call the driver or construct a session manager: they call `askAdminToSchedule(cwd, plan, "approved" | "landed")` in `lib/plans/ask-admin.ts`, built like `askAdminToPlan`, which posts to the admin's `app/api/plans/graph/route.ts`; the route calls `onPlanApproved` or `onPlanLanded` on the admin's one driver. With the admin down or the project unregistered the command says so plainly and the approval or landing still stands (T47). The admin's build host starts the driver's ticks (`startGraphTicks`: 60 seconds for ready phases, five minutes for the trunk cascade handed every open plan) when it starts, the one long-lived process that exists, not a new scheduler (ADR D3); T45 pins both. The driver appends `ready`, `launched`, `done`, `waiting`, `held` and `released` as well as `graph-read`; the scheduler reads `done` from the record. (plan review)
-
-  </details>
-- [ ] Print the graph for a plan from the record, through one function the admin also reads.
-  <details><summary>Technical</summary>
-
-  `indusk plans graph <plan>` prints each phase's state, why it waits and the ready-to-launched gap, from the record, through `printGraph` in `lib/build/graph-print.ts`; the admin's why-it-waits line reads the same function. T42 holds it. The clauses' signals are the per-clause spans written in the phases that decide them, not a span per record entry. (plan review)
+  `src/__tests__/run-graph.live.test.ts`, added to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`: a fixture plan with Phases 1 and 2 independent and 3 depending on both, built through `startBuild` with a scripted agent process that ticks its phase's boxes, commits and exits; asserts two phase sessions overlapped and all three phases are on `plan/<plan>`. It proves no clause; its result is recorded in the retrospective. T35.
 
   </details>
 - [ ] Report the signal for the clause that ready phases start within a minute, at each launch and on each tick.
   <details><summary>Technical</summary>
 
-  signal: `the-work-runs-as-a-graph/ready-phases-start` — reported from `apps/indusk-mcp/src/lib/build/graph-driver-signals.ts`, called by the driver after each launch, on each 60-second tick, and on the first tick after the admin starts. It does not read the driver's own `ready` entries: a phase's ready time is the commit time of the merge that brought its last dependency into its plan's branch (`git log --first-parent --merges plan/<plan>`), or the impl's approval time for a phase with none; its launch time is its session's `startedAt` in the session manager's sessions file. At a launch, launch minus ready, less the recorded worktree setup time, is under sixty seconds whenever the cap had room; on a tick, a phase ready over a minute by git's time with cap room and no session (a missed event, a phase the driver never judged ready, a failed or refused launch, or no admin running until now) is `broken`. `writeClauseSignals(root, "run-graph.driver", plan, { plan: "run-the-graph", phase: "Build Phase 12" }, verdicts)`; `broken` names the phase, its ready time and its launch time or none. Best-effort: a signal never fails the driver.
+  signal: `the-work-runs-as-a-graph/ready-phases-start` — reported from `apps/indusk-mcp/src/lib/build/graph-run-signals.ts`, called after each launch and on each tick (including the first after the admin starts). Not from the graph record: a phase's ready time is the first `git reflog show --date=iso plan/<plan>` entry whose commit has its last dependency's `phase/` tip as an ancestor (a fast-forward and a merge read alike), or, with no dependency, the later of the plan's approval merge reaching the trunk and the run record's `startedAt`; its launch time is the creation entry in its own branch's reflog. Cap room is read at each tick from `admin-sessions.json` against `readSessionsMax()` and kept in the signal's own log. `broken`: a launch over sixty seconds after ready while the log showed room; a phase ready over a minute with room now and no branch; a phase branch over fifteen minutes old with no session and no stop in the run record. A plan whose run is stopped or waits on a question is not judged; a missing reflog reports unknown. `writeClauseSignals(root, "run-graph.driver", plan, { plan: "run-the-graph", phase: "Build Phase 6" }, verdicts)`. Best-effort.
 
   </details>
 - [ ] Report the signal for the clause that the graph is read again before each launch.
   <details><summary>Technical</summary>
 
-  signal: `the-work-runs-as-a-graph/graph-is-current` — reported from `apps/indusk-mcp/src/lib/build/graph-driver-signals.ts`, at each launch. The latest `graph-read` entry before the `launched` entry must be later than the latest `done` entry, the latest approval (the impl's approval time) and the latest landing (from a plain `git log <trunk> --merges`); a launch with no `graph-read` before it is `broken` too. `broken` names the launch and the event it did not account for. Best-effort.
+  signal: `the-work-runs-as-a-graph/graph-is-current` — reported from `apps/indusk-mcp/src/lib/build/graph-run-signals.ts`, at each launch. A plain scan of `git show plan/<plan>:<impl>` at that moment: the launched phase is open, every phase it depends on is closed, and `admin-sessions.json` holds no other session for that phase. `broken` names the launch and which failed. Best-effort.
 
   </details>
-- [ ] Report the signal for the clause that a running phase is never stopped, whenever a phase session ends and on each tick.
+- [ ] Report the signal for the clause that review phases are phases, when the build starts a ritual step.
   <details><summary>Technical</summary>
 
-  signal: `a-hold-is-cheap/running-phases-finish` — reported from `apps/indusk-mcp/src/lib/build/graph-driver-signals.ts`, called when the session manager reports a phase session ended and on each tick. Read from the session manager's own sessions file and each session's own last event, not the driver's state: every phase session that ended has a `done` or a failed-check entry for its phase at or after its end, or a `held` entry whose reason is the session's own stop (its last event is a question that holds or an amendment stop); a `held` entry for a conflict elsewhere, or none at all (stopped for a fix, a landing, an approval, an earlier plan or another merge's conflict, or vanished), is `broken`, naming the phase and what the record shows at its end. Best-effort.
-
-  </details>
-- [ ] Report the signal for the clause that the graph never runs more phase sessions than the cap, at each launch.
-  <details><summary>Technical</summary>
-
-  signal: `the-work-runs-as-a-graph/within-the-cap` — reported from `apps/indusk-mcp/src/lib/build/graph-driver-signals.ts`, called by the driver after each launch. Read from the session manager's own held sessions (`running()`), counted one per session, never one per admitted build, against `readSessionsMax()` — not the scheduler's `cap` input. `broken` names the count, the cap and the sessions running. Best-effort: a signal never fails the driver.
+  signal: `the-work-runs-as-a-graph/reviews-are-phases` — step half, reported from `apps/indusk-mcp/src/lib/build/graph-run-signals.ts`, called by `runBuild` before it starts an audit, falsify, cleanup or retrospective step. A plain scan of `git show plan/<plan>:<impl>` finds no open phase; `broken` names the step and the open phase it started over. Best-effort.
 
   </details>
 
-#### Build Phase 12 Verification
+#### Build Phase 6 Verification
 
-- [ ] The driver tests, the printout test and the guards pass.
+- [ ] The work-step, launch, read, restart, ritual, question, approval and phase-line tests pass, and the guards stay green.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/lib/build/graph-driver.test.ts src/lib/build/graph-driver-launch.test.ts src/lib/build/graph-driver-ticks.test.ts src/lib/plans/ask-admin-schedule.test.ts src/lib/build/graph-print.test.ts src/lib/build/next-step-boundary.test.ts src/lib/build/manual-path.test.ts && pnpm exec vitest related src/lib/build/graph-driver.ts src/lib/build/graph-driver-signals.ts src/lib/build/graph-print.ts src/lib/plans/ask-admin.ts` — T31, T42, T43, T45 and T47 pass; T32 and T33 stay green.
+  `cd apps/indusk-mcp && pnpm exec vitest run src/lib/build/graph-run.test.ts src/lib/build/graph-run-launch.test.ts src/lib/build/graph-run-current.test.ts src/lib/build/graph-run-restart.test.ts src/lib/build/graph-run-rituals.test.ts src/lib/build/graph-run-question.test.ts src/lib/plans/ask-admin-build.test.ts src/lib/run-record/phase-lines.test.ts src/lib/build/next-step-boundary.test.ts src/lib/build/manual-path.test.ts && pnpm exec vitest related src/lib/build/graph-run.ts src/lib/build/runner.ts src/lib/build/graph-run-signals.ts src/lib/plans/ask-admin.ts src/lib/run-record/phase-lines.ts` — T24 to T31 pass; T32 and T33 stay green. `cd ../indusk-admin && pnpm exec vitest related src/lib/build-host.ts` passes.
+
+  </details>
+- [ ] The live check passes in the system tier and is not in the everyday suite.
+  <details><summary>Technical</summary>
+
+  `pnpm test:system -- run-graph.live` from the repo root — T35 passes; `everyday-tests-never-wait.test.ts` passes. Result written under Notes with the date.
 
   </details>
 
-#### Build Phase 12 Context
+#### Build Phase 6 Context
 
-- [ ] Record, in the package's rules file, the two intervals and that the driver holds no state.
+- [ ] Record, in the package's rules file, that the graph runs only as the admin build's work step and holds no state of its own.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "60 s readiness tick, 5 min trunk pass, constants; the driver reads files and the record each time" — guard: `graph-driver.test.ts` carries `clause: the-work-runs-as-a-graph/graph-is-current`.
+  `apps/indusk-mcp/CLAUDE.md` "Run the graph": "The graph runs only as `runBuild`'s work step inside the admin; done is read from the plan's branch, running from the session manager, attempts from `graph/<plan>.jsonl`; 30 s tick" — guard: `graph-run-current.test.ts` carries `clause: the-work-runs-as-a-graph/graph-is-current`.
 
   </details>
 
-#### Build Phase 12 Document
+#### Build Phase 6 Document
 
-- [ ] Finish the reference page and the person's guide page.
+- [ ] Finish the guide page and publish the decision record.
   <details><summary>Technical</summary>
 
-  Complete `reference/cli/run-the-graph.md`; `guide/parallel-plans.md`; update `reference/skills/planner.md` (the two lines, cutting phases small around shared types and schemas) and changelog.
-
-  </details>
-
-### Build Phase 13: Live checks and the review phases
-
-**Tier**: med — the step's default tier for work
-**Depends on**: Build Phase 1, Build Phase 12
-**Files**: apps/indusk-mcp/src/__tests__/run-graph.live.test.ts, apps/indusk-mcp/e2e/run-graph-conflict.e2e.test.ts, apps/indusk-mcp/vitest.tiers.ts, apps/indusk-mcp/skills/falsify.md, apps/indusk-mcp/skills/cleanup.md, apps/indusk-mcp/skills/planner.md
-
-This phase writes the eight whole-story checks that run against real git and real sessions, never in a phase's loop: seven in the system tier with a scripted agent, and the conflict check with a real agent where one is available, and teaches the falsify, cleanup and planner skills to write the dependency line on the phases they author. It closes the build.
-
-- [ ] Write seven live checks against real git and real session processes with a scripted agent, and the conflict check with a real agent.
-  <details><summary>Technical</summary>
-
-  `src/__tests__/run-graph.live.test.ts` (T34 to T38, T40, T41), added to `SYSTEM` in `vitest.tiers.ts`, with a scripted agent process. T39 is `e2e/run-graph-conflict.e2e.test.ts`, run by `pnpm e2e` (which already needs `claude`): a real resolver session started through the session manager, permitted, and committing a resolution the plan's tests pass on. They prove no clause; their results are recorded in the retrospective.
-
-  </details>
-- [ ] Teach the ritual skills to write the dependency and files lines.
-  <details><summary>Technical</summary>
-
-  Edit `apps/indusk-mcp/skills/{falsify,cleanup,planner}.md` (never `.claude/skills/`); falsify and cleanup phases carry `**Depends on**:` naming the build phases they review.
-
-  </details>
-- [ ] Run the live checks once and record the result in the plan.
-  <details><summary>Technical</summary>
-
-  `pnpm test:system -- run-graph.live` and `pnpm e2e -- run-graph-conflict` — results written under Notes with the date.
-
-  </details>
-
-- [ ] Make the three skills and the planner write both lines on every phase.
-  <details><summary>Technical</summary>
-
-  The `/work` skill refuses nothing new: a changed file outside the phase's declared set is listed in its merge entry, never refused (ADR D2), so the manual path (T33) is unchanged. Falsify, cleanup and planner templates write `**Depends on**:` and `**Files**:` on every phase they author; the audit step is not a phase and keeps writing `audit.md`. A template that omits `**Files**:` is caught by the save check. (plan review)
-
-  </details>
-
-#### Build Phase 13 Verification
-
-- [ ] The live checks pass in the system tier.
-  <details><summary>Technical</summary>
-
-  `pnpm test:system -- run-graph.live` from the repo root — T34 to T38, T40 and T41 pass; `pnpm e2e -- run-graph-conflict` — T39 passes; the everyday suite includes neither file (`everyday-tests-never-wait.test.ts` passes).
-
-  </details>
-- [ ] The installed skills match the package's.
-  <details><summary>Technical</summary>
-
-  `indusk sync` shows no diff for the three skills.
-
-  </details>
-
-#### Build Phase 13 Context
-
-- [ ] Record, as a guard, where the live checks run.
-  <details><summary>Technical</summary>
-
-  guard: `run-graph.live.test.ts` listed in `vitest.tiers.ts` SYSTEM and carries `lesson: feedback-slow-at-release-fast-per-phase`.
-
-  </details>
-
-#### Build Phase 13 Document
-
-- [ ] Note in the falsify and cleanup reference pages that the phases they write name their dependencies.
-  <details><summary>Technical</summary>
-
-  `reference/skills/falsify.md` and `reference/skills/cleanup.md`.
+  Complete `apps/docs/src/guide/phases-in-parallel.md` (what the admin shows per phase, a question holding the plan, restart); `apps/docs/src/decisions/run-the-graph.md` from `adr.md`; changelog Unreleased.
 
   </details>
 
@@ -1366,37 +727,28 @@ This phase writes the eight whole-story checks that run against real git and rea
 
 | File | Change |
 |------|--------|
-| `apps/indusk-mcp/src/lib/run/graph/{declarations,record,read-graph,schedule,phase-branch,conflict,merge-into-plan,hold,cascade}.ts` | new: the graph, record, scheduler, branches, merges, holds, trunk cascade |
-| `apps/indusk-mcp/src/lib/run/graph/{read-graph,schedule,phase-branch,conflict,merge,hold,cascade}-signals.ts`, `src/lib/plans/land-pulled-signals.ts`, `src/lib/build/graph-driver-signals.ts` | new: one clause signal per decision, beside the code that decides it |
-| `apps/indusk-mcp/src/lib/build/graph-driver.ts`, `graph-print.ts` | new: event and tick driver; the graph printout |
-| `apps/indusk-mcp/src/lib/session/manager.ts`, `question-wait.ts` | session identity, admission and question holds keyed by plan, kind and phase |
-| `apps/indusk-mcp/src/lib/run-record/record.ts` | one run record per running phase |
-| `apps/indusk-mcp/src/lib/plans/land.ts`, `test-set.ts` | refuse phase refs, unlanded pulled work and running or held phases; every landing merge through the resolver; touched-clause and built-so-far test sets with a `For` field |
-| `apps/indusk-mcp/src/lib/plans/ask-admin.ts`, `approve.ts`, `src/bin/commands/plans.ts` | terminal approval and landing ask the admin to read the graph |
-| `apps/indusk-admin/src/lib/build-host.ts`, `app/api/plans/graph/route.ts`, `app/api/plans/build/route.ts`, `app/api/sessions/route.ts` | host the driver and its ticks; per-phase sessions, records and question holds |
-| `apps/indusk-mcp/src/lib/promises/reopen.ts` | Maintenance phases declare `**Depends on**: none` and their files |
-| `apps/indusk-mcp/src/lib/plan-order.ts`, `src/tools/plan-tools.ts` | the plan-order rule as one function |
-| `apps/indusk-mcp/hooks/validate-impl-structure.js` | refuse bad dependency lines |
-| `apps/indusk-mcp/skills/{falsify,cleanup,planner}.md` | write the dependency line |
-| `apps/indusk-mcp/vitest.tiers.ts`, `src/__tests__/run-graph.live.test.ts`, `e2e/run-graph-conflict.e2e.test.ts` | live checks in the system tier; the real-agent conflict check in e2e |
+| `apps/indusk-mcp/src/lib/graph/{declarations,read-graph,schedule,phase-branch,merge,impl-lines,record}.ts` | new: the lines, the graph, the scheduler, phase branches, the checked merge, the record |
+| `apps/indusk-mcp/src/lib/graph/{read-graph,schedule,phase-branch,merge}-signals.ts`, `src/lib/build/graph-run-signals.ts` | new: one clause signal per decision, beside the code that decides it |
+| `apps/indusk-mcp/src/lib/build/graph-run.ts`, `runner.ts` | new work step; the step loop hands it the work step |
+| `apps/indusk-mcp/src/lib/session/manager.ts` | identity by plan, kind and phase; each phase session counted |
+| `apps/indusk-mcp/src/lib/run-record/{record,liveness,phase-lines}.ts` | each phase's process and state in the build record; the phase lines |
+| `apps/indusk-mcp/src/lib/worktree/provision.ts`, `src/bin/commands/worktree.ts` | one setup for created and phase worktrees |
+| `apps/indusk-mcp/src/lib/plans/{test-set,land,ask-admin,approve}.ts`, `src/bin/commands/{plans,run}.ts` | the merge test scope; landing refusals; terminal approval asks the admin; `indusk run` refuses a graph-run plan |
+| `apps/indusk-mcp/src/lib/promises/reopen.ts`, `skills/{falsify,cleanup,planner}.md`, `hooks/validate-impl-structure.js` | write and check the two lines |
+| `apps/indusk-admin/src/lib/build-host.ts` | hosts the graph work step and its tick; shows each phase |
+| `apps/indusk-mcp/vitest.tiers.ts`, `src/__tests__/run-graph.live.test.ts` | the live check in the system tier |
 | `apps/indusk-mcp/CLAUDE.md`, `CLAUDE.md` | "Run the graph" rules; Key Decisions line |
-| `apps/docs/src/{reference/cli/run-the-graph.md,guide/parallel-plans.md,decisions/run-the-graph.md,changelog.md}` | documentation |
+| `apps/docs/src/{guide/phases-in-parallel.md,decisions/run-the-graph.md,decisions/sessions-per-plan.md,reference/skills/*.md,changelog.md}` | documentation |
 | `.indusk/promises/a-session-belongs-to-its-plan.md` | sentence changed by `promises change` |
 
 ## Dependencies
-- `plans-are-promises` (clauses) and `mark-first` (signals) built; the brief's Depends On.
-- Node 22; real git; no daemon or server for the everyday suite.
+- `a-run-can-be-trusted` and `decisions-as-questions`, landed (the brief's Depends On).
+- Node 22; real git with reflogs on; no daemon or server for the everyday suite.
 
 ## Notes
 
-Decisions made unattended (gate policy auto), each with its reason:
-
-- **gate_policy is `ask`**, so every gate above has a real item. `otel.role` is `library`, so no OTel gate is written; each split and limit clause instead gets a signal task in the phase that builds the code deciding it, one `writeClauseSignals` span per decision through the commands' tracer, best-effort, judged from a source the deciding code does not read (plain git, a plain scan of the impl, the session manager's own sessions, the test runner's own report, the incident files) — never the deciding function, its inputs or the record entries it wrote itself. `within-the-cap` gets a signal of its own (Build Phase 12), since `sessions-are-capped` writes no mark; `never-interrupted` is read through `running-phases-finish`.
-- **Live checks prove no clause.** They run only after landing, while a clause must be proved by tests that pass at close; each live row names the unit rows that prove its clause, and its result is recorded in the retrospective.
-- **Effort in the tier stays out.** `research.md`'s proposed shape has no promise and no test-plan row; building it would add behaviour no promise names (ADR open decision). Its three open questions wait with it.
-- **Seven live checks use a scripted agent process; the conflict check uses a real agent.** Reason: the live checks run at landing and release, not in the build, so cost is not the reason; but only the conflict check's meaning depends on the agent, so only it pays for one, in `pnpm e2e`. Whether resolutions are right in general is the Deferred Verification above, read from the record.
-- **This impl's own `**Depends on**:` and `**Files**:` lines are dogfood.** They are ordinary text to today's checks and take effect once Build Phase 1 lands; the intended graph is: Test Phase 1 first; then Phases 1, 2 and 5 at once; 3 after 1 and 2; 4 after 3; 6 after 3; 7 after 6; 8 after 6 and 7; 9, 10 and 11 follow; 12 joins; 13 closes. Each phase's signal file is its own, so no two phases share one. Reason: show the shape the plan defines.
-- **A conflict at phase start (A29) is tested in Build Phase 7**, because Build Phase 6 only names the resolver type and tests with a stub.
-- **"Touched" for the merge check is rows' `For` clauses plus `promise:` tokens in changed files** (ADR D6); no further choice made here.
-- **Falsification, cleanup and audit phases** are authored later by their rituals, with `**Depends on**:` lines; none is written now.
-- Live check result: (recorded by Build Phase 13).
+- **This impl's own dependency and files lines are dogfood.** They are plain text to today's checks and take effect once Build Phase 1 lands. The intended graph: Test Phase 1 first; then Build Phases 1, 3 and 4 at once; 2 after 1; 5 after 1 and 4; 6 after 2, 3 and 5. Longest chain: Test Phase 1 → 1 (or 4) → 5 → 6.
+- **The plan review's findings for the full design, and where the slice answers them:** a finished phase merged, recorded and followed by a fresh read (Build Phase 6 work step; Build Phase 5 merge); plans in progress or completed with open phases stay in the graph (Build Phase 1); a restarted phase resumes its own worktree (Build Phase 4, Build Phase 6); phase worktrees set up like created ones (Build Phase 4); `indusk run` refuses a graph-run plan (Build Phase 3); the landing signal judges by history, so approval merges read upheld (Build Phase 5); ready times come from the plan branch's reflog, so fast-forwards count (Build Phase 6); the graph runs only in the admin's build and a terminal approval asks it (Build Phase 6); a question holds the whole plan (Build Phase 6). `plan-review.md` was written for the full design and is stale; approval needs a fresh one.
+- **otel.role is `library`**, so no OTel gate is written; each split and limit clause has a signal task in the phase that writes its deciding code, judged from a source that code does not read.
+- **The live check proves no clause.** It runs only at landing and release; each clause it touches is proved by unit rows.
+- Live check result: (recorded by Build Phase 6).
