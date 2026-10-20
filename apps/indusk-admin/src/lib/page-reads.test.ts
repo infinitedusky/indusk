@@ -234,3 +234,46 @@ describe("a slow process list never freezes the server (A14)", () => {
     ).toBeLessThan(1000);
   });
 });
+
+describe("a page's finish call reports what the page read (A24)", () => {
+  it("A24 finish hands the report the real counts, early-refresh flags, reading ages and the time counted from the top of the page", async () => {
+    const { startPage } = await import("./page-reads");
+    const { resetKept } = await import("@infinitedusky/indusk-mcp/run-record");
+    resetKept();
+    const root = mkdtempSync(join(tmpdir(), "page-reads-finish-"));
+    made.push(root);
+    mkdirSync(join(root, ".indusk"), { recursive: true });
+    writeFileSync(join(root, ".indusk/config.json"), '{ "mode": "full" }\n');
+    let clock = 5_000;
+    const reports: Array<{ root: string; input: Record<string, unknown> }> = [];
+    const page = startPage("plan", root, {
+      now: () => clock,
+      exec: async (file, args) =>
+        file === "ps"
+          ? `${process.pid} Mon Oct 19 10:00:00 2026 ${process.execPath}\n`
+          : args[0] === "log"
+            ? ""
+            : "main\n",
+      report: async (r, input) => {
+        reports.push({ root: r, input: input as unknown as Record<string, unknown> });
+      },
+    });
+    // 400 ms pass on the page before its first read (plan files, rendering): they count.
+    clock += 400;
+    await page.reads();
+    clock += 100;
+    page.finish(7);
+    await vi.waitFor(() => expect(reports).toHaveLength(1));
+    const { input } = reports[0];
+    expect(input).toMatchObject({
+      page: "plan",
+      plans: 7,
+      processReads: 1,
+      landingReads: 1,
+      elapsedMs: 500,
+    });
+    expect(input.programStarts, "program starts counted").toBeGreaterThan(0);
+    expect(input.refreshedEarly, "one flag per read").toEqual([false, false]);
+    expect(input.readings, "the age of each reading used").toHaveLength(2);
+  });
+});
