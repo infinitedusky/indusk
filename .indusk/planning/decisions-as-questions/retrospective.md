@@ -83,3 +83,9 @@ Each choice below was taken on the run's own judgement because the gate policy w
 
 - Archive: deferred. Declared promises block `indusk plans archive` by design; the archive happens after `indusk promises confirm` passes at the live check (T26).
 - Landed on main: see the line appended below when the merge completes.
+
+Landed on main at 3ec670c8, 2026-10-19.
+
+Install: `pnpm install:local` run on trunk, exit 0; `indusk --version` reports 1.71.0 from outside the repo.
+
+Release: not run. The project installs its own build (`workflow.steps.land.install`), so nothing is published per plan; no version bump was made. Publishing is the operator's call. Promise confirmation and the archive wait for the live check (T26).
