@@ -8,10 +8,14 @@ test_levels: required
 test_purpose: required
 rationale: required
 phase_summary: required
+cleanup: skipped
+cleanup_reason: "No changed file is over its cap; the new questions modules are small, single-purpose, and share no duplicated helpers."
 gate_policy: ask
 approved_brief: "ed938a6b1d7a4b9473169c08b4fa10d512eb6c711f24fba3b4fbf0ee7a2a2759"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-19T20:57:35.132Z"
+accepted: 2026-10-20T00:29:42.084Z
+accepted_by: person
 ---
 
 # Decisions as questions
