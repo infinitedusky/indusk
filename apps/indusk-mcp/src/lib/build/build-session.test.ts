@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
+import { readHistoryLines } from "../plans/history.js";
 import { readQuestions, recordQuestion } from "../questions/history.js";
 import { SessionManager } from "../session/manager.js";
 import type { Session, SessionOptions, StartedEvent } from "../session/start.js";
@@ -394,7 +395,7 @@ describe("ask_decision — a build asks a choice and it becomes a question", () 
 		});
 	});
 
-	it("a set time leaves the request open, tied to its session, and keeps the session", async () => {
+	it("a set time leaves the request open, tied to its session while it lives, and untied when it ends (T31)", async () => {
 		writeFileSync(
 			join(f.home, "config.json"),
 			JSON.stringify({ sessions: { question_wait: { cheap: 5 } } }),
@@ -405,7 +406,11 @@ describe("ask_decision — a build asks a choice and it becomes a question", () 
 		const [q] = readQuestions(f.worktree, "seats");
 		expect(q).toMatchObject({ state: "waiting" });
 		expect(q?.dueAt).toBeGreaterThan(q?.askedAt ?? 0);
-		expect(q?.session?.requestId).toBe("d");
+		// Tied to its session while the session lived: the line written when it was asked says so.
+		const lines = readHistoryLines(f.worktree, "seats").filter((l) => l.includes("question q-1"));
+		expect(lines.some((l) => l.includes('"requestId":"d"'))).toBe(true);
+		// The session ended, so the record no longer names it and the plan waits under Needs you.
+		expect(q?.session).toBeUndefined();
 	});
 
 	it("the answers given while it was stopped are told to the next session, once", async () => {

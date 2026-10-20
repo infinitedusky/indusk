@@ -44,7 +44,13 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 		if (typeof steps.release_follow_on !== "boolean") {
 			throw new Error("workflow.steps.release_follow_on must be true or false");
 		}
-		out.release_follow_on = steps.release_follow_on;
+		if (steps.release_follow_on === false) {
+			// Only the release's own wait is built; `false` could only switch the promise off.
+			throw new Error(
+				"workflow.steps.release_follow_on: false is not supported — the release always waits for an open follow-on; remove the key or set it to true",
+			);
+		}
+		out.release_follow_on = true;
 	}
 	if (steps.land !== undefined) {
 		const land = section(steps.land, "land");

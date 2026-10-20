@@ -57,6 +57,27 @@ describe("sweep", () => {
 	});
 });
 
+describe("sweep — what the session said", () => {
+	const wait = readQuestionWait({ cheap: "immediate" });
+
+	it("T30 — a request already answered leaves the question untouched", () => {
+		const q = waiting({ id: "x" });
+		const out = sweep([q], 10, wait, () => {
+			throw new Error("request r1 was already answered");
+		});
+		expect(out[0]).toBe(q);
+	});
+
+	it("T30 — a session that is gone is a go-ahead not yet told; one that heard it is told", () => {
+		const gone = sweep([waiting()], 10, wait, () => {
+			throw new Error("no session s1 is running");
+		});
+		expect(gone[0]).toMatchObject({ state: "went-ahead", told: false });
+		const heard = sweep([waiting()], 10, wait, () => {});
+		expect(heard[0]).toMatchObject({ state: "went-ahead", told: true });
+	});
+});
+
 describe("sweepHistory", () => {
 	it("sends a due question on, keeps it as went-ahead in the history, and leaves the held ones", async () => {
 		const { makeFixture } = await import("../bookkeeping/fixture.test-support.js");

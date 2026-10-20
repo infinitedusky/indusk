@@ -1,9 +1,11 @@
 // clause: a-release-waits-for-a-known-wrong/release-refuses
+
+import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { followOnRefusal, openFollowOns } from "./follow-on-refusal.js";
+import { followOnRefusal, landedOnTrunk, openFollowOns } from "./follow-on-refusal.js";
 import { runRelease } from "./run.js";
 
 const dirs: string[] = [];
@@ -81,11 +83,75 @@ describe("runRelease — the wait comes before any publish step", () => {
 		expect(ran).toEqual([]);
 	});
 
-	it("publishes when none is open, or when the step is turned off", () => {
+	it("publishes when none is open", () => {
 		const open = deps([]);
 		expect(runRelease(open.deps).done).toBe(true);
-		const off = deps(["x"], { release_follow_on: false });
-		expect(runRelease(off.deps).done).toBe(true);
-		expect(off.ran).toEqual(["publish"]);
+		expect(open.ran).toEqual(["publish"]);
+	});
+});
+
+describe("T39 — what closes a follow-on", () => {
+	it("a follow-on that landed on the trunk no longer refuses, though its folder is not archived", () => {
+		const dir = planning({ a: followOn(), b: followOn() });
+		expect(openFollowOns(dir, (name) => name === "a").map((p) => p.name)).toEqual(["b"]);
+	});
+
+	it("a brief that cannot be parsed still refuses, as unreadable", () => {
+		const dir = planning({ a: "status: [draft\nfollow_on_of: p/q-1" });
+		expect(openFollowOns(dir)).toEqual([{ name: "a", of: "p/q-1", status: "unreadable" }]);
+	});
+
+	it("a brief marked superseded still refuses", () => {
+		expect(openFollowOns(planning({ a: followOn("superseded") })).map((p) => p.name)).toEqual([
+			"a",
+		]);
+	});
+
+	it("an unreadable brief with no follow_on_of is an ordinary plan", () => {
+		expect(openFollowOns(planning({ a: "status: [draft" }))).toEqual([]);
+	});
+
+	it("reads landing from the trunk's merge subjects", () => {
+		const dir = mkdtempSync(join(tmpdir(), "landed-"));
+		dirs.push(dir);
+		const git = (...a: string[]) => spawnSync("git", ["-C", dir, ...a], { encoding: "utf-8" });
+		git("init", "-q", "-b", "main");
+		git(
+			"-c",
+			"user.name=t",
+			"-c",
+			"user.email=t@t",
+			"commit",
+			"--allow-empty",
+			"-q",
+			"-m",
+			"Merge plan/seat-holds-q-1: seat-holds-q-1 landed",
+		);
+		git(
+			"-c",
+			"user.name=t",
+			"-c",
+			"user.email=t@t",
+			"commit",
+			"--allow-empty",
+			"-q",
+			"-m",
+			"work on other-q-1",
+		);
+		const landed = landedOnTrunk(dir);
+		expect(landed("seat-holds-q-1")).toBe(true);
+		expect(landed("other-q-1")).toBe(false);
+	});
+
+	it("a release_follow_on of false is refused when read, naming the key", async () => {
+		const root = mkdtempSync(join(tmpdir(), "steps-"));
+		dirs.push(root);
+		mkdirSync(join(root, ".indusk"), { recursive: true });
+		writeFileSync(
+			join(root, ".indusk", "config.json"),
+			JSON.stringify({ workflow: { steps: { release_follow_on: false } } }),
+		);
+		const { readWorkflowSteps } = await import("../checks/steps.js");
+		expect(() => readWorkflowSteps(root)).toThrow(/release_follow_on/);
 	});
 });

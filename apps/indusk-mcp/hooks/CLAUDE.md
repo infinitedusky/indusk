@@ -119,6 +119,11 @@ are about keeping the two lanes in step.
 - **`validate-decided-unattended.js` matches only unattended runs**
   (`INDUSK_GATE_POLICY=auto`) and only the lines a save adds to a plan document:
   a person present is asked, not checked, and the plan review, audit and
-  retrospective record a reader's answer, not a choice. It refuses "decided
-  unattended" with no `question: <id>` the plan's history holds. — guarded by
-  `decided-unattended-hook.test.ts` (`lesson: choices-are-asked-as-questions`)
+  retrospective record a reader's answer, not a choice. It refuses a line saying
+  a choice was decided, made or chosen unattended with no `question: <id>` the
+  plan's history holds, and a list under such a line (one ending in `:`) whose
+  items lack one; text inside double quotes or backticks is a mention, not a
+  use. The wording set and the list rule live in the hook and in
+  `lib/questions/silent.ts`, changed together — guarded by
+  `decided-unattended-hook.test.ts` (`lesson: choices-are-asked-as-questions`) and
+  `silent-parity.test.ts` (T35, T36; `clause: a-decision-is-a-question/never-decided-silently`)

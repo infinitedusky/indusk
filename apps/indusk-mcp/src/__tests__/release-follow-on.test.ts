@@ -1,6 +1,6 @@
 // clause: a-release-waits-for-a-known-wrong/release-refuses
 import { afterEach, describe, expect, it } from "vitest";
-import { SHOULD_SKIP } from "./helpers/cli.js";
+import { git, SHOULD_SKIP } from "./helpers/cli.js";
 import { type ReleaseProject, releaseProject } from "./helpers/release-fixture.js";
 
 /**
@@ -23,6 +23,21 @@ describe.skipIf(SHOULD_SKIP)("T21 — a release waits for an open follow-on", ()
 			"an open follow-on",
 		);
 		const r = project.release();
+		expect(r.code).not.toBe(0);
+		expect(`${r.stdout}${r.stderr}`).toMatch(/seat-holds-q-1/);
+		expect(project.orderLog()).not.toContain("release");
+	});
+
+	it("T40 — refuses from a linked worktree whose branch predates the follow-on", () => {
+		project = releaseProject();
+		const tree = `${project.root}-worktrees/old`;
+		git(project.root, ["worktree", "add", "-q", "-b", "plan/old", tree]);
+		project.commit(
+			".indusk/planning/seat-holds-q-1/brief.md",
+			'---\ntitle: "Follow-on"\nstatus: draft\nfollow_on_of: seat-holds/q-1\n---\n\n# Follow-on\n',
+			"an open follow-on, after the branch was cut",
+		);
+		const r = project.releaseFrom(tree);
 		expect(r.code).not.toBe(0);
 		expect(`${r.stdout}${r.stderr}`).toMatch(/seat-holds-q-1/);
 		expect(project.orderLog()).not.toContain("release");

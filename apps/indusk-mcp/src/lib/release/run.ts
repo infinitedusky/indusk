@@ -40,8 +40,8 @@ export interface ReleaseDeps {
 	settleFailures?(slow: SlowRun): SettledFailures;
 	/**
 	 * The follow-on plans still open (decisions-as-questions): the release waits for them,
-	 * before any publish step. Absent reads as none. `workflow.steps.release_follow_on: false`
-	 * turns the wait off.
+	 * before any publish step. Absent reads as none. The wait cannot be switched off
+	 * (`readWorkflowSteps` refuses `release_follow_on: false`).
 	 */
 	openFollowOns?(): string[];
 }
@@ -106,7 +106,7 @@ export function runRelease(deps: ReleaseDeps): ReleaseOutcome {
 	if (!release.command) return outcome;
 
 	// A known-wrong thing on main waits for a person before it is published (clause release-refuses).
-	const waiting = deps.steps.release_follow_on === false ? [] : (deps.openFollowOns?.() ?? []);
+	const waiting = deps.openFollowOns?.() ?? [];
 	if (waiting.length > 0) return { ...outcome, waitingOn: waiting };
 
 	const runSlow = (): boolean => {

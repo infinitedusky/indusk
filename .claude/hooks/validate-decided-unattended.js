@@ -7,7 +7,7 @@
  * An unattended run (`INDUSK_GATE_POLICY=auto`) that meets a choice the plan does not
  * settle asks it as a question (`ask_decision`), and a plan document that records the
  * choice cites the question: `question: <id>` on the line or the next. A save that adds
- * a line saying "decided unattended" with no such reference, or one naming a question
+ * a line saying a choice was decided, made or chosen unattended with no such reference, or one naming a question
  * the plan's record does not hold, is refused, naming the file and line.
  *
  * Only plan documents are read, and only the lines the save adds. The plan review, the
@@ -27,8 +27,11 @@ const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 const PLAN_DOCUMENT =
 	/(^|[\\/])\.indusk[\\/]planning[\\/](?!archive[\\/])([^\\/]+)[\\/][^\\/]+\.md$/;
 const NOT_CHECKED = new Set(["plan-review.md", "audit.md", "retrospective.md"]);
-const DECIDED = /\bdecided unattended\b/i;
+// The rule below is ported to lib/questions/silent.ts; change both together (silent-parity.test.ts).
+const DECIDED = /\b(?:decided|made|chosen)\s+(?:\w+\s+){0,2}?unattended\b/i;
 const REFERENCE = /\bquestion:\s*([A-Za-z0-9_-]+)/;
+const LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+/;
+const QUOTED = /`[^`]*`|"[^"]*"/g;
 
 /** The lines `after` has that `before` did not: the save's additions, with their line numbers (1-based). */
 export function addedLines(before, after, firstLine = 1) {
@@ -56,19 +59,33 @@ export function recordedQuestions(projectRoot, plan) {
 	return ids;
 }
 
-/** What is wrong with the lines a save adds: each recording of a choice with no question, or a made-up one. */
+/** The items of the list under line `at` (0-based): each item's first line number and its text. */
+function itemsUnder(lines, at) {
+	const items = [];
+	for (let j = at + 1; j < lines.length; j++) {
+		const l = lines[j] ?? "";
+		if (LIST_ITEM.test(l)) items.push({ line: j + 1, text: l });
+		else if (l.trim() === "") {
+			const next = lines.slice(j + 1).find((x) => x.trim() !== "");
+			if (next === undefined || !LIST_ITEM.test(next)) break;
+		} else if (/^\s/.test(l) && items.length > 0) {
+			items[items.length - 1].text += `\n${l}`;
+		} else break;
+	}
+	return items;
+}
+
+/**
+ * What is wrong with the lines a save adds: each recording of a choice with no question, or a
+ * made-up one, and each item of a list under such a line without one. Text inside double
+ * quotes or backticks mentions the phrase rather than using it, and is ignored.
+ */
 export function problems(added, allLines, recorded) {
 	const out = [];
-	for (const { line, text } of added) {
-		if (!DECIDED.test(text)) continue;
-		const next = allLines[line] ?? "";
-		const ref = REFERENCE.exec(text) ?? REFERENCE.exec(next);
+	const check = (line, text, cited, what) => {
+		const ref = REFERENCE.exec(cited);
 		if (!ref) {
-			out.push({
-				line,
-				why: "records a choice as decided unattended with no `question: <id>`",
-				text,
-			});
+			out.push({ line, why: `${what} with no \`question: <id>\``, text });
 		} else if (!recorded.has(ref[1])) {
 			out.push({
 				line,
@@ -76,6 +93,13 @@ export function problems(added, allLines, recorded) {
 				text,
 			});
 		}
+	};
+	for (const { line, text } of added) {
+		if (!DECIDED.test(text.replace(QUOTED, ""))) continue;
+		check(line, text, `${text}\n${allLines[line] ?? ""}`, "records a choice as decided unattended");
+		if (/:\s*$/.test(text.trim()))
+			for (const item of itemsUnder(allLines, line - 1))
+				check(item.line, item.text, item.text, "lists a choice made unattended");
 	}
 	return out;
 }

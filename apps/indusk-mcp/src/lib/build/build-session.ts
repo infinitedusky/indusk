@@ -2,10 +2,12 @@ import { join } from "node:path";
 import { answersNote, untold } from "../questions/answer.js";
 import { changesAgreed } from "../questions/cost.js";
 import { readQuestionWait } from "../questions/deadline.js";
+import { realTimers, scheduleDue } from "../questions/due-timer.js";
 import { nextQuestionId, readQuestions, recordQuestion } from "../questions/history.js";
 import type { Question } from "../questions/record.js";
 import { reportClause } from "../questions/signals.js";
-import { silentDecisions } from "../questions/silent.js";
+import { documentsOf, silentDecisions } from "../questions/silent.js";
+import { sweepHistory } from "../questions/sweep.js";
 import { readQuestionWaitSetting } from "../session/limits.js";
 import type { SessionManager, SessionRecord } from "../session/manager.js";
 import { decideBuildPermission, refuseBuildQuestion } from "../session/permissions.js";
@@ -17,6 +19,7 @@ import {
 import type { StartedEvent } from "../session/start.js";
 import { type DecisionStore, receiveDecision } from "./decision-request.js";
 import type { ShortenReason } from "./next-step.js";
+import { unkeptQuestion } from "./question-unkept.js";
 import type { BuildStepName } from "./runner.js";
 import { BUILD_STEP_ENV, type PlanningStep } from "./step-env.js";
 
@@ -177,12 +180,22 @@ function reportAsked(worktree: string, reply: ReturnType<typeof receiveDecision>
 	else void reportClause(worktree, "holds-by-default", { outcome: "upheld" });
 }
 
-/** After a step: no document it saved records a choice as decided unattended without a question (clause never-decided-silently). */
-function reportSilent(worktree: string, plan: string, step: SessionStepName): void {
+/** The plan's documents as a step begins, so its end judges only what the step wrote. */
+function snapshotPlan(worktree: string, plan: string): ReturnType<typeof documentsOf> {
+	return attempt(() => documentsOf(join(worktree, ".indusk", "planning", plan)), new Map());
+}
+
+/** After a step: no line it added to a document records a choice as decided unattended without a question (clause never-decided-silently). */
+function reportSilent(
+	worktree: string,
+	plan: string,
+	step: SessionStepName,
+	before: ReturnType<typeof documentsOf>,
+): void {
 	if (step === "retrospective") return;
 	try {
 		const recorded = new Set(readQuestions(worktree, plan).map((q) => q.id));
-		const found = silentDecisions(join(worktree, ".indusk", "planning", plan), recorded);
+		const found = silentDecisions(join(worktree, ".indusk", "planning", plan), recorded, before);
 		const first = found[0];
 		void reportClause(
 			worktree,
@@ -205,8 +218,8 @@ function attempt<T>(read: () => T, fallback: T): T {
 	}
 }
 
-/** Keep a question in the plan's history, tied to the session that asked it while that session lives. */
-function keep(worktree: string, q: Question, sessionId: string, requestId: string): boolean {
+/** Keep a question in the plan's history, tied to the session that asked it while that session lives; the failure when it cannot be kept. */
+function keep(worktree: string, q: Question, sessionId: string, requestId: string): unknown {
 	try {
 		recordQuestion(
 			worktree,
@@ -214,9 +227,18 @@ function keep(worktree: string, q: Question, sessionId: string, requestId: strin
 				? { ...q, session: { id: sessionId, requestId } }
 				: q,
 		);
-		return true;
-	} catch {
-		return false;
+		return null;
+	} catch (err) {
+		return err ?? new Error("the history could not be written");
+	}
+}
+
+/** A session that ended no longer holds the questions it was keeping: they wait with no session. */
+function releaseQuestions(worktree: string, plan: string, sessionId: string): void {
+	for (const q of attempt(() => readQuestions(worktree, plan), [])) {
+		if (q.state !== "waiting" || q.session?.id !== sessionId) continue;
+		const { session: _gone, ...rest } = q;
+		attempt(() => recordQuestion(worktree, rest), undefined);
 	}
 }
 
@@ -244,6 +266,9 @@ async function oneSession(
 ): Promise<{ error: string | null; rateLimited: boolean; waiting?: string }> {
 	let result: Extract<StartedEvent, { type: "result" }> | undefined;
 	let waiting: string | undefined;
+	let cannotKeep: string | undefined;
+	const timers: Array<() => void> = [];
+	const before = snapshotPlan(opts.worktree, opts.plan);
 	const told = attempt(() => untold(readQuestions(opts.worktree, opts.plan)), []);
 	for (const q of told)
 		attempt(() => recordQuestion(opts.worktree, { ...q, told: true }), undefined);
@@ -285,16 +310,16 @@ async function oneSession(
 				);
 			} else if (ev.type === "question" && ev.decision) {
 				let reply = receiveDecision(ev, opts.plan, store);
-				// A question that cannot be kept is not asked: the session hears why and decides as it must.
-				if (
-					reply.to !== "refuse" &&
-					!keep(opts.worktree, reply.question, holder.id, ev.requestId)
-				) {
-					reply = {
-						to: "refuse",
-						message:
-							"This question could not be recorded in the plan's history, so it was not asked. Record the choice and its reason in the plan and say plainly that it could not be asked.",
-					};
+				// A question that cannot be kept is not asked, and the session is not left to decide it: the step stops.
+				const failure =
+					reply.to !== "refuse"
+						? keep(opts.worktree, reply.question, holder.id, ev.requestId)
+						: null;
+				if (reply.to !== "refuse" && failure) {
+					const unkept = unkeptQuestion(reply.question.id, failure);
+					cannotKeep = unkept.error;
+					reply = { to: "refuse", message: unkept.message };
+					void opts.manager.stop(holder.id).catch(() => {});
 				}
 				reportAsked(opts.worktree, reply);
 				if (reply.to === "refuse") {
@@ -317,8 +342,32 @@ async function oneSession(
 						"rule",
 					);
 					void opts.manager.stop(holder.id).catch(() => {});
+				} else if (reply.to === "wait") {
+					// Kept with its session; the request stays open, and this session's own timer sends it
+					// ahead at its stored time whether or not anyone opens the admin.
+					timers.push(
+						scheduleDue(reply.question, store.now, realTimers, () => {
+							attempt(
+								() =>
+									sweepHistory(
+										opts.worktree,
+										opts.plan,
+										store.now(),
+										() => store.wait(),
+										(q, choice) => {
+											if (!q.session) throw new Error("no session holds the question");
+											opts.manager.reply(
+												q.session.id,
+												{ requestId: q.session.requestId, answers: { [q.text]: choice } },
+												"rule",
+											);
+										},
+									),
+								[],
+							);
+						}),
+					);
 				}
-				// `wait`: the question was kept with its session; the request stays open.
 			} else if (ev.type === "question") {
 				const refusal = refuseBuildQuestion(ev);
 				opts.manager.reply(
@@ -344,7 +393,10 @@ async function oneSession(
 		if (record) opts.onSession(record);
 	}
 	const code = await session.done;
-	reportSilent(opts.worktree, opts.plan, step);
+	for (const cancel of timers) cancel();
+	releaseQuestions(opts.worktree, opts.plan, id);
+	reportSilent(opts.worktree, opts.plan, step, before);
+	if (cannotKeep) return { error: cannotKeep, rateLimited: false };
 	if (waiting) {
 		// The session ended with the question: its place under the cap is free (clause a-hold-frees-the-slot).
 		const freed = opts.manager.forPlan(opts.project, opts.plan, "build") === undefined;

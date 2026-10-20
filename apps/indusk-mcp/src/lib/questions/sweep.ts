@@ -8,9 +8,9 @@ import { reportClause } from "./signals.js";
  * come is sent on with its recommendation and marked `went-ahead`, with when and
  * what was done. A question that holds, or one that changes what was agreed, is
  * never touched however long it waits, and the sweep never approves anything: it
- * only picks the recommended option. `send` tells the session (best-effort: a
- * session gone, as after a restart, still leaves the record saying what the admin
- * did; the next step starts from the record).
+ * only picks the recommended option. `send` tells the session: a request already
+ * answered leaves the question untouched; a session gone, as after a restart, still
+ * records the go-ahead, as not yet told, and the next step is told what was done.
  *
  * clause: the-cost-sets-the-wait/the-setting-decides
  * clause: the-cost-sets-the-wait/holds-by-default
@@ -24,12 +24,16 @@ export function sweep(
 ): Question[] {
 	return questions.map((q) => {
 		if (q.state !== "waiting" || !isDue(q, now, wait)) return q;
+		let told = true;
 		try {
 			send(q, q.recommended);
-		} catch {
-			// The session may be gone; the record still says what was done.
+		} catch (err) {
+			// The person's answer won the race: it is the record's to keep, not the sweep's.
+			if (/already answered/.test(err instanceof Error ? err.message : String(err))) return q;
+			// The session is gone: the record says what was done, and the next step is told.
+			told = false;
 		}
-		return { ...q, state: "went-ahead", done: q.recommended, wentAheadAt: now };
+		return { ...q, state: "went-ahead", done: q.recommended, wentAheadAt: now, told };
 	});
 }
 

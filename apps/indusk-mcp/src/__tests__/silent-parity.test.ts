@@ -13,6 +13,16 @@ describe("validate-decided-unattended.js and lib/questions/silent.ts agree", () 
 		"Decided unattended\nquestion: q-3",
 		"Decided unattended\nnothing here",
 		"no such phrase at all",
+		// T35: a mention inside quotes or backticks is not a use of the phrase
+		'The rule refuses "decided unattended" with no reference.',
+		"The rule refuses `decided unattended` with no reference.",
+		// T36: other words for the same thing, and a list under such a line
+		"Decisions made unattended:\n1. Use SQLite\n2. Use Postgres",
+		"Decisions made unattended (question: q-3):\n1. Use SQLite (question: q-3)\n2. Use Postgres (question: q-3)",
+		"Decisions made unattended:\n- Use SQLite (question: q-3)\n- Use Postgres",
+		"Chosen unattended: SQLite.",
+		"Chosen unattended: SQLite (question: q-3).",
+		"This was made quietly unattended.",
 	];
 	it.each(cases)("%j", (text) => {
 		const lines = text.split("\n");

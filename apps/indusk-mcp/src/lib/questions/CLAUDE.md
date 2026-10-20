@@ -32,3 +32,14 @@ Loaded by Claude Code when a file under `src/lib/questions/` is read
   place that decides one reports it there, and never lets a failed report fail
   the work. `silent.ts` is the TS port of the save-time hook's rule —
   `silent-parity.test.ts` holds the two equal. — guarded by `signals.test.ts`
+- **Every question reaches an outcome with nobody looking, and a step is told any
+  outcome its session never heard.** The session holding a question on a set time
+  runs its own timer (`due-timer.ts`, set in `build-session.ts`) and sweeps at the
+  stored time; the admin's read-time sweep is only the catch-up for a session that is
+  gone. A send that fails because the request was already answered changes nothing
+  (the person's answer won); a go-ahead whose session is gone is `told: false` and is
+  told on the next step (`untold`). A session that ends no longer holds its questions
+  (`session` is dropped), so the plan lists under Needs you. A question that cannot be
+  kept stops the step (`question-unkept.ts`); the session is never told to decide it.
+  — guarded by `due-timer.test.ts` (T28), `sweep.test.ts`, `answer.test.ts` (T30)
+  (`clause: the-cost-sets-the-wait/the-setting-decides`)
