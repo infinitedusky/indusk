@@ -13,7 +13,7 @@
 // every run reads fresh; its median is "fresh"), then once more straight after (inside the
 // window; "kept"). Exits 1 when any time is over one second.
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,7 +37,10 @@ function adminOrigin() {
   const bin = process.env.INDUSK_BIN ?? "indusk";
   const out = execFileSync(bin, ["ui", "status"], { encoding: "utf-8" });
   const port = /running on port (\d+)/.exec(out)?.[1];
-  if (!port) throw new Error(`the admin is not running (indusk ui status said: ${out.trim()})`);
+  if (!port)
+    throw new Error(
+      `the admin is not running (indusk ui status said: ${out.trim()})`,
+    );
   return `http://127.0.0.1:${port}`;
 }
 
@@ -67,7 +70,10 @@ function routeOf(file) {
       out.push(values[part]);
     } else out.push(part);
   }
-  return `/p/${project}${out.length ? `/${out.join("/")}` : ""}`.replace(`/p/${project}/${project}`, `/p/${project}`);
+  return `/p/${project}${out.length ? `/${out.join("/")}` : ""}`.replace(
+    `/p/${project}/${project}`,
+    `/p/${project}`,
+  );
 }
 
 const routes = [
@@ -75,11 +81,17 @@ const routes = [
   ...pageFiles(APP_ROUTES)
     .map(routeOf)
     .filter((r) => r !== null),
-].filter((r, i, all) => all.indexOf(r) === i && r.split("/").length >= 3 && r.includes(only));
+].filter(
+  (r, i, all) =>
+    all.indexOf(r) === i && r.split("/").length >= 3 && r.includes(only),
+);
 
 async function timeOf(origin, route) {
   const start = performance.now();
-  const res = await fetch(origin + route, { redirect: "follow", signal: AbortSignal.timeout(120_000) });
+  const res = await fetch(origin + route, {
+    redirect: "follow",
+    signal: AbortSignal.timeout(120_000),
+  });
   await res.arrayBuffer();
   return { s: (performance.now() - start) / 1000, status: res.status };
 }
@@ -101,7 +113,9 @@ for (const route of routes) {
   const kept = (await timeOf(origin, route)).s;
   rows.push({ route, status, fresh: median(fresh), kept });
   const last = rows[rows.length - 1];
-  console.error(`measured ${route}: fresh ${last.fresh.toFixed(2)} s, kept ${last.kept.toFixed(2)} s`);
+  console.error(
+    `measured ${route}: fresh ${last.fresh.toFixed(2)} s, kept ${last.kept.toFixed(2)} s`,
+  );
 }
 
 let slow = 0;
@@ -112,5 +126,9 @@ for (const r of rows) {
     `${over ? "SLOW" : "ok  "} ${r.route}  fresh ${r.fresh.toFixed(2)} s  kept ${r.kept.toFixed(2)} s  (HTTP ${r.status})`,
   );
 }
-console.log(slow === 0 ? "every page under one second" : `${slow} page(s) over ${LIMIT_S} s`);
+console.log(
+  slow === 0
+    ? "every page under one second"
+    : `${slow} page(s) over ${LIMIT_S} s`,
+);
 process.exit(slow === 0 ? 0 : 1);
