@@ -1,13 +1,16 @@
 ---
 title: "Run the graph — Implementation"
 date: 2026-10-19
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
 test_purpose: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "0f13e3fe9a02cea48c5db2a7369e2d01ac5d3632ffd4cf3e852d9569ce6a151d"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-20T03:43:49.170Z"
 ---
 
 # Run the graph — Implementation
