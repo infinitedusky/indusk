@@ -8,6 +8,7 @@ updated: 2026-09-25
 # one source of truth per link.
 parents:
   - stabilize
+  - state-in-a-database
   - promise-core
 roadmap:
   - workbench-trust-fixes
