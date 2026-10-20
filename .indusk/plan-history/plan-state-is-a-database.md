@@ -1,0 +1,5 @@
+# plan-state-is-a-database — decisions
+
+Each decision the plan waited on, the answer and who gave it, as the admin recorded them (`plans/history`). Not edited by hand.
+
+- 2026-10-20T13:50:15.976Z — question q-1 waiting — {"options":[{"label":"Through the admin daemon","changes":[]},{"label":"A small local Postgres process","changes":["brief"]},{"label":"Each process opens PGlite itself with a file lock","changes":["promise"]}],"recommended":"Through the admin daemon","reason":"It is what the brief says (embedded in the admin), gives one writer so no-lost-write holds by serialization, and the daemon is already machine-global. Cost: every command needs the daemon reachable.","cost":"expensive","askedAt":1792504215976,"id":"q-1","plan":"plan-state-is-a-database","text":"How do the admin, short-lived hooks, build sessions and the command line reach the embedded Postgres (PGlite, one connection per data directory) at the same time on this machine?","statedCost":"moderate","dueAt":null,"state":"waiting"}
