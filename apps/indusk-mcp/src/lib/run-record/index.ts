@@ -6,6 +6,28 @@
 
 export { type PsRow, psAll, realProcessReads } from "../process-identity.js";
 export {
+	countStarts,
+	type Exec,
+	keptProcessTable,
+	processReadsFromTable,
+	READ_TIMEOUT_MS,
+	type ReadDeps,
+	readLandings,
+	readMergeSubjects,
+	readProcessTable,
+	startProgram,
+	trunkMergeSubjectsAsync,
+} from "./async-reads.js";
+export {
+	forgetKept,
+	KEPT_CEILING_MS,
+	KEPT_FOR_MS,
+	type Kept,
+	keptRead,
+	keptWindow,
+	resetKept,
+} from "./kept-reads.js";
+export {
 	type GitReads,
 	landedAsker,
 	landedOnMain,
@@ -18,6 +40,14 @@ export {
 } from "./landed.js";
 export { type RunStatus, runStatus } from "./liveness.js";
 export { type NextStep, nextStepFor } from "./next-step.js";
+export {
+	BLOCKED_LIMIT_MS,
+	judgePageReads,
+	PAGE_LIMIT_MS,
+	PAGE_STARTS_LIMIT,
+	type PageReadsInput,
+	reportPageReads,
+} from "./page-reads-signal.js";
 export {
 	type RunKind,
 	type RunProcess,
