@@ -1,5 +1,5 @@
 import type { Tracer } from "@opentelemetry/api";
-import { commandTracer, flushCommandTracer } from "../telemetry/command-tracer.js";
+import { commandTracerAsync, flushCommandTracer } from "../telemetry/command-tracer.js";
 import { markProjectId } from "./config.js";
 import { markPromise } from "./mark.js";
 
@@ -28,8 +28,10 @@ export async function writeClauseSignals(
 ): Promise<void> {
 	try {
 		const project = markProjectId(projectRoot);
+		// Found asynchronously: a page's report must not stop the server to look for the daemon.
+		const use = tracer ?? (await commandTracerAsync());
 		for (const v of verdicts) {
-			const span = (tracer ?? commandTracer()).startSpan(spanName);
+			const span = use.startSpan(spanName);
 			span.setAttribute("indusk.plan", plan);
 			markPromise(span, {
 				promise: v.promise,

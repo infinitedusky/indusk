@@ -16,7 +16,7 @@ import {
 import { join } from "node:path";
 import { acquireLock, acquireLockAsync } from "../agents/lock.js";
 import { type PsRow, psAll } from "../process-identity.js";
-import { startProgram } from "../start-program.js";
+import { type Exec, startProgram } from "../start-program.js";
 import { addressFilePath, readAddress, type StoredAddress } from "./daemon-address.js";
 import { daemonConfigPath, homeKind, realTempRoots } from "./daemon-process.js";
 import { type Report, sendDaemonReports } from "./daemon-reports.js";
@@ -104,14 +104,37 @@ function lsofOrNull(args: string[]): string | null {
  * it is not on the PATH. It exits 1 when it finds nothing, which is an answer; any other
  * failure, including no answer in time, reads as nothing found.
  */
-export async function lsofOrNullAsync(args: string[]): Promise<string | null> {
+export async function lsofOrNullAsync(
+	args: string[],
+	deps: { exec?: Exec } = {},
+): Promise<string | null> {
 	try {
-		return await startProgram("lsof", ["-nP", ...args], { maxBuffer: 8 * 1024 * 1024 });
+		return await startProgram("lsof", ["-nP", ...args], {
+			maxBuffer: 8 * 1024 * 1024,
+			...(deps.exec ? { exec: deps.exec } : {}),
+		});
 	} catch (e) {
 		const failed = e as { code?: unknown; stdout?: unknown };
 		if (failed.code === "ENOENT") return null;
 		return typeof failed.stdout === "string" ? failed.stdout : "";
 	}
+}
+
+/**
+ * `listening` without stopping the server: the TCP ports each process listens on, in one `lsof`
+ * (or the Linux files when `lsof` is not installed), with the program start limited and counted.
+ */
+export async function listeningAsync(
+	pids: number[],
+	deps: { exec?: Exec } = {},
+): Promise<Record<number, number[]>> {
+	if (pids.length === 0) return {};
+	const out = await lsofOrNullAsync(
+		["-a", "-p", pids.join(","), "-iTCP", "-sTCP:LISTEN", "-Fpn"],
+		deps,
+	);
+	const found = out === null ? listeningFromProcFs(pids) : parseListening(out);
+	return Object.fromEntries(pids.map((pid) => [pid, found[pid] ?? []]));
 }
 
 /** `holders` without stopping the server: who listens on each port, from a process table already read. */
