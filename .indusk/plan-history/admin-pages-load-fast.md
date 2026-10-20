@@ -26,3 +26,4 @@ Each decision the plan waited on, the answer and who gave it, as the admin recor
 - 2026-10-20T13:43:46.511Z — amendment to the look (none): was "None — the admin's pages draw what they drew; the only page changes are the scorecards header's words and how fresh the counts are, both listed under Not drawn.", now "None — " — answered "Approve" by Sandy-Corsillo
 - 2026-10-20T13:43:46.511Z — amendment to the look home.default: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
 - 2026-10-20T13:43:46.511Z — amendment to the look nav.expanded: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
+- 2026-10-20T13:43:46.511Z — amendment to the look dashboard.default: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
