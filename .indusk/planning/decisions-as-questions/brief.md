@@ -4,7 +4,7 @@ date: 2026-10-19
 status: accepted
 workflow: feature
 clauses: required
-description: "An unattended session puts each choice to the person as a question with its recommendation and a cost: cheap and moderate ones go ahead on a timer, expensive ones stop and wait. A late answer that disagrees opens a follow-on plan, and a release waits for it; landing never does."
+description: "An unattended session puts each choice to the person as a question with its recommendation and a cost; what each cost does is a setting (hold, go ahead after a set time, or at once), and by default every question holds until answered. A late answer that disagrees opens a follow-on plan, and a release waits for it; landing never does."
 accepted_at: "2026-10-19T14:47:29.932Z"
 ---
 
@@ -32,12 +32,13 @@ accepted_at: "2026-10-19T14:47:29.932Z"
    - **`asked-with-a-recommendation`** (split). Each question names its options, the one the agent recommends and why, and its cost: cheap, moderate or expensive.
    - **`never-decided-silently`** (limit). A session never records a choice as decided unattended without asking it as a question.
 
-2. **`the-cost-sets-the-wait`** (state). An unanswered cheap question goes ahead with its recommendation after five minutes, a moderate one after an hour, and an expensive one stops its session and frees its slot until the person answers.
-   - **`cheap-and-moderate-go-ahead`** (split). A cheap or moderate question unanswered past its time goes ahead with the recommendation, and says it did.
-   - **`expensive-waits`** (split). An expensive question stops its session, frees its slot, and the run resumes when the person answers.
+2. **`the-cost-sets-the-wait`** (state). What an unanswered question does is its cost's setting: hold until the person answers, go ahead with its recommendation after a set time, or go ahead at once; with nothing set, every cost holds, and a held question stops its session and frees its slot until the person answers.
+   - **`holds-by-default`** (split). With no setting for its cost, a question holds until the person answers (Sandy, 2026-10-19: answer everything first, then decide what to automate).
+   - **`the-setting-decides`** (split). A question goes ahead with its recommendation only as its cost's setting says, after the set time or at once, and says it did.
+   - **`a-hold-frees-the-slot`** (split). A held question stops its session, frees its slot, and the run resumes when the person answers.
 
-3. **`what-was-agreed-is-never-cheap`** (state). A question whose answer would change the brief, a promise or a look, or skip a gate, is expensive whatever cost the agent gave it.
-   - **`never-timed-out`** (limit). A question whose answer would change the brief, a promise or a look, or skip a gate, never goes ahead on a timer.
+3. **`what-was-agreed-is-never-cheap`** (state). A question whose answer would change the brief, a promise or a look, or skip a gate, is expensive whatever cost the agent gave it, and holds until the person answers whatever its cost's setting.
+   - **`never-timed-out`** (limit). A question whose answer would change the brief, a promise or a look, or skip a gate, never goes ahead without the person, whatever its cost's setting.
 
 4. **`a-late-answer-opens-a-follow-on`** (state). An answer given after its question went ahead, choosing other than the recommendation, opens a follow-on plan to make the work match it; every question stays readable with its recommendation, its answer and what was done.
    - **`disagreement-opens-a-plan`** (split). A late answer that differs from what was done opens one draft follow-on plan naming the question, the choice made and the one wanted.
@@ -60,7 +61,7 @@ accepted_at: "2026-10-19T14:47:29.932Z"
 **Changes**
 
 - **`decisions-wait-in-one-place`**. When a plan is waiting on the person it is listed under Needs you, and its page shows each open question with its recommendation, its options, its cost and a reply in words; the answer reaches the agent and is recorded in the plan's history.
-- **`a-build-runs-to-review-unasked`**. An approved plan's implementation runs through its phases, falsification and cleanup without asking for approval, writing its code in the plan's code worktree and, in a workbench, checking items off at the root, and stops only when it is ready for review, for a judgement the plan declared, for an expensive question, or when it cannot continue.
+- **`a-build-runs-to-review-unasked`**. An approved plan's implementation runs through its phases, falsification and cleanup without asking for approval, writing its code in the plan's code worktree and, in a workbench, checking items off at the root, and stops only when it is ready for review, for a judgement the plan declared, for a question that holds, or when it cannot continue.
 
 **Replaces**
 

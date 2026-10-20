@@ -98,6 +98,7 @@ dusk/
 - Plan timing: one per-plan log in machine state, written through one never-raising writer, read by `indusk plans time` — see `/decisions/plan-timing`
 - A run is read from its record on disk, not the admin's memory; a run whose process is gone reads stopped and Build restarts it — see `.indusk/planning/a-run-can-be-trusted/brief.md`
 - A plan is read cold before approval and audited before falsification; the agent answers every concern, one that changes the brief stops as an amendment, the person sees each dismissal — see `/decisions/audit-concerns-are-answered`
+- Decisions as questions: an unattended session asks each choice with a recommendation and a cost; each cost's setting (`sessions.question_wait.*`: hold, minutes or immediate, default hold) says whether it waits or goes ahead on a stored deadline; a held question frees its slot, and one that changes what was agreed always holds; a late disagreement opens a follow-on the release waits for, landing never — see `/decisions/decisions-as-questions`
 
 ## Known Gotchas
 

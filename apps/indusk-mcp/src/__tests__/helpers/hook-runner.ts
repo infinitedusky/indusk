@@ -37,6 +37,7 @@ export type HookName =
 	| "plan-write-witness.js"
 	| "break-inbox.js"
 	| "claude-md-budget.js"
+	| "validate-decided-unattended.js"
 	| "trunk-guard.js"
 	| "gate-reminder.js"
 	| "eval-trigger.js";

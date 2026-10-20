@@ -9,6 +9,7 @@
 
 import { spawnSync } from "node:child_process";
 import { gitSync } from "../../lib/bookkeeping/git.js";
+import { bookkeepingRoots } from "../../lib/bookkeeping/roots.js";
 import { codeKey } from "../../lib/checks/key.js";
 import {
 	findCoveringRun,
@@ -17,13 +18,25 @@ import {
 	recordGreenRun,
 } from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
-import type { WorkflowSteps } from "../../lib/config.js";
+import { getPlanningDir, type WorkflowSteps } from "../../lib/config.js";
+import { reportClause } from "../../lib/questions/signals.js";
 import { announceIncidents } from "../../lib/release/announce.js";
+import {
+	followOnRefusal,
+	landedOnTrunk,
+	openFollowOns,
+} from "../../lib/release/follow-on-refusal.js";
 import { recordOf, recordRelease, releaseVersion } from "../../lib/release/record.js";
 import { type Routed, routeFailures } from "../../lib/release/route.js";
 import { type ReleaseOutcome, runRelease } from "../../lib/release/run.js";
 import { settleFromReport } from "../../lib/release/settle.js";
 import { suspectsSince } from "../../lib/release/suspects.js";
+
+/** The follow-ons still open, read where the opener writes them: the trunk's planning folder, whichever checkout the release runs from. */
+function openFollowOnsOnTrunk(root: string) {
+	const { trunk } = bookkeepingRoots(root);
+	return openFollowOns(getPlanningDir(trunk), landedOnTrunk(trunk));
+}
 
 export async function releaseCommand(checkout: string): Promise<number> {
 	let steps: WorkflowSteps;
@@ -47,7 +60,16 @@ export async function releaseCommand(checkout: string): Promise<number> {
 		codeKey: () => codeKey(root, steps),
 		coveringRun: (key) => findCoveringRun(root, key),
 		recordGreen: (run) => recordGreenRun(root, { ...run, cwd: root, sha: headCommit(root) }),
+		openFollowOns: () => openFollowOnsOnTrunk(root).map((o) => o.name),
 	});
+
+	if (outcome.waitingOn) {
+		const open = openFollowOnsOnTrunk(root);
+		console.error(followOnRefusal(open));
+		// Refused before any publish step, naming each (clause release-refuses).
+		await reportClause(root, "release-refuses", { outcome: "upheld" });
+		return 1;
+	}
 
 	if (!outcome.declared) {
 		console.error(

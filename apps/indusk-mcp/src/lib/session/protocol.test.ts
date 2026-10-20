@@ -203,9 +203,56 @@ describe("A30 — a build writes inside its worktree without asking, and is refu
 		});
 	});
 
-	it("a build's question is answered by telling it to decide and record why", () => {
+	it("a build's plain question is refused, naming the tool a choice is asked through", () => {
 		const d = refuseBuildQuestion({ type: "question", requestId: "q1", questions: [], input: {} });
 		expect(d.allow).toBe(false);
-		if (!d.allow) expect(d.message).toMatch(/own judgement/);
+		if (!d.allow) expect(d.message).toMatch(/ask_decision/);
+	});
+});
+
+describe("decisions-as-questions — ask_decision is a question the panels can draw", () => {
+	const line = JSON.stringify({
+		type: "control_request",
+		request_id: "r1",
+		request: {
+			subtype: "can_use_tool",
+			tool_name: "mcp__indusk__ask_decision",
+			input: {
+				question: "Which store?",
+				options: [{ label: "sqlite", description: "one file" }, { label: "files" }],
+				recommended: "sqlite",
+				reason: "simplest",
+				cost: "cheap",
+			},
+		},
+	});
+
+	it("becomes a question event marked as a decision, with the options as labels", () => {
+		const [ev] = parseSessionLine(line);
+		expect(ev).toMatchObject({
+			type: "question",
+			requestId: "r1",
+			decision: true,
+			questions: [{ question: "Which store?", options: [{ label: "sqlite" }, { label: "files" }] }],
+		});
+	});
+
+	it("its answer reaches the tool as `answer`, beside the answers", () => {
+		const [ev] = parseSessionLine(line);
+		if (ev?.type !== "question") throw new Error("not a question");
+		const reply = JSON.parse(answerQuestion(ev, { "Which store?": "files" }));
+		expect(reply.response.response.updatedInput).toMatchObject({
+			answers: { "Which store?": "files" },
+			answer: "files",
+		});
+	});
+
+	it("a conversation's AskUserQuestion is not a decision", () => {
+		const plain = JSON.stringify({
+			type: "control_request",
+			request_id: "r2",
+			request: { subtype: "can_use_tool", tool_name: "AskUserQuestion", input: { questions: [] } },
+		});
+		expect(parseSessionLine(plain)[0]).not.toHaveProperty("decision");
 	});
 });

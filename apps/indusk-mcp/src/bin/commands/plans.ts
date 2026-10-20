@@ -10,12 +10,13 @@ import { markAuditAnswers } from "../../lib/audit/answers-signal.js";
 import { registryClauses } from "../../lib/audit/clauses.js";
 import { auditInputs, planReviewInputs } from "../../lib/audit/inputs.js";
 import { markPlanReview, markReviewInputs } from "../../lib/audit/review-signal.js";
+import { bookkeepingRoots } from "../../lib/bookkeeping/roots.js";
 import { markAmendmentStop } from "../../lib/build/amendment-signal.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
 import { buildStepModel } from "../../lib/build/step-model.js";
-import { getDraftMaxAgeDays } from "../../lib/config.js";
+import { getDraftMaxAgeDays, getPlanningDir } from "../../lib/config.js";
 import {
 	draftHomeOf,
 	findDraft,
@@ -41,6 +42,8 @@ import {
 	startPlan,
 } from "../../lib/plans/index.js";
 import { plansTestsOutcome } from "../../lib/plans/plan-tests.js";
+import { reportClause } from "../../lib/questions/signals.js";
+import { openFollowOns } from "../../lib/release/follow-on-refusal.js";
 import { planTimeText } from "../../lib/timing/view.js";
 import { livePlanCopy, resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
@@ -384,8 +387,25 @@ export function plansLand(cwd: string, name: string): Promise<void> {
 	return planVerb(async () => {
 		const l = await landPlan(cwd, name);
 		const checks = l.checks.length > 0 ? ` after ${l.checks.length} check(s)` : "";
+		await landedBesideFollowOns(cwd);
 		return `Landed ${l.plan} on the trunk at ${l.merge.slice(0, 8)}${checks}; its worktree and branch are removed.`;
 	});
+}
+
+/**
+ * A landing that succeeded with a follow-on plan open kept the clause that landing never
+ * waits for one (decisions-as-questions); reported from here, since `plans/land.ts` never
+ * reads a question.
+ */
+async function landedBesideFollowOns(cwd: string): Promise<void> {
+	try {
+		const trunk = bookkeepingRoots(cwd).trunk;
+		if (openFollowOns(getPlanningDir(trunk)).length > 0) {
+			await reportClause(trunk, "landing-never-waits", { outcome: "upheld" });
+		}
+	} catch {
+		// A signal is best-effort.
+	}
 }
 
 /**

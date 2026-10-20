@@ -8,6 +8,11 @@ import {
   planWaiting,
   type Waiting,
 } from "@infinitedusky/indusk-mcp/plans/waiting";
+import {
+  readQuestions,
+  sweepHistory,
+} from "@infinitedusky/indusk-mcp/questions";
+import { readQuestionWaitSetting } from "@infinitedusky/indusk-mcp/session";
 import { buildState, planningState } from "./build-host";
 
 export { withSituations } from "./plan-situation";
@@ -49,7 +54,11 @@ export async function readWaiting(
     stoppedAt: buildState(project, p.name)?.stop?.step ?? null,
   }));
   const amendments = await amendmentCounts(projectPath, plans);
+  // Every read sends a question whose stored time has come on with its recommendation,
+  // then lists the plans' questions as the sweep left them (decisions-as-questions).
+  const questions = plans.flatMap((p) => sweptQuestions(projectPath, p.name));
   return planWaiting({
+    questions,
     sessions,
     plans: plans.map(snapshotOf),
     builds,
@@ -85,6 +94,37 @@ export function readPlanHistory(
 ): DecisionEntry[] {
   try {
     return readHistory(projectPath, plan);
+  } catch {
+    return [];
+  }
+}
+
+/** Sweep one plan's questions and return them as they now stand; a history that cannot be read lists none. */
+function sweptQuestions(projectPath: string, plan: string) {
+  try {
+    return sweepHistory(
+      projectPath,
+      plan,
+      Date.now(),
+      () => readQuestionWaitSetting(),
+      (q, choice) => {
+        if (!q.session) return;
+        sessionManager().reply(
+          q.session.id,
+          { requestId: q.session.requestId, answers: { [q.text]: choice } },
+          "rule",
+        );
+      },
+    );
+  } catch {
+    return [];
+  }
+}
+
+/** The plan's recorded questions, each as last recorded; none when they cannot be read. */
+export function readPlanQuestions(projectPath: string, plan: string) {
+  try {
+    return readQuestions(projectPath, plan);
   } catch {
     return [];
   }

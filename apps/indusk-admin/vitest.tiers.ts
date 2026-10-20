@@ -51,6 +51,8 @@ export const SYSTEM = [
 	// The master plan page, the retitled plan and nav screens and the
 	// subplan-row stories read approved and are held by value (plan-stories A6).
 	"src/__tests__/plan-stories.contract.test.ts",
+	// The question rows read approved, are catalogued and lint clean (decisions-as-questions T22).
+	"src/__tests__/question-looks.test.ts",
 	// tests-never-make-us-wait: a test that starts the command line, git or Node is a
 	// process start, and process starts were 80% of the everyday suite's time. They run
 	// when a plan's rows name them or its changes reach them, and in the system tier.

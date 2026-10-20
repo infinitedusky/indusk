@@ -4,8 +4,12 @@ import {
   WAITING_KINDS,
   type WaitingOn,
 } from "@infinitedusky/indusk-mcp/plans/waiting";
+import {
+  answerQuestionRecord,
+  readQuestions,
+} from "@infinitedusky/indusk-mcp/questions";
 import type { NextRequest } from "next/server";
-import { startRelease } from "@/lib/build-host";
+import { resumeAfterQuestion, startRelease } from "@/lib/build-host";
 import { answerDecision, type DecisionChoice } from "@/lib/decisions";
 import { readWaiting } from "@/lib/decisions-reader";
 import { readActivePlans } from "@/lib/planning-reader";
@@ -78,6 +82,16 @@ export async function POST(
         approve: () => approvePlan(root, name),
         release: () => startRelease(project, name),
         record: (entry) => appendDecision(root, name, entry),
+        questions: {
+          answer: (id, text) => {
+            answerQuestionRecord(root, name, id, text);
+          },
+          resume: () => resumeAfterQuestion(project, name),
+          byRequest: (requestId) =>
+            readQuestions(root, name).find(
+              (q) => q.session?.requestId === requestId,
+            )?.id,
+        },
       },
       project,
       waiting,

@@ -6,6 +6,7 @@ import { isAlive, realProcessReads } from "../process-identity.js";
 import { readSessionsMax } from "./limits.js";
 import { decideBuildPermission, decideConfinedPermission } from "./permissions.js";
 import type { PermissionEvent, QuestionEvent, SessionKind } from "./protocol.js";
+import { resumeFromQuestion, runningCount, type Slots, waitOnQuestion } from "./question-wait.js";
 import { type Session, type SessionOptions, type StartedEvent, startSession } from "./start.js";
 
 /**
@@ -114,6 +115,8 @@ export class SessionManager {
 	private readonly max: number | undefined;
 	/** Builds admitted under the cap, by `project\0plan`: each holds one place from its start to its end. */
 	private readonly builds = new Set<string>();
+	/** Plans waiting on a held question, by `project\0plan`: no session, no place (question-wait.ts). */
+	private readonly questionWaits = new Set<string>();
 
 	constructor(
 		opts: { recordPath?: string; start?: (opts: SessionOptions) => Session; max?: number } = {},
@@ -254,7 +257,7 @@ export class SessionManager {
 		const unadmitted = this.running().filter(
 			(r) => !(r.kind === "build" && this.builds.has(buildKey(r.project, r.plan))),
 		);
-		if (this.builds.size + unadmitted.length < max) return undefined;
+		if (runningCount(this.slots(unadmitted)) < max) return undefined;
 		const names = [
 			...[...this.builds].map((k) => `build for ${k.split("\0")[1]}`),
 			...unadmitted.map((r) => `${r.kind} for ${r.plan}`),
@@ -262,6 +265,40 @@ export class SessionManager {
 		return new SessionBusy(
 			`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
 		);
+	}
+
+	private slots(unadmitted: SessionRecord[]): Slots {
+		return {
+			running: [...this.builds, ...unadmitted.map((r) => r.id)],
+			waiting: [...this.questionWaits],
+		};
+	}
+
+	/**
+	 * A plan's run ended on a question that holds: it holds no place while it waits.
+	 * Called once the run's own place is let go (the host frees it when the run ends).
+	 */
+	holdQuestion(project: string, plan: string): void {
+		const key = buildKey(project, plan);
+		const next = waitOnQuestion(
+			{ running: [...this.builds], waiting: [...this.questionWaits] },
+			key,
+			{ holds: true },
+		);
+		this.questionWaits.add(key);
+		for (const p of [...this.builds]) if (!next.running.includes(p)) this.builds.delete(p);
+	}
+
+	/** A held question was answered: the plan no longer waits (its run asks for a place again). */
+	releaseQuestion(project: string, plan: string): void {
+		const key = buildKey(project, plan);
+		const next = resumeFromQuestion({ running: [], waiting: [...this.questionWaits] }, key);
+		if (!next.waiting.includes(key)) this.questionWaits.delete(key);
+	}
+
+	/** Whether the plan's run is waiting on a held question. */
+	waitingOnQuestion(project: string, plan: string): boolean {
+		return this.questionWaits.has(buildKey(project, plan));
 	}
 
 	/** The plan's running session of `kind` (either kind when omitted), if any. */

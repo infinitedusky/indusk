@@ -131,6 +131,8 @@ export interface ReleaseProject extends PromiseProject {
 	run(args: string[]): RunResult;
 	/** `indusk release`. */
 	release(): RunResult;
+	/** `indusk release` run from another checkout of the project, such as a linked worktree. */
+	releaseFrom(cwd: string): RunResult;
 	/** `indusk checks slow`: records a green run at the current commit; throws if it is not green. */
 	recordGreenRun(): void;
 	/** Change what the slow command writes and how it exits, for a later release. */
@@ -248,6 +250,7 @@ export function releaseProject(opts: ReleaseProjectOptions = {}): ReleaseProject
 		dir,
 		run,
 		release: () => run(["release"]),
+		releaseFrom: (cwd) => runCli(cwd, ["release"], env),
 		recordGreenRun() {
 			const r = run(["checks", "slow"]);
 			if (r.code !== 0)

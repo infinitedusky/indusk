@@ -53,6 +53,22 @@ export function appendDecision(
 	plan: string,
 	entry: DecisionEntry,
 ): { entry: DecisionEntry; commit: NoteCommit } {
+	const commit = appendHistoryLine(anyCheckout, plan, lineOf(entry), entry.answer);
+	return { entry, commit };
+}
+
+/**
+ * Append one line to `plan`'s history and commit it, as `appendDecision` does.
+ * The one writer of the file: the question records (`questions/history.ts`) write
+ * their own line shape through it, so a question and an answer share one lock and
+ * one commit path. A line that is not a decision line is skipped by `readHistory`.
+ */
+export function appendHistoryLine(
+	anyCheckout: string,
+	plan: string,
+	line: string,
+	subject: string,
+): NoteCommit {
 	if (!PLAN_NAME.test(plan)) {
 		throw new Error(`${JSON.stringify(plan)} is not a plan name (one kebab-case segment)`);
 	}
@@ -62,14 +78,20 @@ export function appendDecision(
 	return withLock(lock, () => {
 		mkdirSync(dirname(file), { recursive: true });
 		if (!existsSync(file)) appendFileSync(file, header(plan));
-		appendFileSync(file, `${lineOf(entry)}\n`);
-		const commit = commitNote(
+		appendFileSync(file, `${line}\n`);
+		return commitNote(
 			bookkeepingRoots(anyCheckout).trunk,
 			[join(HISTORY_DIR, `${plan}.md`)],
-			`chore(indusk): ${plan} — ${subjectLine(entry.answer)}`,
+			`chore(indusk): ${plan} — ${subjectLine(subject)}`,
 		);
-		return { entry, commit };
 	});
+}
+
+/** The history file's raw lines for `plan`; none when it has none. */
+export function readHistoryLines(anyCheckout: string, plan: string): string[] {
+	if (!PLAN_NAME.test(plan)) return [];
+	const file = historyPath(anyCheckout, plan);
+	return existsSync(file) ? readFileSync(file, "utf-8").split("\n") : [];
 }
 
 /** Every answer recorded for `plan`, oldest first; none when it has no history. */
@@ -77,8 +99,7 @@ export function readHistory(anyCheckout: string, plan: string): DecisionEntry[] 
 	if (!PLAN_NAME.test(plan)) return [];
 	const file = historyPath(anyCheckout, plan);
 	if (!existsSync(file)) return [];
-	return readFileSync(file, "utf-8")
-		.split("\n")
+	return readHistoryLines(anyCheckout, plan)
 		.map(parseLine)
 		.filter((e): e is DecisionEntry => e !== null);
 }

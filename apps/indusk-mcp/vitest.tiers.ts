@@ -160,6 +160,8 @@ export const SYSTEM = [
 	"src/__tests__/record-release-commit.test.ts",
 	"src/__tests__/registry-leak-scan.test.ts",
 	"src/__tests__/release-bugfix-plan.test.ts",
+	"src/__tests__/release-follow-on.test.ts",
+	"src/__tests__/questions-live.test.ts",
 	"src/__tests__/release-guard-install.test.ts",
 	"src/__tests__/reopened-plan-worktree.test.ts",
 	"src/__tests__/repos-root-single-definition.test.ts",

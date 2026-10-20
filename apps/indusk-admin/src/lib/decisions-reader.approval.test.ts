@@ -1,8 +1,15 @@
 // promise: approval-waits-for-a-finished-plan
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PLAN_REVIEW_QUESTIONS } from "../../../indusk-mcp/src/lib/audit/answers";
 import { planReviewHash } from "../../../indusk-mcp/src/lib/audit/review-hash";
 
 /**
@@ -18,12 +25,8 @@ import { planReviewHash } from "../../../indusk-mcp/src/lib/audit/review-hash";
  * (the session host and the registry), as the sibling planning tests do.
  */
 
-const QUESTIONS = [
-  "Do the planned tests prove each promise's sentence, or something narrower?",
-  "Does the impl build what each promise claims, and nothing it does not?",
-  "Which skip reason would you not accept?",
-  "What else would have to change for each promise to hold?",
-];
+// The package's own question list, so a question added there is put to the fixture too.
+const QUESTIONS: readonly string[] = PLAN_REVIEW_QUESTIONS;
 
 const writing = vi.hoisted(() => ({ on: false }));
 
@@ -33,7 +36,9 @@ vi.mock("./session-host", () => ({
     forPlan: () => undefined,
     admitBuild: () => () => {},
     running: () =>
-      writing.on ? [{ id: "s1", project: "proj", plan: "p", kind: "planning" }] : [],
+      writing.on
+        ? [{ id: "s1", project: "proj", plan: "p", kind: "planning" }]
+        : [],
     pendingQuestion: () => null,
     isWriting: () => writing.on,
   }),
@@ -66,7 +71,9 @@ const reviewText = (opts: { read: string | null; answered: boolean }) =>
         ? [
             "- a finding",
             "  - breaks when: a run stops early",
-            ...(opts.answered ? ["  - answer: fix — the rule reads the file"] : []),
+            ...(opts.answered
+              ? ["  - answer: fix — the rule reads the file"]
+              : []),
           ].join("\n")
         : "- Nothing.",
       "",
@@ -110,11 +117,19 @@ async function approveReady(): Promise<boolean> {
   return review.exists && review.complete && review.stale !== true;
 }
 
-const writeReview = (opts: { read: "now" | "older" | null; answered: boolean }) =>
+const writeReview = (opts: {
+  read: "now" | "older" | null;
+  answered: boolean;
+}) =>
   writeFileSync(
     join(planDir(), "plan-review.md"),
     reviewText({
-      read: opts.read === null ? null : opts.read === "now" ? documentsHash() : "0".repeat(64),
+      read:
+        opts.read === null
+          ? null
+          : opts.read === "now"
+            ? documentsHash()
+            : "0".repeat(64),
       answered: opts.answered,
     }),
   );
@@ -157,7 +172,8 @@ describe("approving agrees with the offer", () => {
 
   for (const s of states) {
     it(`A54: ${s.name}: the offer and plans approve's check give one answer`, async () => {
-      if (s.read !== "absent") writeReview({ read: s.read, answered: s.answered });
+      if (s.read !== "absent")
+        writeReview({ read: s.read, answered: s.answered });
       const offered = (await waitingOn()).includes("approval");
       expect(await approveReady()).toBe(offered);
     });

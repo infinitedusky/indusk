@@ -16,6 +16,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerAgentTools } from "../tools/agent-tools.js";
 import { registerContextTools } from "../tools/context-tools.js";
+import { registerDecisionTools } from "../tools/decision-tools.js";
 import { registerDocumentTools } from "../tools/document-tools.js";
 import { registerHighlightTools } from "../tools/highlight-tools.js";
 import { registerLessonTools } from "../tools/lesson-tools.js";
@@ -72,6 +73,7 @@ export async function startServer(): Promise<void> {
 		registerLessonTools(server, projectRoot);
 		registerHighlightTools(server, projectRoot);
 		registerAgentTools(server, projectRoot);
+		registerDecisionTools(server);
 		registerTelemetryTools(server);
 		console.error("[indusk] tools registered");
 

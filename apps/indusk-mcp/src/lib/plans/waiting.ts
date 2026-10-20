@@ -1,6 +1,7 @@
 import type { PlanningStop } from "../build/planning-runner.js";
 import type { DocumentPosition } from "../lifecycle.js";
-import type { Question } from "../session/protocol.js";
+import type { Question as QuestionRecord } from "../questions/record.js";
+import type { Question as AskedQuestion } from "../session/protocol.js";
 import { requiredDocuments } from "../workflow-types.js";
 import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
 
@@ -11,6 +12,10 @@ import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
  *   - **question** — a running admin session for the plan has asked
  *     (`AskUserQuestion`) and nobody has answered; it waits at the plan's
  *     current step. A blocked agent outranks the rest.
+ *   - **question** (held) — an unattended run asked a decision through
+ *     `ask_decision` and its question holds (no stored deadline): the run ended
+ *     and freed its place, and the plan waits with no timer until the person
+ *     answers; the answer resumes the run.
  *   - **review** — its build stopped at review, or the plan stands at review
  *     (the build's stop is held in memory; the position is on disk, so it
  *     survives a restart of the admin).
@@ -58,7 +63,7 @@ export interface WaitingSession {
 	plan: string;
 	kind: "planning" | "build";
 	/** The question the session asked and nobody has answered yet, if any. */
-	question: { requestId: string; questions: Question[] } | null;
+	question: { requestId: string; questions: AskedQuestion[] } | null;
 	/**
 	 * The session's turn is open — it is working, not idle waiting for the
 	 * person. Absent means writing: approval is withheld rather than offered early.
@@ -89,6 +94,8 @@ export interface WaitingInput {
 	amendments?: ReadonlyArray<{ plan: string; count: number }>;
 	/** The admin's planning runs; absent (an admin restart) reads as no run. */
 	plannings?: ReadonlyArray<WaitingPlanning>;
+	/** The plans' question records; one still waiting with no stored deadline holds its plan. */
+	questions?: ReadonlyArray<QuestionRecord>;
 }
 
 /** One question of an ask: its words and the two answers the card offers. */
@@ -111,6 +118,14 @@ export interface Waiting {
 	alternative: string;
 	/** The session's request a question's answer goes to. */
 	requestId?: string;
+	/** The held question a plan waits on (no session asked it any more): answered by recording, then the run resumes. */
+	questionId?: string;
+	/** The question's stored time (ms) when it waits on a set time with no session left to send it ahead. */
+	dueAt?: number;
+	/** The question is answered and its run did not restart: accepting starts the run again, answering nothing. */
+	restart?: boolean;
+	/** The pending request is a recorded question: the plan page draws its question row, not a second card. */
+	recordedQuestion?: string;
 	/** Every question the agent asked, in its order; present for a question. */
 	questions?: WaitingQuestion[];
 }
@@ -131,11 +146,14 @@ export function planWaiting({
 	builds = [],
 	amendments = [],
 	plannings = [],
+	questions = [],
 }: WaitingInput): Waiting[] {
 	const waiting: Waiting[] = [];
 	for (const plan of plans) {
 		const one =
-			askedOf(plan, sessions) ??
+			askedOf(plan, sessions, questions) ??
+			heldQuestion(plan, questions) ??
+			unrestarted(plan, questions, sessions, plannings) ??
 			(amended(plan.name, amendments) ? amendment(plan.name) : null) ??
 			(atReview(plan, builds) ? review(plan.name) : null) ??
 			(awaitingApproval(plan) &&
@@ -150,13 +168,40 @@ export function planWaiting({
 	return waiting;
 }
 
+/** The recommended option first, then the first other one: what a card offers as accept and alternative. */
+function offered(q: QuestionRecord): { accept: string; alternative: string } {
+	const labels = q.options.map((o) => o.label);
+	const accept = labels.includes(q.recommended) ? q.recommended : (labels[0] ?? "Yes");
+	return { accept, alternative: labels.find((l) => l !== accept) ?? "No" };
+}
+
 function askedOf(
 	plan: PlanSnapshot & { name: string },
 	sessions: ReadonlyArray<WaitingSession>,
+	questions: ReadonlyArray<QuestionRecord>,
 ): Waiting | null {
 	const asked = sessions.find((s) => s.plan === plan.name && s.question)?.question;
 	const first = asked?.questions[0];
 	if (!asked || !first) return null;
+	const recorded = questions.find(
+		(q) =>
+			q.plan === plan.name && q.state === "waiting" && q.session?.requestId === asked.requestId,
+	);
+	if (recorded) {
+		const { accept, alternative } = offered(recorded);
+		return {
+			plan: plan.name,
+			on: "question",
+			step: stepAt(plan)?.name ?? "Planning",
+			decision: first.question,
+			accept,
+			alternative,
+			requestId: asked.requestId,
+			recordedQuestion: recorded.id,
+			...(typeof recorded.dueAt === "number" ? { dueAt: recorded.dueAt } : {}),
+			questions: [{ question: first.question, accept, alternative }],
+		};
+	}
 	return {
 		plan: plan.name,
 		on: "question",
@@ -170,6 +215,59 @@ function askedOf(
 			accept: q.options[0]?.label ?? "Yes",
 			alternative: q.options[1]?.label ?? "No",
 		})),
+	};
+}
+
+/**
+ * The plan's oldest question that waits with no session to send it on: one that holds
+ * (no stored deadline), or one on a set time whose session has ended, which shows its time left.
+ */
+function heldQuestion(
+	plan: PlanSnapshot & { name: string },
+	questions: ReadonlyArray<QuestionRecord>,
+): Waiting | null {
+	const q = questions.find((x) => x.plan === plan.name && x.state === "waiting" && !x.session);
+	if (!q) return null;
+	const { accept, alternative } = offered(q);
+	return {
+		plan: plan.name,
+		on: "question",
+		step: stepAt(plan)?.name ?? "Build",
+		decision: q.text,
+		accept,
+		alternative,
+		questionId: q.id,
+		...(typeof q.dueAt === "number" ? { dueAt: q.dueAt } : {}),
+		questions: [{ question: q.text, accept, alternative }],
+	};
+}
+
+/**
+ * A question was answered while its run was stopped and the run did not start again (a
+ * restart refused at `sessions.max`, an admin that went down): the plan waits for the run
+ * to restart, and Build starts it.
+ */
+function unrestarted(
+	plan: PlanSnapshot & { name: string },
+	questions: ReadonlyArray<QuestionRecord>,
+	sessions: ReadonlyArray<WaitingSession>,
+	plannings: ReadonlyArray<WaitingPlanning>,
+): Waiting | null {
+	const q = questions.find(
+		(x) => x.plan === plan.name && x.state === "answered" && x.answer !== undefined && !x.told,
+	);
+	if (!q || sessions.some((s) => s.plan === plan.name) || planningGoing(plan.name, plannings))
+		return null;
+	return {
+		plan: plan.name,
+		on: "question",
+		step: stepAt(plan)?.name ?? "Build",
+		decision: `${q.text} — answered, its run did not restart. Start it again so it hears: ${q.answer}`,
+		accept: "Start the run again",
+		alternative: "Not yet",
+		questionId: q.id,
+		restart: true,
+		questions: [{ question: q.text, accept: "Start the run again", alternative: "Not yet" }],
 	};
 }
 

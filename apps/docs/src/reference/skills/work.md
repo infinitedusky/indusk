@@ -262,7 +262,7 @@ See the [Falsification Ritual guide](/guide/falsification-ritual) for the bounty
 
 A build started from the admin (Build, on an approved plan's page) runs each step as a fresh session of the developer's own `claude`, with nobody to answer it. `indusk plans next` decides each step: `/work`, then `/falsify`, `/cleanup` and `/work` again, until the plan reaches review. Each session runs with `INDUSK_GATE_POLICY=auto`, and in it the skill:
 
-- **does not ask.** A question is answered with "decide on your own judgement and record why", so the decision and its reason go into the plan.
+- **asks a choice the plan does not settle as a question**, with the `ask_decision` tool (options, its recommendation and reason, a cost, what each option changes), and cites it as `question: <id>` wherever the plan records the choice. A choice the plan itself settles needs no question: it is written into the plan with its reason. A plain `AskUserQuestion` is refused, naming `ask_decision`. See [Questions](/guide/questions).
 - **skips a gate item only with its reason**, as `(none needed — <why>)` or `skip-reason: <why>`. `check-gates.js` refuses a bare `(none needed)` under this policy, and the review lists every skip.
 - **stops at an item the plan declared for a person** (a Deferred Verification row, a manual or visual check) and leaves it unchecked; the build stops there and shows it.
 - **records a `blocker:` and stops** rather than looping on a gate that won't pass.
