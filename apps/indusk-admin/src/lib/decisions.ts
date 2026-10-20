@@ -117,6 +117,24 @@ export async function answerDecision(
       `${waiting.plan} waits on an amendment, which is answered on the amendment card`,
     );
   }
+  if (waiting.on === "question" && waiting.restart && deps.questions) {
+    // The question is answered and kept; only its run is missing. Starting it again answers nothing,
+    // so no second decision is recorded.
+    if (choice.choice !== "accept") {
+      throw new Error(
+        `${waiting.plan}'s question is already answered; its run waits to be started again`,
+      );
+    }
+    await deps.questions.resume();
+    return {
+      answer: waiting.accept,
+      via: "resume",
+      commit: {
+        committed: false,
+        reason: "the answer was recorded earlier; this only started the run",
+      },
+    };
+  }
   const answer = answerOf(waiting, choice);
   const reached = await deliver(deps, project, waiting, choice, answer);
   // The answer has reached its target: a history that cannot be written is

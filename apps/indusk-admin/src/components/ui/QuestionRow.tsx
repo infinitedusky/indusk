@@ -27,6 +27,8 @@ export interface QuestionRowProps {
   followOn?: ReactNode;
   /** Answer with an option; when absent the options are only shown. */
   onChoose?: (label: string) => void;
+  /** Keep what was done on a question that went ahead: answers with it, so no follow-on opens. */
+  onKeep?: () => void;
   /** The "Reply in words" control. */
   onReply?: () => void;
   disabled?: boolean;
@@ -74,6 +76,7 @@ export function QuestionRow({
   done,
   followOn,
   onChoose,
+  onKeep,
   onReply,
   disabled = false,
   children,
@@ -113,6 +116,17 @@ export function QuestionRow({
         </p>
       ) : null}
       <div className="flex flex-wrap gap-snug">
+        {wentAhead && onKeep ? (
+          <button
+            type="button"
+            data-testid="question-keep"
+            disabled={disabled}
+            onClick={onKeep}
+            className={`${OPTION} border-ink bg-ink text-surface`}
+          >
+            Keep {done}
+          </button>
+        ) : null}
         {options.map((o) => (
           <button
             key={o.label}

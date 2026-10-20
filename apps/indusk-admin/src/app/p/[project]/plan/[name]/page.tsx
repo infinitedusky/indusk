@@ -157,7 +157,9 @@ export default async function PlanPage({ params }: PlanPageProps) {
           />
           {plan.malformed ? <MalformedNotice /> : null}
           <WaitingAmendments project={project} plan={name} parts={parts} />
-          {waiting && waiting.on !== "amendment" ? (
+          {waiting &&
+          waiting.on !== "amendment" &&
+          !waiting.recordedQuestion ? (
             <DecisionCard project={project} waiting={waiting} />
           ) : null}
           <MasterStory
@@ -199,9 +201,12 @@ export default async function PlanPage({ params }: PlanPageProps) {
       />
       <WaitingAmendments project={project} plan={name} parts={parts} />
       {plan.situation ? <PlanSituationLine situation={plan.situation} /> : null}
-      {waiting && waiting.on !== "amendment" && !waiting.questionId ? (
+      {waiting &&
+      waiting.on !== "amendment" &&
+      !waiting.questionId &&
+      !waiting.recordedQuestion ? (
         <DecisionCard project={project} waiting={waiting} />
-      ) : waiting?.questionId ? null : (
+      ) : waiting?.questionId || waiting?.recordedQuestion ? null : (
         <PlanStatusCard plan={plan} dates={dates} />
       )}
       <QuestionRows

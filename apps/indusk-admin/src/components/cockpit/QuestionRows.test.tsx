@@ -187,6 +187,45 @@ describe("T6 — a question that went ahead says what was done and when", () => 
   });
 });
 
+describe("T37 — what was done can be kept in one click", () => {
+  it("answers with what was done, which differs from nothing, and offers another choice beside it", async () => {
+    const went: Question = {
+      ...base,
+      state: "went-ahead",
+      done: "sqlite",
+      wentAheadAt: NOW - 60_000,
+    };
+    const { container } = await view(
+      <QuestionRows
+        project="p"
+        plan="seat-holds"
+        questions={[went]}
+        now={NOW}
+      />,
+    );
+    const keep = container.querySelector(
+      '[data-testid="question-keep"]',
+    ) as HTMLElement;
+    expect(keep.textContent).toBe("Keep sqlite");
+    expect(container.textContent).toContain("Choose files instead");
+    keep.click();
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]?.body).toMatchObject({ id: "q-1", text: "sqlite" });
+  });
+
+  it("a question still waiting has no keep", async () => {
+    const { container } = await view(
+      <QuestionRows
+        project="p"
+        plan="seat-holds"
+        questions={[base]}
+        now={NOW}
+      />,
+    );
+    expect(container.querySelector('[data-testid="question-keep"]')).toBeNull();
+  });
+});
+
 describe("T13, T14 — every state is readable, and the follow-on is linked", () => {
   it("lists answered and late-answered questions with recommendation, answer, what was done and the follow-on link", async () => {
     const answered: Question = {

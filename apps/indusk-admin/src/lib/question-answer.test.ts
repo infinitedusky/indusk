@@ -75,6 +75,46 @@ describe("answerOneQuestion", () => {
     expect(calls).not.toContain("resume");
   });
 
+  it("T29 — an answer to a question whose session has gone is recorded and starts the run again", async () => {
+    const { d, calls } = deps(
+      q({ dueAt: 5, session: { id: "s1", requestId: "r1" } }),
+    );
+    d.tellSession = () => {
+      throw new Error("no session s1 is running");
+    };
+    const out = await answerOneQuestion(d, "q-1", "b");
+    expect(out.via).toBe("resume");
+    expect(calls).toEqual(["record q-1 b", "decision b", "resume"]);
+  });
+
+  it("a refusal from a live session other than a missing one is still the person's to see", async () => {
+    const { d, calls } = deps(
+      q({ dueAt: 5, session: { id: "s1", requestId: "r1" } }),
+    );
+    d.tellSession = () => {
+      throw new Error("request r1 was already answered");
+    };
+    await expect(answerOneQuestion(d, "q-1", "b")).rejects.toThrow(
+      /already answered/,
+    );
+    expect(calls).toEqual([]);
+  });
+
+  it("T32 — a restart refused at the session limit keeps the answer and says why", async () => {
+    const { d, calls } = deps(q());
+    d.resume = async () => {
+      throw new Error("4 sessions are running, the most allowed");
+    };
+    const out = await answerOneQuestion(d, "q-1", "b");
+    expect(out.restartRefused).toMatch(/4 sessions/);
+    expect(calls).toEqual(["record q-1 b", "decision b"]);
+  });
+
+  it("T38 — a second late answer is accepted, one given in time is not", async () => {
+    const { d } = deps(q({ state: "answered-late", done: "a", answer: "b" }));
+    expect((await answerOneQuestion(d, "q-1", "c")).via).toBe("late");
+  });
+
   it("refuses an empty reply, an answered question and an unknown one, recording nothing", async () => {
     const { d, calls } = deps(q());
     await expect(answerOneQuestion(d, "q-1", "  ")).rejects.toThrow(

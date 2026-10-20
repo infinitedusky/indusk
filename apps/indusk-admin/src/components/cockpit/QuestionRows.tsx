@@ -59,6 +59,10 @@ export function QuestionRows({
     }
     setReplying(null);
     setWords("");
+    // The answer is kept; say when the run could not start again to hear it.
+    const refused = r.body.restartRefused;
+    if (typeof refused === "string")
+      setProblem(`Answer kept; the run did not restart: ${refused}`);
     router.refresh();
   };
 
@@ -85,6 +89,9 @@ export function QuestionRows({
               }))}
               disabled={busy}
               onChoose={(label) => void answer(q.id, label)}
+              {...(went && q.done
+                ? { onKeep: () => void answer(q.id, q.done as string) }
+                : {})}
               {...(went ? {} : { onReply: () => setReplying(q.id) })}
             >
               {replying === q.id ? (
