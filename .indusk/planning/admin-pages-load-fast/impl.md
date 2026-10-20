@@ -13,9 +13,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
-approved_brief: "705101671061dbdd33bf5ead0a0c73ed23585caf2a95a2883cccd930b070686d"
+approved_brief: "f0e0d676b029281b3d85e19f0b39399de131334312494d0b912c00f8298231ab"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-20T13:32:56.507Z"
+approved_at: "2026-10-20T13:43:46.511Z"
 ---
 
 # Admin pages load fast — Impl
