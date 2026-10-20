@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
@@ -321,7 +321,77 @@ interface PlanReadContext {
   words?: Record<string, string>;
 }
 
-async function readPlanFolder(
+/**
+ * A plan folder read once per change to its files: reading one parses every
+ * document and walks its rows, and a page reads every plan of every worktree
+ * (about 180 ms of the nav on dusk's 57, every request). The key is a
+ * size-and-time signature of the folder (two levels down), of the project's
+ * promise files (the readiness reads them) and of the facts the read is
+ * against; a kept plan is also dropped after `PLAN_KEPT_MS`, because the
+ * readiness also reads test files the signature does not cover. A read that
+ * fails is never kept.
+ */
+const PLAN_KEPT_MS = 30_000;
+const planKept = new Map<
+  string,
+  { key: string; at: number; plan: Promise<Plan> }
+>();
+
+/** Every file's name, size and mtime under `dir`, two levels down: a file edited in place changes it. */
+function treeSignature(dir: string, depth = 2): string {
+  try {
+    const parts: string[] = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        parts.push(
+          depth > 0 ? `${entry.name}/(${treeSignature(path, depth - 1)})` : entry.name,
+        );
+      } else {
+        const stat = statSync(path);
+        parts.push(`${entry.name}:${stat.size}:${stat.mtimeMs}`);
+      }
+    }
+    return parts.join(",");
+  } catch {
+    return "unreadable";
+  }
+}
+
+function readPlanFolder(
+  planDir: string,
+  name: string,
+  archived: boolean,
+  context: PlanReadContext = {},
+): Promise<Plan> {
+  const marker = `${sep}.indusk${sep}planning${sep}`;
+  const at = planDir.lastIndexOf(marker);
+  const promises =
+    at === -1 ? "" : treeSignature(join(planDir.slice(0, at), ".indusk", "promises"), 1);
+  const { boundaries = { records: [] }, projectRoot, words } = context;
+  const key = JSON.stringify([
+    archived,
+    projectRoot ?? null,
+    words ?? null,
+    "error" in boundaries
+      ? boundaries.error
+      : boundaries.records.filter((r) => r.plan === name),
+    promises,
+    treeSignature(planDir),
+  ]);
+  const kept = planKept.get(planDir);
+  if (kept && kept.key === key && Date.now() - kept.at < PLAN_KEPT_MS) {
+    return kept.plan;
+  }
+  const plan = readPlanFolderFresh(planDir, name, archived, context);
+  planKept.set(planDir, { key, at: Date.now(), plan });
+  plan.catch(() => {
+    if (planKept.get(planDir)?.plan === plan) planKept.delete(planDir);
+  });
+  return plan;
+}
+
+async function readPlanFolderFresh(
   planDir: string,
   name: string,
   archived: boolean,

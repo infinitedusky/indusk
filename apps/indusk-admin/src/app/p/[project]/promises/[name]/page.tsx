@@ -17,6 +17,7 @@ import {
   WhereItLives,
 } from "@/components/promise/PromiseProof";
 import { Box } from "@/components/ui/Box";
+import { startPage } from "@/lib/page-reads";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
@@ -40,8 +41,11 @@ interface PromisePageProps {
 export default async function PromisePage({ params }: PromisePageProps) {
   const { project, name } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("promise", projectPath ?? "");
   if (!projectPath || !projectPathExists(projectPath)) return null;
 
+  // The daemon is found from the kept process list, not a `ps` of this page's own.
+  await page.reads({ processList: true });
   const registry = registryOf(readProjectPromises(projectPath));
   const entry = registry?.promises.find(
     (p) => p.name === name || p.aliases.includes(name),
@@ -59,6 +63,7 @@ export default async function PromisePage({ params }: PromisePageProps) {
   const beside = registry.promises.filter(
     (p) => p.owner === entry.owner && p.name !== entry.name,
   );
+  page.finish(0);
 
   return (
     <div className="flex min-w-0 flex-col gap-5" data-testid="promise-page">
