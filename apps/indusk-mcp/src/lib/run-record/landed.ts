@@ -30,7 +30,7 @@ export interface GitReads {
 export const landingSubject = (plan: string): string => `Merge plan/${plan}: ${plan} landed`;
 
 /** The landing merge of either mode: a normal plan's exact subject, or a workbench plan's ending. */
-function isLandingOf(subject: string, plan: string): boolean {
+export function isLandingOf(subject: string, plan: string): boolean {
 	return (
 		subject === landingSubject(plan) ||
 		(subject.startsWith("Merge ") && subject.endsWith(`: ${plan} landed`))
@@ -118,8 +118,14 @@ function trunkOf(root: string, allowed: readonly string[]): string {
 	return pickTrunk(current, allowed, exists) ?? (current || "HEAD");
 }
 
-/** The code repository a workbench plan's `code.json` names, with its trunk; null for any other plan. */
-function codeRepoOf(root: string, plan: string): { dir: string; trunk: string } | null {
+/**
+ * The code repository a workbench plan's `code.json` names, and the branches its trunk is among;
+ * null for any other plan. Reads files only, no git, so the asynchronous reader shares it.
+ */
+export function codeRepoSpec(
+	root: string,
+	plan: string,
+): { dir: string; allowed: readonly string[] } | null {
 	if (!isWorkbench(root)) return null;
 	const folder = findPlanFolder(root, plan);
 	if (folder === null) return null;
@@ -134,8 +140,19 @@ function codeRepoOf(root: string, plan: string): { dir: string; trunk: string } 
 	// The worktree `code.json` names is removed at landing, so only the repo is read here.
 	const chosen = chooseCodeRepo(root, typeof repo === "string" ? repo : undefined);
 	if ("error" in chosen) return null;
-	const base = codeRepoBase(root, chosen.name);
-	return { dir: chosen.dir, trunk: trunkOf(chosen.dir, base ? [base] : getTrunkBranches(root)) };
+	return { dir: chosen.dir, allowed: trunkBranchesOf(root, chosen.name) };
+}
+
+/** The branches a workbench repo's trunk is among: its configured base branch, else the project's trunk branches. */
+export function trunkBranchesOf(root: string, repo: string): readonly string[] {
+	const base = codeRepoBase(root, repo);
+	return base ? [base] : getTrunkBranches(root);
+}
+
+/** The code repository a workbench plan's `code.json` names, with its trunk; null for any other plan. */
+function codeRepoOf(root: string, plan: string): { dir: string; trunk: string } | null {
+	const spec = codeRepoSpec(root, plan);
+	return spec === null ? null : { dir: spec.dir, trunk: trunkOf(spec.dir, spec.allowed) };
 }
 
 /**

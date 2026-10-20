@@ -37,5 +37,7 @@ export function runStatus(
 	if (record.stop) return { state: "stopped", reason: record.stopReason ?? record.stop.step };
 	const p = record.process;
 	if (p !== null && isOwnProcess(p.pid, [p.bin], deps, p.startedAt)) return { state: "running" };
+	// A live pid the process table could not show is not a gone process: say unknown.
+	if (p !== null && deps.unreadable?.(p.pid) === true) return { state: "unknown" };
 	return { state: "stopped", reason: PROCESS_GONE };
 }

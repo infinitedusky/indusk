@@ -79,7 +79,7 @@ describe("A8 — after the window both read fresh", () => {
 		};
 		const status = async () => {
 			const got = await keptRead("ps", readTable, { now: r.now });
-			return runStatus(record, processReadsFromTable(got.value), false, undefined);
+			return runStatus(record, processReadsFromTable(got.value), false);
 		};
 		expect((await status()).state).toBe("running");
 		// the process dies; inside the window the old reading still says running
@@ -276,7 +276,7 @@ describe("A27 — the landing reader and the merge-subjects reader share one rea
 				logs.push(args);
 				return "Merge plan/p: p landed\n";
 			}
-			if (args[0] === "branch") return "main\n";
+			if (args[0] === "branch" || args[0] === "for-each-ref") return "main\n";
 			return "";
 		};
 		const deps = { exec, now: () => 1_000 };
