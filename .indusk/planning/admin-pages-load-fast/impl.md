@@ -126,7 +126,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
   `indusk worktree create admin-pages-load-fast` (records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign admin-pages-load-fast <path>`). worktree-per-plan default; skip only if `worktree: none` in frontmatter. The plan's branch is `plan/admin-pages-load-fast`.
 
   </details>
-- [ ] Write the page-timing measure so it reports the time of every page route, fresh and kept, and fails when any is over one second.
+- [x] Write the page-timing measure so it reports the time of every page route, fresh and kept, and fails when any is over one second.
   <details><summary>Technical</summary>
 
   A1: `apps/indusk-admin/scripts/measure-pages.mjs`. Takes the admin's address from `indusk ui` (the daemon's stored address, never a guessed port), lists the page routes from the `page.tsx` files under `src/app/p/[project]` (plan, promises, looks, scorecards, research, draft and the home page), fetches each three times waiting `KEPT_FOR_MS` + 1 s between runs so every run reads fresh, then once more straight after (inside the window), prints each page's fresh median and kept time in seconds, exits non-zero when any is over 1.0 s. Today it prints about 17, 18 to 23 and 30 seconds for the three slow pages and exits 1: red on its own assertion. Run by hand at close (`manual:` rows read as unverified until recorded; the result is recorded in Build Phase 3).
