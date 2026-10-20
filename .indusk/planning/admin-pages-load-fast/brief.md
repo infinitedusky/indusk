@@ -59,7 +59,7 @@ Amended 2026-10-20 after the audit: two things on a page change besides how fast
 
 ### This plan makes
 
-None.
+None — the admin's pages draw what they drew; the only page changes are the scorecards header's words and how fresh the counts are, both listed under Not drawn.
 
 ### Not drawn
 
