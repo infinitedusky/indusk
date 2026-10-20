@@ -2,6 +2,8 @@
 title: "Admin pages load fast — Impl"
 date: 2026-10-20
 status: in-progress
+falsification: skipped
+falsification_reason: "hunted kept reads, async readers, standing cache; one race found, same claim as a cut item, moved"
 trajectory: required
 test_phases: required
 test_levels: required
