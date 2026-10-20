@@ -1,0 +1,7 @@
+# A unit row that injects the outcome of the very seam its clause depends on proves the function beside the seam; and plan-review fix tasks must be reconciled with the ADR and brief when added
+
+Why: in run-the-graph, unit rows for clauses injected what the clause depends on: the scheduler row returned a phase without any session launch, the hold row built its held input by hand, the merge rows injected the test outcome and the test selection, and the cascade row had no host for its tick. Every row was green while the launch, the hold path, the selection and the tick were unproven. Separately, the earlier "(plan review)" fix tasks were appended to the impl without being reconciled with the ADR and brief, so the documents disagreed (a refusal the ADR claimed that could not fire, a fix that contradicted the manual-path guard).
+
+What to do: for each clause row, name the seam the clause depends on (session launch, record to graph to scheduler, real test selection, tick host) and run that seam for real, with a stand-in process or fixture, in at least one row. Inject only what is outside the clause. When a review fix is added to the impl, edit the ADR decision and the test-plan row it changes in the same sitting, and re-read the brief sentence it touches.
+
+Pointer: .indusk/planning/run-the-graph/plan-review.md (first section, "Do the planned tests prove each promise's sentence"); see also a-test-narrower-than-its-promise-proves-the-narrower-thing-and-a-skip-reason-is-written-after-the-audit; highlight h-20261020-008.
