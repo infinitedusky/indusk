@@ -54,7 +54,9 @@ release refused: 2 follow-on plans are still open — seat-holds-q-1 (follow-on 
 
 A follow-on is closed once it is **landed**, **abandoned** or **archived**, and only then does the release go on. An ordinary plan never blocks it, and **landing never waits**: a plan lands, and a follow-on lands, whatever else is open. The dead-draft sweep (`indusk plans archive-dead`) leaves a follow-on alone however old it is, so a person closes it.
 
-`workflow.steps.release_follow_on` moves the wait: absent or `true` is the default (the release waits); `false` turns it off, for a project whose main deploys and which would rather wait at the pull request.
+A follow-on counts as closed once its plan has **landed on the trunk** (read from the merge `plans land` writes), even if its brief still says `draft` and its folder is not yet archived. A brief that cannot be parsed but names `follow_on_of` still blocks, as `unreadable`; `superseded` does not close one. The release reads the **trunk's** planning folder, where follow-ons are written, so running it from a linked worktree whose branch predates the follow-on still refuses.
+
+The wait cannot be switched off: `workflow.steps.release_follow_on: false` is refused when the config is read, naming the key (only the release's wait is built, so `false` could only turn the promise off). `true` or absent is the same.
 
 ## Outcome and exit
 

@@ -79,3 +79,12 @@ Each place that decides one of the plan's clauses reports it as **upheld** or **
 | A plan lands with a follow-on open | `landing-never-waits` |
 
 A report that cannot be written never fails what reported it. See [the decision](/decisions/decisions-as-questions).
+
+## What a time, a late answer and a lost session do
+
+- A question on a set time goes ahead at its stored time **whether or not the admin is open**: the session that holds it runs its own timer. The admin's page only catches up one whose session has gone.
+- An answer to a question whose session has since gone (an admin restart, a dead `claude`) is kept and starts the plan's run again, which is told the answer. If the restart is refused (the machine is at `sessions.max`), the answer stays kept, the plan stays under Needs you as answered and waiting to restart, and the response says why.
+- A question that went ahead can be **kept** in one click ("Keep <what was done>"): it answers with what was done and opens no follow-on. A second late answer to the same question rewrites the open follow-on instead of opening another.
+- The recommended option is always the first offered, on Needs you and on the plan page; a recorded question shows as its row, not as a second decision card.
+- A question that cannot be written to the plan's history stops the step as unable to continue. The session is never told to decide it itself.
+- The save-time check judges only the lines a step added, ignores the phrase inside quotes or backticks, also catches "made" and "chosen unattended", and asks every item of a list under such a line for its question.
