@@ -161,7 +161,12 @@ export async function readPlanParts(
 		};
 	});
 
-	const apps = await Promise.all(listApps(root).map((app) => readAppLooks(root, app)));
+	// Every mockup of every app is drawn only to find the listed looks; a brief that lists none reads no app.
+	const listed = listedLooks(brief);
+	const apps =
+		listed.length === 0
+			? []
+			: await Promise.all(listApps(root).map((app) => readAppLooks(root, app)));
 	const drawn = new Map<string, Drawn>();
 	for (const app of apps) {
 		if ("problem" in app) continue;
@@ -185,7 +190,7 @@ export async function readPlanParts(
 			});
 		}
 	}
-	const looks = listedLooks(brief).map(({ name, relation }) => {
+	const looks = listed.map(({ name, relation }) => {
 		const found = drawn.get(name);
 		return found
 			? { name, relation, ...found }

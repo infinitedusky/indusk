@@ -93,7 +93,11 @@ export default async function PerProjectLooksPage({
         : [],
     ),
   );
-  const apps = await readLooks(checkout.root);
+  // Drawing every mockup is most of this page's cost; the last reading serves while a newer
+  // one is read, and an approval clears it.
+  const apps = await standingKept(`looks-page:${checkout.root}`, () =>
+    readLooks(checkout.root),
+  );
   page.finish(0);
   return (
     <LooksBody

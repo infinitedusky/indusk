@@ -52,9 +52,11 @@ export default async function PromisePage({ params }: PromisePageProps) {
     (p) => p.name === name || p.aliases.includes(name),
   );
   const proof = entry
-    ? await proofOf(projectPath, entry.name, {
-        cacheMs: readAdminRefreshMs(projectPath),
-      })
+    ? await standingKept(`proof:${projectPath}:${entry.name}`, () =>
+        proofOf(projectPath, entry.name, {
+          cacheMs: readAdminRefreshMs(projectPath),
+        }),
+      )
     : null;
   if (!registry || !entry || !proof) notFound();
 

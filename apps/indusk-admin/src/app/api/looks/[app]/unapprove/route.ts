@@ -5,6 +5,7 @@ import {
 } from "@infinitedusky/indusk-mcp/looks/approve";
 import type { NextRequest } from "next/server";
 import { refuse } from "@/lib/session-host";
+import { resetStandingKept } from "@/lib/standing-kept";
 import { type LooksBody, readLooksRequest } from "../request";
 
 export const runtime = "nodejs";
@@ -87,6 +88,8 @@ export async function POST(
     subject.kind,
     subject.seen,
   );
+  // The pages serve the last reading of the looks while a newer one is read.
+  resetStandingKept();
   if (!result.withdrawn) return refuse(409, result.reason);
   return Response.json({ entry: result.entry, commit: result.commit });
 }

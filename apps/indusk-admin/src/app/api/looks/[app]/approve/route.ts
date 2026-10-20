@@ -7,6 +7,7 @@ import {
 import type { NextRequest } from "next/server";
 import { startPlanning } from "@/lib/build-host";
 import { refuse } from "@/lib/session-host";
+import { resetStandingKept } from "@/lib/standing-kept";
 import { type LooksBody, readLooksRequest } from "../request";
 
 export const runtime = "nodejs";
@@ -201,6 +202,9 @@ export async function POST(
       ...(await approve(checkout.root, app, name, by, seen)),
     });
   }
+  // The pages serve the last reading of the looks while a newer one is read; a record just
+  // written must show on the next load.
+  resetStandingKept();
   // The plan whose worktree recorded this approval may now have its last look
   // approved: ask for its planning run. Only that plan — an approval is written
   // in one checkout, and no other plan's worktree holds it — so nothing else is

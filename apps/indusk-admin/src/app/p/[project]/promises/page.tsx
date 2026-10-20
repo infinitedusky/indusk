@@ -155,12 +155,16 @@ export default async function PerProjectPromisesPage({
       : alarmSource(names.length ? names : ["local"]);
   const timelines =
     registry && names.includes(source)
-      ? await readTimelineView(projectPath, registry, {
-          window,
-          source,
-          sources: names,
-          timeoutMs: TIMELINE_TIMEOUT_MS,
-        })
+      ? await standingKept(
+          `timeline:${projectPath}:${JSON.stringify(window)}:${source}:${names.join(",")}`,
+          () =>
+            readTimelineView(projectPath, registry, {
+              window,
+              source,
+              sources: names,
+              timeoutMs: TIMELINE_TIMEOUT_MS,
+            }),
+        )
       : undefined;
   const standing = reads
     ? await standingKept(projectPath, () =>
