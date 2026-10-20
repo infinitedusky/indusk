@@ -119,7 +119,7 @@ There is no scheduler store. The graph comes from impl files and `order_plans`; 
 
 ### D14. Live checks run in the system tier
 
-The eight live checks of the test plan (A9, A30, A39, A58, A64, A74, A84, A95) run in `test:system` at landing and by `indusk release`, never in a phase's loop (`lesson: feedback-slow-at-release-fast-per-phase`). Everything else is a unit test over the pure function with an injected clock and real throwaway git repositories, with no server or daemon.
+The eight live checks of the test plan (A9, A30, A39, A58, A64, A74, A84, A95) run in `test:system` at landing and by `indusk release`, never in a phase's loop (`lesson: feedback-slow-at-release-fast-per-phase`). Everything else is a unit test over the pure function with an injected clock and real throwaway git repositories, with no server or daemon. A live check proves no clause, since it cannot run before the plan closes; each clause is proved by its unit rows, and its signal is a promise span written beside the code that decides it, in the phase that builds that code (one `writeClauseSignals` call per decision, best-effort, judged from a source the deciding code does not read).
 
 ## Alternatives Considered
 

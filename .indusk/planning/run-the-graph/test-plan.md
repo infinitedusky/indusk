@@ -22,7 +22,12 @@ Every phase whose dependencies are done and whose files no running phase touches
 
 ### `a-phase-names-what-it-needs` — each phase in a plan names the phases it depends on; one that names none depends on the phase before it
 
-- Signal: the graph the runner reads from the impl, shown by `indusk plans` output for the plan. Upheld when every phase of a plan in a real run has a dependency list that matches its `needs` line, or the phase before it when it has none; broken reports the plan and the phase whose dependencies differ from what its impl says.
+- Signal: a span on every graph read, from the graph reader's signal file, judging each node's dependencies against a plain scan of the impl's lines. Upheld when every phase of a plan in a real run has a dependency list that matches its `needs` line, or the phase before it when it has none; broken reports the plan and the phase whose dependencies differ from what its impl says.
+- Fails when:
+  - the reader parses a line wrongly, or misses one inside or beside a fence — the signal's plain scan disagrees.
+  - a phase with no line gets no dependency, or the first phase gets one — the signal's expected list says otherwise.
+  - a bad line (unknown phase, itself, a loop) is saved — refused at save; a saved one shows as a mismatch in the signal.
+  - the graph printout shows a different list — no signal: the printout reads the graph through one function, held by A103.
 - Measure: share of phases in the next twenty parallel phases whose recorded dependencies differ from what their impl declared; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -35,7 +40,12 @@ Every phase whose dependencies are done and whose files no running phase touches
 
 ### `ready-phases-start` — a phase becomes ready when the last phase it depends on finishes, and its session is launched within one minute while the session cap has room
 
-- Signal: the runner's record of each phase, with the time it became ready and the time its session was launched, read by `indusk plans` output and the admin's plan page. Upheld when every phase's launch is within one minute of its becoming ready whenever the cap had room at that moment; broken reports the phase, the ready time and the launch time. Setting up its worktree is the phase's own time and is not counted.
+- Signal: a span from the driver's signal file at each launch and on each tick, read from the record's ready and launched times and the session count. Upheld when every phase's launch is within one minute of its becoming ready whenever the cap had room at that moment; broken reports the phase, the ready time and the launch time. Setting up its worktree is the phase's own time and is not counted.
+- Fails when:
+  - a ready phase with cap room is launched late — the launch span.
+  - a ready phase with cap room is never launched (no event, a missed tick, the driver not running) — the tick span reports a phase ready over a minute and not launched; with no driver at all no span arrives, which is itself the gap the close reads.
+  - a launch fails in the session manager — no launched entry follows ready, so the tick span reports it.
+  - the printout or the admin's plan page shows a wrong gap — no signal: both read the record through one function, held by A103.
 - Measure: seconds from a phase becoming ready to its session being launched, for every phase in the next twenty parallel phases that had cap room; expect under sixty for all of them.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -47,7 +57,13 @@ Every phase whose dependencies are done and whose files no running phase touches
 
 ### `no-needless-wait` — no phase is held back by a phase it neither depends on nor shares a file with
 
-- Signal: the runner's record of why each waiting phase waits (a phase, a file, the cap, a hold). Upheld when every waiting phase in a real run names a reason that is one of those; broken reports a ready phase that waited with no reason, or whose reason is a phase it does not depend on and shares no file with.
+- Signal: a span from the scheduler's signal file after each scheduling call, re-deriving each waiting phase's reason from the call's inputs (the scheduler stays pure; the driver reports). Upheld when every waiting phase in a real run names a reason that is one of those (a phase, a file, the cap, a hold); broken reports a ready phase that waited with no reason, or whose reason is a phase it does not depend on and shares no file with.
+- Fails when:
+  - a waiting phase has no reason, or a reason naming a phase it neither depends on nor overlaps — the span.
+  - a ready phase with none of the four reasons is not started — the span.
+  - two file sets are judged overlapping when they are not (a glob bug) — the span re-checks overlap.
+  - an undeclared phase blocks another plan's phase — the span (it may hold only its own plan's files).
+  - the printout shows a different reason than the record — no signal, held by A103.
 - Measure: minutes a phase waited whose reason was none of its dependencies, a shared file, the cap or a hold; expect zero.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -60,7 +76,11 @@ Every phase whose dependencies are done and whose files no running phase touches
 
 ### `graph-is-current` — when a phase ends, a plan is approved or a plan lands, the graph is read again before any next phase starts
 
-- Signal: the runner's record, which shows a graph read before each launch. Upheld when no phase is launched from a graph older than the latest phase end, approval or landing; broken reports the launch and the event it did not account for.
+- Signal: a span from the driver's signal file at each launch, comparing the latest graph read in the record with the latest phase end, approval and landing. Upheld when no phase is launched from a graph older than the latest phase end, approval or landing; broken reports the launch and the event it did not account for.
+- Fails when:
+  - a launch uses a graph read before a phase ended, a plan was approved or a plan landed — the span.
+  - a launch happens with no graph read at all (a path that skips the reader) — the span finds none.
+  - two phases freed together both take one file — the scheduler's no-needless-wait span sees two running phases on one file.
 - Measure: launches made from a graph older than the latest of those three events; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -73,10 +93,17 @@ Every phase whose dependencies are done and whose files no running phase touches
 ### `within-the-cap` — rests on `sessions-are-capped`
 
 - Signal: the promise it rests on, `sessions-are-capped`, read where that promise is read (the machine's running-session count against `sessions.max`). Upheld while that promise is in force and a real parallel run never shows more phase sessions than the cap.
+- Fails when:
+  - phase sessions exceed the cap, or a plan's phase sessions are exempted from it — no signal of its own: `sessions-are-capped` already reports the count, and this clause rests on it.
 
 ### `reviews-are-phases` — falsify, cleanup, the audit and an incident write are build phases of the graph like any other
 
-- Signal: the plan's impl and the runner's record. Upheld when each review phase (a Falsification, Cleanup or Audit phase, or a Maintenance phase for an incident) appears in the graph with dependencies, files and order, and is launched by the same rule as a build phase; the steps that write them do not appear as phases. Broken reports a review phase launched outside the graph, or a step shown as a phase.
+- Signal: a span on every graph read, from the graph reader's signal file, judging the nodes against a plain scan of the impl's headings; launches are covered by `graph-is-current`'s span (every launch comes from a graph read). Upheld when each review phase (a Falsification, Cleanup or Audit phase, or a Maintenance phase for an incident) appears in the graph with dependencies, files and order, and is launched by the same rule as a build phase; the steps that write them do not appear as phases. Broken reports a review phase launched outside the graph, or a step shown as a phase.
+- Fails when:
+  - a review phase in the impl is missing from the graph — the reader's span.
+  - a step that writes a phase (falsify, cleanup, the audit) appears as a node or takes a slot — the reader's span.
+  - a Maintenance phase is not a fix node — the reader's span.
+  - a review phase is launched by the ritual loop instead of the driver — the driver's `graph-is-current` span sees a launch with no graph read.
 - Measure: review phases in the next five plans that were launched by something other than the graph; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -92,7 +119,11 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `own-worktree` — every running phase has its own worktree and branch, cut from its plan's branch
 
-- Signal: `git worktree list` and the runner's record. Upheld when every running phase has a worktree of its own on its own branch whose first commit's parent is on its plan's branch; broken reports a running phase sharing a worktree or branched from elsewhere.
+- Signal: a span from the phase-branch signal file each time a phase starts, read from `git worktree list` and `git merge-base`, not the layout code. Upheld when every running phase has a worktree of its own on its own branch whose first commit's parent is on its plan's branch; broken reports a running phase sharing a worktree or branched from elsewhere.
+- Fails when:
+  - two running phases share a worktree or a branch name — the span.
+  - a phase is cut from the trunk or another branch — the span checks the base.
+  - a merged phase's worktree is left behind, or a failed one is removed — no signal: housekeeping that changes no running phase's work, held by A26.
 - Measure: running phases sharing a worktree or branched off something other than their plan's branch, at any time; expect zero.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -104,7 +135,11 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `starts-from-its-dependencies` — a phase starts with every finished phase it depends on merged into its worktree
 
-- Signal: the phase's worktree at its first commit, read against the plan's branch. Upheld when every dependency's work is present in a phase's worktree when its session starts; broken reports the phase and the dependency whose work is missing.
+- Signal: a span from the phase-branch signal file each time a phase starts, checking each finished dependency's tip is in the new worktree's history. Upheld when every dependency's work is present in a phase's worktree when its session starts; broken reports the phase and the dependency whose work is missing.
+- Fails when:
+  - a finished dependency's work is missing — the span.
+  - work from a phase it does not depend on is merged in — the span.
+  - a conflicting dependency merge leaves half a merge — the conflict span (`agent-resolves-first`) and this span both see it.
 - Measure: phases started without a finished dependency's work in their worktree; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -116,7 +151,10 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `starts-from-the-work-it-waited-for` — a phase that waited on another plan's phase for a file starts with that phase's finished work merged in, landed or not
 
-- Signal: the phase's worktree and the runner's record naming the phase it waited on. Upheld when a phase that waited on another plan's phase starts with that phase's work in its worktree; broken reports the phase and the missing work.
+- Signal: a span from the phase-branch signal file each time a phase that waited on another plan's phase starts. Upheld when a phase that waited on another plan's phase starts with that phase's work in its worktree and its plan has a pulled entry for it; broken reports the phase and the missing work or the missing entry.
+- Fails when:
+  - the other plan's finished work is missing — the span.
+  - unlanded work is merged but no pulled entry is written, so landing order is lost — the span.
 - Measure: phases that waited on another plan's phase and started without its work; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -127,7 +165,11 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `green-before-merging` — a phase merges into its plan's branch only when, with the merge made, its own tests and the tests of every clause the plan's branch has touched pass
 
-- Signal: the runner's record of each merge, with the tests it ran and their result. Upheld when every merge into a plan's branch shows a green run of the phase's tests and of every touched clause's tests, run on the merged result; broken reports a merge with a red or missing run.
+- Signal: a span from the merge signal file after each move of a plan's branch, checking the new tip is the commit the check ran on and that the run was green and covered the touched clauses. Upheld when every merge into a plan's branch shows a green run of the phase's tests and of every touched clause's tests, run on the merged result; broken reports a merge with a red or missing run.
+- Fails when:
+  - a branch moves with a red run, or on a different commit than the one checked — the span.
+  - the run leaves out a clause touched through another phase — the span recomputes the touched set on the new tip.
+  - a red phase is merged anyway after retries — the span.
 - Measure: merges into a plan's branch whose recorded run was red or absent; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -141,7 +183,10 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `every-phase-is-checked` — a phase that runs no test never merges, and a phase that touches a clause carries that clause's signal
 
-- Signal: the runner's record and the phase's rows. Upheld when every merged phase ran at least one test and every phase touching a clause carries that clause's signal; broken reports the merged phase that ran none, or the clause without its signal.
+- Signal: a span from the merge signal file after each move of a plan's branch, reading the run's test count and the phase's tasks with the same rule the contract check uses. Upheld when every merged phase ran at least one test and every phase touching a clause carries that clause's signal; broken reports the merged phase that ran none, or the clause without its signal.
+- Fails when:
+  - a phase merges having run no test, or only deferred rows — the span.
+  - a phase touching a clause merges without that clause's signal task — the span.
 - Measure: phases merged with no test run, and phases touching a clause without its signal, over the next twenty parallel phases; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -153,7 +198,10 @@ Each phase works in its own worktree off its plan's branch, merges in what came 
 
 ### `only-the-plan-lands` — nothing reaches the trunk from a phase's branch; only a plan's branch, once its promises are verified
 
-- Signal: the trunk's history. Upheld when every commit that reached the trunk through the runner came from a plan's branch landing, never from a phase's branch; broken reports the commit and its source branch.
+- Signal: a span from the merge signal file after each landing, read from the trunk's own history with plain `git log`. Upheld when every commit that reached the trunk through the runner came from a plan's branch landing, never from a phase's branch; broken reports the commit and its source branch.
+- Fails when:
+  - a phase branch is merged into the trunk — the span.
+  - a plan lands with its promises not verified — refused by landing today; the span reports a landing with no verified record.
 - Measure: phase branches merged into the trunk directly; expect none, ever.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -168,7 +216,12 @@ When phases of different plans are ready and want the same file, the phase of th
 
 ### `earliest-next` — of ready phases that want a file a running phase holds, the earliest plan's runs next when that file is free
 
-- Signal: the runner's record of each start with the ready phases that wanted the same file. Upheld when each start of a contested file is the earliest plan's phase; broken reports the phase that started and the earlier plan's phase it passed over.
+- Signal: a span from the scheduler's signal file after each scheduling call, ranking contenders with the plan-order function called afresh. Upheld when each start of a contested file is the earliest plan's phase; broken reports the phase that started and the earlier plan's phase it passed over.
+- Fails when:
+  - a later plan's phase takes a contested file — the span.
+  - a stale rank is used after a reorder — the span ranks afresh.
+  - unplaced plans are ordered wrongly — the span.
+  - the printout names the wrong order — no signal, held by A103.
 - Measure: starts of a contested file where a later plan's phase went before an earlier plan's; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -182,7 +235,12 @@ When phases of different plans are ready and want the same file, the phase of th
 
 ### `a-broken-promise-jumps-the-line` — a fix phase gets the next free session ahead of every phase that is not a fix, and the phases touching its files depend on it
 
-- Signal: the runner's record and the dependency list of the phases touching the fix's files. Upheld when a fix phase is launched at the first free session ahead of every non-fix phase, every not-yet-started phase touching its files lists it as a dependency, and every running phase touching them merged the fix before merging into its plan; broken reports the fix passed over, or the phase that started without or merged without it.
+- Signal: two spans — the scheduler's signal file at each start (the fix first, the extra dependencies present) and the merge signal file at each phase end (the fix merged before the plan). Upheld when a fix phase is launched at the first free session ahead of every non-fix phase, every not-yet-started phase touching its files lists it as a dependency, and every running phase touching them merged the fix before merging into its plan; broken reports the fix passed over, or the phase that started without or merged without it.
+- Fails when:
+  - a non-fix phase takes a free session while a fix waits — the scheduler span.
+  - an unstarted phase touching the fix's files starts without it — the scheduler span.
+  - a running phase touching them merges into its plan without the fix — the merge span.
+  - an incident's Maintenance phase declares no files, so nothing depends on it — the scheduler span sees a fix with no file set.
 - Measure: minutes from a fix phase becoming ready to its session launching when any non-fix phase was waiting; expect the same as for a phase with cap room (under one minute after a session frees). Fix phases passed over by a non-fix phase; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -197,6 +255,8 @@ When phases of different plans are ready and want the same file, the phase of th
 ### `never-interrupted` — rests on `a-hold-is-cheap`
 
 - Signal: the promise it rests on, `a-hold-is-cheap`, read where that promise is read. Upheld while it is in force.
+- Fails when:
+  - a running phase is stopped for a fix — no signal of its own: `running-phases-finish` reports it, and this clause rests on that promise.
 
 ## `trunk-cascades`
 
@@ -204,7 +264,13 @@ When anything lands on the trunk, every open plan's branch merges it, and a runn
 
 ### `branches-follow-the-trunk` — within five minutes of a landing, every open plan's branch with no running phase has merged it
 
-- Signal: the trunk's head against each open plan's branch, read with the time of the landing. Upheld when, five minutes after a landing, every open plan's branch with no running phase contains the landing; broken reports the plan and how long its branch has been behind.
+- Signal: a span from the cascade's signal file after each landing's cascade and on each five-minute pass, reading the trunk's tip against each open plan's branch with plain git. Upheld when, five minutes after a landing, every open plan's branch with no running phase contains the landing; broken reports the plan and how long its branch has been behind.
+- Fails when:
+  - an idle open plan's branch is behind for more than five minutes — the span.
+  - a landing made while the runner was off is never caught up — the next pass's span.
+  - the cascade merges into an unapproved or landed plan, or one with a running phase — the span.
+  - in a workbench, one repo's trunk is merged into another repo's plan — the span reads per repo.
+  - the cascade conflicts — the conflict span (`agent-resolves-first`); the branch stays behind and this span reports it.
 - Measure: minutes from a landing to the last idle open plan's branch containing it, over the next ten landings; expect under five for all of them.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -218,7 +284,10 @@ When anything lands on the trunk, every open plan's branch merges it, and a runn
 
 ### `phase-merges-at-its-end` — a running phase merges the trunk when it ends, before it merges into its plan
 
-- Signal: the runner's record of each phase's end, showing the trunk merge before the plan merge. Upheld when every phase that ended after a landing it had not seen merged the trunk first; broken reports the phase merged into its plan without the landing.
+- Signal: a span from the merge signal file after each move of a plan's branch, checking the trunk's tip at the phase's end is in the merged commit's history. Upheld when every phase that ended after a landing it had not seen merged the trunk first; broken reports the phase merged into its plan without the landing.
+- Fails when:
+  - a phase merges into its plan without the latest trunk — the span.
+  - a running phase is interrupted to take the trunk — `running-phases-finish`'s span.
 - Measure: phases merged into their plan without the trunk's latest landing; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -229,7 +298,12 @@ When anything lands on the trunk, every open plan's branch merges it, and a runn
 
 ### `agent-resolves-first` — a conflicting merge is resolved by an agent and kept only with the plan's tests passing; otherwise it becomes a question naming the files, and only that plan's affected phases go on hold
 
-- Signal: the runner's record of each conflict, its resolution, the tests run on it and the outcome. Upheld when every conflict is either resolved with the plan's tests recorded passing, or recorded as a question naming the files with only that plan's affected phases on hold; broken reports a resolution kept with failing or missing tests, or a hold wider than the plan's affected phases.
+- Signal: a span from the conflict signal file after every conflicting merge at each of the four merge points, reading the worktree's head with git rather than the function's own answer. Upheld when every conflict is either resolved with the plan's tests recorded passing, or recorded as a question naming the files with only that plan's affected phases on hold; broken reports a resolution kept with failing or missing tests, or a hold wider than the plan's affected phases.
+- Fails when:
+  - a resolution is kept with red or missing tests — the span.
+  - a thrown-away resolution leaves the branch changed — the span compares the head with the one before the merge.
+  - an unresolved conflict raises no question, or the hold reaches another plan or an unaffected phase — the span.
+  - a merge point bypasses the resolver with a plain merge — no span is written for that merge; held by the call-site test in Build Phase 7.
 - Measure: the share of merges that conflict, and of those the share an agent resolved with the plan's tests passing, read from the runner's record after the first twenty parallel phases (the brief's second expectation). Resolutions kept with a red or missing test run; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -248,7 +322,11 @@ A plan whose phase pulled another plan's unlanded work cannot land before that p
 
 ### `lands-after` — a plan holding another plan's unlanded work is refused landing, naming that plan, until it has landed
 
-- Signal: the output of the landing command and the plan's pulled-work record. Upheld when a plan with another plan's unlanded work in its branch is refused landing, with the other plan named, and lands once that plan has landed; broken reports a plan that landed first.
+- Signal: a span from the landing's pulled-work signal file after each landing, reading the trunk's own log for each pulled plan's landing. Upheld when a plan with another plan's unlanded work in its branch is refused landing, with the other plan named, and lands once that plan has landed; broken reports a plan that landed first.
+- Fails when:
+  - a plan lands before a plan it pulled from — the span.
+  - the pulled entry was never written — `starts-from-the-work-it-waited-for`'s span.
+  - a workbench landing skips the rule — the span is reported from both landing paths.
 - Measure: plans landed while holding another plan's unlanded work; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -260,7 +338,10 @@ A plan whose phase pulled another plan's unlanded work cannot land before that p
 
 ### `merges-again-before-landing` — before it lands, such a plan merges the trunk with the other plan's landed work in it
 
-- Signal: the plan's branch against the trunk at landing. Upheld when a plan that pulled another plan's work contains the trunk with that work landed before it lands; broken reports the plan that landed without the merge.
+- Signal: a span from the landing's pulled-work signal file after each landing, checking each pulled plan's landing commit is in the landed branch's history. Upheld when a plan that pulled another plan's work contains the trunk with that work landed before it lands; broken reports the plan that landed without the merge.
+- Fails when:
+  - the plan lands without merging the trunk after the other plan landed — the span.
+  - the plan's tests are not run on the merged result — the landing's own test run refuses, as it does today.
 - Measure: plans that pulled unlanded work and landed without merging the trunk after the other plan's landing; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -275,7 +356,10 @@ Nothing stops: a running phase always finishes, and a phase put on hold is set a
 
 ### `running-phases-finish` — a running phase is never stopped to let another in
 
-- Signal: the runner's record of each session's start and end. Upheld when no session was ended by the runner while its phase was running, for any reason other than the phase finishing, failing or being put on hold by a question or amendment; broken reports the phase and what stopped it.
+- Signal: a span from the driver's signal file whenever a phase session ends and on each tick, read from the session manager's own sessions against the record. Upheld when no session was ended by the runner while its phase was running, for any reason other than the phase finishing, failing or being put on hold by a question or amendment; broken reports the phase and what stopped it.
+- Fails when:
+  - the runner ends a running phase's session for a fix, a landing, an approval or an earlier plan — the span.
+  - a session disappears with no done, failed or held entry — the tick span.
 - Measure: running phases stopped by the runner to make room for another; expect none, ever.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -286,7 +370,12 @@ Nothing stops: a running phase always finishes, and a phase put on hold is set a
 
 ### `a-hold-frees-its-files` — a phase put on hold gives up its turn on its files at once, so phases waiting only for those files go ahead; phases that need its output still wait
 
-- Signal: the runner's record of a hold and the waiting phases' reasons. Upheld when a phase put on hold is no longer given as the reason any phase waits for a file, and phases that depend on it still show it as their reason; broken reports a phase still waiting on a held phase's file, or a dependent starting without the held phase's output.
+- Signal: a span from the hold signal file at the first scheduling call after each hold, reading the waiting reasons and the session manager's sessions. Upheld when a phase put on hold is no longer given as the reason any phase waits for a file, and phases that depend on it still show it as their reason; broken reports a phase still waiting on a held phase's file, or a dependent starting without the held phase's output.
+- Fails when:
+  - a phase still waits on a held phase's file — the span.
+  - the held phase's session slot is not freed — the span.
+  - a dependent starts without the held phase's output — the span.
+  - a conflict hold or an amendment hold is not written as a hold — no span follows; the conflict span (`agent-resolves-first`) reports an unresolved conflict with no hold.
 - Measure: seconds from a hold to the next phase waiting only for its files starting; expect under sixty (the same as a ready phase).
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -299,7 +388,12 @@ Nothing stops: a running phase always finishes, and a phase put on hold is set a
 
 ### `the-held-phase-catches-up` — when a held phase is ready again it waits for any active phase it now depends on, merges what finished meanwhile that touches its files, and carries on from where it stopped
 
-- Signal: the held phase's record after it is released, with the phases it waited for, the work it merged and where it resumed. Upheld when a released phase waits for every active phase it now depends on, merges the finished work touching its files, and resumes from its stopping point; broken reports the phase that resumed without a dependency's work or restarted from the beginning.
+- Signal: a span from the hold signal file when a released phase resumes, read from its worktree's history with git. Upheld when a released phase waits for every active phase it now depends on, merges the finished work touching its files, and resumes from its stopping point; broken reports the phase that resumed without a dependency's work or restarted from the beginning.
+- Fails when:
+  - it resumes before an active phase it now depends on is done — the span.
+  - finished work touching its files, or the trunk after a landing, is missing — the span.
+  - its work from before the hold is lost or redone — the span checks the hold's commit is kept.
+  - nothing releases it (no answer, no re-approval) — no signal here: the hold stays listed as held in the printout; what raises and answers a question is `decisions-as-questions`'.
 - Measure: held phases that resumed without merging finished work touching their files, or that restarted rather than resuming; expect none.
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -324,6 +418,7 @@ Assertions that prove no promise of this plan, each with why it is still worth a
 | A100 | A phase boundary still names the command for what runs next, and the runner runs it. | unit | Must-not-break: `a-plan-boundary-names-the-next-session`. |
 | A101 | Running with the cap at one yields the same order and the same result as today's one-phase-at-a-time run for a plan whose phases name nothing. | unit | A regression guard: the zero-migration claim of `a-phase-names-what-it-needs`. |
 | A102 | The existing manual `/work` path for one phase still works unchanged when no runner is active. | unit | A regression guard: the runner is added beside the manual path, not instead of it. |
+| A103 | The graph printout and the admin's why-it-waits line show each phase's state, the reason it waits and its ready-to-launched gap exactly as the runner record holds them. | unit | A display guard: the one place the clauses are shown; a wrong line there could hide a broken clause, and no signal reads the screen. |
 
 ## Expectations
 
@@ -347,7 +442,8 @@ Neither brief expectation is a test; each is read from the runner's record or fr
 - **Decision: dependencies are declared with a phase's own line, and a phase naming none depends on the one before it.** Chosen because the brief says so (`a-phase-names-what-it-needs`); the exact spelling of the line is the ADR's, and A1 to A5 are written against behaviour, not spelling.
 - **Decision: a phase with no declared files is treated as touching all its plan's files.** The brief does not say. Chosen as the safe reading (A13): an unknown set of files cannot be shown free, and treating it as empty would let two phases collide unseen. Reversible by the ADR; if it declares otherwise, A13 changes with it.
 - **Decision: a hold's trigger is out of scope.** Questions that hold belong to `decisions-as-questions`, and amendments to `brief-as-the-contract`. This plan's rows (A85 to A95) prove what a hold does to the graph given one; A88 and A89 use a conflict and an amendment because both exist today, so no row waits on a plan not yet built.
-- **Decision: live checks (A9, A30, A39, A58, A64, A74, A84, A95) run in the system tier, never in a phase's loop.** Each needs real sessions and worktrees. They run at landing and by `indusk release`, as the system tier does for the other plans.
+- **Decision: live checks (A9, A30, A39, A58, A64, A74, A84, A95) run in the system tier, never in a phase's loop.** Each needs real sessions and worktrees. They run at landing and by `indusk release`, as the system tier does for the other plans. Because they run only after landing, none of them proves a clause: each clause they touch is proved by its unit rows, and each live check's result is recorded in the retrospective.
+- **Decision: each split and limit clause's signal is a promise span written where the code that decides it lives**, in the build phase that writes that code, one span per decision through the commands' tracer, best-effort and never failing its caller (the shape of `a-run-can-be-trusted`'s signal files). Each judges from a source the deciding code does not use (plain git, a plain scan of the impl, the session manager's own sessions) so a bug in the code cannot hide from its own signal.
 - **Open decision: a failed merge check (A37) keeps the phase listed as stopped and does not start a repair.** The brief says a phase merges only when green but not what follows a red; the ADR should decide whether a stopped phase is retried, put on hold or raised as a question. The row asserts only what is certain: it is kept, listed and does not stop unrelated phases.
 - **Open decision: how a plan "touching" a clause is read for `green-before-merging` (A38).** The row says "every clause the plan's branch has touched", following the brief; the ADR must say whether touching is read from the plan's rows, from changed files, or both.
 - The signal for each clause leans on the runner's record; the ADR must name where that record lives. If it is machine state (`~/.indusk/projects/…`), the admin reads it; the brief's "this plan changes no screen" means the record is read through `indusk plans` output, which A12 and A52 assume.
