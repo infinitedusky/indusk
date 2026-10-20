@@ -1,0 +1,7 @@
+# A clause's row or signal must exercise the real emitter with real inputs: a pure judge fed flags, labels over an empty folder, or a report whose counts are constants reads upheld whatever the pages do
+
+The admin-pages-load-fast audit (audit.md, highlight h-20261020-016) found that the clause rows passed on the mechanism in isolation and never on the real page path: `judgePageReads` was handed hand-made flags, A12 called `startPage` with labels over an empty planning folder and never loaded a page, `page-reads.ts` set `processReads` and `landingReads` to the constants 1 and 0, `refreshedEarly` could only be true on a backwards clock, and `measure-pages.mjs` dropped routes and took a median. Every row was green and the signal could not have gone broken.
+
+Rule: for each split or limit clause, at least one row loads the real page (or the real reader over a real folder) and the signal's inputs are counted or measured from what the code did, never set to a constant. Before accepting a signal, ask which input to the judge could be true only in a test, and make that input observable in production. A live check measures every route and judges the slowest load and any non-200, not a median of the routes it could parameterize.
+
+Related: a-promise-that-makes-a-sentence-has-a-row-driven-from-a-real-record-on-disk, a-skip-reason-names-a-row-that-exercises-the-same-real-reads, a-clause-signal-reads-a-source-independent-of-the-code-it-judges. See .indusk/planning/admin-pages-load-fast/audit.md.
