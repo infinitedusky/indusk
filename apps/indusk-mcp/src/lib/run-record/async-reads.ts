@@ -26,13 +26,30 @@ import {
 /** What every reader here takes: the program runner and the clock are inputs. */
 export interface ReadDeps extends KeptDeps {
 	exec?: Exec;
+	/** Told of every kept reading a reader asks for, so a page can report ages and early refreshes. */
+	onKept?: (reading: KeptNote) => void;
+}
+
+/** What a page learns of one kept reading it asked for. */
+export interface KeptNote {
+	key: string;
+	ageMs: number;
+	windowMs: number;
+	reused: boolean;
+	refreshedEarly: boolean;
 }
 const startIn = (deps: ReadDeps, cwd?: string): StartOptions => ({
 	...(cwd === undefined ? {} : { cwd }),
 	...(deps.exec === undefined ? {} : { exec: deps.exec }),
 });
 
-export { countStarts, type Exec, READ_TIMEOUT_MS, startProgram } from "../start-program.js";
+export {
+	beginStartCount,
+	countStarts,
+	type Exec,
+	READ_TIMEOUT_MS,
+	startProgram,
+} from "../start-program.js";
 
 // ── the process list ────────────────────────────────────────────────────────────────────────────
 
@@ -52,7 +69,7 @@ export async function readProcessTable(deps: ReadDeps = {}): Promise<PsRow[] | n
 
 /** The process list, kept; throws when it could not be read so a failure is never kept. */
 export function keptProcessTable(deps: ReadDeps = {}): Promise<Kept<PsRow[]>> {
-	return keptRead(
+	return kept(
 		"ps",
 		async () => {
 			const table = await readProcessTable(deps);
@@ -120,7 +137,17 @@ async function readBranches(dir: string, deps: ReadDeps): Promise<Set<string>> {
 	return new Set(out.split("\n").filter(Boolean));
 }
 
-const kept = <T>(key: string, read: () => Promise<T>, deps: ReadDeps) => keptRead(key, read, deps);
+const kept = async <T>(key: string, read: () => Promise<T>, deps: ReadDeps) => {
+	const result = await keptRead(key, read, deps);
+	deps.onKept?.({
+		key,
+		ageMs: result.ageMs,
+		windowMs: result.windowMs,
+		reused: result.reused,
+		refreshedEarly: result.refreshedEarly,
+	});
+	return result;
+};
 const subjectsKey = (dir: string, trunk: string) => `landings:${dir}\0${trunk}`;
 const keptSubjects = (dir: string, trunk: string, deps: ReadDeps) =>
 	kept(subjectsKey(dir, trunk), () => readMergeSubjects(dir, trunk, deps), deps);

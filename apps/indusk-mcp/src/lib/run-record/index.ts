@@ -6,8 +6,10 @@
 
 export { type PsRow, psAll, realProcessReads } from "../process-identity.js";
 export {
+	beginStartCount,
 	countStarts,
 	type Exec,
+	type KeptNote,
 	keptProcessTable,
 	processReadsFromTable,
 	READ_TIMEOUT_MS,

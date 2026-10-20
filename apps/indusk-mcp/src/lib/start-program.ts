@@ -48,6 +48,17 @@ export async function countStarts<T>(fn: () => Promise<T>): Promise<{ result: T;
 	return { result, starts: counter.count };
 }
 
+/**
+ * Opens a count that lasts for the rest of the calling async chain: a page function calls it first,
+ * so every `startProgram` below it, in any helper it awaits, adds to the page's count. `count()`
+ * reads it. Used where wrapping the whole page in `countStarts` is not possible (a server component).
+ */
+export function beginStartCount(): { count(): number } {
+	const counter = { count: 0 };
+	starts.enterWith(counter);
+	return { count: () => counter.count };
+}
+
 export interface StartOptions {
 	cwd?: string;
 	env?: NodeJS.ProcessEnv;
