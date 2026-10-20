@@ -178,7 +178,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
 
 #### Test Phase 1 Verification
 
-- [ ] The tests this phase writes exist, and each fails on its own assertion against today's readers.
+- [x] The tests this phase writes exist, and each fails on its own assertion against today's readers.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run apps/indusk-admin/src/lib/page-reads.test.ts apps/indusk-admin/src/__tests__/no-sync-starts.contract.test.ts` exits non-zero; the output names the counts (A2, A3, A4), the event-loop lag under a slow `ps` (A14) and the files with a synchronous start (A13); `node apps/indusk-admin/scripts/measure-pages.mjs` exits 1 with times above one second (A1).
