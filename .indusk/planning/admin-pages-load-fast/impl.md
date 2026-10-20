@@ -4,6 +4,8 @@ date: 2026-10-20
 status: in-progress
 falsification: skipped
 falsification_reason: "hunted kept reads, async readers, standing cache; one race found, same claim as a cut item, moved"
+cleanup: skipped
+cleanup_reason: "two read caches and five kept maps duplicate; plan-state-is-a-database replaces them, extraction waits"
 trajectory: required
 test_phases: required
 test_levels: required
