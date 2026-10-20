@@ -41,7 +41,7 @@ live state.
 
 ## Next after this list
 
-`run-the-graph` — brief accepted 2026-10-19 (stories gone through with Sandy); planning now, builds right after `decisions-as-questions`.
+`run-the-graph` — sliced 2026-10-19: slice 1 is a plan's phases in parallel; the later slices are named in run-the-master. Its plan is being re-cut to the slice.
 
 ## Parked until done
 

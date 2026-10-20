@@ -6,6 +6,10 @@ status: living
 subplans:
   - run-the-graph
   - decisions-as-questions
+  - plans-share-files
+  - fixes-go-first
+  - the-trunk-cascades
+  - holds-free-phases
   - activity-and-graph
 ---
 
@@ -20,11 +24,18 @@ run is Homework Gate's milestones.
 
 ## Children, in order
 
-1. **`run-the-graph`** — phases run in parallel as a graph: a branch and
-   worktree per phase off its plan's branch, merges at a phase's start and into
-   the plan branch when green, earlier plans first on a contended file, main
-   cascading into every open plan, landing after any plan whose unlanded work
-   was pulled. No screen.
+1. **`run-the-graph`** — sliced 2026-10-19 (Sandy) after two cold reads of the
+   full design found twenty-odd problems each. **Slice 1, `run-the-graph`:** a
+   plan's own phases run in parallel by declared dependencies, each on its own
+   branch off the plan's, merged in only when green. The later slices, one plan
+   each, from the stories in run-the-graph's brief (full design at commit
+   `0842d3fdf`): **`plans-share-files`** (two plans' phases take turns on a
+   file, the earlier plan first, and the later lands after the work it pulled);
+   **`fixes-go-first`** (a fix for a broken promise gets the next session, and
+   phases touching its files wait for it); **`the-trunk-cascades`** (every open
+   plan merges the trunk as it moves, conflicts resolved by an agent or asked);
+   **`holds-free-phases`** (a question or a conflict holds one phase, frees its
+   files, and the held phase catches up). No screen.
 2. **`decisions-as-questions`** — every decision a question in one thread,
    carrying the agent's recommendation and a cost: cheap proceeds after five
    minutes, moderate after an hour, expensive waits, red. An unanswered
