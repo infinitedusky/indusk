@@ -8434,6 +8434,18 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-19T22:56:03.976Z",
 			"plan": "a-run-can-be-trusted"
+		},
+		{
+			"kind": "story",
+			"story": "question-row.cheap",
+			"snapshotHash": "1d3192ad3c19949161472a76d3d13456dd87adec3e17736fe256db2d08165de8",
+			"stylesheetHash": "c61ef0c236fd84a85d36b0f41b90bae7509afc42395175f625f042cd799f2a14",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-20T00:29:04.120Z",
+			"plan": "decisions-as-questions"
 		}
 	]
 }
