@@ -1,0 +1,7 @@
+# When a brief sentence or a selection rule changes, grep for every place that restates or mirrors it (registry sentence, ADR, impl, test plan, the signal that mirrors the selector) and update each in the same sitting
+
+Why: in run-the-graph an amendment to a brief sentence and a fix to the merge check's selector were each applied to one document. The recheck then found the promise registry sentence, the ADR, impl and test-plan wording, the signal that mirrors the selector (so it judged by the old rule), and the signals of other clauses touched by the new hold all still saying the old thing. Six findings came from that alone.
+
+What to do: before committing an amendment or a rule change, write down the sentence or rule and grep the plan folder and `.indusk/promises/` for its key words and its old wording. List every hit as a place to change, and every signal that re-derives the rule (a signal that mirrors a selector must use the same selector) as a place to check. Change them in one commit and name them in the commit message. For a promise, change the registry through `indusk promises change` so the History line records it, then confirm the brief, ADR, impl and test plan quote the same sentence.
+
+Pointer: .indusk/planning/run-the-graph/plan-review.md (recheck, 2026-10-20); highlight h-20261020-015. See also an-adr-rule-added-under-risks-can-falsify-an-accepted-brief-promise-reread-the-promise-sentences-in-the-same-sitting.

@@ -3304,3 +3304,24 @@ Next: Build Phase 1 (tier strong), the scaffold per code repo.
 (empty)
 
 ---
+
+## Session 93a03e5b — close admin-pages-load-fast (cut paging to follow-on)
+
+**Session ID**: 93a03e5b-bb00-418d-8550-d1293f0d781e
+**Last updated**: 2026-10-20T13:30:41.567Z
+**Branch**: plan/admin-pages-load-fast
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-pages-load-fast
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

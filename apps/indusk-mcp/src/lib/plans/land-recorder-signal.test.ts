@@ -164,7 +164,7 @@ describe("A90 — landing reports the recorder clause from its test results", ()
 	it("plans land reports the failure before it throws its refusal", async () => {
 		fixture = clausePlanProject({
 			testText: {
-				"a-clause": `// promise: a-promise\n// clause: a-promise/a-clause\n${TOKEN}\nimport { expect, it } from "vitest";\nit("x", () => expect(1).toBe(1));\n`,
+				"a-clause": `// ${"promise"}: a-promise\n// ${"clause"}: a-promise/a-clause\n${TOKEN}\nimport { expect, it } from "vitest";\nit("x", () => expect(1).toBe(1));\n`,
 			},
 		});
 		// A103: the clause is reported from the recorder landing test's own result, which the

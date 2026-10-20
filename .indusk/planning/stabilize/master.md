@@ -41,7 +41,13 @@ live state.
 
 ## Next after this list
 
-`run-the-graph` — sliced 2026-10-19: slice 1 is a plan's phases in parallel; the later slices are named in run-the-master. Its plan is being re-cut to the slice.
+`admin-pages-load-fast` — brief accepted 2026-10-20: every admin page under a second (a profile showed 11 of 17 s in synchronous `ps`/`git` calls per plan). Planning now; builds first.
+
+`plan-state-is-a-database` — started 2026-10-20 (Sandy: "we should do this first"): a plan's live state (ticks, row states, phase state, blockers, decisions, runs) moves out of the impl into a local SQLite database written only by commands that run the gates; documents keep the agreement, a snapshot lands in git. Comes before the two below; `run-the-graph` slice 1 is rewritten on top of it instead of merging impls.
+
+`a-review-rechecks-what-changed` — not started (Sandy, 2026-10-20): after a plan review's findings are answered by changing the documents, the next read checks that each fix fixes its finding and broke nothing beside it, rather than a full cold read that finds a new set; the planning run stops looping once a read needs no fix. Seen on `admin-pages-load-fast` (26 findings on its second full read of a small bugfix) and on `run-the-graph` (four full reads).
+
+`run-the-graph` — slice 1 (a plan's phases in parallel) approved 2026-10-20 (`f7bc9c91`); builds after the two above. The later slices are named in run-the-master.
 
 ## Parked until done
 
