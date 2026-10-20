@@ -190,7 +190,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
   `pnpm exec vitest run apps/indusk-admin/src/lib/decisions-reader.approval.test.ts apps/indusk-admin/src/lib/decisions.test.ts` exits 0 (A18, A19).
 
   </details>
-- [ ] Every deferral above has a reason that names a symbol which does not exist yet, and none hides a test that could be written today.
+- [x] Every deferral above has a reason that names a symbol which does not exist yet, and none hides a test that could be written today.
   <details><summary>Technical</summary>
 
   Read the two Deferred blocks against `apps/indusk-mcp/src/lib/run-record/` and `apps/indusk-admin/src/lib/`: `kept-reads.ts` and `page-reads.ts` do not exist, so the imports named would not resolve.
