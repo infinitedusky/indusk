@@ -43,6 +43,8 @@ live state.
 
 `admin-pages-load-fast` — brief accepted 2026-10-20: every admin page under a second (a profile showed 11 of 17 s in synchronous `ps`/`git` calls per plan). Planning now; builds first.
 
+`a-review-rechecks-what-changed` — not started (Sandy, 2026-10-20): after a plan review's findings are answered by changing the documents, the next read checks that each fix fixes its finding and broke nothing beside it, rather than a full cold read that finds a new set; the planning run stops looping once a read needs no fix. Seen on `admin-pages-load-fast` (26 findings on its second full read of a small bugfix) and on `run-the-graph` (four full reads).
+
 `run-the-graph` — sliced 2026-10-19: slice 1 is a plan's phases in parallel; the later slices are named in run-the-master. Its plan is to be rewritten against the inventory in its research notes (110 sequential assumptions, 38 blocking; a seven-item smallest change set).
 
 ## Parked until done
