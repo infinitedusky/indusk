@@ -41,7 +41,9 @@ live state.
 
 ## Next after this list
 
-`run-the-graph` — sliced 2026-10-19: slice 1 is a plan's phases in parallel; the later slices are named in run-the-master. Its plan is being re-cut to the slice.
+`admin-pages-load-fast` — brief accepted 2026-10-20: every admin page under a second (a profile showed 11 of 17 s in synchronous `ps`/`git` calls per plan). Planning now; builds first.
+
+`run-the-graph` — sliced 2026-10-19: slice 1 is a plan's phases in parallel; the later slices are named in run-the-master. Its plan is to be rewritten against the inventory in its research notes (110 sequential assumptions, 38 blocking; a seven-item smallest change set).
 
 ## Parked until done
 
