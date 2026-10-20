@@ -42,6 +42,7 @@ import {
   readRegistryProjects,
 } from "@/lib/registry-client";
 import { readProjectResearch } from "@/lib/research-reader";
+import { standingKept } from "@/lib/standing-kept";
 
 interface PerProjectLayoutProps {
   children: React.ReactNode;
@@ -118,9 +119,11 @@ export default async function PerProjectLayout({
   // A broken look counts beside them (ui-promises ADR decision 7), from the
   // package's look standing — the rows the dashboard lists first.
   const brokenPromises = reads
-    ? (await readStanding(projectPath, { health: reads })).filter(
-        (s) => s.standing === "broken",
-      ).length
+    ? (
+        await standingKept(projectPath, () =>
+          readStanding(projectPath, { health: reads }),
+        )
+      ).filter((s) => s.standing === "broken").length
     : 0;
   const brokenLooks = (await readLookStanding(projectPath)).rows.filter(
     (l) => l.standing === "broken",

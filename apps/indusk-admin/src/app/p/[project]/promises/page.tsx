@@ -30,6 +30,7 @@ import { buildRows, parseQuery, readsNoSignal } from "@/lib/promise-dashboard";
 import { readTimelineView } from "@/lib/promise-timeline";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { standingKept } from "@/lib/standing-kept";
 import { parseWindow } from "@/lib/timeline-strip";
 
 /** The timeline's read budget: the health read's two seconds, again. */
@@ -160,7 +161,9 @@ export default async function PerProjectPromisesPage({
         })
       : undefined;
   const standing = reads
-    ? await readStanding(projectPath, { health: reads })
+    ? await standingKept(projectPath, () =>
+        readStanding(projectPath, { health: reads }),
+      )
     : [];
   // Looks beside the promises (ui-promises ADR decision 7): each look's
   // standing from the same package reader the nav counts.

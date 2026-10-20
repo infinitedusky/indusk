@@ -5,7 +5,7 @@
 // recorded measure of it (a `manual:` live check, run by hand at close).
 //
 //   node apps/indusk-admin/scripts/measure-pages.mjs [--project <name>] [--plan <handle>]
-//        [--research <slug>] [--draft <id>] [--wait-ms <ms>] [--runs <n>] [--only <text>]
+//        [--research <slug>] [--draft <id>] [--base-url <url>] [--wait-ms <ms>] [--runs <n>] [--only <text>]
 //
 // The admin's address is the one `indusk ui status` prints (the daemon's stored address),
 // never a guessed port. Page routes are the `page.tsx` files under src/app/p/[project].
@@ -34,6 +34,8 @@ const runs = Number(arg("runs", "3"));
 const only = arg("only", "");
 
 function adminOrigin() {
+  const base = arg("base-url", null);
+  if (base) return base.replace(/\/$/, "");
   const bin = process.env.INDUSK_BIN ?? "indusk";
   const out = execFileSync(bin, ["ui", "status"], { encoding: "utf-8" });
   const port = /running on port (\d+)/.exec(out)?.[1];
