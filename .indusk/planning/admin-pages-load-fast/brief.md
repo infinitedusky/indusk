@@ -55,7 +55,15 @@ None.
 
 ## Looks
 
-None — the change is in the admin's server-side readers and the package's run-record readers; nothing on a page changes but how fast it arrives.
+Amended 2026-10-20 after the audit (the person's answer to q-5): two things on a page change besides how fast it arrives.
+
+### This plan makes
+
+1. **`scorecards.paged`**. The scorecards page shows 25 entries at a time, newest first, with a header reading "N scorecards" and controls to move to older and newer pages, so every scorecard in the log can still be reached. (Built in Build Phase 3 as "the latest 100" with no way to reach older ones; this replaces that. Not yet drawn: the mockup is drawn and approved before re-approval.)
+
+### Not drawn
+
+- **How fresh the counts are.** The red number of broken promises in the nav, a promise's own health, and the Looks page's mockups are shown from the last reading, up to 60 seconds old, while a newer one is read behind it; a promise that breaks can take up to a minute to turn the count red. Nothing is drawn differently, so this has no mockup; it is listed so the person approves it or sends it back.
 
 ## Depends On
 

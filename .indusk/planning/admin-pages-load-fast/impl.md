@@ -464,6 +464,54 @@ This phase is the check against the real running admin that the three pages name
   Closed on unit proof (question: q-4): the live reading was not taken. The admin that was measured was this branch's own build on a spare port with `INDUSK_SKIP_TELEMETRY_AUTOSTART=1` (the machine's daemon serves the main checkout's older code, which has no page-reads report), and the local Jaeger answers HTTP 500 to the thirty-day promise queries, so the reports could not be read back. Reuse inside the window is proved by the unit rows A7, A9 and A12; the live reading waits for a page under one second and a landed build.
 
   </details>
+- [ ] Show the scorecards page 25 at a time, newest first, with controls to reach older and newer pages, once the person re-approves the amended brief. (discovered: the audit, the person's answer to q-5)
+  <details><summary>Technical</summary>
+
+  Replaces `SCORECARDS_SHOWN = 100` in `apps/indusk-admin/src/app/p/[project]/scorecards/page.tsx` with 25 per page and a `?page=` search parameter; the header reads "N scorecards". Look `scorecards.paged` in the brief: its mockup is drawn and approved before the build resumes. The once-per-change parse stays.
+
+  </details>
+- [ ] Make the page-timing measure time every page, take the slowest of its loads, and fail a page that answers with an error. (discovered: the audit)
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/scripts/measure-pages.mjs`: list the root page, `app/new/*`, research, draft and the plan document page (find a parameter for each from the planning folder instead of dropping the route); judge the slowest of the runs, not the median; a status other than 200 fails the page; a cold load waits past `STALE_FOR_MS` (60 s), not 9 s. A1.
+
+  </details>
+- [ ] Count the process-list and trunk-history reads a page really makes, instead of reporting one of each. (discovered: the audit)
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/lib/page-reads.ts:131` sets `processReads` and `landingReads` to constants. Count them from the counted starter (`countStarts` in the package's `start-program.ts`) for the page's async context, so `judgePageReads` can see a second read. A24's assertion is tightened to a page that reads twice reporting two.
+
+  </details>
+- [ ] Make the reuse signal notice a page that reads fresh inside the window, and judge a reading's age against the window that reuse used. (discovered: the audit)
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/run-record/kept-reads.ts:109`: `refreshedEarly` can only be true on a backwards clock. Record the last fresh read time per key in the shared slot apart from the entry, and set the flag when a fresh read starts inside the window of the previous one (a lost or per-request slot). Report the window reuse used (`max(stored, caller)`) to `page-reads-signal.ts:64`, so a project with `admin.refresh_ms` over the stored window does not read broken. A23 gets a row that loses the slot between loads.
+
+  </details>
+- [ ] Put the brief page, the document page and the project home on the page's reads, and have the recorder find the daemon without a synchronous process start. (discovered: the audit)
+  <details><summary>Technical</summary>
+
+  Those three pages never call `startPage`, so `onThisPage` (`apps/indusk-mcp/src/lib/telemetry/status.ts:154`) hands them the synchronous `realDaemonReads`. `markIncidentVerdict` (`apps/indusk-mcp/src/lib/promises/incident-signal.ts:56`) moves to `commandTracerAsync`. A13's scan also asserts every page route under `app/p/` calls `startPage`.
+
+  </details>
+- [ ] Check the remembered repository of a folder is still right before answering from it. (discovered: the audit)
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/worktree/layout.ts:84` `gitCommonDirOf` caches every positive answer for the process's life. Keep with each entry the size-and-time signature of the folder's `.git` entry (one `stat`, no program) and drop the entry when it differs.
+
+  </details>
+- [ ] File the page-speed reports under the project that declares the page-speed promise, whichever project's page was shown. (discovered: the audit)
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/run-record/page-reads-signal.ts:115` writes with `root` set to the shown project, so a `seat-holds` page's report is stamped with a project that has no `admin-pages-load-fast`. Write it under the admin's own project root (the one whose registry declares the promise) and keep the shown project as an attribute.
+
+  </details>
+- [ ] Keep the admin's remembered readings in one machine-wide place per server, so an approval clears the copy the pages read. (discovered: the audit)
+  <details><summary>Technical</summary>
+
+  Decision 16 put kept readings on one `Symbol.for` slot on `globalThis` because Next may load a module once per bundle. `standingKept` (`standing-kept.ts:25`), `planKept` (`planning-reader.ts:335`), `keptScorecards`, `registryKept` (`registry.ts:521`) and `countsKept` (`overview.ts`) use module-level maps; move each to a `globalThis` slot so `resetStandingKept()` in the looks approve route clears the pages' copy.
+
+  </details>
 
 #### Build Phase 3 Verification
 
