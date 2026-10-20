@@ -247,7 +247,7 @@ describe("A14 — the reader judges the impl under the policy the session wrote 
 			"",
 		].join("\n");
 		write("impl.md", impl);
-		const result = realPlanningReads.runHook({
+		const result = await realPlanningReads.runHook({
 			tool_name: "Write",
 			tool_input: { file_path: join(dir, "impl.md"), content: impl },
 			cwd: root,

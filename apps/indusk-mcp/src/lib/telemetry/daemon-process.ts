@@ -43,6 +43,9 @@ export function daemonConfigPath(home: string, role: DaemonRole): string {
 
 /** The daemon process a command line is, or `null` when it is not one. */
 export function daemonProcessOf(command: string): DaemonProcess | null {
+	// Every row of the machine's process list is asked: the binary pattern needs this literal, and
+	// its leading `\S*` costs time on a long command line that lacks it (340 ms over one list).
+	if (!command.includes("telemetry-binaries-")) return null;
 	const binary = BINARY.exec(command);
 	const config = CONFIG.exec(command);
 	if (!binary || !config) return null;

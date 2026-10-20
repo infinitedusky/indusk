@@ -178,6 +178,49 @@ describe("cockpit-audit-fixes A12 — an idle author does not hide approval", ()
 });
 
 /**
+ * admin-pages-load-fast A28: the planning run writes the test plan and the ADR as drafts
+ * (approving the plan is what accepts them), so a plan whose brief is accepted, whose other
+ * documents exist as drafts and whose plan review is answered is offered for approval.
+ *
+ * promise: approval-waits-for-a-finished-plan
+ */
+describe("A28 — a plan the planning run wrote is offered for approval", () => {
+	const draft = { status: "draft" };
+	const written: Plan = {
+		...approval,
+		name: "planned-unasked",
+		documents: {
+			research: { status: "complete" },
+			brief: accepted,
+			"test-plan": draft,
+			adr: draft,
+			impl: draft,
+		},
+	};
+
+	it("A28 brief accepted, test plan and ADR draft, impl draft, review answered, no run: listed once, as approval, with Approve", () => {
+		expect(planWaiting({ sessions: [], plans: [written], builds: [] })).toEqual([
+			expect.objectContaining({ plan: "planned-unasked", on: "approval", accept: "Approve" }),
+		]);
+	});
+
+	it("A28 a required document that does not exist yet still holds approval back", () => {
+		const missing: Plan = {
+			...written,
+			documents: { ...written.documents, "test-plan": undefined },
+		};
+		expect(planWaiting({ sessions: [], plans: [missing], builds: [] })).toEqual([]);
+	});
+
+	it("A28 a brief still a draft holds approval back, and an unanswered plan review is asked for, not approved", () => {
+		const unaccepted: Plan = { ...written, documents: { ...written.documents, brief: draft } };
+		expect(planWaiting({ sessions: [], plans: [unaccepted], builds: [] })).toEqual([]);
+		const unread: Plan = { ...written, planReview: "missing" };
+		expect(planWaiting({ sessions: [], plans: [unread], builds: [] })[0]?.on).toBe("plan-review");
+	});
+});
+
+/**
  * plan-stories A14: a plan waiting only on an amendment waits on the person, at its
  * Brief step; one with no amendment and nothing else waiting does not. The new
  * input is passed through a cast, so the file compiles before the input exists.

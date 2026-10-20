@@ -40,6 +40,11 @@ vi.mock("@/lib/registry-client", () => ({
   projectPathExists: () => true,
 }));
 
+vi.mock("@/lib/page-reads", () => ({
+  __esModule: true,
+  startPage: () => ({ reads: async () => ({}), finish: () => {} }),
+}));
+
 vi.mock("@/lib/vcs", () => ({
   __esModule: true,
   getCommitMessages: () => ({}),

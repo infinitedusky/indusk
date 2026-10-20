@@ -13,8 +13,11 @@ import {
   sweepHistory,
 } from "@infinitedusky/indusk-mcp/questions";
 import { readQuestionWaitSetting } from "@infinitedusky/indusk-mcp/session";
-import { buildState, planningState } from "./build-host";
+import { buildState, needsProcessList, planningState } from "./build-host";
+import { latestReading, type Reading, readPageReads } from "./page-reads";
 
+export { needsProcessList } from "./build-host";
+export { startPage, startPageFor } from "./page-reads";
 export { withSituations } from "./plan-situation";
 
 import { snapshotOf } from "./plan-snapshot";
@@ -38,8 +41,19 @@ export async function readWaiting(
   project: string,
   projectPath: string,
   plans: Plan[],
+  /** The page's reading of the processes; absent, one is made (kept, so a second page reuses it). */
+  read?: Reading,
 ): Promise<Waiting[]> {
   const manager = sessionManager();
+  const reading: Reading =
+    read ??
+    (plans.length === 0
+      ? latestReading()
+      : await readPageReads(
+          projectPath,
+          {},
+          { processList: () => needsProcessList(project, plans) },
+        ));
   const sessions = manager
     .running()
     .filter((r) => r.project === project)
@@ -51,7 +65,7 @@ export async function readWaiting(
     }));
   const builds = plans.map((p) => ({
     plan: p.name,
-    stoppedAt: buildState(project, p.name)?.stop?.step ?? null,
+    stoppedAt: buildState(project, p.name, reading)?.stop?.step ?? null,
   }));
   const amendments = await amendmentCounts(projectPath, plans);
   // Every read sends a question whose stored time has come on with its recommendation,
@@ -64,7 +78,7 @@ export async function readWaiting(
     builds,
     amendments,
     plannings: plans.flatMap((p) => {
-      const s = planningState(project, p.name);
+      const s = planningState(project, p.name, reading);
       return s ? [{ plan: p.name, running: s.running, stop: s.stop }] : [];
     }),
   });

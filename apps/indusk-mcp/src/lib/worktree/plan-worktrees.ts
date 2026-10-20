@@ -3,6 +3,8 @@ import { basename, join, resolve } from "node:path";
 import { getPlanningDir } from "../config.js";
 import { git, listWorktrees } from "../git.js";
 import { findPlanFolder, planFolderPath } from "../promises/plan-folder.js";
+import { keptRead } from "../run-record/kept-reads.js";
+import { onPage } from "../start-program.js";
 import { type Assignment, readRecord } from "./plan-worktree-record.js";
 import { isWorkbench } from "./repos.js";
 
@@ -134,6 +136,14 @@ export interface Repository {
  * instead would list that repository's plans as this project's.
  */
 export async function repositoryOf(anyCheckout: string): Promise<Repository | null> {
+	// Inside a page the layout of the repository is read once and kept for the window, so a
+	// page of many running plans asks git once (admin-pages-load-fast, decision 15).
+	if (onPage())
+		return (await keptRead(`repository:${anyCheckout}`, () => readRepository(anyCheckout))).value;
+	return readRepository(anyCheckout);
+}
+
+async function readRepository(anyCheckout: string): Promise<Repository | null> {
 	let list: Awaited<ReturnType<typeof listWorktrees>>;
 	try {
 		const top = await git(anyCheckout, "rev-parse", "--show-toplevel");

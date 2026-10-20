@@ -25,6 +25,7 @@ export async function register(): Promise<void> {
     { readRegistryProjects },
     { readAdminRefreshMs },
     { writeScanRecord, recordPassOutcome },
+    { warmProject },
   ] = await Promise.all([
     import("@infinitedusky/indusk-mcp/admin/recorder-loop"),
     import("@infinitedusky/indusk-mcp/promises/record"),
@@ -33,7 +34,12 @@ export async function register(): Promise<void> {
     import("./lib/registry-client"),
     import("./lib/project-reader"),
     import("@infinitedusky/indusk-mcp/admin/scan-record"),
+    import("@infinitedusky/indusk-mcp/run-record"),
   ]);
+
+  // Each project's shared git directory is found now, off any request, so the readers that ask for
+  // it synchronously beneath a page or this loop are answered from what is found (decision 11).
+  for (const project of readRegistryProjects()) void warmProject(project.path);
 
   startRecorderLoops({
     projects: () => readRegistryProjects().map((p) => p.path),
@@ -47,6 +53,7 @@ export async function register(): Promise<void> {
     // Each tick also judges the shell guard's recorded decisions
     // (a-run-can-be-trusted, Decision 8); best-effort, it never fails a pass.
     record: async (root) => {
+      await warmProject(root);
       await drainPlanWriteDecisions(root);
       return recordBreaks(root, { by: "admin", source: "deployed" });
     },

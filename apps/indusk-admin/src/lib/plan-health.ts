@@ -4,6 +4,7 @@ import {
 } from "@infinitedusky/indusk-mcp/promises/health";
 import type { PromiseEntry } from "@infinitedusky/indusk-mcp/promises/registry";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
+import { standingKept } from "@/lib/standing-kept";
 
 // promise: a-promise-reads-the-same-on-its-plan-page
 /**
@@ -35,7 +36,9 @@ export async function readPlanHealth(
   if (!registry) return {};
   return planPromiseHealth(
     registry,
-    await readHealth(projectPath, registry),
+    await standingKept(`health:${projectPath}`, () =>
+      readHealth(projectPath, registry),
+    ),
     worktreePromises(projectPath, [checkout]),
   );
 }

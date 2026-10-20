@@ -30,6 +30,13 @@ export interface ProcessDeps {
 	command(pid: number): string | null;
 	/** When the process started, or `null` when it cannot be read. Needed only by a caller that passes `startedAt`. */
 	startTime?(pid: number): Date | null;
+	/**
+	 * True when the reads behind `command` and `startTime` could not see this pid although it is
+	 * alive (a process table that failed, or was read before the process existed), so "not our
+	 * process" would be a guess. A run read from it is unknown, never stopped
+	 * (admin-pages-load-fast, decisions 7 and 12). Absent for the per-pid reads.
+	 */
+	unreadable?(pid: number): boolean;
 }
 
 /** `ps -o lstart=` reads to the second; the record is written just after spawn returns. */
@@ -78,7 +85,7 @@ export function ps(field: string, pid: number): string | null {
  * session it ends (small-fixes A23): three modules each kept their own, and
  * only one read `ps` in the C locale.
  */
-export const realProcessReads: Required<ProcessDeps> = {
+export const realProcessReads: Omit<Required<ProcessDeps>, "unreadable"> = {
 	alive: isAlive,
 	command: (pid) => ps("command", pid),
 	startTime(pid) {

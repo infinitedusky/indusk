@@ -55,7 +55,35 @@ None.
 
 ## Looks
 
-None — the change is in the admin's server-side readers and the package's run-record readers; nothing on a page changes but how fast it arrives.
+Amended 2026-10-20 after the audit: two things on a page change besides how fast it arrives. Paging the scorecards (the person's answer to q-5) was cut from this plan on 2026-10-20 to close it now; it moves to the follow-on `scorecards-are-paged`.
+
+### This plan makes
+
+None.
+
+### Existing looks
+
+**Must not break**
+
+- **`home.default`**. The project list, now read through the page's one reading of the process list.
+- **`nav.expanded`**. The nav, whose broken count, look standing and plan names are served from the last reading while a newer one is read.
+- **`dashboard.default`**. The Promises page, whose rows are served from the last reading while a newer one is read.
+- **`promise.broken`**. A promise's own page, read through the page's reads.
+- **`plan.working`**. The plan page, whose plan folder is read once per change to its files.
+- **`looks.default`**. The Looks page, whose waiting looks are counted without being drawn.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
+
+### Not drawn
+
+- **The scorecards page shows the latest 100.** The page draws the newest 100 scorecards and its header reads "latest 100 of N"; older ones stay in the log and cannot be reached from the page until `scorecards-are-paged` pages them 25 at a time. Only the header's words change, so this has no mockup; it is listed so the person approves it or sends it back.
+- **How fresh the counts are.** The red number of broken promises in the nav, a promise's own health, and the Looks page's mockups are shown from the last reading, up to 60 seconds old, while a newer one is read behind it; a promise that breaks can take up to a minute to turn the count red. Nothing is drawn differently, so this has no mockup; it is listed so the person approves it or sends it back.
 
 ## Depends On
 

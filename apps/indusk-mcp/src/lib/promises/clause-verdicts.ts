@@ -13,7 +13,7 @@ import {
 import { join, relative } from "node:path";
 import type { Tracer } from "@opentelemetry/api";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
-import { liveOtlpEndpointSync } from "../telemetry/status.js";
+import { liveOtlpEndpointAsync } from "../telemetry/endpoint-async.js";
 import { type ClauseVerdict, writeClauseSignals } from "./clause-signal.js";
 import { movesThroughChecks, parserReadsWrite } from "./shell-write-reading.js";
 
@@ -240,7 +240,7 @@ export interface DrainOptions {
 	tracer?: Tracer;
 	now?: Date;
 	/** Whether a daemon is there to receive the signals; with none, nothing is sent or removed. */
-	live?: () => boolean;
+	live?: () => boolean | Promise<boolean>;
 	/** Skip if the last drain was under a minute ago (the command line's call). */
 	throttle?: boolean;
 }
@@ -270,8 +270,9 @@ export async function drainPlanWriteDecisions(
 		}
 		const text = readFileSync(path, "utf-8");
 		const lines = text.split("\n").filter((l) => l.trim() !== "");
-		const live = opts.live ?? (() => liveOtlpEndpointSync() !== null);
-		if (!live()) return { sent: 0, kept: lines.length };
+		// Found asynchronously: the admin's recorder runs this on a timer in the server (decision 19).
+		const live = opts.live ?? (async () => (await liveOtlpEndpointAsync()) !== null);
+		if (!(await live())) return { sent: 0, kept: lines.length };
 
 		const parsed: PlanWriteLine[] = [];
 		for (const l of lines) {

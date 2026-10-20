@@ -25,12 +25,13 @@ import {
   bringTrunkIntoPlan,
 } from "@infinitedusky/indusk-mcp/plans";
 import {
-  planLandedOnMain,
-  psAll,
+  forgetLandings,
+  forgetProcessList,
+  keptProcessTable,
   type RunKind,
   type RunRecord,
+  readLandings,
   readRunRecord,
-  realProcessReads,
   releaseOutcome,
   reportDeadReadsStopped,
   reportKeptOnDisk,
@@ -45,6 +46,7 @@ import {
   writeRunRecord,
 } from "@infinitedusky/indusk-mcp/run-record";
 import matter from "gray-matter";
+import { latestReading, type Reading, readPageReads } from "./page-reads";
 import { getProjectPath } from "./registry-client";
 import { planLocation, sessionManager } from "./session-host";
 
@@ -141,6 +143,7 @@ function judgedRelease(
   project: string,
   plan: string,
   step: { released: boolean; error: string | null } | null,
+  landed: boolean,
 ): {
   release: { released: boolean; error: string | null };
   stop: RunnerStop;
@@ -148,7 +151,7 @@ function judgedRelease(
   const root = getProjectPath(project);
   const outcome = releaseOutcome({
     step,
-    landedOnMain: root !== null && planLandedOnMain(root, plan),
+    landedOnMain: root !== null && landed,
     landError: step?.error ?? null,
   });
   // signal: a-run-is-read-from-its-record/released-only-when-landed, from the trunk's own log read again
@@ -160,6 +163,17 @@ function judgedRelease(
         release: { released: false, error: outcome.reason },
         stop: { step: "release-failed", why: outcome.reason },
       };
+}
+
+/**
+ * Whether the trunk shows the plan landed, read now. A release has just ended, so whatever a page
+ * kept of the trunk's history a moment ago may predate the merge: it is dropped first (decision 12).
+ */
+async function landedNow(project: string, plan: string): Promise<boolean> {
+  const root = getProjectPath(project);
+  if (root === null) return false;
+  forgetLandings();
+  return (await readLandings(root))(plan);
 }
 
 /** The step session's own process, as the manager recorded it, for the record. */
@@ -180,17 +194,32 @@ function recordsOf(
   });
 }
 
+/**
+ * The reading an entry point that is not a page makes of the processes and the trunk (a route, a
+ * start): the kept table and landings of the project, read once and shared with any page inside the
+ * window. A project that is not registered reads nothing.
+ */
+export async function readNow(project: string): Promise<Reading> {
+  const root = getProjectPath(project);
+  if (!root) return latestReading();
+  return readPageReads(root);
+}
+
 const newest = (records: RunRecord[]): RunRecord | undefined =>
   [...records].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
 
 /** What the record alone says of a run, with no entry held here: judged by its own process. */
-function statusOfRecord(record: RunRecord) {
-  return runStatus(record, realProcessReads, false);
+function statusOfRecord(record: RunRecord, read: Reading) {
+  return runStatus(record, read.reads, false);
 }
 
 /** The build page's state from a record: nothing held here, so the record decides. */
-function buildStateFromRecord(project: string, record: RunRecord): BuildState {
-  const status = statusOfRecord(record);
+function buildStateFromRecord(
+  project: string,
+  record: RunRecord,
+  read: Reading,
+): BuildState {
+  const status = statusOfRecord(record, read);
   if (status.state === "running") {
     return {
       running: true,
@@ -203,7 +232,12 @@ function buildStateFromRecord(project: string, record: RunRecord): BuildState {
   // A release that recorded "released" is read again from the trunk (found after a restart too).
   const recorded =
     record.kind === "release" && record.stop?.step === "released"
-      ? judgedRelease(project, record.plan, { released: true, error: null })
+      ? judgedRelease(
+          project,
+          record.plan,
+          { released: true, error: null },
+          read.landed(record.plan),
+        )
       : null;
   const stop = recorded?.stop ??
     (record.stop as RunnerStop | null) ?? {
@@ -228,12 +262,14 @@ function buildStateFromRecord(project: string, record: RunRecord): BuildState {
  * the newest of the plan's. A run that stopped on its own is not dead; one
  * whose record cannot be read is not known to be.
  */
-function deadRun(project: string, plan: string): RunKind | null {
+function deadRun(project: string, plan: string, read: Reading): RunKind | null {
   const dead = recordsOf(project, plan, [
     "planning",
     "release",
     "build",
-  ]).filter((r) => r.stop === null && statusOfRecord(r).state === "stopped");
+  ]).filter(
+    (r) => r.stop === null && statusOfRecord(r, read).state === "stopped",
+  );
   return newest(dead)?.kind ?? null;
 }
 
@@ -242,9 +278,15 @@ function deadRun(project: string, plan: string): RunKind | null {
  * recorded step session is looked for in the process table, apart from the rule that decided
  * what the page showed.
  */
-function reportBuildPressed(project: string, plan: string): void {
+function reportBuildPressed(
+  project: string,
+  plan: string,
+  read: Reading,
+): void {
   const root = getProjectPath(project);
   if (!root) return;
+  // An unreadable table says nothing of the run: judged against nothing, it would call a live run dead.
+  if (read.table === null) return;
   try {
     const record = newest(
       recordsOf(project, plan, ["planning", "release", "build"]),
@@ -255,9 +297,9 @@ function reportBuildPressed(project: string, plan: string): void {
       plannings().get(key(project, plan))?.running === true;
     void reportDeadReadsStopped(root, {
       record,
-      shown: heldHere ? "running" : statusOfRecord(record).state,
+      shown: heldHere ? "running" : statusOfRecord(record, read).state,
       heldHere,
-      table: psAll(),
+      table: read.table,
     });
   } catch {
     // best-effort
@@ -294,11 +336,15 @@ async function restartFor(root: string, plan: string, dead: RunKind) {
  * by the run's own process, so a restart changes nothing and a run that died
  * reads stopped with its reason.
  */
-export function buildState(project: string, plan: string): BuildState | null {
+export function buildState(
+  project: string,
+  plan: string,
+  read: Reading = latestReading(),
+): BuildState | null {
   const held = builds().get(key(project, plan));
-  const shown = held ?? buildStateOnDisk(project, plan);
+  const shown = held ?? buildStateOnDisk(project, plan, read);
   if (shown?.running)
-    checkInProgress(project, plan, "build", held?.running === true);
+    checkInProgress(project, plan, "build", held?.running === true, read);
   return shown;
 }
 
@@ -309,13 +355,19 @@ export function buildState(project: string, plan: string): BuildState | null {
 export async function buildView(
   project: string,
   plan: string,
+  read?: Reading,
 ): Promise<{
   build: BuildState | null;
   phase: string | null;
   sentence: string | null;
 }> {
-  const build = buildState(project, plan);
   const root = getProjectPath(project);
+  const asked: Reading =
+    read ??
+    (root
+      ? await readPageReads(root, {}, { processList: true })
+      : latestReading());
+  const build = buildState(project, plan, asked);
   const phase = root
     ? shownPhase(await readBuildPlan(root, plan).catch(() => null))
     : null;
@@ -361,6 +413,7 @@ export function throttled(id: string, send: () => Promise<void>): void {
 export function runOfPlan(
   project: string,
   plan: string,
+  read: Reading = latestReading(),
 ): {
   kind: RunKind;
   status: ReturnType<typeof runStatus>;
@@ -379,7 +432,7 @@ export function runOfPlan(
       : builds().get(key(project, plan))?.running === true;
   const status = heldHere
     ? ({ state: "running" } as const)
-    : statusOfRecord(record);
+    : statusOfRecord(record, read);
   return {
     kind: record.kind,
     status,
@@ -390,9 +443,40 @@ export function runOfPlan(
 }
 
 /** The newest build or release record's state: what the page shows when this daemon holds nothing. */
-function buildStateOnDisk(project: string, plan: string): BuildState | null {
+function buildStateOnDisk(
+  project: string,
+  plan: string,
+  read: Reading,
+): BuildState | null {
   const record = newest(recordsOf(project, plan, ["build", "release"]));
-  return record ? buildStateFromRecord(project, record) : null;
+  return record ? buildStateFromRecord(project, record, read) : null;
+}
+
+/**
+ * Whether a page of these plans needs the machine's process list: a plan has a run on record, or
+ * a session runs for the project. A page of plans with neither starts no `ps` (A4).
+ */
+export function needsProcessList(
+  project: string,
+  plans: readonly { name: string }[],
+): boolean {
+  return (
+    anyRunOnRecord(project, plans) ||
+    sessionManager()
+      .running()
+      .some((r) => r.project === project)
+  );
+}
+
+/** Whether any of the plans has a run on record: a page with none needs no process list. */
+export function anyRunOnRecord(
+  project: string,
+  plans: readonly { name: string }[],
+): boolean {
+  return plans.some(
+    (p) =>
+      recordsOf(project, p.name, ["planning", "release", "build"]).length > 0,
+  );
 }
 
 /** Once per plan in a while: a plan shown in progress has a process running for it (a signal, Decision 17). */
@@ -403,6 +487,7 @@ function checkInProgress(
   plan: string,
   kind: RunKind,
   heldHere: boolean,
+  read: Reading,
 ): void {
   const k = `${key(project, plan)}/${kind}`;
   const now = Date.now();
@@ -411,16 +496,26 @@ function checkInProgress(
   const root = getProjectPath(project);
   if (!root) return;
   try {
-    // signal: a-run-is-read-from-its-record/never-in-progress-when-idle, read from the process table
-    void reportNotInProgressWhenIdle(root, {
-      plan,
-      kind,
-      heldHere,
-      sessions: sessionManager()
-        .running()
-        .filter((r) => r.project === project && r.plan === plan),
-      table: psAll(),
-    });
+    const sessions = sessionManager()
+      .running()
+      .filter((r) => r.project === project && r.plan === plan);
+    const report = (table: NonNullable<Reading["table"]>) =>
+      // signal: a-run-is-read-from-its-record/never-in-progress-when-idle, read from the process table
+      reportNotInProgressWhenIdle(root, {
+        plan,
+        kind,
+        heldHere,
+        sessions,
+        table,
+      });
+    // The timer's own read when the caller has none: kept, so a tick inside the window starts no `ps`.
+    if (read.table !== null) void report(read.table);
+    else
+      void keptProcessTable()
+        .then((k) => report(k.value))
+        .catch(() => {
+          // an unreadable table says nothing: no report
+        });
   } catch {
     // best-effort
   }
@@ -500,7 +595,11 @@ async function depsFor(
               plan,
               ...(reason ? { reason } : {}),
               ...chosen,
-              onSession: (r) => handle.update({ process: processOf(r) }),
+              onSession: (r) => {
+                handle.update({ process: processOf(r) });
+                // A table taken before this process existed must not be reused for its page.
+                forgetProcessList();
+              },
             });
           } finally {
             handle.update({ process: null });
@@ -553,12 +652,13 @@ export async function startBuild(
 ): Promise<BuildState> {
   const inPlanning = planningStepRefusal("starting a build");
   if (inPlanning) throw new Error(inPlanning);
-  const existing = buildState(project, plan);
+  const read = await readNow(project);
+  const existing = buildState(project, plan, read);
   if (existing?.running) throw new Error(`${plan} is already building`);
-  if (planningState(project, plan)?.running)
+  if (planningState(project, plan, read)?.running)
     throw new Error(`${plan} is being planned: its planning run has not ended`);
   assertNoBuildSession(project, plan);
-  reportBuildPressed(project, plan);
+  reportBuildPressed(project, plan, read);
   // Held before the first await, as startRelease and startPlanning are: from the press on the
   // plan reads running and a second press is refused, so one plan never has two builds (A96).
   const k = key(project, plan);
@@ -571,12 +671,14 @@ export async function startBuild(
     release: null,
   };
   builds().set(k, state);
+  // Pressing Build starts a process no earlier reading of the table has seen (A20).
+  forgetProcessList();
   const letGo = () => {
     if (builds().get(k) !== state) return;
     if (before) builds().set(k, before);
     else builds().delete(k);
   };
-  const dead = deadRun(project, plan);
+  const dead = deadRun(project, plan, read);
   if (dead !== null) {
     let restart: Awaited<ReturnType<typeof restartFor>>;
     try {
@@ -621,11 +723,16 @@ export async function startBuild(
     throw err;
   }
   void runBuild({ ...deps, autoAccept: autoAccepts(root) })
-    .then((stop) => {
+    .then(async (stop) => {
       // An auto-accepted release is judged from the trunk too, never from its step's word.
       const judged =
         stop.step === "released"
-          ? judgedRelease(project, plan, { released: true, error: null })
+          ? judgedRelease(
+              project,
+              plan,
+              { released: true, error: null },
+              await landedNow(project, plan),
+            )
           : null;
       state.stop = judged?.stop ?? stop;
       if (judged) state.release = judged.release;
@@ -678,7 +785,7 @@ export async function startRelease(
   project: string,
   plan: string,
 ): Promise<BuildState> {
-  const existing = buildState(project, plan);
+  const existing = buildState(project, plan, await readNow(project));
   if (existing?.running)
     throw new Error(`${plan} is already building or releasing`);
   assertNoBuildSession(project, plan);
@@ -706,8 +813,13 @@ export async function startRelease(
     throw err;
   }
   void runRelease(deps, "person")
-    .then((r) => {
-      const judged = judgedRelease(project, plan, r);
+    .then(async (r) => {
+      const judged = judgedRelease(
+        project,
+        plan,
+        r,
+        await landedNow(project, plan),
+      );
       state.release = judged.release;
       state.stop = judged.stop;
       handle.update({ stop: state.stop, stopReason: whyOf(state.stop) });
@@ -758,17 +870,18 @@ const plannings = (): Map<string, PlanningRunState> => {
 export function planningState(
   project: string,
   plan: string,
+  read: Reading = latestReading(),
 ): PlanningRunState | null {
   const held = plannings().get(key(project, plan));
   if (held) {
-    if (held.running) checkInProgress(project, plan, "planning", true);
+    if (held.running) checkInProgress(project, plan, "planning", true, read);
     return held;
   }
   const record = recordsOf(project, plan, ["planning"])[0];
   if (!record) return null;
-  const status = statusOfRecord(record);
+  const status = statusOfRecord(record, read);
   if (status.state === "running") {
-    checkInProgress(project, plan, "planning", false);
+    checkInProgress(project, plan, "planning", false, read);
     return {
       started: true,
       running: true,
@@ -836,9 +949,10 @@ export async function startPlanning(
 ): Promise<PlanningRunState> {
   const inPlanning = planningStepRefusal("starting a planning run");
   if (inPlanning) throw new Error(inPlanning);
-  if (planningState(project, plan)?.running)
+  const read = await readNow(project);
+  if (planningState(project, plan, read)?.running)
     throw new Error(`${plan} is already being planned`);
-  if (buildState(project, plan)?.running)
+  if (buildState(project, plan, read)?.running)
     throw new Error(`${plan} is building: its build has not ended`);
   assertNoBuildSession(project, plan);
   const root = getProjectPath(project);
@@ -926,7 +1040,10 @@ export async function startPlanning(
             project,
             plan,
             ...chosen,
-            onSession: (r) => handle.update({ process: processOf(r) }),
+            onSession: (r) => {
+              handle.update({ process: processOf(r) });
+              forgetProcessList();
+            },
           });
         } finally {
           handle.update({ process: null });
@@ -976,7 +1093,7 @@ export async function resumeAfterQuestion(
   plan: string,
 ): Promise<unknown> {
   sessionManager().releaseQuestion(project, plan);
-  const planning = planningState(project, plan);
+  const planning = planningState(project, plan, await readNow(project));
   const stop = planning?.stop;
   if (
     planning &&

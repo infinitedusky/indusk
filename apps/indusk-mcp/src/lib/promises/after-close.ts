@@ -6,7 +6,7 @@ import { type PlanSummary, parsePlan } from "../plan-parser.js";
 import { getQuietWindowDays } from "./config.js";
 import { landedDate } from "./display.js";
 import { recorded } from "./incidents.js";
-import { type Registry, readPromises } from "./registry.js";
+import { type Registry, readPromisesKept } from "./registry.js";
 import { openMaintenancePhasesIn } from "./reopen.js";
 
 /**
@@ -42,7 +42,7 @@ export function closedAt(planDir: string): Date | null {
 }
 
 function registryOf(projectRoot: string): Registry | null {
-	const read = readPromises(projectRoot);
+	const read = readPromisesKept(projectRoot);
 	if (read.ok) return read.registry;
 	return "partial" in read ? read.partial : null;
 }

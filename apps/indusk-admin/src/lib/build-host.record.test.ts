@@ -74,7 +74,7 @@ vi.mock("@infinitedusky/indusk-mcp/run-record", async () => {
   const actual = await vi.importActual<
     typeof import("@infinitedusky/indusk-mcp/run-record")
   >("@infinitedusky/indusk-mcp/run-record");
-  return { ...actual, planLandedOnMain: () => onMain };
+  return { ...actual, readLandings: async () => () => onMain };
 });
 
 vi.mock("@infinitedusky/indusk-mcp/build", async () => {

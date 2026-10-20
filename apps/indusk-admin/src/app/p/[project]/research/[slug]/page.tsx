@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/Markdown";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { startPage } from "@/lib/page-reads";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { readResearchContent } from "@/lib/research-reader";
 
@@ -18,6 +19,7 @@ interface ResearchRouteProps {
 export default async function ResearchPage({ params }: ResearchRouteProps) {
   const { project, slug } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("research", projectPath ?? "");
 
   if (!projectPath || !projectPathExists(projectPath)) {
     return (
@@ -29,6 +31,7 @@ export default async function ResearchPage({ params }: ResearchRouteProps) {
   }
 
   const content = await readResearchContent(projectPath, slug);
+  page.finish(0);
   if (content === null) notFound();
 
   return (

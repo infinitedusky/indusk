@@ -69,6 +69,9 @@ vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
 vi.mock("@infinitedusky/indusk-mcp/promises/sources", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).sourcesMock(),
 );
+vi.mock("@/lib/page-reads", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).pageReadsMock(),
+);
 vi.mock("@/lib/timeline-strip", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).timelineStripMock(),
 );

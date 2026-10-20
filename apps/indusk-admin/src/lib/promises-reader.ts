@@ -1,7 +1,7 @@
 import {
   type ReadRegistryResult,
   type Registry,
-  readPromises,
+  readPromisesKept,
 } from "@infinitedusky/indusk-mcp/promises/registry";
 
 /**
@@ -18,7 +18,7 @@ import {
 export type ProjectPromises = ReadRegistryResult;
 
 export function readProjectPromises(projectRoot: string): ProjectPromises {
-  return readPromises(projectRoot);
+  return readPromisesKept(projectRoot);
 }
 
 /**

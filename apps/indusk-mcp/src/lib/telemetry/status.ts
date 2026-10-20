@@ -3,6 +3,8 @@ import { createConnection } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { isAlive } from "../process-identity.js";
+import { keptProcessTable } from "../run-record/async-reads.js";
+import { onPage } from "../start-program.js";
 import type { StoredAddress } from "./daemon-address.js";
 import type { DaemonReads } from "./daemon-reads.js";
 import { realDaemonReads } from "./daemon-reads.js";
@@ -14,6 +16,7 @@ import {
 	resolveLocalDaemonSync,
 	resolveLocalDaemonVia,
 } from "./daemon-state.js";
+import { preparedDaemonReads } from "./prepared-reads.js";
 
 /**
  * The read side of the local telemetry daemon: where it records itself, and
@@ -132,22 +135,40 @@ function resolveOpts(
 }
 
 /** `resolveLocalDaemonHere`, saying whether the record or a finding reached the daemon. */
-export function resolveLocalDaemonViaHere(
+export async function resolveLocalDaemonViaHere(
 	by: string,
 	deps: ResolveDeps = {},
 ): Promise<ReachedDaemon | null> {
-	return resolveLocalDaemonVia(resolveOpts(by, deps));
+	return resolveLocalDaemonVia(await onThisPage(resolveOpts(by, deps), deps));
+}
+
+/**
+ * On a server's page the resolver is handed the process list and sockets read asynchronously and
+ * kept, so it starts no `ps` or `lsof` that stops the server (admin-pages-load-fast, decision 9);
+ * the command line, and a caller that brought its own reads, resolve as they always did.
+ */
+async function onThisPage<T extends { reads: DaemonReads; home: string }>(
+	opts: T,
+	deps: ResolveDeps,
+): Promise<T> {
+	if (deps.reads !== undefined || !onPage()) return opts;
+	try {
+		const rows = (await keptProcessTable()).value;
+		return { ...opts, reads: await preparedDaemonReads(opts.reads, opts.home, rows) };
+	} catch {
+		return opts;
+	}
 }
 
 /**
  * The local daemon a reader should reach, or null: the one resolver behind
  * every reader (`resolveLocalDaemon`), asked for this home unless handed reads.
  */
-export function resolveLocalDaemonHere(
+export async function resolveLocalDaemonHere(
 	by: string,
 	deps: ResolveDeps = {},
 ): Promise<DaemonMeta | null> {
-	return resolveLocalDaemon(resolveOpts(by, deps));
+	return resolveLocalDaemon(await onThisPage(resolveOpts(by, deps), deps));
 }
 
 /**

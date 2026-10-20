@@ -28,6 +28,7 @@ import {
 	symlinkSync,
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import { startProgram } from "../start-program.js";
 
 /**
  * Root entries that are never worktrees.
@@ -80,6 +81,8 @@ export function listWorkbenchSubdirs(root: string): string[] {
  * of the spawn would be two answers to diverge.
  */
 export function gitCommonDirOf(path: string): string | null {
+	const known = commonDirs().get(path);
+	if (known !== undefined) return known;
 	const r = spawnSync(
 		"git",
 		["-C", path, "rev-parse", "--path-format=absolute", "--git-common-dir"],
@@ -88,7 +91,48 @@ export function gitCommonDirOf(path: string): string | null {
 		},
 	);
 	if (r.status !== 0 || !r.stdout) return null;
-	return r.stdout.trim();
+	const found = r.stdout.trim();
+	commonDirs().set(path, found);
+	return found;
+}
+
+/**
+ * The shared git directories already found, by path. A path stays in the repository it is in, so
+ * a found answer is kept for the life of the process (a "not in a repository" answer is not: a
+ * folder may be made a repository). The server's pages ask through `gitCommonDirOfAsync`, which
+ * fills this, so the synchronous callers beneath them (the project's id, the bookkeeping home)
+ * are answered here and start no program (admin-pages-load-fast, decision 11).
+ */
+function commonDirs(): Map<string, string> {
+	const g = globalThis as unknown as Record<symbol, Map<string, string> | undefined>;
+	const slot = Symbol.for("indusk.worktree.common-dirs");
+	let map = g[slot];
+	if (map === undefined) {
+		map = new Map();
+		g[slot] = map;
+	}
+	return map;
+}
+
+/** `gitCommonDirOf` without stopping the server: the admin's pages read it (decision 11), and it fills what the synchronous one answers from. */
+export async function gitCommonDirOfAsync(path: string): Promise<string | null> {
+	const known = commonDirs().get(path);
+	if (known !== undefined) return known;
+	try {
+		const out = await startProgram("git", [
+			"-C",
+			path,
+			"rev-parse",
+			"--path-format=absolute",
+			"--git-common-dir",
+		]);
+		const found = out.trim();
+		if (found === "") return null;
+		commonDirs().set(path, found);
+		return found;
+	} catch {
+		return null;
+	}
 }
 
 /**

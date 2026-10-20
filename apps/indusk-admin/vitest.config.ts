@@ -105,6 +105,8 @@ export default defineConfig({
             ...SYSTEM.map(asGlob),
             ...NODE_PAGES.map(asGlob),
           ],
+          // A page's reads and kept standings load node-only readers; mocked once here.
+          setupFiles: ["src/__tests__/helpers/browser-page-reads.ts"],
           browser: {
             enabled: true,
             provider: playwright(),

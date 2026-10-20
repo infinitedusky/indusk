@@ -22,9 +22,11 @@ import { TrustNotice } from "@/components/session/TrustNotice";
 import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
 import {
+  needsProcessList,
   readPlanHistory,
   readPlanQuestions,
   readWaiting,
+  startPageFor,
   withSituations,
 } from "@/lib/decisions-reader";
 import { planLookState } from "@/lib/look-state";
@@ -41,6 +43,7 @@ import {
   readPlanHierarchy,
 } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
+import { standingKept } from "@/lib/standing-kept";
 import { projectTrusted } from "@/lib/trust-reader";
 
 interface PlanPageProps {
@@ -55,19 +58,30 @@ interface PlanPageProps {
  */
 export default async function PlanPage({ params }: PlanPageProps) {
   const { project, name } = await params;
+  // The page's clock and count of program starts begin here, before any read.
+  const page = startPageFor("plan", project);
   const found = await readPlanPage(project, name);
   if (!found) return null;
   const { projectPath } = found;
+  // One reading of the process list (only when the plan has a run) and of the trunk's landings.
+  const read = await page.reads({
+    processList: () =>
+      !found.plan.archived && needsProcessList(project, [found.plan]),
+  });
 
   // The dates the released card reads come from the package.
-  const dates = (await readHealthNames(projectPath)).planDates[name];
+  const dates = (
+    await standingKept(`health-names:${projectPath}`, () =>
+      readHealthNames(projectPath),
+    )
+  ).planDates[name];
 
   // The one decision the plan waits on, and what it was answered before
   // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
   // the card while it waits on them, so neither is offered twice.
   const waiting = found.plan.archived
     ? undefined
-    : (await readWaiting(project, projectPath, [found.plan]))[0];
+    : (await readWaiting(project, projectPath, [found.plan], read))[0];
 
   // What the plan reads as and what runs for it, from the package's one reader, so the
   // steps, the sentence and the confirmation list all say what is true (a-run-can-be-trusted).
@@ -87,6 +101,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
           plan: name,
           promises: partsForConfirm.promises.map((p) => p.name),
         },
+        read,
       },
     )
   )[0];
@@ -115,8 +130,9 @@ export default async function PlanPage({ params }: PlanPageProps) {
   const grouping = readPlanHierarchy(projectPath);
   const story =
     (grouping.subplans[name] ?? []).length > 0
-      ? await masterPage(project, projectPath, name, grouping)
+      ? await masterPage(project, projectPath, name, grouping, read)
       : undefined;
+  page.finish(1);
   const sessionControl = (
     <PlanSession
       project={project}
@@ -275,19 +291,23 @@ async function masterPage(
   projectPath: string,
   name: string,
   grouping: ReturnType<typeof readPlanHierarchy>,
+  read: Awaited<ReturnType<ReturnType<typeof startPageFor>["reads"]>>,
 ) {
   const [active, archived] = await Promise.all([
     readActivePlans(projectPath),
     readArchivedPlans(projectPath),
   ]);
-  const { planDates, words } = await readHealthNames(projectPath);
+  const { planDates, words } = await standingKept(
+    `health-names:${projectPath}`,
+    () => readHealthNames(projectPath),
+  );
   const isReleased = (n: string) => (planDates[n]?.released ?? null) !== null;
   const group = groupOf(
     buildGroups(active, archived, grouping, isReleased, words).groups,
     name,
   );
   if (!group) return undefined;
-  const waiting = await readWaiting(project, projectPath, active);
+  const waiting = await readWaiting(project, projectPath, active, read);
   return masterStory(group, isReleased, {
     prefix: `/p/${project}/plan/`,
     waiting: Object.fromEntries(waiting.map((w) => [w.plan, w.step])),

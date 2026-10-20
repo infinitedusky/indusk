@@ -4,6 +4,7 @@ import { resourceFromAttributes } from "@opentelemetry/resources";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { liveOtlpEndpointAsync } from "./endpoint-async.js";
 import { liveOtlpEndpointSync, type ResolveDeps } from "./status.js";
 
 /**
@@ -32,6 +33,26 @@ export function commandTracer(deps: ResolveDeps = {}): Tracer {
 		const endpoint = liveOtlpEndpointSync(deps);
 		if (endpoint === null) return trace.getTracer(TRACER_NAME);
 		provider = new NodeTracerProvider({
+			resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: SERVICE_NAME }),
+			spanProcessors: [
+				new BatchSpanProcessor(new OTLPTraceExporter({ url: `${endpoint}/v1/traces` })),
+			],
+		});
+	}
+	return provider.getTracer(TRACER_NAME);
+}
+
+/**
+ * `commandTracer` for a caller that must not stop the server (a page's report): the daemon is
+ * found with the process list and sockets read asynchronously. The provider, once made, is the same
+ * one. With no daemon found it is the no-op tracer, and the next ask looks again.
+ */
+export async function commandTracerAsync(deps: ResolveDeps = {}): Promise<Tracer> {
+	if (provider === null) {
+		const endpoint = await liveOtlpEndpointAsync(deps);
+		if (endpoint === null) return trace.getTracer(TRACER_NAME);
+		// Another report may have made the provider while this one waited.
+		provider ??= new NodeTracerProvider({
 			resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: SERVICE_NAME }),
 			spanProcessors: [
 				new BatchSpanProcessor(new OTLPTraceExporter({ url: `${endpoint}/v1/traces` })),

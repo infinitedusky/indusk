@@ -21,6 +21,7 @@ const QUESTIONS = [
   "Does the impl build what each promise claims, and nothing it does not?",
   "Which skip reason would you not accept?",
   "What else would have to change for each promise to hold?",
+  "Which way could a clause fail that no signal would see?",
 ];
 
 let project: string;

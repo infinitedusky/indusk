@@ -39,11 +39,14 @@ export interface ScorecardsListProps {
    * `src/lib/vcs.ts`.
    */
   descriptions?: Map<string, string>;
+  /** How many scorecards the log holds when `scorecards` is only the latest of them. */
+  total?: number;
 }
 
 export function ScorecardsList({
   scorecards,
   descriptions,
+  total,
 }: ScorecardsListProps) {
   // Most-recent-first sort (ISO 8601 timestamps sort lexicographically in
   // reverse). Done here so the page-level walker can pass an unsorted
@@ -65,7 +68,10 @@ export function ScorecardsList({
         </p>
         <p className="text-xs text-ink-faint">
           Source: <span className="font-mono">eval/results.log</span> in each
-          project's home across every registered project ({sorted.length}{" "}
+          project's home across every registered project (
+          {total !== undefined && total > sorted.length
+            ? `latest ${sorted.length} of ${total}`
+            : sorted.length}{" "}
           entries, most recent first)
         </p>
       </header>

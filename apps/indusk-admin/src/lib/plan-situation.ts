@@ -11,11 +11,9 @@ import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
 import {
   type Confirmation,
   confirmationsOf,
-  landedAsker,
   liveCheckRecorded,
   type NextStep,
   nextStepFor,
-  psAll,
   readDocumentsHash,
   readReviewText,
   reportNextStep,
@@ -24,9 +22,14 @@ import {
   type Situation,
   shownPhase,
   situation,
-  trunkMergeSubjects,
 } from "@infinitedusky/indusk-mcp/run-record";
-import { heldRunning, runOfPlan, throttled } from "./build-host";
+import {
+  heldRunning,
+  needsProcessList,
+  runOfPlan,
+  throttled,
+} from "./build-host";
+import { type PageReads, readPageReads, withPageContext } from "./page-reads";
 import { snapshotOf } from "./plan-snapshot";
 import type { Plan } from "./planning-reader";
 import { sessionManager } from "./session-host";
@@ -43,9 +46,19 @@ export interface PlanSituation {
   next: NextStep | null;
 }
 
+/** What a plan's situation is read from: the page's one reading of the processes and the trunk. */
+export type SituationReading = Pick<
+  PageReads,
+  "table" | "reads" | "landed" | "subjects"
+>;
+
 /** What runs for the plan right now: a process writing it, a build, a release. */
-function liveOf(project: string, plan: string): LivePlan {
-  const run = runOfPlan(project, plan);
+function liveOf(
+  project: string,
+  plan: string,
+  read: SituationReading,
+): LivePlan {
+  const run = runOfPlan(project, plan, read);
   const going = run?.status.state === "running" ? run : null;
   const interactive = sessionManager()
     .running()
@@ -63,19 +76,43 @@ function liveOf(project: string, plan: string): LivePlan {
 export interface SituationOptions {
   /** The plan whose confirmation list is wanted (the plan's own page): each clause signal and live check. */
   confirmFor?: { plan: string; promises: readonly string[] };
+  /** The page's reading; absent, one is made for these plans (kept, so a second page reuses it). */
+  read?: SituationReading;
 }
 
 /** Each plan with `live` (what runs for it) and `situation` (what it reads as), for the page and the nav. */
-export async function withSituations(
+export function withSituations(
   project: string,
   projectPath: string,
   plans: readonly Plan[],
   waiting: readonly Waiting[],
   options: SituationOptions = {},
 ): Promise<Plan[]> {
+  return withPageContext(() =>
+    situations(project, projectPath, plans, waiting, options),
+  );
+}
+
+async function situations(
+  project: string,
+  projectPath: string,
+  plans: readonly Plan[],
+  waiting: readonly Waiting[],
+  options: SituationOptions,
+): Promise<Plan[]> {
   // The trunk's merge subjects are read once for all plans, from the trunk branch (never the
-  // root checkout's own) and, for a workbench plan, from its code repository (A94, A95).
-  const isLanded = landedAsker(projectPath);
+  // root checkout's own) and, for a workbench plan, from its code repository (A94, A95); the
+  // process list once too, and only when a plan has a run (A2, A3, A4).
+  const open = plans.filter((p) => !p.archived);
+  if (open.length === 0) return [...plans];
+  const read: SituationReading =
+    options.read ??
+    (await readPageReads(
+      projectPath,
+      {},
+      { processList: () => needsProcessList(project, open) },
+    ));
+  const isLanded = read.landed;
   const out: Plan[] = [];
   for (const plan of plans) {
     out.push(
@@ -88,6 +125,7 @@ export async function withSituations(
             waiting,
             onMain: isLanded(plan.name),
             confirmFor: options.confirmFor,
+            read,
           }),
     );
   }
@@ -102,10 +140,11 @@ async function situatedPlan(input: {
   waiting: readonly Waiting[];
   onMain: boolean;
   confirmFor: SituationOptions["confirmFor"];
+  read: SituationReading;
 }): Promise<Plan> {
-  const { project, projectPath, plan, onMain } = input;
-  const withLive: Plan = { ...plan, live: liveOf(project, plan.name) };
-  const run = runOfPlan(project, plan.name);
+  const { project, projectPath, plan, onMain, read } = input;
+  const withLive: Plan = { ...plan, live: liveOf(project, plan.name, read) };
+  const run = runOfPlan(project, plan.name, read);
   const phase =
     run?.kind === "build" && run.status.state === "running"
       ? shownPhase(
@@ -125,7 +164,7 @@ async function situatedPlan(input: {
     ...(confirmations ? { confirmations } : {}),
   });
   const next = nextStepFor(reading);
-  reportSituation(project, projectPath, withLive, reading, next);
+  reportSituation(project, projectPath, withLive, reading, next, read);
   return { ...withLive, situation: { situation: reading, next } };
 }
 
@@ -185,23 +224,29 @@ function reportSituation(
   plan: Plan,
   reading: Situation,
   next: NextStep | null,
+  read: SituationReading,
 ): void {
   const id = `${project}/${plan.name}`;
+  const sessions = sessionManager()
+    .running()
+    .filter((r) => r.project === project && r.plan === plan.name);
+  // An unreadable table says nothing of what is running: judged against nothing it would call a
+  // live run dead, so the report is not made. A page that read no list has no run to judge.
+  const judgeable = read.table !== null || sessions.length === 0;
   // signal: a-run-is-read-from-its-record/says-what-is-true
-  throttled(`${id}/says`, () =>
-    reportSaysWhatIsTrue(root, {
-      plan: plan.name,
-      kind: reading.kind,
-      text: reading.text,
-      heldHere: heldRunning(project, plan.name),
-      sessions: sessionManager()
-        .running()
-        .filter((r) => r.project === project && r.plan === plan.name),
-      table: psAll(),
-      subjects: trunkMergeSubjects(root),
-      steps: drawnSteps(plan),
-    }),
-  );
+  if (judgeable)
+    throttled(`${id}/says`, () =>
+      reportSaysWhatIsTrue(root, {
+        plan: plan.name,
+        kind: reading.kind,
+        text: reading.text,
+        heldHere: heldRunning(project, plan.name),
+        sessions,
+        table: read.table ?? [],
+        subjects: read.subjects,
+        steps: drawnSteps(plan),
+      }),
+    );
   // signal: a-run-is-read-from-its-record/always-a-next-step
   throttled(`${id}/next`, () =>
     reportNextStep(root, { plan: plan.name, kind: reading.kind, next }),

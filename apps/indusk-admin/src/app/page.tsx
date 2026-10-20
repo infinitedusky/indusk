@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { isWorkbench } from "@infinitedusky/indusk-mcp/worktree/repos";
 import type { ProjectCardData } from "@/components/ProjectCard";
 import { ProjectGrid } from "@/components/ProjectGrid";
+import { startPage } from "@/lib/page-reads";
 import { hasWorkInProgress } from "@/lib/plan-stage";
 import { readActivePlans } from "@/lib/planning-reader";
 import { readRegistryProjects } from "@/lib/registry-client";
@@ -19,6 +20,11 @@ import { readRegistryProjects } from "@/lib/registry-client";
  */
 export default async function Home() {
   const registered = readRegistryProjects();
+  // The home page has no project of its own: it reports under the first one it shows.
+  const page = startPage(
+    "home",
+    registered.find((entry) => existsSync(entry.path))?.path ?? "",
+  );
   // A registered path that is gone is not a project to show — it is named in
   // a note that points at `indusk ui prune` (admin-ui-phase-progress A23).
   const live = registered.filter((entry) => existsSync(entry.path));
@@ -40,5 +46,6 @@ export default async function Home() {
     }),
   );
 
+  page.finish(projects.length);
   return <ProjectGrid projects={projects} notFound={notFound} />;
 }

@@ -9,6 +9,7 @@ import { planReviewAnswers } from "../plans/plan-review.js";
 import type { PsRow } from "../process-identity.js";
 import { type ClauseVerdict, writeClauseSignals } from "../promises/clause-signal.js";
 import type { SessionRecord } from "../session/manager.js";
+import { trunkMergeSubjectsAsync } from "./async-reads.js";
 import type { SituationKind } from "./situation.js";
 
 /**
@@ -127,8 +128,15 @@ export function judgeReleased(plan: string, subjects: readonly string[]): Clause
 	);
 }
 
-export const reportReleased = (root: string, plan: string, tracer?: Tracer) =>
-	report(root, "run.released", plan, judgeReleased(plan, trunkMergeSubjects(root)), tracer);
+export const reportReleased = async (root: string, plan: string, tracer?: Tracer) =>
+	report(
+		root,
+		"run.released",
+		plan,
+		// Read asynchronously (admin-pages-load-fast, decision 11): this runs in the server as a release ends.
+		judgeReleased(plan, await trunkMergeSubjectsAsync(root)),
+		tracer,
+	);
 
 export interface TrueInput {
 	plan: string;

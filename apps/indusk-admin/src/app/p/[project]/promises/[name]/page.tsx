@@ -17,9 +17,11 @@ import {
   WhereItLives,
 } from "@/components/promise/PromiseProof";
 import { Box } from "@/components/ui/Box";
+import { startPage } from "@/lib/page-reads";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { standingKept } from "@/lib/standing-kept";
 
 interface PromisePageProps {
   params: Promise<{ project: string; name: string }>;
@@ -40,25 +42,33 @@ interface PromisePageProps {
 export default async function PromisePage({ params }: PromisePageProps) {
   const { project, name } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("promise", projectPath ?? "");
   if (!projectPath || !projectPathExists(projectPath)) return null;
 
+  // The daemon is found from the kept process list, not a `ps` of this page's own.
+  await page.reads({ processList: true });
   const registry = registryOf(readProjectPromises(projectPath));
   const entry = registry?.promises.find(
     (p) => p.name === name || p.aliases.includes(name),
   );
   const proof = entry
-    ? await proofOf(projectPath, entry.name, {
-        cacheMs: readAdminRefreshMs(projectPath),
-      })
+    ? await standingKept(`proof:${projectPath}:${entry.name}`, () =>
+        proofOf(projectPath, entry.name, {
+          cacheMs: readAdminRefreshMs(projectPath),
+        }),
+      )
     : null;
   if (!registry || !entry || !proof) notFound();
 
-  const names = await readHealthNames(projectPath);
+  const names = await standingKept(`health-names:${projectPath}`, () =>
+    readHealthNames(projectPath),
+  );
   const sentenceOf = (n: string) => promiseWords(n, names.words);
   const planHrefPrefix = `/p/${project}/plan/`;
   const beside = registry.promises.filter(
     (p) => p.owner === entry.owner && p.name !== entry.name,
   );
+  page.finish(0);
 
   return (
     <div className="flex min-w-0 flex-col gap-5" data-testid="promise-page">

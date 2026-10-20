@@ -10,7 +10,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   stop sessions through `@infinitedusky/indusk-mcp/session`, change plans
   through `/plans`, and keep a project conversation through `./new-project`;
   no file in this app writes a plan or project file, spawns a process (beyond
-  the two read-only git readers) or parses Claude's protocol. Guarded by
+  the read-only git readers) or parses Claude's protocol. Guarded by
   `admin-uses-package-commands.test.ts`.
 - **Every handler under `app/api` calls `adminOnly(request)` first**: the
   `Host` must be the admin's own (`isAdminHost`), and a `POST`'s `Origin`
@@ -189,21 +189,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   is closed until opened and the detail shows as formatted markdown, code as
   code. Guarded by `PhaseItems.test.tsx` (A6) and `PhaseRow.test.tsx` (A5). —
   `promise: technical-detail-opens-on-request`
-- **A decision's card is read again from what the daemon holds after every
-  answer**: a started release clears the build's stop and a second accept is
-  refused while it runs, and an answer delivered but not recorded is reported
-  sent, never failed; an answer carries the kind of decision the card showed
-  (`on`), and one the plan no longer waits on is refused before anything runs
-  — a plan-review card can become an approval without the person (guarded by
-  A22 in `decisions.test.ts`). Guarded by `src/lib/build-host.release.test.ts` and
-  `src/lib/decisions.test.ts`. **A decision's card shows everything the agent
-  asked, never the first of it**: an ask of several questions is shown whole and
-  answered under each question's text (`choice: "answers"`), and an answer
-  that leaves one out is refused — guarded by A7 in `DecisionCard.test.tsx` and
-  `decisions.test.ts`. **A session is "writing" only while its turn is open**:
-  an idle session waiting for the person does not hold approval back
-  (`SessionManager.isWriting`) — guarded by A12 in `waiting.test.ts`. — see
-  `/decisions/plan-cockpit`
+- **A decision's card is read again from what the daemon holds after every answer**: a started release clears the build's stop and a second accept is refused while it runs; an answer delivered but not recorded is reported sent; an answer carries the kind (`on`) the card showed, and one the plan no longer waits on is refused (`decisions.test.ts`, `build-host.release.test.ts`). **A card shows everything the agent asked**, and an answer leaving one out is refused (`DecisionCard.test.tsx`). **A session is "writing" only while its turn is open** (`SessionManager.isWriting`, `waiting.test.ts`). — see `/decisions/plan-cockpit`
+- **A page reads the process list and the trunk's landings through `lib/page-reads.ts`: once, kept briefly, no synchronous start**: it opens with `startPage`/`startPageFor`, asks `reads()` once and ends with `finish`; routes use `readNow`; none keeps `realProcessReads`. A reader that starts a program uses the package's `startProgram`, asynchronously. Guarded by `no-sync-starts.contract.test.ts` and `page-reads.test.ts` — `clause: admin-pages-load-fast/never-freezes`
 - **Storybook is `@storybook/nextjs-vite`; its story tests are the system
   tier's**: the `storybook` vitest project is named in `SYSTEM_PROJECTS`
   (`vitest.tiers.ts`) and defined by `vitest.config.ts` only for a run the

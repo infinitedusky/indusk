@@ -920,6 +920,21 @@ export const PROOFS: Record<string, Proof> = {
  * The admin's decisions reader, answered from the fixture through the
  * package's real `planWaiting`: the session above, the plans as they are now.
  */
+const stubPage = () => ({
+  reads: async () => ({
+    table: null,
+    reads: {},
+    landed: () => false,
+    subjects: [],
+  }),
+  finish: () => {},
+});
+
+/** The page-reads module for a browser page test: a page's reads and report need processes it has none of. */
+export function pageReadsMock() {
+  return { __esModule: true, startPage: stubPage, startPageFor: stubPage };
+}
+
 export function decisionsReaderMock() {
   return {
     __esModule: true,
@@ -935,6 +950,10 @@ export function decisionsReaderMock() {
     // What runs for a plan is the build host's read, which a browser page test has no process for.
     withSituations: async (_project: string, _path: string, plans: Plan[]) =>
       plans,
+    // A page's reads and report are the page-reads module's, which a browser page test has no process for.
+    needsProcessList: () => false,
+    startPage: stubPage,
+    startPageFor: stubPage,
   };
 }
 

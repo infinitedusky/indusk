@@ -70,6 +70,9 @@ vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
 vi.mock("@/lib/registry-client", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).registryClientMock(),
 );
+vi.mock("@/lib/page-reads", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).pageReadsMock(),
+);
 vi.mock("@/lib/project-reader", () => ({
   __esModule: true,
   readAdminRefreshMs: () => 5000,

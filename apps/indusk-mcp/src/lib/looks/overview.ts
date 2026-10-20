@@ -1,6 +1,6 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { gitCommonDirOf } from "../worktree/layout.js";
+import { gitCommonDirOfAsync } from "../worktree/layout.js";
 import { readRecord } from "../worktree/plan-worktree-record.js";
 import {
 	type ApprovalEntry,
@@ -161,8 +161,10 @@ function viewOf(
 	mockup: Mockup,
 	approvals: ApprovalEntry[],
 	css: string,
+	stories: StoryApprovalEntry[],
 ): MockupView {
-	const approval = approvalOf(app, mockup, approvals);
+	// The story approvals are handed in: left out, `approvalOf` re-reads and re-validates the record per mockup.
+	const approval = approvalOf(app, mockup, approvals, [], stories);
 	const entry = approval.state === "approved" ? approval.entry : approval.reference;
 	return {
 		name: mockup.name,
@@ -240,17 +242,89 @@ export async function readAppLooks(root: string, appName: string): Promise<AppLo
 		const app = await readApp(root, appName);
 		const approvals = readApprovals(app);
 		const css = generateCss(app.foundation);
+		const storyApprovals = readStoryApprovals(app);
 		return {
 			app: appName,
 			devices: app.devices,
 			foundationHash: app.foundation.hash,
-			mockups: app.mockups.map((m) => viewOf(app, m, approvals, css)),
-			stories: storiesOf(app, readStoryApprovals(app), css),
+			mockups: app.mockups.map((m) => viewOf(app, m, approvals, css, storyApprovals)),
+			stories: storiesOf(app, storyApprovals, css),
 			uncovered: await coverageOf(root, app, approvals),
 		};
 	} catch (err) {
 		return { app: appName, problem: (err as Error).message };
 	}
+}
+
+/**
+ * How many looks await a person in the checkout at `root` (what `proposedCount`
+ * of `readLooks` says), read without drawing any: no page documents and no
+ * coverage, which are most of `readAppLooks`' time and none of a count. A
+ * checkout is counted for every plan worktree on the Looks page, so this runs
+ * dozens of times per load (admin-pages-load-fast).
+ */
+export async function proposedCountOf(root: string): Promise<number> {
+	const signature = looksSignature(root);
+	const kept = countsKept.get(root);
+	if (kept && kept.signature === signature) return kept.count;
+	const count = await proposedCountRead(root);
+	countsKept.set(root, { signature, count });
+	return count;
+}
+
+/** The last count of each checkout and the files' state it was read from; a changed file makes it read again. */
+const countsKept = new Map<string, { signature: string; count: number }>();
+
+/**
+ * Every file under a checkout's mockups, by path, size and modified time:
+ * everything `readApp` reads is under this one directory, so a count read at
+ * this signature is the count now. Statting is milliseconds where reading,
+ * composing and hashing every mockup is hundreds of them.
+ */
+function looksSignature(root: string): string {
+	const parts: string[] = [];
+	const walk = (dir: string) => {
+		let entries: import("node:fs").Dirent[];
+		try {
+			entries = readdirSync(dir, { withFileTypes: true });
+		} catch {
+			return;
+		}
+		for (const e of entries) {
+			const path = join(dir, e.name);
+			if (e.isDirectory()) walk(path);
+			else {
+				try {
+					const st = statSync(path);
+					parts.push(`${path}:${st.size}:${st.mtimeMs}`);
+				} catch {
+					parts.push(`${path}:gone`);
+				}
+			}
+		}
+	};
+	walk(join(root, MOCKUPS_DIR));
+	return parts.join("\n");
+}
+
+async function proposedCountRead(root: string): Promise<number> {
+	const counts = await Promise.all(
+		listApps(root).map(async (appName) => {
+			try {
+				const app = await readApp(root, appName);
+				const approvals = readApprovals(app);
+				const stories = readStoryApprovals(app);
+				return (
+					app.mockups.filter((m) => approvalOf(app, m, approvals, [], stories).state === "proposed")
+						.length +
+					app.stories.filter((s) => storyApprovalOf(app, s, stories).state === "proposed").length
+				);
+			} catch {
+				return 0; // an app that cannot be read has no proposed look to count; `readLooks` names its problem
+			}
+		}),
+	);
+	return counts.reduce((a, b) => a + b, 0);
 }
 
 /** Every app's looks in the project. */
@@ -287,7 +361,8 @@ export async function looksCheckouts(projectRoot: string): Promise<LooksCheckout
 	const out: LooksCheckout[] = [{ plan: null, root: projectRoot, branch: null }];
 	// A project that is not a git checkout has no plan worktrees: its own
 	// checkout is the only one, never a refusal of the whole page.
-	if (!gitCommonDirOf(projectRoot)) return out;
+	// Found asynchronously, which also answers the record read beneath it (decision 11).
+	if (!(await gitCommonDirOfAsync(projectRoot))) return out;
 	const record = await readRecord(projectRoot);
 	if (!record.ok) return out;
 	for (const a of record.assignments) {
@@ -309,9 +384,7 @@ export interface CountedCheckout extends LooksCheckout {
  */
 export async function countedCheckouts(projectRoot: string): Promise<CountedCheckout[]> {
 	const all = await looksCheckouts(projectRoot);
-	return Promise.all(
-		all.map(async (c) => ({ ...c, proposed: proposedCount(await readLooks(c.root)) })),
-	);
+	return Promise.all(all.map(async (c) => ({ ...c, proposed: await proposedCountOf(c.root) })));
 }
 
 /**

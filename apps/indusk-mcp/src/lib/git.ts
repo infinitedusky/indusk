@@ -2,6 +2,8 @@ import { execFile, execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
+import { keptRead } from "./run-record/kept-reads.js";
+import { onPage, startProgram } from "./start-program.js";
 
 /**
  * The git primitives more than one subsystem needs.
@@ -87,27 +89,31 @@ export interface TrunkCommit {
 	subject: string;
 }
 
+const FIRST_PARENT_ARGS = ["log", "--first-parent", "--format=%H%x1f%cs%x1f%s"];
+
+function parseFirstParentLog(out: string): TrunkCommit[] {
+	return out
+		.split("\n")
+		.filter((line) => line !== "")
+		.map((line) => {
+			const [sha, date, ...subject] = line.split("\x1f");
+			return { sha, date, subject: subject.join("\x1f") };
+		})
+		.reverse();
+}
+
 /**
- * The first-parent line of HEAD, oldest first — one `git log` for a caller
- * that asks many questions of the trunk (which release shipped each plan).
- * Null when there is nothing to read: no repository, or an unborn branch.
+ * The first-parent line of HEAD, oldest first, read without stopping the server (admin-pages-load-fast,
+ * decision 11): started asynchronously with the time limit and counted. Inside a page it is kept for
+ * the window, so the nav and the page that follows it read the trunk's history once.
  */
-export function firstParentLogSync(root: string): TrunkCommit[] | null {
+export async function firstParentLogAsync(root: string): Promise<TrunkCommit[] | null> {
+	const read = async (): Promise<TrunkCommit[]> =>
+		parseFirstParentLog(
+			await startProgram("git", FIRST_PARENT_ARGS, { cwd: root, maxBuffer: 64 * 1024 * 1024 }),
+		);
 	try {
-		const out = execFileSync("git", ["log", "--first-parent", "--format=%H%x1f%cs%x1f%s"], {
-			cwd: root,
-			encoding: "utf-8",
-			maxBuffer: 64 * 1024 * 1024,
-			stdio: ["ignore", "pipe", "ignore"],
-		});
-		return out
-			.split("\n")
-			.filter((line) => line !== "")
-			.map((line) => {
-				const [sha, date, ...subject] = line.split("\x1f");
-				return { sha, date, subject: subject.join("\x1f") };
-			})
-			.reverse();
+		return onPage() ? (await keptRead(`first-parent:${root}`, read)).value : await read();
 	} catch {
 		return null;
 	}

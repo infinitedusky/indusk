@@ -28,6 +28,7 @@ vi.mock("@infinitedusky/indusk-mcp/plans", () => {
 let planning: { running: boolean; step: string | null } | null = null;
 vi.mock("@/lib/build-host", () => ({
   planningState: () => planning,
+  readNow: async () => ({ table: null, reads: {}, landed: () => false }),
   startBuild: async () => {
     calls.push("build");
     return build();

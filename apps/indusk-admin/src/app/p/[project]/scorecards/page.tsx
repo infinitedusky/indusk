@@ -1,9 +1,13 @@
 import { ScorecardsList } from "@/components/Scorecards";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { startPage } from "@/lib/page-reads";
 import { readEvalScorecards } from "@/lib/planning-reader";
 import { hasEvalDirectory } from "@/lib/project-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { getCommitMessages } from "@/lib/vcs";
+
+/** How many of the latest scorecards the page draws; the rest stay in the log. */
+const SCORECARDS_SHOWN = 100;
 
 interface ScorecardsRouteProps {
   params: Promise<{ project: string }>;
@@ -27,6 +31,7 @@ export default async function PerProjectScorecardsPage({
 }: ScorecardsRouteProps) {
   const { project } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("scorecards", projectPath ?? "");
 
   if (!projectPath || !projectPathExists(projectPath)) {
     return (
@@ -40,15 +45,19 @@ export default async function PerProjectScorecardsPage({
   const since = new Date(0);
   const until = new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000);
 
-  const scorecards = await readEvalScorecards(projectPath, {
+  const everyScorecard = await readEvalScorecards(projectPath, {
     from: since,
     to: until,
   }).catch(() => []);
+  // The log grows without end (thousands of entries, megabytes), and drawing
+  // all of them is most of what this page costs; the latest are the ones read.
+  const scorecards = everyScorecard.slice(0, SCORECARDS_SHOWN);
 
   const ids = scorecards
     .map((s) => (s.changeId ? String(s.changeId) : ""))
     .filter((id) => id !== "");
-  const messages = getCommitMessages(projectPath, ids);
+  const messages = await getCommitMessages(projectPath, ids);
+  page.finish(0);
 
   // Single-project view — deliberately omit the project-name label per row
   // (it'd be redundant noise since every scorecard belongs to {project}).
@@ -73,5 +82,11 @@ export default async function PerProjectScorecardsPage({
     );
   }
 
-  return <ScorecardsList scorecards={scorecards} descriptions={messages} />;
+  return (
+    <ScorecardsList
+      scorecards={scorecards}
+      descriptions={messages}
+      total={everyScorecard.length}
+    />
+  );
 }

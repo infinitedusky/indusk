@@ -11,7 +11,9 @@ import { showOf } from "@/components/looks/address";
 import { LooksBody, type OpenMockup } from "@/components/looks/Looks";
 import type { OpenStory } from "@/components/looks/Stories";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { startPage } from "@/lib/page-reads";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { standingKept } from "@/lib/standing-kept";
 
 interface LooksRouteProps {
   params: Promise<{ project: string }>;
@@ -47,6 +49,7 @@ export default async function PerProjectLooksPage({
 }: LooksRouteProps) {
   const { project } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("looks", projectPath ?? "");
   if (!projectPath || !projectPathExists(projectPath)) {
     return (
       <StaleProjectFailurePage
@@ -79,7 +82,10 @@ export default async function PerProjectLooksPage({
   // A plan worktree is named by its plan's title; one the package reads no
   // title for reads as its handle in words, never as the folder name.
   const checkouts = await countedCheckouts(projectPath);
-  const { planTitles, words } = await readHealthNames(projectPath);
+  const { planTitles, words } = await standingKept(
+    `health-names:${projectPath}`,
+    () => readHealthNames(projectPath),
+  );
   const titles = Object.fromEntries(
     checkouts.flatMap((c) =>
       c.plan
@@ -87,10 +93,16 @@ export default async function PerProjectLooksPage({
         : [],
     ),
   );
+  // Drawing every mockup is most of this page's cost; the last reading serves while a newer
+  // one is read, and an approval clears it.
+  const apps = await standingKept(`looks-page:${checkout.root}`, () =>
+    readLooks(checkout.root),
+  );
+  page.finish(0);
   return (
     <LooksBody
       project={project}
-      apps={await readLooks(checkout.root)}
+      apps={apps}
       path={`/p/${project}/looks`}
       open={open}
       openStory={openStory}

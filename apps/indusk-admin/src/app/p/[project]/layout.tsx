@@ -18,7 +18,12 @@ import {
   UnassignedWorktrees,
   WorktreeRecordError,
 } from "@/components/Worktrees";
-import { readWaiting, withSituations } from "@/lib/decisions-reader";
+import {
+  needsProcessList,
+  readWaiting,
+  startPage,
+  withSituations,
+} from "@/lib/decisions-reader";
 import { worktreePromises } from "@/lib/plan-health";
 import {
   readActivePlans,
@@ -37,6 +42,7 @@ import {
   readRegistryProjects,
 } from "@/lib/registry-client";
 import { readProjectResearch } from "@/lib/research-reader";
+import { standingKept } from "@/lib/standing-kept";
 
 interface PerProjectLayoutProps {
   children: React.ReactNode;
@@ -75,6 +81,8 @@ export default async function PerProjectLayout({
     );
   }
 
+  // The nav is read for every page of the project: it keeps its own count of reads and starts.
+  const page = startPage("nav", projectPath);
   const [active, archived, research, worktrees] = await Promise.all([
     readActivePlans(projectPath),
     readArchivedPlans(projectPath),
@@ -92,7 +100,11 @@ export default async function PerProjectLayout({
   // (day-monitor, A23) — the same cached read the Promises page makes, red
   // from the alarm source alone (promise-sources, ADR D5).
   const registry = registryOf(promisesRead);
-  const reads = registry ? await readHealth(projectPath, registry) : null;
+  const reads = registry
+    ? await standingKept(`health:${projectPath}`, () =>
+        readHealth(projectPath, registry),
+      )
+    : null;
   // The plans' worktrees' promises too, as each plan's page reads them, so a
   // break red on a plan's page is red here (plan-page-promise-health A7).
   const red =
@@ -111,18 +123,27 @@ export default async function PerProjectLayout({
   // A broken look counts beside them (ui-promises ADR decision 7), from the
   // package's look standing — the rows the dashboard lists first.
   const brokenPromises = reads
-    ? (await readStanding(projectPath, { health: reads })).filter(
-        (s) => s.standing === "broken",
-      ).length
+    ? (
+        await standingKept(projectPath, () =>
+          readStanding(projectPath, { health: reads }),
+        )
+      ).filter((s) => s.standing === "broken").length
     : 0;
-  const brokenLooks = (await readLookStanding(projectPath)).rows.filter(
-    (l) => l.standing === "broken",
-  ).length;
+  // The look standing draws every mockup to learn its coverage; the nav serves the last
+  // answer while a newer one is read behind it (admin-pages-load-fast, fifth round).
+  const brokenLooks = (
+    await standingKept(`looks:${projectPath}`, () =>
+      readLookStanding(projectPath),
+    )
+  ).rows.filter((l) => l.standing === "broken").length;
   const brokenCount = brokenPromises + brokenLooks;
 
   // Each Path's released count: when a release shipped a plan, from the
   // package's `planDates` (display-names), read once for the whole nav.
-  const { planDates, words } = await readHealthNames(projectPath);
+  const { planDates, words } = await standingKept(
+    `health-names:${projectPath}`,
+    () => readHealthNames(projectPath),
+  );
   // Each plan's title, from the copy the admin reads it from (its worktree
   // first), so Needs you names a worktree plan by its own title.
   const planTitles = Object.fromEntries(
@@ -131,9 +152,16 @@ export default async function PerProjectLayout({
 
   // Needs you: each plan waiting on the person, with the step it waits at —
   // the package's `planWaiting`, over what the admin holds (ADR decision 2).
-  const waiting = await readWaiting(project, projectPath, active);
+  // The process list and the trunk's landings are read once for the nav and shared with the page.
+  const read = await page.reads({
+    processList: () => needsProcessList(project, active),
+  });
+  const waiting = await readWaiting(project, projectPath, active, read);
   // What each plan reads as, and what runs for it, from the package's one reader of both.
-  const situated = await withSituations(project, projectPath, active, waiting);
+  const situated = await withSituations(project, projectPath, active, waiting, {
+    read,
+  });
+  page.finish(active.length);
 
   const summary = `${active.length} ${active.length === 1 ? "plan" : "plans"}`;
 

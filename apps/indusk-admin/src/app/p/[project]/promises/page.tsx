@@ -23,12 +23,14 @@ import {
   PromisesProblems,
 } from "@/components/Promises";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { startPage } from "@/lib/page-reads";
 import { readPlanHierarchy } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { buildRows, parseQuery, readsNoSignal } from "@/lib/promise-dashboard";
 import { readTimelineView } from "@/lib/promise-timeline";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { standingKept } from "@/lib/standing-kept";
 import { parseWindow } from "@/lib/timeline-strip";
 
 /** The timeline's read budget: the health read's two seconds, again. */
@@ -94,6 +96,7 @@ export default async function PerProjectPromisesPage({
 }: PromisesRouteProps) {
   const { project } = await params;
   const projectPath = getProjectPath(project);
+  const page = startPage("promises", projectPath ?? "");
 
   if (!projectPath || !projectPathExists(projectPath)) {
     return (
@@ -104,6 +107,9 @@ export default async function PerProjectPromisesPage({
     );
   }
 
+  // The machine's process list and the trunk's landings, read once and shared with the nav and
+  // the other pages inside the window; the daemon is found from the same list.
+  await page.reads({ processList: true });
   const read = readProjectPromises(projectPath);
   if (!read.ok && "missing" in read) {
     return <PromisesEmpty dir={read.missing} />;
@@ -113,9 +119,11 @@ export default async function PerProjectPromisesPage({
   // D7): one cached read each; unreachable is said, never drawn green.
   // The alarm source's chip leads: it is the one that raises (ADR D5).
   const reads = registry
-    ? await readHealth(projectPath, registry, {
-        cacheMs: readAdminRefreshMs(projectPath),
-      })
+    ? await standingKept(`health:${projectPath}`, () =>
+        readHealth(projectPath, registry, {
+          cacheMs: readAdminRefreshMs(projectPath),
+        }),
+      )
     : null;
   const alarm = reads ? alarmRead(reads) : undefined;
   const health = reads
@@ -147,28 +155,39 @@ export default async function PerProjectPromisesPage({
       : alarmSource(names.length ? names : ["local"]);
   const timelines =
     registry && names.includes(source)
-      ? await readTimelineView(projectPath, registry, {
-          window,
-          source,
-          sources: names,
-          timeoutMs: TIMELINE_TIMEOUT_MS,
-        })
+      ? await standingKept(
+          `timeline:${projectPath}:${JSON.stringify(window)}:${source}:${names.join(",")}`,
+          () =>
+            readTimelineView(projectPath, registry, {
+              window,
+              source,
+              sources: names,
+              timeoutMs: TIMELINE_TIMEOUT_MS,
+            }),
+        )
       : undefined;
   const standing = reads
-    ? await readStanding(projectPath, { health: reads })
+    ? await standingKept(projectPath, () =>
+        readStanding(projectPath, { health: reads }),
+      )
     : [];
   // Looks beside the promises (ui-promises ADR decision 7): each look's
   // standing from the same package reader the nav counts.
-  const looks = await readLookStanding(projectPath, {
-    cacheMs: readAdminRefreshMs(projectPath),
-  });
-  const planNames = await readHealthNames(projectPath);
+  const looks = await standingKept(`looks:${projectPath}`, () =>
+    readLookStanding(projectPath, {
+      cacheMs: readAdminRefreshMs(projectPath),
+    }),
+  );
+  const planNames = await standingKept(`health-names:${projectPath}`, () =>
+    readHealthNames(projectPath),
+  );
   const declarations = readPlanHierarchy(projectPath);
   const rows = buildRows(standing, {
     planTitles: planNames.planTitles,
     sentenceOf: (name) => promiseWords(name, planNames.words),
     declarations,
   });
+  page.finish(rows.length);
   return (
     <div
       className="flex flex-col gap-4"

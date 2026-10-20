@@ -19,10 +19,11 @@ it("T1 the reader builds no hook path from its own location when it loads", () =
 	expect(text).toMatch(
 		/induskMcpPackageRoot\(\)[\s\S]{0,40}"hooks"[\s\S]{0,40}"validate-impl-structure\.js"/,
 	);
-	// Turbopack reads `spawnSync("node", [path])` as loading a script and resolves the
-	// path at build time; the running Node binary is not read that way.
-	expect(text).not.toMatch(/spawnSync\("node",/);
-	expect(text).toMatch(/spawnSync\(process\.execPath,/);
+	// Turbopack reads a start of `"node"` with a script path as loading a script and resolves the
+	// path at build time; the running Node binary is not read that way. The hook is started
+	// asynchronously, so the server keeps answering while it runs (admin-pages-load-fast).
+	expect(text).not.toMatch(/(?:spawnSync|startProgram)\("node",/);
+	expect(text).toMatch(/startProgram\(process\.execPath,/);
 });
 
 it("T1 the shipped impl hook is where the package root says", () => {
