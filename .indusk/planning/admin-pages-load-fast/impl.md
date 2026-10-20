@@ -209,7 +209,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
 
 #### Test Phase 1 Document
 
-- [ ] Note in the plan that the page-timing measure exists and where its result will be recorded.
+- [x] Note in the plan that the page-timing measure exists and where its result will be recorded.
   <details><summary>Technical</summary>
 
   Add one line under `## Notes` of this impl naming `apps/indusk-admin/scripts/measure-pages.mjs` and that Build Phase 3 records its result.
@@ -523,4 +523,7 @@ This phase is the check against the real running admin that the three pages name
 - Residual (accepted): a page route that never calls the page-reads module reports nothing, so its slowness reads "no signal"; A1 measures every route at close, and the new-page rule in the admin's CLAUDE.md (Build Phase 2) tells a new page to use the module.
 - Plan review round 2: the plan was read cold again after the first answers changed it; decisions 16 to 19 and one Build Phase 2 task are its fixes, and its "nothing" answers are in `plan-review.md`.
 - The plan review (`plan-review.md`) was answered by the planning agent without the person; every answer is in that file and each "nothing" is shown at approval.
+- The page-timing measure is `apps/indusk-admin/scripts/measure-pages.mjs` (A1); Build Phase 3 records its result here. Written in Test Phase 1 it reads 17 to 23 s on the promises routes of the running admin and exits 1. Options added beyond the plan: `--runs`, `--only`, `--wait-ms`, and a 120 s limit per request.
+- Test Phase 1, decided unattended from the plan itself: the slow-`ps` shim in A14 sleeps 2 s (not 3 s) and only on the whole-process-list call, because a 3 s sleep on every `ps` made one page spend about 15 s and would race the 3 s `READ_TIMEOUT_MS` once Build Phase 1 adds it. The page-reads and scan tests read 40 process-list reads and 16 synchronous starts today. The package must be built (`pnpm build` in `apps/indusk-mcp`, git-ignored `dist/`) before any admin test loads.
+- `everyday-tests-never-wait.test.ts` is red on this branch before Test Phase 1, for files that are not this plan's (`decided-unattended-hook.test.ts`, `accept-brief-conflict.test.ts`, and others); none of this plan's files is named.
 - A1 is a `manual:` live check: the three clause rows prove the clauses and A1 is the recorded measure of the headline sentence, as the test plan's untestable row U1 states. It is unverified to tools by design.
