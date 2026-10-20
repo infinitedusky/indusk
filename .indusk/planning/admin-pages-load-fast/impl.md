@@ -200,7 +200,7 @@ This phase writes the tests whose subject exists today, so each fails on its own
 
 #### Test Phase 1 Context
 
-- [ ] Record that a page path's reads are counted by test, so a later page cannot add a per-plan program start unseen.
+- [x] Record that a page path's reads are counted by test, so a later page cannot add a per-plan program start unseen. (guard: the two test files carry the rule; their failure messages name the count or the file; no CLAUDE.md entry in this phase, as the item's detail says)
   <details><summary>Technical</summary>
 
   guard: `no-sync-starts.contract.test.ts` and `page-reads.test.ts` are the enforcers (their failure messages name the file or the count). No separate CLAUDE.md entry is written in this phase; the rule's home is written in Build Phase 2's Context item.
