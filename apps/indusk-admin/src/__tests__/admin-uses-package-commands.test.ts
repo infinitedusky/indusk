@@ -31,10 +31,16 @@ function sources(dir = SRC, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * The files that import Node's `child_process`. `lib/vcs.ts` no longer does: its one `git log`
+ * goes through the package's counted, time-limited `startProgram` (admin-pages-load-fast,
+ * decision 15), so it is still a read-only git reader but not a process start of the admin's own.
+ */
+const SPAWNING = ["lib/git-only-path.ts"];
 const READ_ONLY_GIT = ["lib/git-only-path.ts", "lib/vcs.ts"];
 
 describe("A25 — the admin acts only through the package", () => {
-  it("only the two read-only git readers start a process", () => {
+  it("only the read-only git reader that imports child_process starts a process", () => {
     const spawning = sources()
       .filter((f) =>
         /from ["']node:child_process["']|require\(["']child_process["']\)/.test(
@@ -43,7 +49,7 @@ describe("A25 — the admin acts only through the package", () => {
       )
       .map((f) => relative(SRC, f))
       .sort();
-    expect(spawning).toEqual(READ_ONLY_GIT);
+    expect(spawning).toEqual(SPAWNING);
   });
 
   it("the read-only readers never make a worktree, merge, or start claude", () => {

@@ -65,7 +65,7 @@ describe("commit-message lookup", { timeout: 30000 }, () => {
     rmSync(gitOnlyBin, { recursive: true, force: true });
   });
 
-  it("A3 — displays a commit message when jj is not installed", () => {
+  it("A3 — displays a commit message when jj is not installed", async () => {
     process.env.PATH = gitPath;
 
     // Guard the guard: if jj were still reachable, A3 would prove nothing.
@@ -80,25 +80,25 @@ describe("commit-message lookup", { timeout: 30000 }, () => {
       "jj must be unreachable, or A3 proves nothing",
     ).not.toBe(0);
 
-    expect(getCommitMessage(repo, sha)).not.toBeNull();
+    expect(await getCommitMessage(repo, sha)).not.toBeNull();
   });
 
-  it("A4 — the displayed message is the commit's actual git message", () => {
+  it("A4 — the displayed message is the commit's actual git message", async () => {
     process.env.PATH = gitPath;
-    expect(getCommitMessage(repo, sha)).toBe(MESSAGE);
+    expect(await getCommitMessage(repo, sha)).toBe(MESSAGE);
   });
 
-  it("A4 — bulk lookup resolves each id once and keys by id", () => {
+  it("A4 — bulk lookup resolves each id once and keys by id", async () => {
     process.env.PATH = gitPath;
-    const out = getCommitMessages(repo, [sha, sha]);
+    const out = await getCommitMessages(repo, [sha, sha]);
     expect(out.size).toBe(1);
     expect(out.get(sha)).toBe(MESSAGE);
   });
 
-  it("returns null for an id no vcs resolves", () => {
+  it("returns null for an id no vcs resolves", async () => {
     process.env.PATH = gitPath;
     expect(
-      getCommitMessage(repo, "deadbeefdeadbeefdeadbeefdeadbeef"),
+      await getCommitMessage(repo, "deadbeefdeadbeefdeadbeefdeadbeef"),
     ).toBeNull();
   });
 });
